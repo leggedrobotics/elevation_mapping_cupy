@@ -77,7 +77,7 @@ class ElevationMappingNode:
         translation = np.array(translation)
         position = np.array([translation[0], translation[1]])
         self.elevation_map.input(points, R, translation)
-        self.elevation_map.move_to(position)
+        # self.elevation_map.move_to(position)
         # self.elevation_map.show()
         total_time = time.time() - start
         print(points.shape)
@@ -99,7 +99,7 @@ class ElevationMappingNode:
         # print('R ', self.R)
 
         position = np.array([position.x, position.y])
-        # self.elevation_map.move_to(position)
+        self.elevation_map.move_to(position)
 
     def publish_map(self):
         # start = time.time()

@@ -28,11 +28,11 @@ else:
 class TraversabilityFilter(chainer.Chain):
     def __init__(self, w1, w2, w3, w_out):
         super(TraversabilityFilter, self).__init__()
-        self.conv1 = L.Convolution2D(1, 4, ksize=3, pad=1, dilate=1,
+        self.conv1 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=1,
                                      nobias=True, initialW=w1).to_gpu()
-        self.conv2 = L.Convolution2D(1, 4, ksize=3, pad=2, dilate=2,
+        self.conv2 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=2,
                                      nobias=True, initialW=w2).to_gpu()
-        self.conv3 = L.Convolution2D(1, 4, ksize=3, pad=3, dilate=3,
+        self.conv3 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=3,
                                      nobias=True, initialW=w3).to_gpu()
         self.conv_out = L.Convolution2D(12, 1, ksize=1,
                                         nobias=True, initialW=w_out).to_gpu()
@@ -45,26 +45,28 @@ class TraversabilityFilter(chainer.Chain):
 
 
     def __call__(self, elevation_map):
-        # elevation = F.expand_dims(elevation_map[0], 0)
-        shape = elevation_map[0].shape
-        elevation = F.reshape(elevation_map[0], (-1, 1, shape[0], shape[1]))
-        out1 = self.conv1(elevation)
-        out2 = self.conv2(elevation)
-        out3 = self.conv3(elevation)
+        elevation = elevation_map[0]
+        padded = F.pad(elevation, 1, 'reflect')
+        out1 = self.conv1(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
+        padded = F.pad(elevation, 2, 'reflect')
+        out2 = self.conv2(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
+        padded = F.pad(elevation, 3, 'reflect')
+        out3 = self.conv3(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
         out = F.concat((out1, out2, out3), axis=1)
-        return self.conv_out(out).array
+        return F.absolute(self.conv_out(out)).array
+
 
 class ElevationMap(object):
     def __init__(self):
         self.resolution = 0.05
         self.center = xp.array([0, 0], dtype=float)
-        self.map_length =10 
+        self.map_length = 8 
         # +2 is a border for outside map
         self.cell_n = int(self.map_length / self.resolution) + 2
 
         self.noise_factor = 0.05
         self.mahalanobis_thresh = 2.0
-        self.outlier_variance = 0.10
+        self.outlier_variance = 0.001
         self.time_variance = 0.01
 
         self.max_variance = 1.0
@@ -181,7 +183,7 @@ class ElevationMap(object):
         index = xp.clip(index, 0, self.cell_n - 1)
         return index
 
-    def get_indices(self, points, index):
+    def get_indices(self, index):
         # get unique indices for averaging new values
         flatten_index = index[:, 0] * self.cell_n + index[:, 1]
         unique = xp.unique(flatten_index,
@@ -194,7 +196,7 @@ class ElevationMap(object):
         unique_index[:, 1] = flatten_unique_index % self.cell_n
         return index, unique_index, unique_inverse, unique_count
 
-    def outlier_rejection(self):
+    def large_variance_rejection(self):
 
         outliers = self.elevation_map[1] > self.max_variance
         self.elevation_map[0] = xp.where(outliers, 0,
@@ -204,6 +206,53 @@ class ElevationMap(object):
         self.elevation_map[2] = xp.where(outliers, 0,
                                          self.elevation_map[2])
 
+    def add_variance_to_outliers(self, outlier_index):
+        if len(outlier_index) > 0:
+            outlier_unique = self.get_indices(outlier_index)
+            _, outlier_unique, inverse, _ = outlier_unique
+            variance_addition = xp.bincount(inverse, xp.ones_like(inverse))
+            variance_addition *= self.outlier_variance
+            index_x, index_y = outlier_unique[:, 0], outlier_unique[:, 1]
+            self.elevation_map[1][index_x, index_y] += variance_addition
+
+    def outlier_rejection(self, index, map_h, map_v, point_h, point_v):
+        outliers = xp.abs(map_h - point_h) > (map_v * self.mahalanobis_thresh)
+        outlier_index = index[outliers]
+        outlier_map_index = (outlier_index[:, 0], outlier_index[:, 1])
+        self.add_variance_to_outliers(outlier_index)
+        index = index[~outliers]
+        map_h = map_h[~outliers]
+        map_v = map_v[~outliers]
+        point_h = point_h[~outliers]
+        point_v = point_v[~outliers]
+
+    def gather_into_unique_cell(self, index, new_h, new_v, mode='mean'):
+        unique_tuple = self.get_indices(index)
+        index, unique_index, unique_inverse, unique_count = unique_tuple
+        if mode == 'mean':
+            new_unique_h = xp.bincount(unique_inverse, new_h) / unique_count
+            new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
+        elif mode == 'max':
+            new_unique_h = self.get_max_unique_values(unique_inverse, new_h)
+            new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
+        else:
+            print('ERROR[gather_into_unique_cell]: use mean or max')
+            print('Using mean...')
+            new_unique_h = xp.bincount(unique_inverse, new_h) / unique_count
+            new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
+        index_x, index_y = unique_index[:, 0], unique_index[:, 1]
+        return (index_x, index_y), new_unique_h, new_unique_v
+
+    def get_max_unique_values(self, unique, values):
+        order = xp.lexsort(xp.stack([values, unique]))
+        unique = unique[order]
+        values = values[order]
+        index = xp.empty(len(unique), 'bool')
+        index[-1] = True
+        index[:-1] = unique[1:] != unique[:-1]
+        new_values = values[index]
+        return new_values
+
     def update_map(self, points):
         self.update_variance()
         index = self.get_cell_index(points)
@@ -212,33 +261,23 @@ class ElevationMap(object):
         point_h = points[:, 2]
         point_v = points[:, 3]
         # outlier rejection
-        outliers = xp.abs(map_h - point_h) > (map_v * self.mahalanobis_thresh)
-        outlier_index = index[outliers]
-        outlier_map_index = (outlier_index[:, 0], outlier_index[:, 1])
-        self.elevation_map[1][outlier_map_index] += self.outlier_variance
-        index = index[~outliers]
-        map_h = map_h[~outliers]
-        map_v = map_v[~outliers]
-        point_h = point_h[~outliers]
-        point_v = point_v[~outliers]
-        unique_tuple = self.get_indices(points, index)
-        index, unique_index, unique_inverse, unique_count = unique_tuple
+        self.outlier_rejection(index, map_h, map_v, point_h, point_v)
+
+        # calculate new value
         new_h = ((map_h * point_v + point_h * map_v) / (map_v + point_v))
         new_v = (map_v * point_v) / (map_v + point_v)
 
-        new_unique_h = xp.bincount(unique_inverse, new_h) / unique_count
-        new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
-        index_x, index_y = unique_index[:, 0], unique_index[:, 1]
-        self.elevation_map[0][index_x, index_y] = new_unique_h
-        self.elevation_map[1][index_x, index_y] = new_unique_v
-        self.elevation_map[2][index_x, index_y] = 1
-        self.outlier_rejection()
-        start = time.time()
-        traversability = self.traversability_filter(self.elevation_map).reshape((self.cell_n, self.cell_n))
-        self.time_sum += time.time() - start
-        self.time_cnt += 1
-        print('average traversability ', self.time_sum / self.time_cnt)
-        self.elevation_map[3] = traversability
+        # get value for each cell (choose max or mean)
+        idx, h, v = self.gather_into_unique_cell(index, new_h, new_v, mode='max')
+        self.elevation_map[0][idx] = h
+        self.elevation_map[1][idx] = v
+        self.elevation_map[2][idx] = 1
+
+        self.large_variance_rejection()
+
+        # calculate traversability
+        traversability = self.traversability_filter(self.elevation_map)
+        self.elevation_map[3] = traversability.reshape((self.cell_n, self.cell_n))
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
