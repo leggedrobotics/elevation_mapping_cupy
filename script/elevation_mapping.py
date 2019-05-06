@@ -29,13 +29,13 @@ class TraversabilityFilter(chainer.Chain):
     def __init__(self, w1, w2, w3, w_out):
         super(TraversabilityFilter, self).__init__()
         self.conv1 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=1,
-                                     nobias=True, initialW=w1).to_gpu()
+                                     nobias=True, initialW=w1)
         self.conv2 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=2,
-                                     nobias=True, initialW=w2).to_gpu()
+                                     nobias=True, initialW=w2)
         self.conv3 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=3,
-                                     nobias=True, initialW=w3).to_gpu()
+                                     nobias=True, initialW=w3)
         self.conv_out = L.Convolution2D(12, 1, ksize=1,
-                                        nobias=True, initialW=w_out).to_gpu()
+                                        nobias=True, initialW=w_out)
 
         if use_cupy:
             self.conv1.to_gpu()
