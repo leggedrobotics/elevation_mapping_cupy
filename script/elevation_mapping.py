@@ -58,15 +58,19 @@ class TraversabilityFilter(chainer.Chain):
 
 class ElevationMap(object):
     def __init__(self):
-        self.resolution = 0.05
+        self.resolution = 0.02
         self.center = xp.array([0, 0], dtype=float)
         self.map_length = 8 
         # +2 is a border for outside map
         self.cell_n = int(self.map_length / self.resolution) + 2
 
+        # 'mean' or 'max'
+        # self.gather_mode = 'mean'
+        self.gather_mode = 'max'
+
         self.noise_factor = 0.05
         self.mahalanobis_thresh = 2.0
-        self.outlier_variance = 0.001
+        self.outlier_variance = 0.01
         self.time_variance = 0.01
 
         self.max_variance = 1.0
@@ -268,7 +272,7 @@ class ElevationMap(object):
         new_v = (map_v * point_v) / (map_v + point_v)
 
         # get value for each cell (choose max or mean)
-        idx, h, v = self.gather_into_unique_cell(index, new_h, new_v, mode='max')
+        idx, h, v = self.gather_into_unique_cell(index, new_h, new_v, mode=self.gather_mode)
         self.elevation_map[0][idx] = h
         self.elevation_map[1][idx] = v
         self.elevation_map[2][idx] = 1
@@ -292,9 +296,9 @@ class ElevationMap(object):
                              self.elevation_map[0].copy(), xp.nan)
         variance = self.elevation_map[1].copy()
         traversability = self.elevation_map[3].copy()
-        elevation = elevation[1:-2, 1:-2]
-        variance = variance[1:-2, 1:-2]
-        traversability = traversability[1:-2, 1:-2]
+        elevation = elevation[1:-1, 1:-1]
+        variance = variance[1:-1, 1:-1]
+        traversability = traversability[1:-1, 1:-1]
 
         maps = xp.stack([elevation, variance, traversability], axis=0)
         if use_cupy:
