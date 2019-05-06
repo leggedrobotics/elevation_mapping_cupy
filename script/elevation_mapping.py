@@ -26,8 +26,33 @@ else:
 
 
 class TraversabilityFilter(chainer.Chain):
-    def __init__(self):
+    def __init__(self, w1, w2, w3, w_out):
+        super(TraversabilityFilter, self).__init__()
+        self.conv1 = L.Convolution2D(1, 4, ksize=3, pad=1, dilate=1,
+                                     nobias=True, initialW=w1).to_gpu()
+        self.conv2 = L.Convolution2D(1, 4, ksize=3, pad=2, dilate=2,
+                                     nobias=True, initialW=w2).to_gpu()
+        self.conv3 = L.Convolution2D(1, 4, ksize=3, pad=3, dilate=3,
+                                     nobias=True, initialW=w3).to_gpu()
+        self.conv_out = L.Convolution2D(12, 1, ksize=1,
+                                        nobias=True, initialW=w_out).to_gpu()
 
+        if use_cupy:
+            self.conv1.to_gpu()
+            self.conv2.to_gpu()
+            self.conv3.to_gpu()
+            self.conv_out.to_gpu()
+
+
+    def __call__(self, elevation_map):
+        # elevation = F.expand_dims(elevation_map[0], 0)
+        shape = elevation_map[0].shape
+        elevation = F.reshape(elevation_map[0], (-1, 1, shape[0], shape[1]))
+        out1 = self.conv1(elevation)
+        out2 = self.conv2(elevation)
+        out3 = self.conv3(elevation)
+        out = F.concat((out1, out2, out3), axis=1)
+        return self.conv_out(out).array
 
 class ElevationMap(object):
     def __init__(self):
@@ -44,11 +69,67 @@ class ElevationMap(object):
 
         self.max_variance = 1.0
 
-        # layers: elevation, variance, is_valid
-        self.elevation_map = xp.zeros((3, self.cell_n, self.cell_n))
+        # layers: elevation, variance, is_valid, traversability
+        self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
         # Initial variance
         self.initial_variance = 10.0
         self.elevation_map[1] += self.initial_variance
+
+        w1 = np.array([[[[-1.6650e-01, -1.6682e-01, -1.6663e-01],
+                        [-7.5112e-06, -4.0844e-05,  3.7997e-05],
+                        [ 1.6670e-01,  1.6667e-01,  1.6660e-01]]],
+                      [[[-1.6653e-01,  3.0289e-05,  1.6651e-01],
+                        [-1.6677e-01, -5.4666e-05,  1.6669e-01],
+                        [-1.6665e-01,  1.2168e-04,  1.6665e-01]]],
+                      [[[-1.3175e-04,  1.2513e-01,  2.4983e-01],
+                        [-1.2505e-01,  3.6682e-06,  1.2503e-01],
+                        [-2.4988e-01, -1.2494e-01,  9.7242e-06]]],
+                      [[[ 2.4968e-01,  1.2499e-01, -1.5196e-05],
+                        [ 1.2511e-01, -2.3487e-04, -1.2501e-01],
+                        [ 2.1485e-04, -1.2496e-01, -2.4978e-01]]]])
+        w2 = np.array([[[[-1.6604e-01, -1.6719e-01, -1.6669e-01],
+                        [ 4.1097e-04, -7.9650e-05,  9.1703e-05],
+                        [ 1.6636e-01,  1.6711e-01,  1.6602e-01]]],
+                      [[[-1.6644e-01,  1.6302e-04,  1.6659e-01],
+                        [-1.6714e-01,  3.3449e-05,  1.6717e-01],
+                        [-1.6642e-01,  1.3836e-04,  1.6591e-01]]],
+                      [[[-2.8285e-04,  1.2527e-01,  2.4939e-01],
+                        [-1.2541e-01,  1.6673e-05,  1.2501e-01],
+                        [-2.4916e-01, -1.2515e-01,  3.0937e-04]]],
+                      [[[ 2.4936e-01,  1.2532e-01,  5.7826e-05],
+                        [ 1.2510e-01, -7.0027e-05, -1.2552e-01],
+                        [ 1.5795e-04, -1.2541e-01, -2.4900e-01]]]])
+        w3 = np.array([[[[-1.6498e-01, -1.6708e-01, -1.6560e-01],
+                        [ 9.8741e-04,  6.1481e-04, -2.3462e-03],
+                        [ 1.6511e-01,  1.6745e-01,  1.6584e-01]]],
+                      [[[-1.6636e-01,  5.5259e-04,  1.6628e-01],
+                        [-1.6795e-01,  8.4194e-04,  1.6589e-01],
+                        [-1.6569e-01,  3.2529e-04,  1.6612e-01]]],
+                      [[[ 3.5657e-04,  1.2612e-01,  2.4948e-01],
+                        [-1.2560e-01,  3.0604e-04,  1.2374e-01],
+                        [-2.4845e-01, -1.2534e-01, -6.1795e-04]]],
+                      [[[ 2.4942e-01,  1.2524e-01, -1.5642e-04],
+                        [ 1.2534e-01, -3.7394e-04, -1.2408e-01],
+                        [-3.9571e-04, -1.2554e-01, -2.4946e-01]]]])
+        w_out = np.array([[[[1.2696]],
+                           [[1.4777]],
+                           [[1.7409]],
+                           [[1.7916]],
+                           [[0.9110]],
+                           [[0.8669]],
+                           [[1.3450]],
+                           [[1.3525]],
+                           [[0.2810]],
+                           [[0.0376]],
+                           [[0.5175]],
+                           [[0.5921]]]])
+        self.traversability_filter = TraversabilityFilter(w1, w2, w3, w_out)
+        if use_cupy:
+            self.traversability_filter.to_gpu()
+
+        self.time_sum = 0.0
+        self.time_cnt = 0.0
+
 
     def move(self, delta_position):
         delta_position = xp.asarray(delta_position)
@@ -152,6 +233,12 @@ class ElevationMap(object):
         self.elevation_map[1][index_x, index_y] = new_unique_v
         self.elevation_map[2][index_x, index_y] = 1
         self.outlier_rejection()
+        start = time.time()
+        traversability = self.traversability_filter(self.elevation_map).reshape((self.cell_n, self.cell_n))
+        self.time_sum += time.time() - start
+        self.time_cnt += 1
+        print('average traversability ', self.time_sum / self.time_cnt)
+        self.elevation_map[3] = traversability
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
@@ -165,9 +252,12 @@ class ElevationMap(object):
         elevation = xp.where(self.elevation_map[2] > 0.5,
                              self.elevation_map[0].copy(), xp.nan)
         variance = self.elevation_map[1].copy()
+        traversability = self.elevation_map[3].copy()
         elevation = elevation[1:-2, 1:-2]
         variance = variance[1:-2, 1:-2]
-        maps = xp.stack([elevation, variance], axis=0)
+        traversability = traversability[1:-2, 1:-2]
+
+        maps = xp.stack([elevation, variance, traversability], axis=0)
         if use_cupy:
             maps = xp.asnumpy(maps)
         maps = xp.transpose(maps, axes=(0, 2, 1))

@@ -57,7 +57,7 @@ class ElevationMappingNode:
                                                                       msg.header.stamp)
         except:
             print('Could not get tf')
-            self.publish_map()
+            # self.publish_map()
             return
         R = tftf.quaternion_matrix(quaternion)[0:3, 0:3]
         self.stamp = msg.header.stamp
@@ -121,15 +121,16 @@ class ElevationMappingNode:
         msg.info.pose.position.y = self.elevation_map.center[1]
         msg.info.pose.position.z = 0
         msg.info.pose.orientation.w = 1.0
-        msg.layers = ['elevation', 'variance']
+        msg.layers = ['elevation', 'variance', 'traversability']
         # print('info', time.time() - start)
         map_array = self.elevation_map.get_maps()
         # print('get_maps ', time.time() - start)
         # print(map_array)
         elevation_data = self.numpy_array_to_msg(map_array[0])
         variance_data = self.numpy_array_to_msg(map_array[1])
+        traversability_data = self.numpy_array_to_msg(map_array[2])
         # print('array_to_msg ', time.time() - start)
-        msg.data = [elevation_data, variance_data]
+        msg.data = [elevation_data, variance_data, traversability_data]
         # msg.data.data = [list(elevation), list(variance)]
         # print(msg)
         return msg
