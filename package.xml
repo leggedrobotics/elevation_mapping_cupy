@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>elevation_mapping_cupy</name>
+  <version>0.0.0</version>
+  <description>The elevation mapping by cupy</description>
+
+  <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>catkin_simple</depend>
+  <depend>ros_numpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>grid_map_msgs</depend>
+
+</package>
