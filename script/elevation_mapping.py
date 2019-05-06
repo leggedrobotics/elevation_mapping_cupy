@@ -235,7 +235,7 @@ class ElevationMap(object):
         index, unique_index, unique_inverse, unique_count = unique_tuple
         if mode == 'mean':
             new_unique_h = xp.bincount(unique_inverse, new_h) / unique_count
-            new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
+            new_unique_v = xp.bincount(unique_inverse, new_v)
         elif mode == 'max':
             new_unique_h = self.get_max_unique_values(unique_inverse, new_h)
             new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
@@ -243,7 +243,7 @@ class ElevationMap(object):
             print('ERROR[gather_into_unique_cell]: use mean or max')
             print('Using mean...')
             new_unique_h = xp.bincount(unique_inverse, new_h) / unique_count
-            new_unique_v = xp.bincount(unique_inverse, new_v) / unique_count
+            new_unique_v = xp.bincount(unique_inverse, new_v)
         index_x, index_y = unique_index[:, 0], unique_index[:, 1]
         return (index_x, index_y), new_unique_h, new_unique_v
 
