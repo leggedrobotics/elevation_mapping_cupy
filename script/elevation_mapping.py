@@ -4,6 +4,10 @@ import scipy.ndimage
 
 import matplotlib.pylab as plt
 
+import chainer
+import chainer.links as L
+import chainer.functions as F
+
 # import open3d as od
 
 import time
@@ -19,6 +23,10 @@ if use_cupy:
 else:
     xp = np
     sp = nsp
+
+
+class TraversabilityFilter(chainer.Chain):
+    def __init__(self):
 
 
 class ElevationMap(object):
@@ -109,16 +117,11 @@ class ElevationMap(object):
 
         outliers = self.elevation_map[1] > self.max_variance
         self.elevation_map[0] = xp.where(outliers, 0,
-                                         self.elevation_map[0].copy())
+                                         self.elevation_map[0])
         self.elevation_map[1] = xp.where(outliers, self.initial_variance,
-                                         self.elevation_map[1].copy())
+                                         self.elevation_map[1])
         self.elevation_map[2] = xp.where(outliers, 0,
-                                         self.elevation_map[2].copy())
-        # outliers = variance > self.max_variance
-        # print(outliers)
-        # outlier_index = [outliers[:, 0], outliers[:, 1]]
-        # print(outlier_index)
-        # self.elevation_map[2][outlier_index] = 0
+                                         self.elevation_map[2])
 
     def update_map(self, points):
         self.update_variance()
@@ -154,13 +157,9 @@ class ElevationMap(object):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
     def input(self, raw_points, R, t):
-        start = time.time()
         points = self.add_noise(xp.asarray(raw_points))
-        # print('add noise', time.time() - start)
         points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
-        # print('transform', time.time() - start)
         self.update_map(points)
-        # print('update map', time.time() - start)
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,
@@ -171,8 +170,7 @@ class ElevationMap(object):
         maps = xp.stack([elevation, variance], axis=0)
         if use_cupy:
             maps = xp.asnumpy(maps)
-        # return elevation, variance
-        maps = xp.transpose(maps, axes=(0, 2, 1)) 
+        maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         return maps
@@ -192,39 +190,3 @@ class ElevationMap(object):
             plt.show()
             plt.imshow(self.elevation_map[2])
             plt.show()
-
-
-# def load_points():
-#     print("Load a ply point cloud, print it, and render it")
-#     pcd = od.read_point_cloud("./fragment.ply")
-#     print(pcd)
-#     downpcd = od.voxel_down_sample(pcd, voxel_size=0.010)
-#
-#     return downpcd
-#     # return pcd
-#
-#
-# # @xp.fuse()
-# def main():
-#     pcd = load_points()
-#     # od.draw_geometries([pcd])
-#     # print(points)
-#     elevation_map = ElevationMap()
-#
-#     theta = -0.25 * xp.pi
-#     # theta = 0
-#     R = xp.array([[xp.cos(theta), -xp.sin(theta), 0],
-#                  [xp.sin(theta), xp.cos(theta), 0],
-#                  [0, 0, 1]], dtype=xp.float)
-#     t = xp.array([0.1, 0.2, -0.1])
-#     start = time.time()
-#     for i in range(1000):
-#         points = xp.asarray(pcd.points)
-#         elevation_map.input(points, R, t)
-#     elapsed = time.time() - start
-#     print(elapsed)
-#     elevation_map.show()
-#
-#
-# if __name__ == '__main__':
-#     main()

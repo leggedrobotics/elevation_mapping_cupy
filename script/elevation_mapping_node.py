@@ -69,9 +69,9 @@ class ElevationMappingNode:
         points[:, 2] = pc['z']
         points = points[~np.isnan(points).any(axis=1)]
         # print(points.shape)
-        # n = 7 
+        # n = 7
         # points = np.concatenate([points for i in range(n)])
-        points = points[0:5000]
+        # points = points[0:5000]
         start = time.time()
         # print(points[100:200])
         translation = np.array(translation)
