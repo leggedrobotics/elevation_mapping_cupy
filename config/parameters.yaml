@@ -1,5 +1,6 @@
 use_cupy: true
 resolution: 0.02
+map_length: 4
 gather_mode: 'max'
 sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0

@@ -27,7 +27,6 @@ class ElevationMappingNode:
         self.load_rosparam()
         self.load_weights()
         self.elevation_map = ElevationMap(self.param)
-        print(self.pointcloud_topic)
         rospy.Subscriber(self.pointcloud_topic, PointCloud2,
                          self.point_callback, queue_size=1)
         rospy.Subscriber(self.pose_topic, PoseWithCovarianceStamped,
@@ -51,6 +50,7 @@ class ElevationMappingNode:
     def load_rosparam(self):
         self.param.use_cupy = rospy.get_param('~use_cupy', True)
         self.param.resolution = rospy.get_param('~resolution', 0.02)
+        self.param.map_length = rospy.get_param('~map_length', 5.0)
         self.param.gather_mode = rospy.get_param('~gather_mode', 'max')
         self.param.sensor_noise_factor = rospy.get_param('~sensor_noise_factor', 0.05)
         self.param.mahalanobis_thresh = rospy.get_param('~mahalanobis_thresh', 2.0)
@@ -83,20 +83,23 @@ class ElevationMappingNode:
             print('Could not get tf')
             return
         R = tftf.quaternion_matrix(quaternion)[0:3, 0:3]
+        start = time.time()
         points = self.pointcloud2_to_array(msg)
+        print('points convert', time.time() - start)
         start = time.time()
         translation = np.array(translation)
         position = np.array([translation[0], translation[1]])
         self.elevation_map.input(points, R, translation)
-        # self.elevation_map.move_to(position)
-        # self.elevation_map.show()
         total_time = time.time() - start
         print('number of points ', points.shape[0])
         print('total', total_time)
         self.time_sum += total_time
         self.time_cnt += 1
         print('average ', self.time_sum / self.time_cnt)
+
+        start = time.time()
         self.publish_map()
+        print('publish', time.time() - start)
 
     def pointcloud2_to_array(self, msg):
         pc = ros_numpy.numpify(msg).flatten()
@@ -113,11 +116,14 @@ class ElevationMappingNode:
         self.elevation_map.move_to(position)
 
     def publish_map(self):
+        start = time.time()
         msg = self.get_gridmap_msg()
+        print('gridmap msg convertion ', time.time() - start)
+        start = time.time()
         self.map_publisher.publish(msg)
+        print('gridmap msg publish ', time.time() - start)
 
     def get_gridmap_msg(self):
-        start = time.time()
         msg = GridMap()
         msg.info.header.stamp = self.stamp
         msg.info.header.frame_id = self.map_frame
