@@ -49,7 +49,7 @@ catkin build elevation_mapping_cupy
 ```
 ### Run
 ```bash
-rosrun elevation_mapping_cupy elevation_mapping_node.py
+roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 ```
 ### Subscribed Topics
 

@@ -4,13 +4,14 @@
 # to the 'chatter' topic
 
 import rospy
+import rospkg
 import numpy as np
 # from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import PointCloud2
 from grid_map_msgs.msg import GridMap
-from elevation_mapping import ElevationMap
+from elevation_mapping import ElevationMap, Parameter
 import ros_numpy
 import tf
 import tf.transformations as tftf
@@ -19,13 +20,17 @@ import time
 
 
 class ElevationMappingNode:
-    def __init__(self, pointcloud_topic, pose_topic):
+    def __init__(self):
         # init ros
-        self.elevation_map = ElevationMap()
         rospy.init_node('elevation_mapping_cupy', anonymous=False)
-        rospy.Subscriber(pointcloud_topic, PointCloud2,
+        self.param = Parameter()
+        self.load_rosparam()
+        self.load_weights()
+        self.elevation_map = ElevationMap(self.param)
+        print(self.pointcloud_topic)
+        rospy.Subscriber(self.pointcloud_topic, PointCloud2,
                          self.point_callback, queue_size=1)
-        rospy.Subscriber(pose_topic, PoseWithCovarianceStamped,
+        rospy.Subscriber(self.pose_topic, PoseWithCovarianceStamped,
                          self.pose_callback, queue_size=1)
 
         self.map_publisher = rospy.Publisher('elevation_map',
@@ -36,7 +41,6 @@ class ElevationMappingNode:
         self.R = np.zeros((3, 3))
 
         self.stamp = rospy.Time.now()
-        self.frame_id = 'map'
 
         # measurements
         self.time_sum = 0.0
@@ -44,76 +48,79 @@ class ElevationMappingNode:
 
         rospy.spin()
 
+    def load_rosparam(self):
+        self.param.use_cupy = rospy.get_param('~use_cupy', True)
+        self.param.resolution = rospy.get_param('~resolution', 0.02)
+        self.param.gather_mode = rospy.get_param('~gather_mode', 'max')
+        self.param.sensor_noise_factor = rospy.get_param('~sensor_noise_factor', 0.05)
+        self.param.mahalanobis_thresh = rospy.get_param('~mahalanobis_thresh', 2.0)
+        self.param.outlier_variance = rospy.get_param('~outlier_variance', 0.01)
+        self.param.time_variance = rospy.get_param('~time_variance', 0.01)
+        self.param.initial_variance = rospy.get_param('~initial_variance', 10.0)
+        self.pointcloud_topic = rospy.get_param('~pointcloud_topic', 'points')
+        self.pose_topic = rospy.get_param('~pose_topic', 'pose')
+        self.map_frame = rospy.get_param('~map_frame', 'map')
+
+    def load_weights(self):
+        filename = rospy.get_param('~weight_file', 'config/weights.yaml')
+        rospack = rospkg.RosPack()
+        root_path = rospack.get_path('elevation_mapping_cupy')
+        filename = root_path + '/' + filename
+        self.param.load_weights(filename)
 
     def point_callback(self, msg):
         print('recieved pointcloud')
+        self.stamp = msg.header.stamp
         frame_id = msg.header.frame_id
         frame_id = 'ghost_desired/' + frame_id
         print('frame_id is ', frame_id)
-        # frame_id = 'ghost_desired/' + 'realsense_d435_front_camera_axis_aligned'
         try:
-            (translation, quaternion) = self.listener.lookupTransform('odom',
-                                                                      frame_id,
-                                                                      msg.header.stamp)
+            transform = self.listener.lookupTransform(self.map_frame,
+                                                      frame_id,
+                                                      msg.header.stamp)
+            translation, quaternion = transform
         except:
             print('Could not get tf')
-            # self.publish_map()
             return
         R = tftf.quaternion_matrix(quaternion)[0:3, 0:3]
-        self.stamp = msg.header.stamp
-        pc = ros_numpy.numpify(msg)
-        pc = pc.flatten()
-        points = np.zeros((pc.shape[0], 3))
-        points[:, 0] = pc['x']
-        points[:, 1] = pc['y']
-        points[:, 2] = pc['z']
-        points = points[~np.isnan(points).any(axis=1)]
-        # print(points.shape)
-        # n = 7
-        # points = np.concatenate([points for i in range(n)])
-        # points = points[0:5000]
+        points = self.pointcloud2_to_array(msg)
         start = time.time()
-        # print(points[100:200])
         translation = np.array(translation)
         position = np.array([translation[0], translation[1]])
         self.elevation_map.input(points, R, translation)
         # self.elevation_map.move_to(position)
         # self.elevation_map.show()
         total_time = time.time() - start
-        print(points.shape)
+        print('number of points ', points.shape[0])
         print('total', total_time)
         self.time_sum += total_time
         self.time_cnt += 1
         print('average ', self.time_sum / self.time_cnt)
         self.publish_map()
-        # print(points.shape)
+
+    def pointcloud2_to_array(self, msg):
+        pc = ros_numpy.numpify(msg).flatten()
+        points = np.zeros((pc.shape[0], 3))
+        points[:, 0] = pc['x']
+        points[:, 1] = pc['y']
+        points[:, 2] = pc['z']
+        points = points[~np.isnan(points).any(axis=1)]
+        return points
 
     def pose_callback(self, msg):
         position = msg.pose.pose.position
-        orientation = msg.pose.pose.orientation
-        self.translation = np.array([position.x, position.y, position.z])
-        quaternion = (orientation.x, orientation.y,
-                      orientation.z, orientation.w)
-        self.R = tftf.quaternion_matrix(quaternion)[0:3, 0:3]
-        # print('translation ', self.translation)
-        # print('R ', self.R)
-
         position = np.array([position.x, position.y])
         self.elevation_map.move_to(position)
 
     def publish_map(self):
-        # start = time.time()
         msg = self.get_gridmap_msg()
-        # print('get msg', time.time() - start)
         self.map_publisher.publish(msg)
-        # print('publish', time.time() - start)
 
     def get_gridmap_msg(self):
-        # print('get_gridmap_msg')
         start = time.time()
         msg = GridMap()
         msg.info.header.stamp = self.stamp
-        msg.info.header.frame_id = self.frame_id
+        msg.info.header.frame_id = self.map_frame
         msg.info.resolution = self.elevation_map.resolution
         msg.info.length_x = self.elevation_map.map_length
         msg.info.length_y = self.elevation_map.map_length
@@ -122,17 +129,11 @@ class ElevationMappingNode:
         msg.info.pose.position.z = 0
         msg.info.pose.orientation.w = 1.0
         msg.layers = ['elevation', 'variance', 'traversability']
-        # print('info', time.time() - start)
         map_array = self.elevation_map.get_maps()
-        # print('get_maps ', time.time() - start)
-        # print(map_array)
         elevation_data = self.numpy_array_to_msg(map_array[0])
         variance_data = self.numpy_array_to_msg(map_array[1])
         traversability_data = self.numpy_array_to_msg(map_array[2])
-        # print('array_to_msg ', time.time() - start)
         msg.data = [elevation_data, variance_data, traversability_data]
-        # msg.data.data = [list(elevation), list(variance)]
-        # print(msg)
         return msg
 
     def numpy_array_to_msg(self, a):
@@ -145,7 +146,6 @@ class ElevationMappingNode:
         dim2 = MultiArrayDimension()
         dim2.label = 'row_index'
         dim2.size = a.shape[1]
-        # dim2.stride = dim.stride * a.shape[1]
         dim2.stride = a.shape[1]
         msg.layout.dim.append(dim2)
         msg.data = a.flatten()
@@ -154,8 +154,6 @@ class ElevationMappingNode:
 
 if __name__ == '__main__':
     try:
-        pointcloud_topic = '/realsense_d435_front/depth/color/points'
-        pose_topic = '/state_estimator/pose_in_odom'
-        node = ElevationMappingNode(pointcloud_topic, pose_topic)
+        node = ElevationMappingNode()
     except rospy.ROSInterruptException:
         pass

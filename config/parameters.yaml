@@ -1,0 +1,14 @@
+use_cupy: true
+resolution: 0.02
+gather_mode: 'max'
+sensor_noise_factor: 0.05
+mahalanobis_thresh: 2.0
+outlier_variance: 0.01
+time_variance: 0.01
+max_variance: 1.0
+initial_variance: 10.0
+weight_file: 'config/weights.yaml'
+
+pointcloud_topic: '/realsense_d435_front/depth/color/points'
+pose_topic: '/state_estimator/pose_in_odom'
+map_frame: 'map'

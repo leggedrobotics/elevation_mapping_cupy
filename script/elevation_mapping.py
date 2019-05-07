@@ -2,27 +2,57 @@ import numpy as np
 import scipy as nsp
 import scipy.ndimage
 
-import matplotlib.pylab as plt
-
 import chainer
 import chainer.links as L
 import chainer.functions as F
+import yaml
 
-# import open3d as od
+use_cupy = False
+xp = np
+sp = nsp
 
-import time
 
-use_cupy = True
-# use_cupy = False
-if use_cupy:
-    import cupy as cp
-    import cupyx.scipy as csp
-    import cupyx.scipy.ndimage
-    xp = cp
-    sp = csp
-else:
-    xp = np
-    sp = nsp
+def load_backend(enable_cupy):
+    if enable_cupy:
+        import cupy as cp
+        import cupyx.scipy as csp
+        import cupyx.scipy.ndimage
+        global use_cupy, xp, sp
+        use_cupy = True
+        xp = cp
+        sp = csp
+    else:
+        xp = np
+        sp = nsp
+
+
+class Parameter(object):
+    def __init__(self):
+        self.use_cupy = True
+        self.resolution = 0.02
+        self.gather_mode = 'max'
+
+        self.map_length = 10.0
+        self.sensor_noise_factor = 0.05
+        self.mahalanobis_thresh = 2.0
+        self.outlier_variance = 0.01
+        self.time_variance = 0.01
+
+        self.max_variance = 1.0
+
+        self.initial_variance = 10.0
+        self.w1 = np.array((4, 1, 3, 3))
+        self.w2 = np.array((4, 1, 3, 3))
+        self.w3 = np.array((4, 1, 3, 3))
+        self.w_out = np.array((1, 12, 1, 1))
+
+    def load_weights(self, filename):
+        with open(filename) as file:
+            weights = yaml.load(file)
+            self.w1 = np.array(weights['w1'])
+            self.w2 = np.array(weights['w2'])
+            self.w3 = np.array(weights['w3'])
+            self.w_out = np.array(weights['w_out'])
 
 
 class TraversabilityFilter(chainer.Chain):
@@ -48,95 +78,53 @@ class TraversabilityFilter(chainer.Chain):
     def __call__(self, elevation_map):
         elevation = elevation_map[0]
         padded = F.pad(elevation, 1, 'reflect')
-        out1 = self.conv1(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
+        padded.reshape(-1, 1, padded.shape[0], padded.shape[1])
+        out1 = self.conv1(padded)
+
         padded = F.pad(elevation, 2, 'reflect')
-        out2 = self.conv2(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
+        padded.reshape(-1, 1, padded.shape[0], padded.shape[1])
+        out2 = self.conv2(padded)
+
         padded = F.pad(elevation, 3, 'reflect')
-        out3 = self.conv3(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
+        padded.reshape(-1, 1, padded.shape[0], padded.shape[1])
+        out3 = self.conv3(padded)
+
         out = F.concat((out1, out2, out3), axis=1)
         return self.conv_out(F.absolute(out)).array
 
 
 class ElevationMap(object):
-    def __init__(self):
-        self.resolution = 0.02
+    def __init__(self, param):
+        load_backend(param.use_cupy)
+        self.resolution = param.resolution
         self.center = xp.array([0, 0], dtype=float)
-        self.map_length = 8 
+        self.map_length = param.map_length
         # +2 is a border for outside map
         self.cell_n = int(self.map_length / self.resolution) + 2
 
         # 'mean' or 'max'
         # self.gather_mode = 'mean'
-        self.gather_mode = 'max'
+        self.gather_mode = param.gather_mode
 
-        self.noise_factor = 0.05
-        self.mahalanobis_thresh = 2.0
-        self.outlier_variance = 0.01
-        self.time_variance = 0.01
+        self.sensor_noise_factor = param.sensor_noise_factor
+        self.mahalanobis_thresh = param.mahalanobis_thresh
+        self.outlier_variance = param.outlier_variance
+        self.time_variance = param.time_variance
 
-        self.max_variance = 1.0
+        self.max_variance = param.max_variance
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
         # Initial variance
-        self.initial_variance = 10.0
+        self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
 
-        w1 = np.array([[[[-1.6650e-01, -1.6682e-01, -1.6663e-01],
-                        [-7.5112e-06, -4.0844e-05,  3.7997e-05],
-                        [ 1.6670e-01,  1.6667e-01,  1.6660e-01]]],
-                      [[[-1.6653e-01,  3.0289e-05,  1.6651e-01],
-                        [-1.6677e-01, -5.4666e-05,  1.6669e-01],
-                        [-1.6665e-01,  1.2168e-04,  1.6665e-01]]],
-                      [[[-1.3175e-04,  1.2513e-01,  2.4983e-01],
-                        [-1.2505e-01,  3.6682e-06,  1.2503e-01],
-                        [-2.4988e-01, -1.2494e-01,  9.7242e-06]]],
-                      [[[ 2.4968e-01,  1.2499e-01, -1.5196e-05],
-                        [ 1.2511e-01, -2.3487e-04, -1.2501e-01],
-                        [ 2.1485e-04, -1.2496e-01, -2.4978e-01]]]])
-        w2 = np.array([[[[-1.6604e-01, -1.6719e-01, -1.6669e-01],
-                        [ 4.1097e-04, -7.9650e-05,  9.1703e-05],
-                        [ 1.6636e-01,  1.6711e-01,  1.6602e-01]]],
-                      [[[-1.6644e-01,  1.6302e-04,  1.6659e-01],
-                        [-1.6714e-01,  3.3449e-05,  1.6717e-01],
-                        [-1.6642e-01,  1.3836e-04,  1.6591e-01]]],
-                      [[[-2.8285e-04,  1.2527e-01,  2.4939e-01],
-                        [-1.2541e-01,  1.6673e-05,  1.2501e-01],
-                        [-2.4916e-01, -1.2515e-01,  3.0937e-04]]],
-                      [[[ 2.4936e-01,  1.2532e-01,  5.7826e-05],
-                        [ 1.2510e-01, -7.0027e-05, -1.2552e-01],
-                        [ 1.5795e-04, -1.2541e-01, -2.4900e-01]]]])
-        w3 = np.array([[[[-1.6498e-01, -1.6708e-01, -1.6560e-01],
-                        [ 9.8741e-04,  6.1481e-04, -2.3462e-03],
-                        [ 1.6511e-01,  1.6745e-01,  1.6584e-01]]],
-                      [[[-1.6636e-01,  5.5259e-04,  1.6628e-01],
-                        [-1.6795e-01,  8.4194e-04,  1.6589e-01],
-                        [-1.6569e-01,  3.2529e-04,  1.6612e-01]]],
-                      [[[ 3.5657e-04,  1.2612e-01,  2.4948e-01],
-                        [-1.2560e-01,  3.0604e-04,  1.2374e-01],
-                        [-2.4845e-01, -1.2534e-01, -6.1795e-04]]],
-                      [[[ 2.4942e-01,  1.2524e-01, -1.5642e-04],
-                        [ 1.2534e-01, -3.7394e-04, -1.2408e-01],
-                        [-3.9571e-04, -1.2554e-01, -2.4946e-01]]]])
-        w_out = np.array([[[[1.2696]],
-                           [[1.4777]],
-                           [[1.7409]],
-                           [[1.7916]],
-                           [[0.9110]],
-                           [[0.8669]],
-                           [[1.3450]],
-                           [[1.3525]],
-                           [[0.2810]],
-                           [[0.0376]],
-                           [[0.5175]],
-                           [[0.5921]]]])
-        self.traversability_filter = TraversabilityFilter(w1, w2, w3, w_out)
+        self.traversability_filter = TraversabilityFilter(param.w1,
+                                                          param.w2,
+                                                          param.w3,
+                                                          param.w_out)
         if use_cupy:
             self.traversability_filter.to_gpu()
-
-        self.time_sum = 0.0
-        self.time_cnt = 0.0
-
 
     def move(self, delta_position):
         delta_position = xp.asarray(delta_position)
@@ -169,7 +157,7 @@ class ElevationMap(object):
 
     def add_noise(self, points):
         z = points[:, -1]
-        n = self.noise_factor * z * z
+        n = self.sensor_noise_factor * z * z
         n = xp.expand_dims(n, axis=1)
         points = xp.hstack([points, n])
         return points
@@ -223,7 +211,6 @@ class ElevationMap(object):
     def outlier_rejection(self, index, map_h, map_v, point_h, point_v):
         outliers = xp.abs(map_h - point_h) > (map_v * self.mahalanobis_thresh)
         outlier_index = index[outliers]
-        outlier_map_index = (outlier_index[:, 0], outlier_index[:, 1])
         self.add_variance_to_outliers(outlier_index)
         index = index[~outliers]
         map_h = map_h[~outliers]
@@ -273,7 +260,8 @@ class ElevationMap(object):
         new_v = (map_v * point_v) / (map_v + point_v)
 
         # get value for each cell (choose max or mean)
-        idx, h, v = self.gather_into_unique_cell(index, new_h, new_v, mode=self.gather_mode)
+        idx, h, v = self.gather_into_unique_cell(index, new_h,
+                                                 new_v, mode=self.gather_mode)
         self.elevation_map[0][idx] = h
         self.elevation_map[1][idx] = v
         self.elevation_map[2][idx] = 1
@@ -282,7 +270,8 @@ class ElevationMap(object):
 
         # calculate traversability
         traversability = self.traversability_filter(self.elevation_map)
-        self.elevation_map[3] = traversability.reshape((self.cell_n, self.cell_n))
+        self.elevation_map[3] = traversability.reshape((self.cell_n,
+                                                        self.cell_n))
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
@@ -308,19 +297,3 @@ class ElevationMap(object):
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         return maps
-
-    def show(self):
-        if use_cupy:
-            plt.imshow(xp.asnumpy(self.elevation_map[0]))
-            plt.show()
-            plt.imshow(xp.asnumpy(self.elevation_map[1]))
-            plt.show()
-            plt.imshow(xp.asnumpy(self.elevation_map[2]))
-            plt.show()
-        else:
-            plt.imshow(self.elevation_map[0])
-            plt.show()
-            plt.imshow(self.elevation_map[1])
-            plt.show()
-            plt.imshow(self.elevation_map[2])
-            plt.show()
