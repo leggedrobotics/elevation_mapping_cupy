@@ -78,16 +78,16 @@ class TraversabilityFilter(chainer.Chain):
     def __call__(self, elevation_map):
         elevation = elevation_map[0]
         padded = F.pad(elevation, 1, 'reflect')
-        padded.reshape(-1, 1, padded.shape[0], padded.shape[1])
-        out1 = self.conv1(padded)
+        out1 = self.conv1(padded.reshape(-1, 1,
+                                         padded.shape[0],padded.shape[1]))
 
         padded = F.pad(elevation, 2, 'reflect')
-        padded.reshape(-1, 1, padded.shape[0], padded.shape[1])
-        out2 = self.conv2(padded)
+        out2 = self.conv2(padded.reshape(-1, 1,
+                                         padded.shape[0], padded.shape[1]))
 
         padded = F.pad(elevation, 3, 'reflect')
-        padded.reshape(-1, 1, padded.shape[0], padded.shape[1])
-        out3 = self.conv3(padded)
+        out3 = self.conv3(padded.reshape(-1, 1,
+                                         padded.shape[0], padded.shape[1]))
 
         out = F.concat((out1, out2, out3), axis=1)
         return self.conv_out(F.absolute(out)).array
@@ -291,9 +291,9 @@ class ElevationMap(object):
         traversability = traversability[1:-1, 1:-1]
 
         maps = xp.stack([elevation, variance, traversability], axis=0)
-        if use_cupy:
-            maps = xp.asnumpy(maps)
         maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
+        if use_cupy:
+            maps = xp.asnumpy(maps)
         return maps
