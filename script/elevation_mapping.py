@@ -53,7 +53,7 @@ class TraversabilityFilter(chainer.Chain):
         padded = F.pad(elevation, 3, 'reflect')
         out3 = self.conv3(padded.reshape(-1, 1, padded.shape[0], padded.shape[1]))
         out = F.concat((out1, out2, out3), axis=1)
-        return F.absolute(self.conv_out(out)).array
+        return self.conv_out(F.absolute(out)).array
 
 
 class ElevationMap(object):
