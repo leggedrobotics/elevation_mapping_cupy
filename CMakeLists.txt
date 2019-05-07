@@ -8,7 +8,6 @@ find_package(catkin REQUIRED
   sensor_msgs
   std_msgs
   geometry_msgs
-  nav_msgs
   grid_map_msgs
 )
 
@@ -19,7 +18,6 @@ catkin_package(
     sensor_msgs
     std_msgs
     geometry_msgs
-    nav_msgs
     grid_map_msgs
 )
 
