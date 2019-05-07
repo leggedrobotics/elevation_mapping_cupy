@@ -42,7 +42,8 @@ class TraversabilityFilter(chainer.Chain):
             self.conv2.to_gpu()
             self.conv3.to_gpu()
             self.conv_out.to_gpu()
-
+        chainer.config.train = False
+        chainer.config.enable_backprop = False
 
     def __call__(self, elevation_map):
         elevation = elevation_map[0]
