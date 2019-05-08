@@ -73,10 +73,13 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
     The entire elevation map.
 
 ### Processing Time
-The processing time of 
+The processing time of
+
 - pointcloud transform
 - elevation map update
 - traversability calculation
-is measured in P52 laptop which has `IntelÂ® Coreâ„¢ i7-8850H CPU` and `Quadro P3200 `.
+
+is measured in P52 laptop which has `Intel® Core™ i7-8850H CPU` and `Quadro P3200 `.  
+101760 = 424 x 240 is the realsense's number of points.
 
 ![graph](doc/processing_time.png)
