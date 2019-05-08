@@ -38,7 +38,6 @@ cupy can be installed with specific CUDA versions.
 > % pip install cupy
 
 ### ROS package dependencies
-- [catkin_simple](https://github.com/catkin/catkin_simple)
 - [ros_numpy](https://github.com/eric-wieser/ros_numpy)
 - [grid_map_msgs](https://github.com/ANYbotics/grid_map)
 
@@ -71,3 +70,15 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 * **`elevation_map`** ([grid_map_msg/GridMap])
 
     The entire elevation map.
+
+### Processing Time
+The processing time of
+
+- pointcloud transform
+- elevation map update
+- traversability calculation
+
+is measured in P52 laptop which has `Intel� Core� i7-8850H CPU` and `Quadro P3200 `.  
+101760 = 424 x 240 is the realsense's number of points.
+
+![graph](doc/processing_time.png)
