@@ -71,3 +71,12 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 * **`elevation_map`** ([grid_map_msg/GridMap])
 
     The entire elevation map.
+
+### Processing Time
+The processing time of 
+- pointcloud transform
+- elevation map update
+- traversability calculation
+is measured in P52 laptop which has `Intel® Core™ i7-8850H CPU` and `Quadro P3200 `.
+
+![graph](doc/processing_time.png)
