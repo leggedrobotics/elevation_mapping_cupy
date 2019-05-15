@@ -6,6 +6,7 @@ import chainer
 import chainer.links as L
 import chainer.functions as F
 import yaml
+import string
 
 use_cupy = False
 xp = np
@@ -14,10 +15,10 @@ sp = nsp
 
 def load_backend(enable_cupy):
     if enable_cupy:
+        global use_cupy, xp, sp, cp
         import cupy as cp
         import cupyx.scipy as csp
         import cupyx.scipy.ndimage
-        global use_cupy, xp, sp
         use_cupy = True
         xp = cp
         sp = csp
@@ -105,6 +106,10 @@ class ElevationMap(object):
         # 'mean' or 'max'
         # self.gather_mode = 'mean'
         self.gather_mode = param.gather_mode
+        if self.gather_mode == 'max':
+            self.atomic_func = 'atomicMax'
+        else:
+            self.atomic_func = 'atomicAdd'
 
         self.sensor_noise_factor = param.sensor_noise_factor
         self.mahalanobis_thresh = param.mahalanobis_thresh
@@ -245,7 +250,7 @@ class ElevationMap(object):
         new_values = values[index]
         return new_values
 
-    def update_map(self, points):
+    def update_map_xp(self, points):
         self.update_variance()
         index = self.get_cell_index(points)
         map_h = self.elevation_map[0][index[:, 0], index[:, 1]]
@@ -273,13 +278,92 @@ class ElevationMap(object):
         self.elevation_map[3] = traversability.reshape((self.cell_n,
                                                         self.cell_n))
 
+    def update_map_kernel(self, points):
+        add_points_kernel = cp.ElementwiseKernel(
+                in_params='raw U p, U center_x, U center_y',
+                out_params='raw U map, raw T newmap',
+                preamble=\
+                string.Template('''
+                __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
+                    return max(min(x, max_x), min_x);
+                }
+                __device__ float16 round(float16 x) {
+                    return (int)x + (int)(2 * (x - (int)x));
+                }
+                __device__ int get_xy_idx(float16 x, float16 center) {
+                    const float resolution = ${resolution};
+                    int i = round((x - center) / resolution);
+                    return i;
+                }
+                __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
+                    int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
+                    int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
+                    return ${width} * idx_x + idx_y;
+                }
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+                __device__ int floatToOrderedInt( float floatVal )
+                {
+                    int intVal = __float_as_int( floatVal );
+                    return (intVal >= 0 ) ? intVal : intVal ^ 0x7FFFFFFF;
+                }
+                __device__ float orderedIntToFloat( int intVal )
+                {
+                    return __int_as_float( (intVal >= 0) ? intVal : intVal ^ 0x7FFFFFFF );
+                }
+
+                ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n),
+                operation=\
+                string.Template(
+                '''
+                U x = p[i * 4];
+                U y = p[i * 4 + 1];
+                U z = p[i * 4 + 2];
+                U v = p[i * 4 + 3];
+                int idx = get_idx(x, y, center_x, center_y);
+                U map_h = map[get_map_idx(idx, 0)];
+                U map_v = map[get_map_idx(idx, 1)];
+                if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
+                    atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
+                }
+                else {
+                    T new_h = (map_h * v + z * map_v) / (map_v + v);
+                    T new_v = (map_v * v) / (map_v + v);
+                    ${atomic_func}(&newmap[get_map_idx(idx, 0)], new_h);
+                    atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
+                    ${atomic_func}(&newmap[get_map_idx(idx, 2)], 1.0);
+                    map[get_map_idx(idx, 2)] = 1;
+                }
+                ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
+                                outlier_variance=self.outlier_variance,
+                                atomic_func=self.atomic_func),
+                name='add_points_kernel')
+        new_map = cp.zeros((3, self.cell_n, self.cell_n))
+        add_points_kernel(points, self.center[0], self.center[1],
+                          self.elevation_map, new_map,
+                          size=(points.shape[0]))
+        self.elevation_map[0] = xp.where(new_map[2] > 0,
+                                         new_map[0] / new_map[2],
+                                         self.elevation_map[0])
+        self.elevation_map[1] = xp.where(new_map[2] > 0,
+                                         new_map[1],
+                                         self.elevation_map[1])
+        self.large_variance_rejection()
+
+        # calculate traversability
+        traversability = self.traversability_filter(self.elevation_map)
+        self.elevation_map[3] = traversability.reshape((self.cell_n,
+                                                        self.cell_n))
+
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
     def input(self, raw_points, R, t):
         points = self.add_noise(xp.asarray(raw_points))
         points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
-        self.update_map(points)
+        self.update_map_kernel(points)
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,

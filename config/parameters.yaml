@@ -6,7 +6,7 @@ sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0
 outlier_variance: 0.01
 time_variance: 0.01
-max_variance: 1.0
+max_variance: 5.0
 initial_variance: 10.0
 weight_file: 'config/weights.yaml'
 
