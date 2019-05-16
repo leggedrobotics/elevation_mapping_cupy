@@ -134,6 +134,9 @@ class ElevationMap(object):
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
 
+        self.points_cpu = None
+        self.points_gpu = None
+
         self.compile_add_points_kernel()
 
         self.traversability_filter = TraversabilityFilter(param.w1,
@@ -261,6 +264,35 @@ class ElevationMap(object):
         index[:-1] = unique[1:] != unique[:-1]
         new_values = values[index]
         return new_values
+
+    def to_pinned_memory(self, array):
+        # print(array)
+        # print(array.dtype)
+        # print(array.shape)
+        if use_cupy:
+            mem = xp.cuda.alloc_pinned_memory(array.nbytes)
+            src = np.frombuffer(mem, array.dtype, array.size).reshape(array.shape)
+            # src[...] = array
+            src = array
+            return src
+        else:
+            return array
+    
+    def load_points(self, points):
+        if use_cupy:
+            if self.points_cpu is None:
+                # points = np.concatenate([points for i in range(5)], axis=0)
+                self.points_cpu = self.to_pinned_memory(points)
+                self.points_gpu = xp.ndarray(self.points_cpu.shape,
+                                             self.points_cpu.dtype)
+                self.stream = xp.cuda.Stream(non_blocking=True)
+    
+                self.points_gpu.set(self.points_cpu, stream=self.stream)
+            else:
+                self.points_cpu[...] = points
+                self.points_gpu.set(self.points_cpu, stream=self.stream)
+        else:
+            self.points_cpu = points
 
     def update_map_xp(self, points):
         self.update_variance()
@@ -412,6 +444,18 @@ class ElevationMap(object):
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
+    def load(self, points, R, t):
+        self.load_points(points)
+        if use_cupy:
+            self.raw_points = self.points_gpu[~xp.isnan(self.points_gpu).any(axis=1)]
+        else:
+            self.raw_points = self.points_cpu[~xp.isnan(self.points_cpu).any(axis=1)]
+        self.R = xp.asarray(R)
+        self.t = xp.asarray(t)
+
+    def calculate(self):
+        self.update_map_kernel(self.raw_points, self.R, self.t)
+
     def input(self, raw_points, R, t):
         # points = self.add_noise(xp.asarray(raw_points))
         # points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
@@ -445,6 +489,6 @@ if __name__ == '__main__':
     param = Parameter()
     param.load_weights('../config/weights.yaml')
     elevation = ElevationMap(param)
-    for i in range(1000):
+    for i in range(200):
         elevation.input(points, R, t)
         print(i)

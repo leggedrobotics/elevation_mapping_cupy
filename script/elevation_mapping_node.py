@@ -44,6 +44,8 @@ class ElevationMappingNode:
         # measurements
         self.time_sum = 0.0
         self.time_cnt = 0
+        self.loaded = False
+        # rospy.Timer(rospy.Duration(1. / 6), self.publish_map)
 
         rospy.spin()
 
@@ -69,11 +71,12 @@ class ElevationMappingNode:
         self.param.load_weights(filename)
 
     def point_callback(self, msg):
-        print('recieved pointcloud')
+        # print('recieved pointcloud')
+        callback_start = time.time()
         self.stamp = msg.header.stamp
         frame_id = msg.header.frame_id
         frame_id = 'ghost_desired/' + frame_id
-        print('frame_id is ', frame_id)
+        # print('frame_id is ', frame_id)
         try:
             transform = self.listener.lookupTransform(self.map_frame,
                                                       frame_id,
@@ -90,7 +93,9 @@ class ElevationMappingNode:
         start = time.time()
         translation = np.array(translation)
         position = np.array([translation[0], translation[1]])
-        self.elevation_map.input(points, R, translation)
+        self.elevation_map.load(points, R, translation)
+        self.loaded = True
+        # self.elevation_map.input(points, R, translation)
         total_time = time.time() - start
         print('number of points ', points.shape[0])
         print('total', total_time)
@@ -98,9 +103,10 @@ class ElevationMappingNode:
         self.time_cnt += 1
         print('average ', self.time_sum / self.time_cnt)
 
-        start = time.time()
-        self.publish_map()
-        print('publish', time.time() - start)
+        # start = time.time()
+        self.publish_map(3)
+        # print('publish', time.time() - start)
+        print('whole ', time.time() - callback_start)
 
     def pointcloud2_to_array(self, msg):
         pc = ros_numpy.numpify(msg).flatten()
@@ -108,7 +114,7 @@ class ElevationMappingNode:
         points[:, 0] = pc['x']
         points[:, 1] = pc['y']
         points[:, 2] = pc['z']
-        points = points[~np.isnan(points).any(axis=1)]
+        # points = points[~np.isnan(points).any(axis=1)]
         return points
 
     def pose_callback(self, msg):
@@ -116,9 +122,13 @@ class ElevationMappingNode:
         position = np.array([position.x, position.y])
         self.elevation_map.move_to(position)
 
-    def publish_map(self):
+    def publish_map(self, e):
+        if self.loaded is False:
+            return
         start = time.time()
+        self.elevation_map.calculate()
         msg = self.get_gridmap_msg()
+        self.loaded = False
         print('gridmap msg convertion ', time.time() - start)
         start = time.time()
         self.map_publisher.publish(msg)
