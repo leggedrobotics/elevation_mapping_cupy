@@ -31,7 +31,7 @@ class Parameter(object):
     def __init__(self):
         self.use_cupy = True
         self.resolution = 0.02
-        self.gather_mode = 'max'
+        self.gather_mode = 'mean'
 
         self.map_length = 10.0
         self.sensor_noise_factor = 0.05
@@ -78,17 +78,27 @@ class TraversabilityFilter(chainer.Chain):
 
     def __call__(self, elevation_map):
         elevation = elevation_map[0]
-        padded = F.pad(elevation, 1, 'reflect')
-        out1 = self.conv1(padded.reshape(-1, 1,
-                                         padded.shape[0],padded.shape[1]))
+        # padded = F.pad(elevation, 1, 'reflect')
+        # out1 = self.conv1(padded.reshape(-1, 1,
+        #                                  padded.shape[0],padded.shape[1]))
+        out1 = self.conv1(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
+        out2 = self.conv2(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
+        out3 = self.conv3(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
 
-        padded = F.pad(elevation, 2, 'reflect')
-        out2 = self.conv2(padded.reshape(-1, 1,
-                                         padded.shape[0], padded.shape[1]))
+        # print(out1.shape)
+        out1 = out1[:, :, 2:-2, 2:-2]
+        # print(out1.shape)
+        # print(out2.shape)
+        out2 = out2[:, :, 1:-1, 1:-1]
+        # print(out2.shape)
 
-        padded = F.pad(elevation, 3, 'reflect')
-        out3 = self.conv3(padded.reshape(-1, 1,
-                                         padded.shape[0], padded.shape[1]))
+        # padded = F.pad(elevation, 2, 'reflect')
+        # out2 = self.conv2(padded.reshape(-1, 1,
+        #                                  padded.shape[0], padded.shape[1]))
+
+        # padded = F.pad(elevation, 3, 'reflect')
+        # out3 = self.conv3(padded.reshape(-1, 1,
+        #                                  padded.shape[0], padded.shape[1]))
 
         out = F.concat((out1, out2, out3), axis=1)
         return self.conv_out(F.absolute(out)).array
@@ -123,6 +133,8 @@ class ElevationMap(object):
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
+
+        self.compile_add_points_kernel()
 
         self.traversability_filter = TraversabilityFilter(param.w1,
                                                           param.w2,
@@ -274,13 +286,14 @@ class ElevationMap(object):
         self.large_variance_rejection()
 
         # calculate traversability
-        traversability = self.traversability_filter(self.elevation_map)
-        self.elevation_map[3] = traversability.reshape((self.cell_n,
-                                                        self.cell_n))
+        # traversability = self.traversability_filter(self.elevation_map)
+        # print('traversability ', traversability.shape)
+        # self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
-    def update_map_kernel(self, points):
-        add_points_kernel = cp.ElementwiseKernel(
-                in_params='raw U p, U center_x, U center_y',
+    def compile_add_points_kernel(self):
+        self.new_map = cp.zeros((3, self.cell_n, self.cell_n))
+        self.add_points_kernel = cp.ElementwiseKernel(
+                in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
                 out_params='raw U map, raw T newmap',
                 preamble=\
                 string.Template('''
@@ -313,15 +326,26 @@ class ElevationMap(object):
                 {
                     return __int_as_float( (intVal >= 0) ? intVal : intVal ^ 0x7FFFFFFF );
                 }
+                __device__ float transform_p(float16 x, float16 y, float16 z,
+                                             float16 r0, float16 r1, float16 r2, float16 t) {
+                    return r0 * x + r1 * y + r2 * z + t;
+                }
+                __device__ float z_noise(float16 z){
+                    return ${sensor_noise_factor} * z * z;
+                }
 
-                ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n),
+                ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n,
+                                sensor_noise_factor=self.sensor_noise_factor),
                 operation=\
                 string.Template(
                 '''
-                U x = p[i * 4];
-                U y = p[i * 4 + 1];
-                U z = p[i * 4 + 2];
-                U v = p[i * 4 + 3];
+                U rx = p[i * 3];
+                U ry = p[i * 3 + 1];
+                U rz = p[i * 3 + 2];
+                U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
+                U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
+                U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
+                U v = z_noise(rz);
                 int idx = get_idx(x, y, center_x, center_y);
                 U map_h = map[get_map_idx(idx, 0)];
                 U map_v = map[get_map_idx(idx, 1)];
@@ -340,30 +364,58 @@ class ElevationMap(object):
                                 outlier_variance=self.outlier_variance,
                                 atomic_func=self.atomic_func),
                 name='add_points_kernel')
-        new_map = cp.zeros((3, self.cell_n, self.cell_n))
-        add_points_kernel(points, self.center[0], self.center[1],
-                          self.elevation_map, new_map,
+        self.average_map_kernel = cp.ElementwiseKernel(
+                in_params='raw U newmap',
+                out_params='raw U map',
+                preamble=\
+                string.Template('''
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+                ''').substitute(width=self.cell_n, height=self.cell_n),
+                operation=\
+                '''
+                U h = map[get_map_idx(i, 0)];
+                U v = map[get_map_idx(i, 1)];
+                U new_h = newmap[get_map_idx(i, 0)];
+                U new_v = newmap[get_map_idx(i, 1)];
+                U new_cnt = newmap[get_map_idx(i, 2)];
+                if (new_cnt > 0) {
+                    map[get_map_idx(i, 0)] = new_h / new_cnt;
+                    map[get_map_idx(i, 1)] = new_v;
+                }
+                ''',
+                name='average_map_kernel')
+
+    def update_map_kernel(self, points, R, t):
+        self.new_map *= 0.0
+        self.add_points_kernel(points, self.center[0], self.center[1], R, t,
+                          self.elevation_map, self.new_map,
                           size=(points.shape[0]))
-        self.elevation_map[0] = xp.where(new_map[2] > 0,
-                                         new_map[0] / new_map[2],
-                                         self.elevation_map[0])
-        self.elevation_map[1] = xp.where(new_map[2] > 0,
-                                         new_map[1],
-                                         self.elevation_map[1])
+        self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
+        # self.elevation_map[0] = xp.where(self.new_map[2] > 0,
+        #                                  self.new_map[0] / self.new_map[2],
+        #                                  self.elevation_map[0])
+        # self.elevation_map[1] = xp.where(self.new_map[2] > 0,
+        #                                  self.new_map[1],
+        #                                  self.elevation_map[1])
         # self.large_variance_rejection()
 
         # calculate traversability
         traversability = self.traversability_filter(self.elevation_map)
-        self.elevation_map[3] = traversability.reshape((self.cell_n,
-                                                        self.cell_n))
+        self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
+        # traversability = self.traversability_filter(self.elevation_map)
+        # self.elevation_map[3] = traversability.reshape((self.cell_n,
+        #                                                 self.cell_n))
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
     def input(self, raw_points, R, t):
-        points = self.add_noise(xp.asarray(raw_points))
-        points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
-        self.update_map_kernel(points)
+        # points = self.add_noise(xp.asarray(raw_points))
+        # points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
+        self.update_map_kernel(xp.asarray(raw_points), xp.asarray(R), xp.asarray(t))
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,
@@ -381,3 +433,18 @@ class ElevationMap(object):
         if use_cupy:
             maps = xp.asnumpy(maps)
         return maps
+
+
+if __name__ == '__main__':
+    load_backend(True)
+    xp.random.seed(123)
+    points = xp.random.rand(100000, 3)
+    R = xp.random.rand(3, 3)
+    t = xp.random.rand(3)
+    print(R, t)
+    param = Parameter()
+    param.load_weights('../config/weights.yaml')
+    elevation = ElevationMap(param)
+    for i in range(1000):
+        elevation.input(points, R, t)
+        print(i)
