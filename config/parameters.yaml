@@ -1,12 +1,12 @@
 use_cupy: true
 resolution: 0.02
 map_length: 4
-gather_mode: 'max'
+gather_mode: 'mean'
 sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0
 outlier_variance: 0.01
 time_variance: 0.01
-max_variance: 5.0
+max_variance: 10000.0
 initial_variance: 10.0
 weight_file: 'config/weights.yaml'
 

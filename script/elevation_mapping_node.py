@@ -85,6 +85,7 @@ class ElevationMappingNode:
         R = tftf.quaternion_matrix(quaternion)[0:3, 0:3]
         start = time.time()
         points = self.pointcloud2_to_array(msg)
+        points = np.concatenate([points for i in range(4)])
         print('points convert', time.time() - start)
         start = time.time()
         translation = np.array(translation)

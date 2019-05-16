@@ -350,7 +350,7 @@ class ElevationMap(object):
         self.elevation_map[1] = xp.where(new_map[2] > 0,
                                          new_map[1],
                                          self.elevation_map[1])
-        self.large_variance_rejection()
+        # self.large_variance_rejection()
 
         # calculate traversability
         traversability = self.traversability_filter(self.elevation_map)
