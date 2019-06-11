@@ -1,4 +1,4 @@
-use_cupy: true
+use_cupy: false
 resolution: 0.02
 map_length: 4
 gather_mode: 'mean'

@@ -9,12 +9,16 @@
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
   <depend>rospy</depend>
-  <depend>catkin_simple</depend>
   <depend>ros_numpy</depend>
+  <depend>tf</depend>
+  <depend>tf_conversions</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>grid_map_msgs</depend>
+  <depend>grid_map_ros</depend>
+  <depend>pcl_ros</depend>
 
 </package>

@@ -2,24 +2,51 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(elevation_mapping_cupy)
 
+find_package(pybind11 REQUIRED)  # or add_subdirectory(pybind11)
+find_package(Eigen3 REQUIRED)
+
 find_package(catkin REQUIRED
+  roscpp
   rospy
   ros_numpy
+  tf
+  tf_conversions
   sensor_msgs
   std_msgs
   geometry_msgs
   grid_map_msgs
+  grid_map_ros
+  pcl_ros
 )
 
 catkin_package(
+  INCLUDE_DIRS
+    include
+    ${EIGEN3_INCLUDE_DIRS}
   CATKIN_DEPENDS
+    roscpp
     rospy
     ros_numpy
+    tf
+    tf_conversions
     sensor_msgs
     std_msgs
     geometry_msgs
-    grid_map_msgs
+    grid_map_ros
+    pcl_ros
 )
+
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
+
+add_library(elevation_mapping_wrapper src/elevation_mapping_wrapper.cpp)
+target_link_libraries(elevation_mapping_wrapper ${catkin_LIBRARIES} pybind11::embed)
+
+add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
+target_link_libraries(elevation_mapping_node elevation_mapping_wrapper)
 
 install(
   PROGRAMS
@@ -27,3 +54,4 @@ install(
     scripts/elevation_mapping_node.py
   DESTINATION
     ${CATKIN_PACKAGE_BIN_DESTINATION})
+
