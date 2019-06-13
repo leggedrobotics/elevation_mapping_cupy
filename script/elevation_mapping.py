@@ -7,6 +7,7 @@ import chainer.links as L
 import chainer.functions as F
 import yaml
 import string
+import time
 
 use_cupy = False
 xp = np
@@ -22,6 +23,8 @@ def load_backend(enable_cupy):
         use_cupy = True
         xp = cp
         sp = csp
+	pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
+	cp.cuda.set_allocator(pool.malloc)
     else:
         xp = np
         sp = nsp
@@ -494,11 +497,14 @@ class ElevationMap(object):
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         if use_cupy:
-            maps = xp.asnumpy(maps)
-        elevation_data[:] = maps[0]
-        variance_data[:] = maps[1]
-        traversability_data[:] = maps[2]
-        # return maps
+            stream = cp.cuda.Stream(non_blocking=True)
+            elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
+            variance_data[...] = xp.asnumpy(maps[1], stream=stream)
+            traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
+        else:
+            elevation_data[...] = maps[0]
+            variance_data[...] = maps[1]
+            traversability_data[...] = maps[2]
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ ElevationMappingWrapper::ElevationMappingWrapper() {
     auto elevation_mapping = py::module::import("elevation_mapping");
     py::object param = elevation_mapping.attr("Parameter")();
     // param.attr("use_cupy") = false;
-    param.attr("load_weights")("/home/tamiki/catkin_ws/src/elevation_mapping_cupy/config/weights.yaml");
+    param.attr("load_weights")("/home/takahiro/catkin_ws/src/elevation_mapping_cupy/config/weights.yaml");
     map_ = elevation_mapping.attr("ElevationMap")(param);
     resolution_ = map_.attr("get_resolution")().cast<double>();
     map_length_ = map_.attr("get_length")().cast<double>();

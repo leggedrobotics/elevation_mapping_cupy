@@ -72,17 +72,26 @@ class ElevationMappingNode:
 
     def point_callback(self, msg):
         # print('recieved pointcloud')
+        print(rospy.Time.now().secs)
+        # return
         callback_start = time.time()
         self.stamp = msg.header.stamp
         frame_id = msg.header.frame_id
         frame_id = 'ghost_desired/' + frame_id
         # print('frame_id is ', frame_id)
         try:
+            self.listener.waitForTransform(self.map_frame,
+                                           frame_id,
+                                           msg.header.stamp,
+                                           # rospy.Time(0),
+                                           rospy.Duration(1.0))
             transform = self.listener.lookupTransform(self.map_frame,
                                                       frame_id,
+                                                      # rospy.Time(0))
                                                       msg.header.stamp)
             translation, quaternion = transform
-        except:
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            rospy.logerr("tf error when resolving tf: %s")
             print('Could not get tf')
             return
         R = tftf.quaternion_matrix(quaternion)[0:3, 0:3]
