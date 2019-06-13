@@ -29,11 +29,15 @@ class ElevationMappingWrapper {
 
     void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t);
     void move_to(const Eigen::VectorXd& p);
-    int get_maps(std::vector<Eigen::MatrixXd>& maps);
+    void get_maps(std::vector<Eigen::MatrixXd>& maps);
+    void get_grid_map(grid_map::GridMap& gridMap);
 
     void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
   private:
     py::object map_;
+    double resolution_;
+    // grid_map::Length length_;
+    double map_length_;
 };
 
 
@@ -49,9 +53,11 @@ class ElevationMappingNode {
     ros::NodeHandle nh_;
     ros::Subscriber pointcloudSub_;
     ros::Subscriber poseSub_;
+    ros::Publisher mapPub_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
+    grid_map::GridMap gridMap_;
 };
 
 }

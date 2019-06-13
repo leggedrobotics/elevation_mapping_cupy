@@ -29,7 +29,7 @@ def load_backend(enable_cupy):
 
 class Parameter(object):
     def __init__(self):
-        self.use_cupy = False
+        self.use_cupy = True
         self.resolution = 0.02
         self.gather_mode = 'mean'
 
@@ -91,10 +91,11 @@ class TraversabilityFilter(chainer.Chain):
 class ElevationMap(object):
     def __init__(self, param):
         print(param.use_cupy)
-        param.use_cupy = False
+        param.use_cupy = True
         load_backend(param.use_cupy)
         self.resolution = param.resolution
         self.center = xp.array([0, 0], dtype=float)
+        self.center_cpu = np.array([0, 0], dtype=float)
         self.map_length = param.map_length
         # +2 is a border for outside map
         self.cell_n = int(self.map_length / self.resolution) + 2
@@ -134,6 +135,21 @@ class ElevationMap(object):
             self.traversability_filter.to_gpu()
         print('end of initialization')
 
+    def get_resolution(self):
+        return self.resolution
+
+    def get_length(self):
+        return self.map_length
+
+    def get_position(self, position):
+        if use_cupy:
+            # position[0][:] = xp.asnumpy(self.center)
+            position[0][:] = self.center_cpu
+            # return xp.asnumpy(self.center)
+        else:
+            position[0][:] = self.center
+        # return self.center
+
     def move(self, delta_position):
         delta_position = xp.asarray(delta_position)
         delta_pixel = xp.round(delta_position / self.resolution)
@@ -147,6 +163,7 @@ class ElevationMap(object):
         delta_pixel = xp.around(delta / self.resolution)
         delta = delta_pixel * self.resolution
         self.center += delta
+        self.center_cpu += xp.asnumpy(delta)
         self.shift_map(-delta_pixel)
 
     def shift_map(self, delta_pixel):
@@ -434,7 +451,17 @@ class ElevationMap(object):
         self.update_map_kernel(self.raw_points, self.R, self.t)
 
     def input(self, raw_points, R, t):
-        self.update_map_kernel(xp.asarray(raw_points), xp.asarray(R), xp.asarray(t))
+        # print(raw_points)
+        # print(R)
+        # print(t)
+        # print(use_cupy)
+        if use_cupy:
+            self.update_map_kernel(xp.asarray(raw_points), xp.asarray(R), xp.asarray(t))
+        else:
+            points = self.add_noise(xp.asarray(raw_points))
+            points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
+            self.update_map_xp(points)
+        # print('finish processing')
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,
@@ -452,6 +479,26 @@ class ElevationMap(object):
         if use_cupy:
             maps = xp.asnumpy(maps)
         return maps
+
+    def get_maps_ref(self, elevation_data, variance_data, traversability_data):
+        elevation = xp.where(self.elevation_map[2] > 0.5,
+                             self.elevation_map[0].copy(), xp.nan)
+        variance = self.elevation_map[1].copy()
+        traversability = self.elevation_map[3].copy()
+        elevation = elevation[1:-1, 1:-1]
+        variance = variance[1:-1, 1:-1]
+        traversability = traversability[1:-1, 1:-1]
+
+        maps = xp.stack([elevation, variance, traversability], axis=0)
+        maps = xp.transpose(maps, axes=(0, 2, 1))
+        maps = xp.flip(maps, 1)
+        maps = xp.flip(maps, 2)
+        if use_cupy:
+            maps = xp.asnumpy(maps)
+        elevation_data[:] = maps[0]
+        variance_data[:] = maps[1]
+        traversability_data[:] = maps[2]
+        # return maps
 
 
 if __name__ == '__main__':
