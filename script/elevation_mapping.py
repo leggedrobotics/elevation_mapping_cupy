@@ -45,10 +45,10 @@ class Parameter(object):
         self.max_variance = 1.0
 
         self.initial_variance = 10.0
-        self.w1 = np.array((4, 1, 3, 3))
-        self.w2 = np.array((4, 1, 3, 3))
-        self.w3 = np.array((4, 1, 3, 3))
-        self.w_out = np.array((1, 12, 1, 1))
+        self.w1 = np.zeros((4, 1, 3, 3))
+        self.w2 = np.zeros((4, 1, 3, 3))
+        self.w3 = np.zeros((4, 1, 3, 3))
+        self.w_out = np.zeros((1, 12, 1, 1))
 
     def load_weights(self, filename):
         with open(filename) as file:
@@ -57,6 +57,36 @@ class Parameter(object):
             self.w2 = np.array(weights['w2'])
             self.w3 = np.array(weights['w3'])
             self.w_out = np.array(weights['w_out'])
+
+    def set_use_cupy(self, use_cupy):
+        self.use_cupy = use_cupy
+
+    def set_resolution(self, resolution):
+        self.resolution = resolution
+
+    def set_gather_mode(self, gather_mode):
+        self.gather_mode = gather_mode
+
+    def set_map_length(self, map_length):
+        self.map_length = map_length
+
+    def set_sensor_noise_factor(self, sensor_noise_factor):
+        self.sensor_noise_factor = sensor_noise_factor
+
+    def set_mahalanobis_thresh(self, mahalanobis_thresh):
+        self.mahalanobis_thresh = mahalanobis_thresh
+
+    def set_outlier_variance(self, outlier_variance):
+        self.outlier_variance = outlier_variance
+
+    def set_time_variance(self, time_variance):
+        self.time_variance = time_variance
+
+    def set_max_variance(self, max_variance):
+        self.max_variance = max_variance
+
+    def set_initial_variance(self, initial_variance):
+        self.initial_variance = initial_variance
 
 
 class TraversabilityFilter(chainer.Chain):
@@ -93,7 +123,6 @@ class TraversabilityFilter(chainer.Chain):
 
 class ElevationMap(object):
     def __init__(self, param):
-        print(param.use_cupy)
         param.use_cupy = True
         load_backend(param.use_cupy)
         self.resolution = param.resolution
@@ -136,7 +165,6 @@ class ElevationMap(object):
                                                           param.w_out)
         if use_cupy:
             self.traversability_filter.to_gpu()
-        print('end of initialization')
 
     def get_resolution(self):
         return self.resolution
@@ -146,8 +174,9 @@ class ElevationMap(object):
 
     def get_position(self, position):
         if use_cupy:
-            # position[0][:] = xp.asnumpy(self.center)
-            position[0][:] = self.center_cpu
+            position[0][:] = xp.asnumpy(self.center)
+            # position[0][:] = self.center_cpu
+            # position[0][:] = self.center_cpu
             # return xp.asnumpy(self.center)
         else:
             position[0][:] = self.center
@@ -423,6 +452,7 @@ class ElevationMap(object):
                 if (new_cnt > 0) {
                     map[get_map_idx(i, 0)] = new_h / new_cnt;
                     map[get_map_idx(i, 1)] = new_v;
+                    map[get_map_idx(i, 2)] = 1;
                 }
                 ''',
                 name='average_map_kernel')
@@ -454,14 +484,16 @@ class ElevationMap(object):
         self.update_map_kernel(self.raw_points, self.R, self.t)
 
     def input(self, raw_points, R, t):
+        raw_points = xp.asarray(raw_points)
+        raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
         # print(raw_points)
         # print(R)
         # print(t)
         # print(use_cupy)
         if use_cupy:
-            self.update_map_kernel(xp.asarray(raw_points), xp.asarray(R), xp.asarray(t))
+            self.update_map_kernel(raw_points, xp.asarray(R), xp.asarray(t))
         else:
-            points = self.add_noise(xp.asarray(raw_points))
+            points = self.add_noise(raw_points)
             points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
             self.update_map_xp(points)
         # print('finish processing')
@@ -476,7 +508,7 @@ class ElevationMap(object):
         traversability = traversability[1:-1, 1:-1]
 
         maps = xp.stack([elevation, variance, traversability], axis=0)
-        maps = xp.transpose(maps, axes=(0, 2, 1))
+        # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         if use_cupy:
@@ -493,12 +525,13 @@ class ElevationMap(object):
         traversability = traversability[1:-1, 1:-1]
 
         maps = xp.stack([elevation, variance, traversability], axis=0)
-        maps = xp.transpose(maps, axes=(0, 2, 1))
+        # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         if use_cupy:
+            elevation_data[...] = xp.asnumpy(maps[0])
             stream = cp.cuda.Stream(non_blocking=True)
-            elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
+            # elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
             variance_data[...] = xp.asnumpy(maps[1], stream=stream)
             traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
         else:

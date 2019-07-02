@@ -9,6 +9,7 @@
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
+#include <grid_map_msgs/GetGridMap.h>
 // PCL
 // #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -26,6 +27,7 @@ class ElevationMappingWrapper {
   public:
     ElevationMappingWrapper();
     ~ElevationMappingWrapper()=default;
+    void initialize(ros::NodeHandle& nh);
 
     void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t);
     void move_to(const Eigen::VectorXd& p);
@@ -34,10 +36,13 @@ class ElevationMappingWrapper {
 
     void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
   private:
+    void setParameters(ros::NodeHandle& nh);
     py::object map_;
+    py::object param_;
     double resolution_;
     // grid_map::Length length_;
     double map_length_;
+    int map_n_;
 };
 
 
@@ -50,10 +55,12 @@ class ElevationMappingNode {
     void readParameters();
     void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
     void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
+    bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     ros::NodeHandle nh_;
     ros::Subscriber pointcloudSub_;
     ros::Subscriber poseSub_;
     ros::Publisher mapPub_;
+    ros::ServiceServer rawSubmapService_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
