@@ -43,6 +43,7 @@ class Parameter(object):
         self.time_variance = 0.01
 
         self.max_variance = 1.0
+        self.dilation_size = 2
 
         self.initial_variance = 10.0
         self.w1 = np.zeros((4, 1, 3, 3))
@@ -88,6 +89,9 @@ class Parameter(object):
     def set_initial_variance(self, initial_variance):
         self.initial_variance = initial_variance
 
+    def set_dilation_size(self, dilation_size):
+        self.dilation_size = dilation_size
+
 
 class TraversabilityFilter(chainer.Chain):
     def __init__(self, w1, w2, w3, w_out):
@@ -109,8 +113,8 @@ class TraversabilityFilter(chainer.Chain):
         chainer.config.train = False
         chainer.config.enable_backprop = False
 
-    def __call__(self, elevation_map):
-        elevation = elevation_map[0]
+    def __call__(self, elevation):
+        # elevation = elevation_map[0]
         out1 = self.conv1(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
         out2 = self.conv2(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
         out3 = self.conv3(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
@@ -145,6 +149,7 @@ class ElevationMap(object):
         self.time_variance = param.time_variance
 
         self.max_variance = param.max_variance
+        self.dilation_size = param.dilation_size
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -325,6 +330,7 @@ class ElevationMap(object):
 
     def compile_add_points_kernel(self):
         self.new_map = cp.zeros((3, self.cell_n, self.cell_n))
+        self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = cp.ElementwiseKernel(
                 in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
                 out_params='raw U map, raw T newmap',
@@ -408,19 +414,68 @@ class ElevationMap(object):
                 }
                 ''').substitute(width=self.cell_n, height=self.cell_n),
                 operation=\
-                '''
+                string.Template('''
                 U h = map[get_map_idx(i, 0)];
                 U v = map[get_map_idx(i, 1)];
                 U new_h = newmap[get_map_idx(i, 0)];
                 U new_v = newmap[get_map_idx(i, 1)];
                 U new_cnt = newmap[get_map_idx(i, 2)];
                 if (new_cnt > 0) {
-                    map[get_map_idx(i, 0)] = new_h / new_cnt;
-                    map[get_map_idx(i, 1)] = new_v;
-                    map[get_map_idx(i, 2)] = 1;
+                    if (new_v / new_cnt > ${max_variance}) {
+                        map[get_map_idx(i, 0)] = 0;
+                        map[get_map_idx(i, 1)] = ${initial_variance};
+                        map[get_map_idx(i, 2)] = 0;
+                    }
+                    else {
+                        map[get_map_idx(i, 0)] = new_h / new_cnt;
+                        map[get_map_idx(i, 1)] = new_v / new_cnt;
+                        map[get_map_idx(i, 2)] = 1;
+                    }
                 }
-                ''',
+                ''').substitute(max_variance=self.max_variance,
+                                initial_variance=self.initial_variance),
                 name='average_map_kernel')
+
+        self.dilation_filter = cp.ElementwiseKernel(
+                in_params='raw U map, raw U mask',
+                out_params='raw U newmap',
+                preamble=\
+                string.Template('''
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+
+                __device__ int get_relative_map_idx(int idx, int dx, int dy, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    const int relative_idx = idx + ${width} * dy + dx;
+                    return layer * layer_n + relative_idx;
+                }
+                ''').substitute(width=self.cell_n, height=self.cell_n),
+                operation=\
+                string.Template('''
+                U h = map[get_map_idx(i, 0)];
+                U valid = mask[get_map_idx(i, 0)];
+                newmap[get_map_idx(i, 0)] = h;
+                if (valid < 0.5) {
+                    U distance = 100;
+                    U near_value = 0;
+                    for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
+                        for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
+                            U valid = mask[get_relative_map_idx(i, dx, dy, 0)];
+                            if(valid > 0.5 && dx + dy < distance) {
+                                distance = dx + dy;
+                                near_value = map[get_relative_map_idx(i, dx, dy, 0)];
+                            }
+                        }
+                    }
+                    if(distance < 100) {
+                        newmap[get_map_idx(i, 0)] = near_value;
+                        // newmap[get_map_idx(i, 0)] = 10;
+                    }
+                }
+                ''').substitute(dilation_size=self.dilation_size),
+                name='dilation_filter')
 
     def update_map_kernel(self, points, R, t):
         self.new_map *= 0.0
@@ -429,8 +484,19 @@ class ElevationMap(object):
                           size=(points.shape[0]))
         self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
+        # dilation before traversability_filter
+        self.traversability_input *= 0.0
+        self.dilation_filter(self.elevation_map[0],
+                             self.elevation_map[2],
+                             self.traversability_input,
+                             size=(self.cell_n * self.cell_n))
+        # self.dilation_filter(self.traversability_input,
+        #                      self.elevation_map[2],
+        #                      self.traversability_input,
+        #                      size=(self.cell_n * self.cell_n))
         # calculate traversability
-        traversability = self.traversability_filter(self.elevation_map)
+        # traversability = self.traversability_filter(self.elevation_map)
+        traversability = self.traversability_filter(self.traversability_input)
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
     def update_variance(self):

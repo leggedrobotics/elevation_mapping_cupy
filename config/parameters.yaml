@@ -1,13 +1,14 @@
 use_cupy: true
-resolution: 0.02
-map_length: 5
+resolution: 0.04
+map_length: 10
+dilation_size: 3
 gather_mode: 'mean'
 sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0
 outlier_variance: 0.01
 time_variance: 0.01
-max_variance: 1.0
-initial_variance: 1.0
+max_variance: 100.0
+initial_variance: 100.0
 weight_file: 'config/weights.yaml'
 
 pointcloud_topic: '/realsense_d435_front/depth/color/points'
