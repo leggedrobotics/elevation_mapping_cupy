@@ -11,12 +11,6 @@ namespace elevation_mapping_cupy{
 using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 ElevationMappingWrapper::ElevationMappingWrapper() {
-  // auto elevation_mapping = py::module::import("elevation_mapping");
-  // param_ = elevation_mapping.attr("Parameter")();
-  // // setParameters(nh);
-  // map_ = elevation_mapping.attr("ElevationMap")(param_);
-  // resolution_ = map_.attr("get_resolution")().cast<double>();
-  // map_length_ = map_.attr("get_length")().cast<double>();
 }
 
 void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
@@ -101,14 +95,12 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   RowMatrixXd pos(1, 2);
   map_.attr("get_position")(static_cast<Eigen::Ref<RowMatrixXd>>(pos));
 
-  // grid_map::Position position(pos(0, 1), pos(0, 0));
   grid_map::Position position(pos(0, 0), pos(0, 1));
   grid_map::Length length(map_length_, map_length_);
   gridMap.setGeometry(length, resolution_, position);
   std::vector<Eigen::MatrixXd> maps;
   get_maps(maps);
   std::vector<std::string> layerNames = {"elevation", "variance", "traversability"};
-  // ROS_INFO_STREAM(maps[0]);
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }

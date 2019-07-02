@@ -40,7 +40,6 @@ class ElevationMappingWrapper {
     py::object map_;
     py::object param_;
     double resolution_;
-    // grid_map::Length length_;
     double map_length_;
     int map_n_;
 };

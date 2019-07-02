@@ -127,7 +127,6 @@ class ElevationMap(object):
         load_backend(param.use_cupy)
         self.resolution = param.resolution
         self.center = xp.array([0, 0], dtype=float)
-        self.center_cpu = np.array([0, 0], dtype=float)
         self.map_length = param.map_length
         # +2 is a border for outside map
         self.cell_n = int(self.map_length / self.resolution) + 2
@@ -175,12 +174,8 @@ class ElevationMap(object):
     def get_position(self, position):
         if use_cupy:
             position[0][:] = xp.asnumpy(self.center)
-            # position[0][:] = self.center_cpu
-            # position[0][:] = self.center_cpu
-            # return xp.asnumpy(self.center)
         else:
             position[0][:] = self.center
-        # return self.center
 
     def move(self, delta_position):
         delta_position = xp.asarray(delta_position)
@@ -195,7 +190,6 @@ class ElevationMap(object):
         delta_pixel = xp.around(delta / self.resolution)
         delta = delta_pixel * self.resolution
         self.center += delta
-        self.center_cpu += xp.asnumpy(delta)
         self.shift_map(-delta_pixel)
 
     def shift_map(self, delta_pixel):
@@ -301,35 +295,6 @@ class ElevationMap(object):
         index[:-1] = unique[1:] != unique[:-1]
         new_values = values[index]
         return new_values
-
-    def to_pinned_memory(self, array):
-        # print(array)
-        # print(array.dtype)
-        # print(array.shape)
-        if use_cupy:
-            mem = xp.cuda.alloc_pinned_memory(array.nbytes)
-            src = np.frombuffer(mem, array.dtype, array.size).reshape(array.shape)
-            # src[...] = array
-            src = array
-            return src
-        else:
-            return array
-
-    def load_points(self, points):
-        if use_cupy:
-            if self.points_cpu is None:
-                # points = np.concatenate([points for i in range(5)], axis=0)
-                self.points_cpu = self.to_pinned_memory(points)
-                self.points_gpu = xp.ndarray(self.points_cpu.shape,
-                                             self.points_cpu.dtype)
-                self.stream = xp.cuda.Stream(non_blocking=True)
-
-                self.points_gpu.set(self.points_cpu, stream=self.stream)
-            else:
-                self.points_cpu[...] = points
-                self.points_gpu.set(self.points_cpu, stream=self.stream)
-        else:
-            self.points_cpu = points
 
     def update_map_xp(self, points):
         self.update_variance()
@@ -471,32 +436,15 @@ class ElevationMap(object):
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
-    def load(self, points, R, t):
-        self.load_points(points)
-        if use_cupy:
-            self.raw_points = self.points_gpu[~xp.isnan(self.points_gpu).any(axis=1)]
-        else:
-            self.raw_points = self.points_cpu[~xp.isnan(self.points_cpu).any(axis=1)]
-        self.R = xp.asarray(R)
-        self.t = xp.asarray(t)
-
-    def calculate(self):
-        self.update_map_kernel(self.raw_points, self.R, self.t)
-
     def input(self, raw_points, R, t):
         raw_points = xp.asarray(raw_points)
         raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
-        # print(raw_points)
-        # print(R)
-        # print(t)
-        # print(use_cupy)
         if use_cupy:
             self.update_map_kernel(raw_points, xp.asarray(R), xp.asarray(t))
         else:
             points = self.add_noise(raw_points)
             points = self.transform_points(points, xp.asarray(R), xp.asarray(t))
             self.update_map_xp(points)
-        # print('finish processing')
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,
