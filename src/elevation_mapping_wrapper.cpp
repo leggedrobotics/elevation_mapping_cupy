@@ -137,7 +137,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   pointcloudSub_ = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   gridMap_.setFrameId(mapFrameId_);
-  rawSubmapService_ = nh_.advertiseService("get_submap", &ElevationMappingNode::getSubmap, this);
+  rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 

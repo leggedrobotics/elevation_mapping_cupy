@@ -13,4 +13,4 @@ weight_file: 'config/weights.yaml'
 
 pointcloud_topic: '/realsense_d435_front/depth/color/points'
 pose_topic: '/state_estimator/pose_in_odom'
-map_frame: 'map'
+map_frame: 'odom'
