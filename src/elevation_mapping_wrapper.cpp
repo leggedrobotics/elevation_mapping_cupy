@@ -134,12 +134,14 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 {
   nh_ = nh;
   map_.initialize(nh_);
-  std::string pointcloud_topic, pose_topic, map_frame;
-  nh.param<std::string>("pointcloud_topic", pointcloud_topic, "points");
+  std::string pointcloud_topic_1, pointcloud_topic_2, pose_topic, map_frame;
+  nh.param<std::string>("pointcloud_topic_1", pointcloud_topic_1, "points");
+  nh.param<std::string>("pointcloud_topic_2", pointcloud_topic_2, "points");
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
-  pointcloudSub_ = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
+  pointcloudSub1_ = nh_.subscribe(pointcloud_topic_1, 1, &ElevationMappingNode::pointcloudCallback, this);
+  pointcloudSub2_ = nh_.subscribe(pointcloud_topic_2, 1, &ElevationMappingNode::pointcloudCallback, this);
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);

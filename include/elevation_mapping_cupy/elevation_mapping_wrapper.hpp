@@ -59,7 +59,8 @@ class ElevationMappingNode {
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     ros::NodeHandle nh_;
-    ros::Subscriber pointcloudSub_;
+    ros::Subscriber pointcloudSub1_;
+    ros::Subscriber pointcloudSub2_;
     ros::Subscriber poseSub_;
     ros::Publisher mapPub_;
     ros::ServiceServer rawSubmapService_;
