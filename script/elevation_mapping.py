@@ -551,11 +551,8 @@ class ElevationMap(object):
         self.drift_compensation_kernel(self.elevation_map, points, self.center[0], self.center[1], R, t,
                           error, error_cnt,
                           size=(points.shape[0]))
-        print('error ', error)
-        print('error cnt ', error_cnt)
         if error_cnt > 100:
             mean_error = error / error_cnt
-            print('mean error', mean_error)
             self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
                           self.elevation_map, self.new_map,
