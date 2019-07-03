@@ -151,8 +151,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromPCLPointCloud2(pcl_pc, *pointCloud);
   tf::StampedTransform transformTf;
-  // std::string sensorFrameId = cloud.header.frame_id;
-  std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
+  std::string sensorFrameId = cloud.header.frame_id;
+  // std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
   auto timeStamp = cloud.header.stamp;
   Eigen::Affine3d transformationSensorToMap;
   try {
