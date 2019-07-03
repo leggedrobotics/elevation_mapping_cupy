@@ -150,6 +150,7 @@ class ElevationMap(object):
 
         self.max_variance = param.max_variance
         self.dilation_size = param.dilation_size
+        self.traversability_inlier = 0.1
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -169,6 +170,11 @@ class ElevationMap(object):
                                                           param.w_out)
         if use_cupy:
             self.traversability_filter.to_gpu()
+
+    def clear(self):
+        self.elevation_map *= 0.0
+        # Initial variance
+        self.elevation_map[1] += self.initial_variance
 
     def get_resolution(self):
         return self.resolution
@@ -403,6 +409,67 @@ class ElevationMap(object):
                                 outlier_variance=self.outlier_variance,
                                 atomic_func=self.atomic_func),
                 name='add_points_kernel')
+        self.drift_compensation_kernel = cp.ElementwiseKernel(
+                in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
+                out_params='raw T error, raw T error_cnt',
+                preamble=\
+                string.Template('''
+                __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
+                    return max(min(x, max_x), min_x);
+                }
+                __device__ float16 round(float16 x) {
+                    return (int)x + (int)(2 * (x - (int)x));
+                }
+                __device__ int get_xy_idx(float16 x, float16 center) {
+                    const float resolution = ${resolution};
+                    int i = round((x - center) / resolution);
+                    return i;
+                }
+                __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
+                    int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
+                    int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
+                    return ${width} * idx_x + idx_y;
+                }
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+                __device__ float transform_p(float16 x, float16 y, float16 z,
+                                             float16 r0, float16 r1, float16 r2, float16 t) {
+                    return r0 * x + r1 * y + r2 * z + t;
+                }
+                __device__ float z_noise(float16 z){
+                    return ${sensor_noise_factor} * z * z;
+                }
+
+                ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n,
+                                sensor_noise_factor=self.sensor_noise_factor),
+                operation=\
+                string.Template(
+                '''
+                U rx = p[i * 3];
+                U ry = p[i * 3 + 1];
+                U rz = p[i * 3 + 2];
+                U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
+                U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
+                U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
+                U v = z_noise(rz);
+                int idx = get_idx(x, y, center_x, center_y);
+                U map_h = map[get_map_idx(idx, 0)];
+                U map_v = map[get_map_idx(idx, 1)];
+                U map_t = map[get_map_idx(idx, 3)];
+                if (abs(map_h - z) < (map_v * ${mahalanobis_thresh}) &&
+                    map_v < ${outlier_variance} / 2.0 && 
+                    map_t < ${traversability_inlier}) {
+                    T e = z - map_h;
+                    atomicAdd(&error[0], e);
+                    atomicAdd(&error_cnt[0], 1);
+                }
+                ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
+                                outlier_variance=self.outlier_variance,
+                                atomic_func=self.atomic_func,
+                                traversability_inlier=self.traversability_inlier),
+                name='drift_compensation_kernel')
         self.average_map_kernel = cp.ElementwiseKernel(
                 in_params='raw U newmap',
                 out_params='raw U map',
@@ -479,6 +546,14 @@ class ElevationMap(object):
 
     def update_map_kernel(self, points, R, t):
         self.new_map *= 0.0
+        error = xp.array([0.0], dtype=xp.float32)
+        error_cnt = xp.array([0], dtype=xp.float32)
+        self.drift_compensation_kernel(self.elevation_map, points, self.center[0], self.center[1], R, t,
+                          error, error_cnt,
+                          size=(points.shape[0]))
+        if error_cnt > 100:
+            mean_error = error / error_cnt
+            self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
                           self.elevation_map, self.new_map,
                           size=(points.shape[0]))

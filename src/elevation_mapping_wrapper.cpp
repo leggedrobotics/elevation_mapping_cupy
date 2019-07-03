@@ -78,6 +78,11 @@ void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
 }
 
 
+void ElevationMappingWrapper::clear() {
+  map_.attr("clear")();
+}
+
+
 void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
 
   RowMatrixXd elevation(map_n_, map_n_);
@@ -137,7 +142,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   pointcloudSub_ = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   gridMap_.setFrameId(mapFrameId_);
-  rawSubmapService_ = nh_.advertiseService("get_submap", &ElevationMappingNode::getSubmap, this);
+  rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
+  clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -151,8 +157,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromPCLPointCloud2(pcl_pc, *pointCloud);
   tf::StampedTransform transformTf;
-  // std::string sensorFrameId = cloud.header.frame_id;
-  std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
+  std::string sensorFrameId = cloud.header.frame_id;
+  // std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
   auto timeStamp = cloud.header.stamp;
   Eigen::Affine3d transformationSensorToMap;
   try {
@@ -210,6 +216,13 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
     grid_map::GridMapRosConverter::toMessage(subMap, layers, response.map);
   }
   return isSuccess;
+}
+
+bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+  ROS_INFO("Clearing map.");
+  map_.clear();
+  return true;
 }
 
 }
