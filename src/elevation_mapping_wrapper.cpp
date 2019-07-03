@@ -34,6 +34,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool use_cupy;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
   float time_variance, initial_variance;
+  int dilation_size;
   std::string gather_mode, weight_file;
   nh.param<bool>("use_cupy", use_cupy, true);
   param_.attr("set_use_cupy")(use_cupy);
@@ -51,6 +52,8 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   param_.attr("set_time_variance")(time_variance);
   nh.param<float>("initial_variance", initial_variance, 10.0);
   param_.attr("set_initial_variance")(initial_variance);
+  nh.param<int>("dilation_size", dilation_size, 2);
+  param_.attr("set_dilation_size")(dilation_size);
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);
   nh.param<std::string>("weight_file", weight_file, "config/weights.yaml");
