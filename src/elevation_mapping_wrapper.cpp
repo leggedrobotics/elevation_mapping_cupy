@@ -78,6 +78,11 @@ void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
 }
 
 
+void ElevationMappingWrapper::clear() {
+  map_.attr("clear")();
+}
+
+
 void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
 
   RowMatrixXd elevation(map_n_, map_n_);
@@ -138,6 +143,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_submap", &ElevationMappingNode::getSubmap, this);
+  clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -210,6 +216,13 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
     grid_map::GridMapRosConverter::toMessage(subMap, layers, response.map);
   }
   return isSuccess;
+}
+
+bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+  ROS_INFO("Clearing map.");
+  map_.clear();
+  return true;
 }
 
 }

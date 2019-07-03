@@ -171,7 +171,7 @@ class ElevationMap(object):
         if use_cupy:
             self.traversability_filter.to_gpu()
 
-    def reset(self):
+    def clear(self):
         self.elevation_map *= 0.0
         # Initial variance
         self.elevation_map[1] += self.initial_variance

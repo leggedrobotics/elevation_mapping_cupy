@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <std_srvs/Empty.h>
 #include <tf/transform_listener.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -31,6 +32,7 @@ class ElevationMappingWrapper {
 
     void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t);
     void move_to(const Eigen::VectorXd& p);
+    void clear();
     void get_maps(std::vector<Eigen::MatrixXd>& maps);
     void get_grid_map(grid_map::GridMap& gridMap);
 
@@ -55,11 +57,13 @@ class ElevationMappingNode {
     void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
     void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
+    bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     ros::NodeHandle nh_;
     ros::Subscriber pointcloudSub_;
     ros::Subscriber poseSub_;
     ros::Publisher mapPub_;
     ros::ServiceServer rawSubmapService_;
+    ros::ServiceServer clearMapService_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
