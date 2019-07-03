@@ -134,7 +134,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   pointcloudSub_ = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   gridMap_.setFrameId(mapFrameId_);
-  rawSubmapService_ = nh_.advertiseService("get_submap", &ElevationMappingNode::getSubmap, this);
+  rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -148,8 +148,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromPCLPointCloud2(pcl_pc, *pointCloud);
   tf::StampedTransform transformTf;
-  // std::string sensorFrameId = cloud.header.frame_id;
-  std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
+   std::string sensorFrameId = cloud.header.frame_id;
+  // std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
   auto timeStamp = cloud.header.stamp;
   Eigen::Affine3d transformationSensorToMap;
   try {
