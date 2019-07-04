@@ -151,6 +151,7 @@ class ElevationMap(object):
         self.max_variance = param.max_variance
         self.dilation_size = param.dilation_size
         self.traversability_inlier = 0.1
+        self.wall_num_thresh = 100
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -335,7 +336,7 @@ class ElevationMap(object):
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
     def compile_add_points_kernel(self):
-        self.new_map = cp.zeros((3, self.cell_n, self.cell_n))
+        self.new_map = cp.zeros((4, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = cp.ElementwiseKernel(
                 in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
@@ -394,10 +395,12 @@ class ElevationMap(object):
                 int idx = get_idx(x, y, center_x, center_y);
                 U map_h = map[get_map_idx(idx, 0)];
                 U map_v = map[get_map_idx(idx, 1)];
+                U num_points = newmap[get_map_idx(idx, 3)];
                 if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
                     atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
                 }
                 else {
+                    if (num_points > ${wall_num_thresh} && z < map_h) { continue; }
                     T new_h = (map_h * v + z * map_v) / (map_v + v);
                     T new_v = (map_v * v) / (map_v + v);
                     ${atomic_func}(&newmap[get_map_idx(idx, 0)], new_h);
@@ -407,11 +410,12 @@ class ElevationMap(object):
                 }
                 ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
                                 outlier_variance=self.outlier_variance,
-                                atomic_func=self.atomic_func),
+                                atomic_func=self.atomic_func,
+                                wall_num_thresh=self.wall_num_thresh),
                 name='add_points_kernel')
         self.drift_compensation_kernel = cp.ElementwiseKernel(
                 in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
-                out_params='raw T error, raw T error_cnt',
+                out_params='raw U newmap, raw T error, raw T error_cnt',
                 preamble=\
                 string.Template('''
                 __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
@@ -464,6 +468,7 @@ class ElevationMap(object):
                     T e = z - map_h;
                     atomicAdd(&error[0], e);
                     atomicAdd(&error_cnt[0], 1);
+                    atomicAdd(&newmap[get_map_idx(idx, 3)], 1.0);
                 }
                 ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
                                 outlier_variance=self.outlier_variance,
@@ -549,7 +554,7 @@ class ElevationMap(object):
         error = xp.array([0.0], dtype=xp.float32)
         error_cnt = xp.array([0], dtype=xp.float32)
         self.drift_compensation_kernel(self.elevation_map, points, self.center[0], self.center[1], R, t,
-                          error, error_cnt,
+                          self.new_map, error, error_cnt,
                           size=(points.shape[0]))
         if error_cnt > 100:
             mean_error = error / error_cnt
