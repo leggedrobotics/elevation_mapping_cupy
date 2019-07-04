@@ -134,14 +134,16 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 {
   nh_ = nh;
   map_.initialize(nh_);
-  std::string pointcloud_topic_1, pointcloud_topic_2, pose_topic, map_frame;
-  nh.param<std::string>("pointcloud_topic_1", pointcloud_topic_1, "points");
-  nh.param<std::string>("pointcloud_topic_2", pointcloud_topic_2, "points");
+  std::string pose_topic, map_frame;
+  std::vector<std::string>pointcloud_topics;
+  nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
-  pointcloudSub1_ = nh_.subscribe(pointcloud_topic_1, 1, &ElevationMappingNode::pointcloudCallback, this);
-  pointcloudSub2_ = nh_.subscribe(pointcloud_topic_2, 1, &ElevationMappingNode::pointcloudCallback, this);
+  for (const auto& pointcloud_topic: pointcloud_topics) {
+    ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
+    pointcloudSubs_.push_back(sub);
+  }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
@@ -152,7 +154,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 
 void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud)
 {
-  // auto start = ros::Time::now();
   pcl::PCLPointCloud2 pcl_pc;
   pcl_conversions::toPCL(cloud, pcl_pc);
 
@@ -160,14 +161,11 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pcl::fromPCLPointCloud2(pcl_pc, *pointCloud);
   tf::StampedTransform transformTf;
   std::string sensorFrameId = cloud.header.frame_id;
-  // std::string sensorFrameId = "ghost_desired/realsense_d435_front_depth_optical_frame";
   auto timeStamp = cloud.header.stamp;
   Eigen::Affine3d transformationSensorToMap;
   try {
     transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
     transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
-    // transformListener_.waitForTransform(sensorFrameId, mapFrameId_, timeStamp, ros::Duration(1.0));
-    // transformListener_.lookupTransform(sensorFrameId, mapFrameId_, timeStamp, transformTf);
     poseTFToEigen(transformTf, transformationSensorToMap);
   }
   catch (tf::TransformException &ex) {
@@ -177,17 +175,11 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   map_.input(pointCloud,
              transformationSensorToMap.rotation(),
              transformationSensorToMap.translation());
-  // ROS_INFO_STREAM("input " << ros::Time::now() - start);
-
-  // start = ros::Time::now();
   map_.get_grid_map(gridMap_);
   gridMap_.setTimestamp(ros::Time::now().toSec());
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
-  // ROS_INFO_STREAM("get " << ros::Time::now() - start);
-  // start = ros::Time::now();
   mapPub_.publish(msg);
-  // ROS_INFO_STREAM("publish " << ros::Time::now() - start);
 
   ROS_INFO("ElevationMap received a point cloud (%i points) for elevation mapping.", static_cast<int>(pointCloud->size()));
 }
