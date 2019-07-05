@@ -181,7 +181,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
   mapPub_.publish(msg);
 
-  ROS_INFO("ElevationMap received a point cloud (%i points) for elevation mapping.", static_cast<int>(pointCloud->size()));
+  ROS_INFO_THROTTLE(1.0, "ElevationMap received a point cloud (%i points) for elevation mapping.", static_cast<int>(pointCloud->size()));
 }
 
 void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
