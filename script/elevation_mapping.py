@@ -151,7 +151,7 @@ class ElevationMap(object):
         self.max_variance = param.max_variance
         self.dilation_size = param.dilation_size
         self.traversability_inlier = 0.1
-        self.wall_num_thresh = 100
+        self.wall_num_thresh = 30
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -380,6 +380,26 @@ class ElevationMap(object):
                     return ${sensor_noise_factor} * z * z;
                 }
 
+                __device__ float ray_vector(float16 tx, float16 ty, float16 tz,
+                                            float16 px, float16 py, float16 pz,
+                                            float16& rx, float16& ry, float16& rz){
+                    float16 vx = px - tx;
+                    float16 vy = py - ty;
+                    float16 vz = pz - tz;
+                    float16 norm = sqrt(vx * vx + vy * vy + vz * vz);
+                    if (norm > 0) {
+                        rx = vx / norm;
+                        ry = vy / norm;
+                        rz = vz / norm;
+                    }
+                    else {
+                        rx = 0;
+                        ry = 0;
+                        rz = 0;
+                    }
+                    return norm;
+                }
+
                 ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n,
                                 sensor_noise_factor=self.sensor_noise_factor),
                 operation=\
@@ -392,6 +412,8 @@ class ElevationMap(object):
                 U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
                 U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
                 U v = z_noise(rz);
+                float16 ray_x, ray_y, ray_z;
+                float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
                 int idx = get_idx(x, y, center_x, center_y);
                 U map_h = map[get_map_idx(idx, 0)];
                 U map_v = map[get_map_idx(idx, 1)];
@@ -407,11 +429,28 @@ class ElevationMap(object):
                     atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
                     ${atomic_func}(&newmap[get_map_idx(idx, 2)], 1.0);
                     map[get_map_idx(idx, 2)] = 1;
+                    // visibility cleanup
+                    // if (false) {
+                         for (float16 s=${ray_step}; s < ray_length * 0.1; s+=${ray_step}) {
+                             U nx = t[0] + ray_x * s;
+                             U ny = t[1] + ray_y * s;
+                             U nz = t[2] + ray_z * s;
+                             int nidx = get_idx(nx, ny, center_x, center_y);
+                             U nmap_h = map[get_map_idx(nidx, 0)];
+                             U nmap_v = map[get_map_idx(nidx, 1)];
+                             if (nmap_h > nz + nmap_v * 3) {
+                                 map[get_map_idx(nidx, 1)] = 100;
+                                 map[get_map_idx(nidx, 2)] = 0;
+                             }
+                         }
+                    //  }
+                            
                 }
                 ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
                                 outlier_variance=self.outlier_variance,
                                 atomic_func=self.atomic_func,
-                                wall_num_thresh=self.wall_num_thresh),
+                                wall_num_thresh=self.wall_num_thresh,
+                                ray_step=self.resolution / 2.0),
                 name='add_points_kernel')
         self.drift_compensation_kernel = cp.ElementwiseKernel(
                 in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
