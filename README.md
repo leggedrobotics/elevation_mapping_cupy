@@ -26,7 +26,7 @@ On jetson, pip builds the packages from source so it would take time.
 
 Also, on jetson you need to install fortran beforehand.
 ```bash
-https://bitbucket.org/leggedrobotics/elevation_mapping_cupy/src/master/
+sudo apt-get install gfortran
 ```
 
 cupy can be installed with specific CUDA versions. (On jetson, only from source could work)
