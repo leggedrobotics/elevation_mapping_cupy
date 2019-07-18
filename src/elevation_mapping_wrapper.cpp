@@ -22,44 +22,70 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   path.attr("insert")(0, module_path);
 
   auto elevation_mapping = py::module::import("elevation_mapping");
-  param_ = elevation_mapping.attr("Parameter")();
+  auto parameter = py::module::import("parameter");
+  std::cout << "parameter " << std::endl;
+  param_ = parameter.attr("Parameter")();
+  std::cout << "param_ " << std::endl;
   setParameters(nh);
+  std::cout << "set params" << std::endl;
   map_ = elevation_mapping.attr("ElevationMap")(param_);
-  resolution_ = map_.attr("get_resolution")().cast<double>();
-  map_length_ = map_.attr("get_length")().cast<double>();
-  map_n_ = (int)(map_length_ / resolution_);
+  std::cout << "map_" << std::endl;
 }
 
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  bool use_cupy;
+  bool enable_edge_sharpen;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
-  float time_variance, initial_variance;
-  int dilation_size;
+  float time_variance, initial_variance, traversability_inlier;
+  int dilation_size, wall_num_thresh, min_height_drift_cnt;
   std::string gather_mode, weight_file;
-  nh.param<bool>("use_cupy", use_cupy, true);
-  param_.attr("set_use_cupy")(use_cupy);
+  nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
+  param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
+
   nh.param<float>("resolution", resolution, 0.02);
   param_.attr("set_resolution")(resolution);
+
   nh.param<float>("map_length", map_length, 5.0);
   param_.attr("set_map_length")(map_length);
+
   nh.param<float>("sensor_noise_factor", sensor_noise_factor, 0.05);
   param_.attr("set_sensor_noise_factor")(sensor_noise_factor);
+
   nh.param<float>("mahalanobis_thresh", mahalanobis_thresh, 2.0);
   param_.attr("set_mahalanobis_thresh")(mahalanobis_thresh);
+
   nh.param<float>("outlier_variance", outlier_variance, 0.01);
   param_.attr("set_outlier_variance")(outlier_variance);
+
   nh.param<float>("time_variance", time_variance, 0.01);
   param_.attr("set_time_variance")(time_variance);
+
   nh.param<float>("initial_variance", initial_variance, 10.0);
   param_.attr("set_initial_variance")(initial_variance);
+
+  nh.param<float>("traversability_inlier", traversability_inlier, 0.1);
+  param_.attr("set_traversability_inlier")(traversability_inlier);
+
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
+
+  nh.param<int>("wall_num_thresh", wall_num_thresh, 100);
+  param_.attr("set_wall_num_thresh")(wall_num_thresh);
+
+  nh.param<int>("min_height_drift_cnt", min_height_drift_cnt, 100);
+  param_.attr("set_min_height_drift_cnt")(min_height_drift_cnt);
+
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);
+
   nh.param<std::string>("weight_file", weight_file, "config/weights.yaml");
   std::string path = ros::package::getPath("elevation_mapping_cupy");
+
   weight_file = path + "/" + weight_file;
   param_.attr("load_weights")(weight_file);
+
+  resolution_ = resolution;
+  map_length_ = map_length;
+  map_n_ = (int)(map_length_ / resolution_);
 }
 
 

@@ -62,7 +62,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
   mapPub_.publish(msg);
 
-  ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) for in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
+  ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
 }
 
 void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)

@@ -4,7 +4,6 @@ import numpy as np
 
 class Parameter(object):
     def __init__(self):
-        self.use_cupy = True
         self.resolution = 0.02
         self.gather_mode = 'mean'
 
