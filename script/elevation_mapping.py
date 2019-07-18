@@ -42,6 +42,7 @@ class ElevationMap(object):
         self.min_height_drift_cnt = param.min_height_drift_cnt
 
         self.enable_edge_sharpen = param.enable_edge_sharpen
+        self.enable_drift_compensation = param.enable_drift_compensation
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -125,7 +126,8 @@ class ElevationMap(object):
                                    self.center[0], self.center[1], R, t,
                                    self.new_map, error, error_cnt,
                                    size=(points.shape[0]))
-        if error_cnt > self.min_height_drift_cnt:
+        if (self.enable_drift_compensation
+                and error_cnt > self.min_height_drift_cnt):
             mean_error = error / error_cnt
             self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,

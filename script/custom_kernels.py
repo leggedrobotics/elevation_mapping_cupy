@@ -2,6 +2,42 @@ import cupy as cp
 import string
 
 
+def map_utils(resolution, width, height, sensor_noise_factor):
+    util_preamble = string.Template('''
+        __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
+
+            return max(min(x, max_x), min_x);
+        }
+        __device__ float16 round(float16 x) {
+            return (int)x + (int)(2 * (x - (int)x));
+        }
+        __device__ int get_xy_idx(float16 x, float16 center) {
+            const float resolution = ${resolution};
+            int i = round((x - center) / resolution);
+            return i;
+        }
+        __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
+            int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
+            int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
+            return ${width} * idx_x + idx_y;
+        }
+        __device__ int get_map_idx(int idx, int layer_n) {
+            const int layer = ${width} * ${height};
+            return layer * layer_n + idx;
+        }
+        __device__ float transform_p(float16 x, float16 y, float16 z,
+                                     float16 r0, float16 r1, float16 r2, float16 t) {
+            return r0 * x + r1 * y + r2 * z + t;
+        }
+        __device__ float z_noise(float16 z){
+            return ${sensor_noise_factor} * z * z;
+        }
+
+        ''').substitute(resolution=resolution, width=width, height=height,
+                        sensor_noise_factor=sensor_noise_factor)
+    return util_preamble
+
+
 def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       mahalanobis_thresh, outlier_variance, wall_num_thresh,
                       enable_edge_shaped=True):
@@ -9,39 +45,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
     add_points_kernel = cp.ElementwiseKernel(
             in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
             out_params='raw U map, raw T newmap',
-            preamble=\
-            string.Template('''
-            __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
-
-                return max(min(x, max_x), min_x);
-            }
-            __device__ float16 round(float16 x) {
-                return (int)x + (int)(2 * (x - (int)x));
-            }
-            __device__ int get_xy_idx(float16 x, float16 center) {
-                const float resolution = ${resolution};
-                int i = round((x - center) / resolution);
-                return i;
-            }
-            __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
-                int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
-                int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
-                return ${width} * idx_x + idx_y;
-            }
-            __device__ int get_map_idx(int idx, int layer_n) {
-                const int layer = ${width} * ${height};
-                return layer * layer_n + idx;
-            }
-            __device__ float transform_p(float16 x, float16 y, float16 z,
-                                         float16 r0, float16 r1, float16 r2, float16 t) {
-                return r0 * x + r1 * y + r2 * z + t;
-            }
-            __device__ float z_noise(float16 z){
-                return ${sensor_noise_factor} * z * z;
-            }
-
-            ''').substitute(resolution=resolution, width=width, height=height,
-                            sensor_noise_factor=sensor_noise_factor),
+            preamble=map_utils(resolution, width, height, sensor_noise_factor),
             operation=\
             string.Template(
             '''
@@ -82,38 +86,7 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
     error_counting_kernel = cp.ElementwiseKernel(
             in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
             out_params='raw U newmap, raw T error, raw T error_cnt',
-            preamble=\
-            string.Template('''
-            __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
-                return max(min(x, max_x), min_x);
-            }
-            __device__ float16 round(float16 x) {
-                return (int)x + (int)(2 * (x - (int)x));
-            }
-            __device__ int get_xy_idx(float16 x, float16 center) {
-                const float resolution = ${resolution};
-                int i = round((x - center) / resolution);
-                return i;
-            }
-            __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
-                int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
-                int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
-                return ${width} * idx_x + idx_y;
-            }
-            __device__ int get_map_idx(int idx, int layer_n) {
-                const int layer = ${width} * ${height};
-                return layer * layer_n + idx;
-            }
-            __device__ float transform_p(float16 x, float16 y, float16 z,
-                                         float16 r0, float16 r1, float16 r2, float16 t) {
-                return r0 * x + r1 * y + r2 * z + t;
-            }
-            __device__ float z_noise(float16 z){
-                return ${sensor_noise_factor} * z * z;
-            }
-
-            ''').substitute(resolution=resolution, width=width, height=height,
-                            sensor_noise_factor=sensor_noise_factor),
+            preamble=map_utils(resolution, width, height, sensor_noise_factor),
             operation=\
             string.Template(
             '''

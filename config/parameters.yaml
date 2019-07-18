@@ -14,6 +14,7 @@ min_height_drift_cnt: 100
 
 gather_mode: 'mean'
 enable_edge_sharpen: true
+enable_drift_compensation: true
 
 weight_file: 'config/weights.yaml'
 

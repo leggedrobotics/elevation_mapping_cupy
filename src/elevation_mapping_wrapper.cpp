@@ -23,23 +23,22 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 
   auto elevation_mapping = py::module::import("elevation_mapping");
   auto parameter = py::module::import("parameter");
-  std::cout << "parameter " << std::endl;
   param_ = parameter.attr("Parameter")();
-  std::cout << "param_ " << std::endl;
   setParameters(nh);
-  std::cout << "set params" << std::endl;
   map_ = elevation_mapping.attr("ElevationMap")(param_);
-  std::cout << "map_" << std::endl;
 }
 
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  bool enable_edge_sharpen;
+  bool enable_edge_sharpen, enable_drift_compensation;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
   float time_variance, initial_variance, traversability_inlier;
   int dilation_size, wall_num_thresh, min_height_drift_cnt;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
   param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
+
+  nh.param<bool>("enable_drift_compensation", enable_drift_compensation, true);
+  param_.attr("set_enable_drift_compensation")(enable_drift_compensation);
 
   nh.param<float>("resolution", resolution, 0.02);
   param_.attr("set_resolution")(resolution);

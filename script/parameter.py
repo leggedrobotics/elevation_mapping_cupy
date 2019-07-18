@@ -21,6 +21,7 @@ class Parameter(object):
         self.min_height_drift_cnt = 100
 
         self.enable_edge_sharpen = True
+        self.enable_drift_compensation = True
 
         self.initial_variance = 10.0
         self.w1 = np.zeros((4, 1, 3, 3))
@@ -80,3 +81,6 @@ class Parameter(object):
 
     def set_enable_edge_sharpen(self, enable_edge_sharpen):
         self.enable_edge_sharpen = enable_edge_sharpen
+
+    def set_enable_drift_compensation(self, enable_drift_compensation):
+        self.enable_drift_compensation = enable_drift_compensation
