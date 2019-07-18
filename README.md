@@ -20,10 +20,16 @@ The tested versions are CUDA10.0, cuDNN7.
 - [chainer](https://chainer.org/)
 
 ```bash
-pip install numpy, scipy, cupy, chainer
+pip install numpy scipy cupy chainer
+```
+On jetson, pip builds the packages from source so it would take time.
+
+Also, on jetson you need to install fortran beforehand.
+```bash
+https://bitbucket.org/leggedrobotics/elevation_mapping_cupy/src/master/
 ```
 
-cupy can be installed with specific CUDA versions.
+cupy can be installed with specific CUDA versions. (On jetson, only from source could work)
 > (For CUDA 9.0)
 > % pip install cupy-cuda90
 > 
@@ -39,9 +45,28 @@ cupy can be installed with specific CUDA versions.
 > (Install CuPy from source)
 > % pip install cupy
 
+### pybind11
+```bash
+pip install pytest
+pip3 install pytest
+git clone https://github.com/pybind/pybind11.git
+cd pybind11
+mkdir build
+cd build
+sudo mkdir /opt/pybind11
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/pybind11
+make -j8
+sudo make install
+```
+
 ### ROS package dependencies
 - [ros_numpy](https://github.com/eric-wieser/ros_numpy)
 - [grid_map_msgs](https://github.com/ANYbotics/grid_map)
+
+#### On Jetson
+```bash
+pip3 install catkin_pkg
+```
 
 ## Usage
 ### Build
