@@ -137,6 +137,11 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }
+  Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(map_n_, map_n_);
+  gridMap.add("horizontal_variance_x", zero.cast<float>());
+  gridMap.add("horizontal_variance_y", zero.cast<float>());
+  gridMap.add("horizontal_variance_xy", zero.cast<float>());
+  gridMap.add("time", zero.cast<float>());
 }
 
 
