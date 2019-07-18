@@ -42,11 +42,13 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-add_library(elevation_mapping_wrapper src/elevation_mapping_wrapper.cpp)
-target_link_libraries(elevation_mapping_wrapper ${catkin_LIBRARIES} pybind11::embed)
+add_library(elevation_mapping_ros
+    src/elevation_mapping_wrapper.cpp
+    src/elevation_mapping_ros.cpp)
+target_link_libraries(elevation_mapping_ros ${catkin_LIBRARIES} pybind11::embed)
 
 add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
-target_link_libraries(elevation_mapping_node elevation_mapping_wrapper)
+target_link_libraries(elevation_mapping_node elevation_mapping_ros)
 
 install(
   PROGRAMS

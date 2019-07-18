@@ -2,12 +2,12 @@ import numpy as np
 import scipy as nsp
 import scipy.ndimage
 
-import chainer
-import chainer.links as L
-import chainer.functions as F
-import yaml
-import string
-import time
+from traversability_filter import TraversabilityFilter
+from parameter import Parameter
+from custom_kernels import add_points_kernel
+from custom_kernels import error_counting_kernel
+from custom_kernels import average_map_kernel
+from custom_kernels import dilation_filter_kernel
 
 use_cupy = False
 xp = np
@@ -23,106 +23,11 @@ def load_backend(enable_cupy):
         use_cupy = True
         xp = cp
         sp = csp
-	pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
-	cp.cuda.set_allocator(pool.malloc)
+        pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
+        cp.cuda.set_allocator(pool.malloc)
     else:
         xp = np
         sp = nsp
-
-
-class Parameter(object):
-    def __init__(self):
-        self.use_cupy = True
-        self.resolution = 0.02
-        self.gather_mode = 'mean'
-
-        self.map_length = 10.0
-        self.sensor_noise_factor = 0.05
-        self.mahalanobis_thresh = 2.0
-        self.outlier_variance = 0.01
-        self.time_variance = 0.01
-
-        self.max_variance = 1.0
-        self.dilation_size = 2
-
-        self.initial_variance = 10.0
-        self.w1 = np.zeros((4, 1, 3, 3))
-        self.w2 = np.zeros((4, 1, 3, 3))
-        self.w3 = np.zeros((4, 1, 3, 3))
-        self.w_out = np.zeros((1, 12, 1, 1))
-
-    def load_weights(self, filename):
-        with open(filename) as file:
-            weights = yaml.load(file)
-            self.w1 = np.array(weights['w1'])
-            self.w2 = np.array(weights['w2'])
-            self.w3 = np.array(weights['w3'])
-            self.w_out = np.array(weights['w_out'])
-
-    def set_use_cupy(self, use_cupy):
-        self.use_cupy = use_cupy
-
-    def set_resolution(self, resolution):
-        self.resolution = resolution
-
-    def set_gather_mode(self, gather_mode):
-        self.gather_mode = gather_mode
-
-    def set_map_length(self, map_length):
-        self.map_length = map_length
-
-    def set_sensor_noise_factor(self, sensor_noise_factor):
-        self.sensor_noise_factor = sensor_noise_factor
-
-    def set_mahalanobis_thresh(self, mahalanobis_thresh):
-        self.mahalanobis_thresh = mahalanobis_thresh
-
-    def set_outlier_variance(self, outlier_variance):
-        self.outlier_variance = outlier_variance
-
-    def set_time_variance(self, time_variance):
-        self.time_variance = time_variance
-
-    def set_max_variance(self, max_variance):
-        self.max_variance = max_variance
-
-    def set_initial_variance(self, initial_variance):
-        self.initial_variance = initial_variance
-
-    def set_dilation_size(self, dilation_size):
-        self.dilation_size = dilation_size
-
-
-class TraversabilityFilter(chainer.Chain):
-    def __init__(self, w1, w2, w3, w_out):
-        super(TraversabilityFilter, self).__init__()
-        self.conv1 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=1,
-                                     nobias=True, initialW=w1)
-        self.conv2 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=2,
-                                     nobias=True, initialW=w2)
-        self.conv3 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=3,
-                                     nobias=True, initialW=w3)
-        self.conv_out = L.Convolution2D(12, 1, ksize=1,
-                                        nobias=True, initialW=w_out)
-
-        if use_cupy:
-            self.conv1.to_gpu()
-            self.conv2.to_gpu()
-            self.conv3.to_gpu()
-            self.conv_out.to_gpu()
-        chainer.config.train = False
-        chainer.config.enable_backprop = False
-
-    def __call__(self, elevation):
-        # elevation = elevation_map[0]
-        out1 = self.conv1(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
-        out2 = self.conv2(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
-        out3 = self.conv3(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
-
-        out1 = out1[:, :, 2:-2, 2:-2]
-        out2 = out2[:, :, 1:-1, 1:-1]
-        out = F.concat((out1, out2, out3), axis=1)
-        return self.conv_out(F.absolute(out)).array
 
 
 class ElevationMap(object):
@@ -136,12 +41,7 @@ class ElevationMap(object):
         self.cell_n = int(self.map_length / self.resolution) + 2
 
         # 'mean' or 'max'
-        self.gather_mode = 'mean'
-        # self.gather_mode = param.gather_mode
-        if self.gather_mode == 'max':
-            self.atomic_func = 'atomicMax'
-        else:
-            self.atomic_func = 'atomicAdd'
+        self.gather_mode = param.gather_mode
 
         self.sensor_noise_factor = param.sensor_noise_factor
         self.mahalanobis_thresh = param.mahalanobis_thresh
@@ -150,8 +50,12 @@ class ElevationMap(object):
 
         self.max_variance = param.max_variance
         self.dilation_size = param.dilation_size
-        self.traversability_inlier = 0.1
-        self.wall_num_thresh = 100
+        self.traversability_inlier = param.traversability_inlier
+        self.wall_num_thresh = param.wall_num_thresh
+        self.min_height_drift_cnt = param.min_height_drift_cnt
+
+        # self.enable_edge_sharpen = param.enable_edge_sharpen
+        self.enable_edge_sharpen = False
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -159,11 +63,8 @@ class ElevationMap(object):
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
 
-        self.points_cpu = None
-        self.points_gpu = None
-
         if use_cupy:
-            self.compile_add_points_kernel()
+            self.compile_kernels()
 
         self.traversability_filter = TraversabilityFilter(param.w1,
                                                           param.w2,
@@ -206,7 +107,6 @@ class ElevationMap(object):
 
     def shift_map(self, delta_pixel):
         shift_value = delta_pixel
-        # shift_value = xp.round(delta_pixel)
         shift_fn = sp.ndimage.interpolation.shift
         # elevation
         self.elevation_map[0] = shift_fn(self.elevation_map[0], shift_value,
@@ -335,247 +235,54 @@ class ElevationMap(object):
         traversability = self.traversability_filter(self.elevation_map)
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
-    def compile_add_points_kernel(self):
+    def compile_kernels(self):
         self.new_map = cp.zeros((4, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
-        self.add_points_kernel = cp.ElementwiseKernel(
-                in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
-                out_params='raw U map, raw T newmap',
-                preamble=\
-                string.Template('''
-                __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
-                    return max(min(x, max_x), min_x);
-                }
-                __device__ float16 round(float16 x) {
-                    return (int)x + (int)(2 * (x - (int)x));
-                }
-                __device__ int get_xy_idx(float16 x, float16 center) {
-                    const float resolution = ${resolution};
-                    int i = round((x - center) / resolution);
-                    return i;
-                }
-                __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
-                    int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
-                    int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
-                    return ${width} * idx_x + idx_y;
-                }
-                __device__ int get_map_idx(int idx, int layer_n) {
-                    const int layer = ${width} * ${height};
-                    return layer * layer_n + idx;
-                }
-                __device__ int floatToOrderedInt( float floatVal )
-                {
-                    int intVal = __float_as_int( floatVal );
-                    return (intVal >= 0 ) ? intVal : intVal ^ 0x7FFFFFFF;
-                }
-                __device__ float orderedIntToFloat( int intVal )
-                {
-                    return __int_as_float( (intVal >= 0) ? intVal : intVal ^ 0x7FFFFFFF );
-                }
-                __device__ float transform_p(float16 x, float16 y, float16 z,
-                                             float16 r0, float16 r1, float16 r2, float16 t) {
-                    return r0 * x + r1 * y + r2 * z + t;
-                }
-                __device__ float z_noise(float16 z){
-                    return ${sensor_noise_factor} * z * z;
-                }
+        self.add_points_kernel = add_points_kernel(self.resolution,
+                                                   self.cell_n,
+                                                   self.cell_n,
+                                                   self.sensor_noise_factor,
+                                                   self.mahalanobis_thresh,
+                                                   self.outlier_variance,
+                                                   self.wall_num_thresh,
+                                                   self.enable_edge_sharpen)
+        self.error_counting_kernel = error_counting_kernel(self.resolution,
+                                                           self.cell_n,
+                                                           self.cell_n,
+                                                           self.sensor_noise_factor,
+                                                           self.mahalanobis_thresh,
+                                                           self.outlier_variance,
+                                                           self.traversability_inlier)
 
-                ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n,
-                                sensor_noise_factor=self.sensor_noise_factor),
-                operation=\
-                string.Template(
-                '''
-                U rx = p[i * 3];
-                U ry = p[i * 3 + 1];
-                U rz = p[i * 3 + 2];
-                U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
-                U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
-                U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
-                U v = z_noise(rz);
-                int idx = get_idx(x, y, center_x, center_y);
-                U map_h = map[get_map_idx(idx, 0)];
-                U map_v = map[get_map_idx(idx, 1)];
-                U num_points = newmap[get_map_idx(idx, 3)];
-                if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
-                    atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-                }
-                else {
-                    if (num_points > ${wall_num_thresh} && z < map_h) { continue; }
-                    T new_h = (map_h * v + z * map_v) / (map_v + v);
-                    T new_v = (map_v * v) / (map_v + v);
-                    ${atomic_func}(&newmap[get_map_idx(idx, 0)], new_h);
-                    atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
-                    ${atomic_func}(&newmap[get_map_idx(idx, 2)], 1.0);
-                    map[get_map_idx(idx, 2)] = 1;
-                }
-                ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
-                                outlier_variance=self.outlier_variance,
-                                atomic_func=self.atomic_func,
-                                wall_num_thresh=self.wall_num_thresh),
-                name='add_points_kernel')
-        self.drift_compensation_kernel = cp.ElementwiseKernel(
-                in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
-                out_params='raw U newmap, raw T error, raw T error_cnt',
-                preamble=\
-                string.Template('''
-                __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
-                    return max(min(x, max_x), min_x);
-                }
-                __device__ float16 round(float16 x) {
-                    return (int)x + (int)(2 * (x - (int)x));
-                }
-                __device__ int get_xy_idx(float16 x, float16 center) {
-                    const float resolution = ${resolution};
-                    int i = round((x - center) / resolution);
-                    return i;
-                }
-                __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
-                    int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
-                    int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
-                    return ${width} * idx_x + idx_y;
-                }
-                __device__ int get_map_idx(int idx, int layer_n) {
-                    const int layer = ${width} * ${height};
-                    return layer * layer_n + idx;
-                }
-                __device__ float transform_p(float16 x, float16 y, float16 z,
-                                             float16 r0, float16 r1, float16 r2, float16 t) {
-                    return r0 * x + r1 * y + r2 * z + t;
-                }
-                __device__ float z_noise(float16 z){
-                    return ${sensor_noise_factor} * z * z;
-                }
+        self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
+                                                     self.max_variance, self.initial_variance)
 
-                ''').substitute(resolution=self.resolution, width=self.cell_n, height=self.cell_n,
-                                sensor_noise_factor=self.sensor_noise_factor),
-                operation=\
-                string.Template(
-                '''
-                U rx = p[i * 3];
-                U ry = p[i * 3 + 1];
-                U rz = p[i * 3 + 2];
-                U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
-                U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
-                U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
-                U v = z_noise(rz);
-                int idx = get_idx(x, y, center_x, center_y);
-                U map_h = map[get_map_idx(idx, 0)];
-                U map_v = map[get_map_idx(idx, 1)];
-                U map_t = map[get_map_idx(idx, 3)];
-                if (abs(map_h - z) < (map_v * ${mahalanobis_thresh}) &&
-                    map_v < ${outlier_variance} / 2.0 && 
-                    map_t < ${traversability_inlier}) {
-                    T e = z - map_h;
-                    atomicAdd(&error[0], e);
-                    atomicAdd(&error_cnt[0], 1);
-                    atomicAdd(&newmap[get_map_idx(idx, 3)], 1.0);
-                }
-                ''').substitute(mahalanobis_thresh=self.mahalanobis_thresh,
-                                outlier_variance=self.outlier_variance,
-                                atomic_func=self.atomic_func,
-                                traversability_inlier=self.traversability_inlier),
-                name='drift_compensation_kernel')
-        self.average_map_kernel = cp.ElementwiseKernel(
-                in_params='raw U newmap',
-                out_params='raw U map',
-                preamble=\
-                string.Template('''
-                __device__ int get_map_idx(int idx, int layer_n) {
-                    const int layer = ${width} * ${height};
-                    return layer * layer_n + idx;
-                }
-                ''').substitute(width=self.cell_n, height=self.cell_n),
-                operation=\
-                string.Template('''
-                U h = map[get_map_idx(i, 0)];
-                U v = map[get_map_idx(i, 1)];
-                U new_h = newmap[get_map_idx(i, 0)];
-                U new_v = newmap[get_map_idx(i, 1)];
-                U new_cnt = newmap[get_map_idx(i, 2)];
-                if (new_cnt > 0) {
-                    if (new_v / new_cnt > ${max_variance}) {
-                        map[get_map_idx(i, 0)] = 0;
-                        map[get_map_idx(i, 1)] = ${initial_variance};
-                        map[get_map_idx(i, 2)] = 0;
-                    }
-                    else {
-                        map[get_map_idx(i, 0)] = new_h / new_cnt;
-                        map[get_map_idx(i, 1)] = new_v / new_cnt;
-                        map[get_map_idx(i, 2)] = 1;
-                    }
-                }
-                ''').substitute(max_variance=self.max_variance,
-                                initial_variance=self.initial_variance),
-                name='average_map_kernel')
-
-        self.dilation_filter = cp.ElementwiseKernel(
-                in_params='raw U map, raw U mask',
-                out_params='raw U newmap',
-                preamble=\
-                string.Template('''
-                __device__ int get_map_idx(int idx, int layer_n) {
-                    const int layer = ${width} * ${height};
-                    return layer * layer_n + idx;
-                }
-
-                __device__ int get_relative_map_idx(int idx, int dx, int dy, int layer_n) {
-                    const int layer = ${width} * ${height};
-                    const int relative_idx = idx + ${width} * dy + dx;
-                    return layer * layer_n + relative_idx;
-                }
-                ''').substitute(width=self.cell_n, height=self.cell_n),
-                operation=\
-                string.Template('''
-                U h = map[get_map_idx(i, 0)];
-                U valid = mask[get_map_idx(i, 0)];
-                newmap[get_map_idx(i, 0)] = h;
-                if (valid < 0.5) {
-                    U distance = 100;
-                    U near_value = 0;
-                    for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
-                        for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
-                            U valid = mask[get_relative_map_idx(i, dx, dy, 0)];
-                            if(valid > 0.5 && dx + dy < distance) {
-                                distance = dx + dy;
-                                near_value = map[get_relative_map_idx(i, dx, dy, 0)];
-                            }
-                        }
-                    }
-                    if(distance < 100) {
-                        newmap[get_map_idx(i, 0)] = near_value;
-                        // newmap[get_map_idx(i, 0)] = 10;
-                    }
-                }
-                ''').substitute(dilation_size=self.dilation_size),
-                name='dilation_filter')
+        self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
 
     def update_map_kernel(self, points, R, t):
         self.new_map *= 0.0
         error = xp.array([0.0], dtype=xp.float32)
         error_cnt = xp.array([0], dtype=xp.float32)
-        self.drift_compensation_kernel(self.elevation_map, points, self.center[0], self.center[1], R, t,
-                          self.new_map, error, error_cnt,
-                          size=(points.shape[0]))
-        if error_cnt > 100:
+        self.error_counting_kernel(self.elevation_map, points,
+                                   self.center[0], self.center[1], R, t,
+                                   self.new_map, error, error_cnt,
+                                   size=(points.shape[0]))
+        if error_cnt > self.min_height_drift_cnt:
             mean_error = error / error_cnt
             self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
-                          self.elevation_map, self.new_map,
-                          size=(points.shape[0]))
-        self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
+                               self.elevation_map, self.new_map,
+                               size=(points.shape[0]))
+        self.average_map_kernel(self.new_map, self.elevation_map,
+                                size=(self.cell_n * self.cell_n))
 
         # dilation before traversability_filter
         self.traversability_input *= 0.0
-        self.dilation_filter(self.elevation_map[0],
-                             self.elevation_map[2],
-                             self.traversability_input,
-                             size=(self.cell_n * self.cell_n))
-        # self.dilation_filter(self.traversability_input,
-        #                      self.elevation_map[2],
-        #                      self.traversability_input,
-        #                      size=(self.cell_n * self.cell_n))
+        self.dilation_filter_kernel(self.elevation_map[0],
+                                    self.elevation_map[2],
+                                    self.traversability_input,
+                                    size=(self.cell_n * self.cell_n))
         # calculate traversability
-        # traversability = self.traversability_filter(self.elevation_map)
         traversability = self.traversability_filter(self.traversability_input)
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
@@ -610,18 +317,7 @@ class ElevationMap(object):
         return maps
 
     def get_maps_ref(self, elevation_data, variance_data, traversability_data):
-        elevation = xp.where(self.elevation_map[2] > 0.5,
-                             self.elevation_map[0].copy(), xp.nan)
-        variance = self.elevation_map[1].copy()
-        traversability = self.elevation_map[3].copy()
-        elevation = elevation[1:-1, 1:-1]
-        variance = variance[1:-1, 1:-1]
-        traversability = traversability[1:-1, 1:-1]
-
-        maps = xp.stack([elevation, variance, traversability], axis=0)
-        # maps = xp.transpose(maps, axes=(0, 2, 1))
-        maps = xp.flip(maps, 1)
-        maps = xp.flip(maps, 2)
+        maps = self.get_maps()
         if use_cupy:
             elevation_data[...] = xp.asnumpy(maps[0])
             stream = cp.cuda.Stream(non_blocking=True)
