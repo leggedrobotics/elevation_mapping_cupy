@@ -22,44 +22,69 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   path.attr("insert")(0, module_path);
 
   auto elevation_mapping = py::module::import("elevation_mapping");
-  param_ = elevation_mapping.attr("Parameter")();
+  auto parameter = py::module::import("parameter");
+  param_ = parameter.attr("Parameter")();
   setParameters(nh);
   map_ = elevation_mapping.attr("ElevationMap")(param_);
-  resolution_ = map_.attr("get_resolution")().cast<double>();
-  map_length_ = map_.attr("get_length")().cast<double>();
-  map_n_ = (int)(map_length_ / resolution_);
 }
 
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  bool use_cupy;
+  bool enable_edge_sharpen, enable_drift_compensation;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
-  float time_variance, initial_variance;
-  int dilation_size;
+  float time_variance, initial_variance, traversability_inlier;
+  int dilation_size, wall_num_thresh, min_height_drift_cnt;
   std::string gather_mode, weight_file;
-  nh.param<bool>("use_cupy", use_cupy, true);
-  param_.attr("set_use_cupy")(use_cupy);
+  nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
+  param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
+
+  nh.param<bool>("enable_drift_compensation", enable_drift_compensation, true);
+  param_.attr("set_enable_drift_compensation")(enable_drift_compensation);
+
   nh.param<float>("resolution", resolution, 0.02);
   param_.attr("set_resolution")(resolution);
+
   nh.param<float>("map_length", map_length, 5.0);
   param_.attr("set_map_length")(map_length);
+
   nh.param<float>("sensor_noise_factor", sensor_noise_factor, 0.05);
   param_.attr("set_sensor_noise_factor")(sensor_noise_factor);
+
   nh.param<float>("mahalanobis_thresh", mahalanobis_thresh, 2.0);
   param_.attr("set_mahalanobis_thresh")(mahalanobis_thresh);
+
   nh.param<float>("outlier_variance", outlier_variance, 0.01);
   param_.attr("set_outlier_variance")(outlier_variance);
+
   nh.param<float>("time_variance", time_variance, 0.01);
   param_.attr("set_time_variance")(time_variance);
+
   nh.param<float>("initial_variance", initial_variance, 10.0);
   param_.attr("set_initial_variance")(initial_variance);
+
+  nh.param<float>("traversability_inlier", traversability_inlier, 0.1);
+  param_.attr("set_traversability_inlier")(traversability_inlier);
+
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
+
+  nh.param<int>("wall_num_thresh", wall_num_thresh, 100);
+  param_.attr("set_wall_num_thresh")(wall_num_thresh);
+
+  nh.param<int>("min_height_drift_cnt", min_height_drift_cnt, 100);
+  param_.attr("set_min_height_drift_cnt")(min_height_drift_cnt);
+
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);
+
   nh.param<std::string>("weight_file", weight_file, "config/weights.yaml");
   std::string path = ros::package::getPath("elevation_mapping_cupy");
+
   weight_file = path + "/" + weight_file;
   param_.attr("load_weights")(weight_file);
+
+  resolution_ = resolution;
+  map_length_ = map_length;
+  map_n_ = (int)(map_length_ / resolution_);
 }
 
 
@@ -129,94 +154,5 @@ void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::Poin
   return;
 }
 
-
-ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
-{
-  nh_ = nh;
-  map_.initialize(nh_);
-  std::string pose_topic, map_frame;
-  std::vector<std::string>pointcloud_topics;
-  nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
-  nh.param<std::string>("pose_topic", pose_topic, "pose");
-  nh.param<std::string>("map_frame", mapFrameId_, "map");
-  poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
-  for (const auto& pointcloud_topic: pointcloud_topics) {
-    ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
-    pointcloudSubs_.push_back(sub);
-  }
-  mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
-  gridMap_.setFrameId(mapFrameId_);
-  rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
-  clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
-  ROS_INFO("[ElevationMappingCupy] finish initialization");
-}
-
-
-void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud)
-{
-  pcl::PCLPointCloud2 pcl_pc;
-  pcl_conversions::toPCL(cloud, pcl_pc);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromPCLPointCloud2(pcl_pc, *pointCloud);
-  tf::StampedTransform transformTf;
-  std::string sensorFrameId = cloud.header.frame_id;
-  auto timeStamp = cloud.header.stamp;
-  Eigen::Affine3d transformationSensorToMap;
-  try {
-    transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
-    transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
-    poseTFToEigen(transformTf, transformationSensorToMap);
-  }
-  catch (tf::TransformException &ex) {
-    ROS_ERROR("%s", ex.what());
-    return;
-  }
-  map_.input(pointCloud,
-             transformationSensorToMap.rotation(),
-             transformationSensorToMap.translation());
-  map_.get_grid_map(gridMap_);
-  gridMap_.setTimestamp(ros::Time::now().toSec());
-  grid_map_msgs::GridMap msg;
-  grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
-  mapPub_.publish(msg);
-
-  ROS_INFO_THROTTLE(1.0, "ElevationMap received a point cloud (%i points) for elevation mapping.", static_cast<int>(pointCloud->size()));
-}
-
-void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
-{
-  Eigen::Vector2d position(pose.pose.pose.position.x, pose.pose.pose.position.y);
-  map_.move_to(position);
-}
-
-bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response)
-{
-  grid_map::Position requestedSubmapPosition(request.position_x, request.position_y);
-  grid_map::Length requestedSubmapLength(request.length_x, request.length_y);
-  ROS_DEBUG("Elevation submap request: Position x=%f, y=%f, Length x=%f, y=%f.", requestedSubmapPosition.x(), requestedSubmapPosition.y(), requestedSubmapLength(0), requestedSubmapLength(1));
-
-  bool isSuccess;
-  grid_map::Index index;
-  grid_map::GridMap subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
-
-  if (request.layers.empty()) {
-    grid_map::GridMapRosConverter::toMessage(subMap, response.map);
-  } else {
-    std::vector<std::string> layers;
-    for (const auto& layer : request.layers) {
-      layers.push_back(layer);
-    }
-    grid_map::GridMapRosConverter::toMessage(subMap, layers, response.map);
-  }
-  return isSuccess;
-}
-
-bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
-{
-  ROS_INFO("Clearing map.");
-  map_.clear();
-  return true;
-}
 
 }
