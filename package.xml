@@ -18,6 +18,7 @@
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>grid_map_msgs</depend>
+  <depend>traversability_msgs</depend>
   <depend>grid_map_ros</depend>
   <depend>pcl_ros</depend>
 

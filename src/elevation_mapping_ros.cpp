@@ -6,6 +6,7 @@
 #include <pcl/common/projection_matrix.h>
 #include <tf_conversions/tf_eigen.h>
 #include <ros/package.h>
+#include <traversability_msgs/TraversabilityResult.h>
 
 namespace elevation_mapping_cupy{
 
@@ -28,6 +29,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
+  footprintPathService_ = nh_.advertiseService("check_footprint_path", &ElevationMappingNode::checkFootprintPath, this);
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -97,6 +99,21 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
 {
   ROS_INFO("Clearing map.");
   map_.clear();
+  return true;
+}
+
+bool ElevationMappingNode::checkFootprintPath(traversability_msgs::CheckFootprintPath::Request& request, traversability_msgs::CheckFootprintPath::Response& response) {
+
+  for (auto& path_elem: request.path) {
+    std::vector<Eigen::Vector2d> polygon;
+    for (auto& p: path_elem.footprint.polygon.points) {
+      polygon.push_back(Eigen::Vector2d(p.x, p.y));
+    }
+    double traversability = map_.get_polygon_traversability(polygon);
+    traversability_msgs::TraversabilityResult result;
+    result.traversability = traversability;
+    response.result.push_back(result);
+  }
   return true;
 }
 

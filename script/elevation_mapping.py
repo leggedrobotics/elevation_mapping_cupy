@@ -8,6 +8,9 @@ from custom_kernels import add_points_kernel
 from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
+from custom_kernels import polygon_mask_kernel
+
+from traversability_polygon import get_weighted_sum
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -97,6 +100,7 @@ class ElevationMap(object):
     def compile_kernels(self):
         self.new_map = cp.zeros((4, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
+        self.mask = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = add_points_kernel(self.resolution,
                                                    self.cell_n,
                                                    self.cell_n,
@@ -117,6 +121,8 @@ class ElevationMap(object):
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
+
+        self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def update_map_with_kernel(self, points, R, t):
         self.new_map *= 0.0
@@ -178,19 +184,41 @@ class ElevationMap(object):
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
 
+    def get_polygon_traversability(self, polygon):
+        polygon = xp.asarray(polygon)
+        polygon_min = polygon.min(axis=0)
+        polygon_max = polygon.max(axis=0)
+        polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
+        polygon_n = polygon.shape[0]
+        self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
+                                 polygon_n, polygon_bbox, self.mask,
+                                 size=(100*100))
+        t = get_weighted_sum(self.elevation_map[3], self.mask)
+        return t
+
 
 if __name__ == '__main__':
     #  Test script for profiling.
     #  $ python -m cProfile -o profile.stats elevation_mapping.py
     #  $ snakeviz profile.stats
     xp.random.seed(123)
-    points = xp.random.rand(100000, 3)
-    R = xp.random.rand(3, 3)
-    t = xp.random.rand(3)
+    points = xp.random.rand(100000, 3) * 10
+    points[:, 2] *= 0.2
+    # R = xp.random.rand(3, 3)
+    R = xp.eye(3)
+    t = xp.random.rand(3) * 0.1
+    print(points)
     print(R, t)
     param = Parameter()
     param.load_weights('../config/weights.yaml')
     elevation = ElevationMap(param)
     for i in range(200):
-        elevation.input(points, R, t)
         print(i)
+        elevation.input(points, R, t)
+        import random
+        a = cp.zeros((100, 100)) 
+        n = random.randint(3, 3)
+
+        # polygon = cp.array([[-1, -1], [3, 4], [2, 4], [1, 3]], dtype=float)
+        polygon = cp.array([[(random.random() - 0.5) * 20, (random.random() - 0.5) * 20] for i in range(n)], dtype=float)
+        print('sum', elevation.get_polygon_traversability(polygon))
