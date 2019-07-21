@@ -196,74 +196,6 @@ def dilation_filter_kernel(width, height, dilation_size):
     return dilation_filter_kernel
 
 
-# def polygon_mask_kernel(width, height, resolution):
-#     polygon_mask_kernel = cp.ElementwiseKernel(
-#             in_params='raw U polygon, U center_x, U center_y, int16 polygon_n, raw U polygon_bbox',
-#             out_params='raw U mask',
-#             preamble=\
-#             string.Template('''
-#             __device__ int get_map_idx(int idx, int layer_n) {
-#                 const int layer = ${width} * ${height};
-#                 return layer * layer_n + idx;
-#             }
-#
-#             __device__ float16 get_idx_x(int idx, float16 center_x) {
-#                 int idx_x = idx / ${width};
-#                 float16 x = (idx_x - ${width} / 2) * ${resolution} + center_x;
-#                 return x;
-#             }
-#             __device__ float16 get_idx_y(int idx, float16 center_y) {
-#                 int idx_y = idx % ${width};
-#                 float16 y = (idx_y - ${height} / 2) * ${resolution} + center_y;
-#                 return y;
-#             }
-#
-#             __device__ bool intersect(float16 x1, float16 y1,
-#                                       float16 x2, float16 y2,
-#                                       float16 x3, float16 y3,
-#                                       float16 x4, float16 y4) {
-#                 float16 tc1 = (x1 - x2) * (y3 - y1) + (y1 - y2) * (x1 - x3);
-#                 float16 tc2 = (x1 - x2) * (y4 - y1) + (y1 - y2) * (x1 - x4);
-#                 float16 td1 = (x3 - x4) * (y1 - y3) + (y3 - y4) * (x3 - x1);
-#                 float16 td2 = (x3 - x4) * (y2 - y1) + (y3 - y4) * (x3 - x2);
-#                 if ((tc1 * tc2 < 0) && (td1 * td2 < 0)) {
-#                     return true;
-#                 }
-#                 else {
-#                     return false;
-#                 }
-#             }
-#             ''').substitute(width=width, height=height, resolution=resolution),
-#             operation=\
-#             string.Template('''
-#             float16 x = get_idx_x(i, center_x);
-#             float16 y = get_idx_y(i, center_y);
-#             if (x < polygon_bbox[0] || x > polygon_bbox[2]
-#                 || y < polygon_bbox[1] || y > polygon_bbox[3]){
-#                 mask[i] = 0;
-#             }
-#             else {
-#                 int intersect_cnt = 0;
-#                 for (int j = 0; j < polygon_n; j++) {
-#                     float16 p1x = polygon[j * 2 + 0];
-#                     float16 p1y = polygon[j * 2 + 1];
-#                     float16 p2x = polygon[(j + 1) % polygon_n * 2 + 0];
-#                     float16 p2y = polygon[(j + 1) % polygon_n * 2 + 1];
-#                     if(intersect(x, 0, x, y, p1x, p1y, p2x, p2y)) {
-#                         if(((p1y <= y) && (p2y > y))
-#                                 || ((p1y > y) && (p2y <= y))){
-#                             intersect_cnt++;
-#                         }
-#                     }
-#                 }
-#                 if (intersect_cnt % 2 == 0) { mask[i] = 0; }
-#                 else { mask[i] = 1; }
-#             }
-#             ''').substitute(a=1),
-#             name='polygon_mask_kernel')
-#     return polygon_mask_kernel
-
-
 def polygon_mask_kernel(width, height, resolution):
     polygon_mask_kernel = cp.ElementwiseKernel(
             in_params='raw U polygon, U center_x, U center_y, int16 polygon_n, raw U polygon_bbox',
@@ -353,21 +285,6 @@ def polygon_mask_kernel(width, height, resolution):
                 return ${width} * idx_x + idx_y;
             }
 
-            __device__ bool intersect(float16 x1, float16 y1,
-                                      float16 x2, float16 y2,
-                                      float16 x3, float16 y3,
-                                      float16 x4, float16 y4) {
-                float16 tc1 = (x1 - x2) * (y3 - y1) + (y1 - y2) * (x1 - x3);
-                float16 tc2 = (x1 - x2) * (y4 - y1) + (y1 - y2) * (x1 - x4);
-                float16 td1 = (x3 - x4) * (y1 - y3) + (y3 - y4) * (x3 - x1);
-                float16 td2 = (x3 - x4) * (y2 - y1) + (y3 - y4) * (x3 - x2);
-                if ((tc1 * tc2 < 0) && (td1 * td2 < 0)) {
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
             ''').substitute(width=width, height=height, resolution=resolution),
             operation=\
             string.Template('''
@@ -378,8 +295,7 @@ def polygon_mask_kernel(width, height, resolution):
             int bbox_max_idx = get_idx(polygon_bbox[2], polygon_bbox[3], center_x, center_y);
             Point bmin = {get_idx_x(bbox_min_idx), get_idx_y(bbox_min_idx)};
             Point bmax = {get_idx_x(bbox_max_idx), get_idx_y(bbox_max_idx)};
-            if (p.x < bmin.x || p.x > bmax.x
-                || p.y < bmin.y || p.y > bmax.y){
+            if (p.x < bmin.x || p.x > bmax.x || p.y < bmin.y || p.y > bmax.y){
                 mask[i] = 0;
                 return;
             }
@@ -405,8 +321,7 @@ def polygon_mask_kernel(width, height, resolution):
                                 return;
                             }
                         }
-                        else if(((p1.y <= p.y) && (p2.y > p.y))
-                                || ((p1.y > p.y) && (p2.y <= p.y))){
+                        else if(((p1.y <= p.y) && (p2.y > p.y)) || ((p1.y > p.y) && (p2.y <= p.y))){
                             intersect_cnt++;
                         }
                     }
