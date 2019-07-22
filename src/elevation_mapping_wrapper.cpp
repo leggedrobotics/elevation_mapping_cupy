@@ -31,7 +31,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
-  float time_variance, initial_variance, traversability_inlier;
+  float time_variance, initial_variance, traversability_inlier, position_noise_thresh;
   int dilation_size, wall_num_thresh, min_height_drift_cnt;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
@@ -64,6 +64,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<float>("traversability_inlier", traversability_inlier, 0.1);
   param_.attr("set_traversability_inlier")(traversability_inlier);
 
+  nh.param<float>("position_noise_thresh", position_noise_thresh, 0.1);
+  param_.attr("set_position_noise_thresh")(position_noise_thresh);
+
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
 
@@ -88,13 +91,14 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 }
 
 
-void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t) {
+void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t, const double positionNoise) {
   
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
   map_.attr("input")(static_cast<Eigen::Ref<const RowMatrixXd>>(points),
                      static_cast<Eigen::Ref<const RowMatrixXd>>(R),
-                     static_cast<Eigen::Ref<const Eigen::VectorXd>>(t));
+                     static_cast<Eigen::Ref<const Eigen::VectorXd>>(t),
+                     positionNoise);
 }
 
 

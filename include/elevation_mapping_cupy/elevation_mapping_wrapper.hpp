@@ -30,7 +30,8 @@ class ElevationMappingWrapper {
     ~ElevationMappingWrapper()=default;
     void initialize(ros::NodeHandle& nh);
 
-    void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t);
+    void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
+               const double positionNoise);
     void move_to(const Eigen::VectorXd& p);
     void clear();
     void get_maps(std::vector<Eigen::MatrixXd>& maps);

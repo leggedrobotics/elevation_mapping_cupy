@@ -10,7 +10,11 @@
 namespace elevation_mapping_cupy{
 
 
-ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
+ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
+  lowpassPosition_(0, 0, 0),
+  lowpassOrientation_(0, 0, 0, 1),
+  positionError_(0),
+  alpha_(0.1)
 {
   nh_ = nh;
   map_.initialize(nh_);
@@ -19,6 +23,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
+  nh.param<double>("position_lowpass_alpha", alpha_, 0.2);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
@@ -55,7 +60,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   }
   map_.input(pointCloud,
              transformationSensorToMap.rotation(),
-             transformationSensorToMap.translation());
+             transformationSensorToMap.translation(),
+             positionError_);
   map_.get_grid_map(gridMap_);
   gridMap_.setTimestamp(ros::Time::now().toSec());
   grid_map_msgs::GridMap msg;
@@ -63,12 +69,19 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   mapPub_.publish(msg);
 
   ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
+  ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
 }
 
 void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
 {
   Eigen::Vector2d position(pose.pose.pose.position.x, pose.pose.pose.position.y);
   map_.move_to(position);
+  Eigen::Vector3d position3(pose.pose.pose.position.x, pose.pose.pose.position.y, pose.pose.pose.position.z);
+  Eigen::Vector4d orientation(pose.pose.pose.orientation.x, pose.pose.pose.orientation.y,
+                              pose.pose.pose.orientation.z, pose.pose.pose.orientation.w);
+  lowpassPosition_ = alpha_ * position3 + (1 - alpha_) * lowpassPosition_;
+  lowpassOrientation_ = alpha_ * orientation + (1 - alpha_) * lowpassOrientation_;
+  positionError_ = (position3 - lowpassPosition_).norm() + (orientation - lowpassOrientation_).norm();
 }
 
 bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response)

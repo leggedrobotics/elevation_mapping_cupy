@@ -45,6 +45,11 @@ class ElevationMappingNode {
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
     grid_map::GridMap gridMap_;
+
+    Eigen::Vector3d lowpassPosition_;
+    Eigen::Vector4d lowpassOrientation_;
+    double positionError_;
+    double alpha_;
 };
 
 }

@@ -11,6 +11,8 @@ traversability_inlier: 0.1
 dilation_size: 2
 wall_num_thresh: 100
 min_height_drift_cnt: 100
+position_noise_thresh: 0.1
+position_lowpass_alpha: 0.4
 
 gather_mode: 'mean'
 enable_edge_sharpen: true

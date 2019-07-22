@@ -22,6 +22,7 @@ class Parameter(object):
 
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
+        self.position_noise_thresh = 0.1
 
         self.initial_variance = 10.0
         self.w1 = np.zeros((4, 1, 3, 3))
@@ -72,6 +73,9 @@ class Parameter(object):
 
     def set_traversability_inlier(self, traversability_inlier):
         self.traversability_inlier = traversability_inlier
+
+    def set_position_noise_thresh(self, position_noise_thresh):
+        self.position_noise_thresh = position_noise_thresh
 
     def set_wall_num_thresh(self, wall_num_thresh):
         self.wall_num_thresh = wall_num_thresh
