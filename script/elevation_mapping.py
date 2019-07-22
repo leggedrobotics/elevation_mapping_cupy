@@ -10,7 +10,7 @@ from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
 from custom_kernels import polygon_mask_kernel
 
-from traversability_polygon import get_weighted_sum
+from traversability_polygon import get_masked_traversability, is_traversable, calculate_area
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -46,6 +46,8 @@ class ElevationMap(object):
 
         self.enable_edge_sharpen = param.enable_edge_sharpen
         self.enable_drift_compensation = param.enable_drift_compensation
+        self.safe_thresh = 0.5
+        self.max_unsafe_n = 20
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -184,16 +186,24 @@ class ElevationMap(object):
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
 
-    def get_polygon_traversability(self, polygon):
+    def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)
+        area = calculate_area(polygon)
+        pmin = self.center - self.map_length / 2 + self.resolution
+        pmax = self.center + self.map_length / 2 - self.resolution
+        polygon[:, 0] = polygon[:, 0].clip(pmin[0], pmax[0])
+        polygon[:, 1] = polygon[:, 1].clip(pmin[1], pmax[1])
         polygon_min = polygon.min(axis=0)
         polygon_max = polygon.max(axis=0)
         polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
         polygon_n = polygon.shape[0]
         self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
                                  polygon_n, polygon_bbox, self.mask,
-                                 size=(100*100))
-        t = get_weighted_sum(self.elevation_map[3], self.mask)
+                                 size=(self.cell_n * self.cell_n))
+        masked = get_masked_traversability(self.elevation_map[3], self.mask)
+        t = masked.sum()
+        safe = is_traversable(masked, self.safe_thresh, self.max_unsafe_n)
+        result[...] = np.array([safe, t, area])
         return t
 
 
@@ -221,4 +231,7 @@ if __name__ == '__main__':
 
         # polygon = cp.array([[-1, -1], [3, 4], [2, 4], [1, 3]], dtype=float)
         polygon = cp.array([[(random.random() - 0.5) * 20, (random.random() - 0.5) * 20] for i in range(n)], dtype=float)
-        print('sum', elevation.get_polygon_traversability(polygon))
+        result = cp.zeros(3)
+        print('area ', calculate_area(polygon))
+        print('sum', elevation.get_polygon_traversability(polygon, result))
+        print('result ', result)

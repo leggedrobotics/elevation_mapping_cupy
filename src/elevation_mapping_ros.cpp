@@ -106,13 +106,16 @@ bool ElevationMappingNode::checkFootprintPath(traversability_msgs::CheckFootprin
 
   for (auto& path_elem: request.path) {
     std::vector<Eigen::Vector2d> polygon;
+    Eigen::Vector3d result;
     for (auto& p: path_elem.footprint.polygon.points) {
       polygon.push_back(Eigen::Vector2d(p.x, p.y));
     }
-    double traversability = map_.get_polygon_traversability(polygon);
-    traversability_msgs::TraversabilityResult result;
-    result.traversability = traversability;
-    response.result.push_back(result);
+    double traversability = map_.get_polygon_traversability(polygon, result);
+    traversability_msgs::TraversabilityResult traversability_result;
+    traversability_result.is_safe = bool(result[0] > 0.5);
+    traversability_result.traversability = result[1];
+    traversability_result.area = result[2];
+    response.result.push_back(traversability_result);
   }
   return true;
 }

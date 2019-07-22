@@ -1,5 +1,5 @@
 resolution: 0.04
-map_length: 4
+map_length: 10
 dilation_size: 3
 sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0
@@ -8,7 +8,7 @@ time_variance: 0.01
 max_variance: 100.0
 initial_variance: 100.0
 traversability_inlier: 0.1
-dilation_size: 2
+dilation_size: 3
 wall_num_thresh: 100
 min_height_drift_cnt: 100
 
@@ -20,5 +20,6 @@ weight_file: 'config/weights.yaml'
 
 pointcloud_topics: ['/realsense_d435_front/depth/color/points',
                     '/realsense_d435_rear/depth/color/points']
-pose_topic: '/state_estimator/pose_in_odom'
+# pose_topic: '/state_estimator/pose_in_odom'
+pose_topic: '/icp_tools/pose'
 map_frame: 'odom'

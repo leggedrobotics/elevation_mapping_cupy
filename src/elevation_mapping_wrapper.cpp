@@ -140,7 +140,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
 }
 
 
-double ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon) {
+double ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon, Eigen::Vector3d& result) {
   RowMatrixXd polygon_m(polygon.size(), 2);
   if (polygon.size() < 3)
     return 0;
@@ -151,7 +151,8 @@ double ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Ve
     i++;
   }
   double traversability = map_.attr("get_polygon_traversability")(
-      static_cast<Eigen::Ref<const RowMatrixXd>>(polygon_m)).cast<double>();
+      static_cast<Eigen::Ref<const RowMatrixXd>>(polygon_m),
+      static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<double>();
   return traversability;
 }
 
