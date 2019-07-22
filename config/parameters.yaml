@@ -17,6 +17,7 @@ position_lowpass_alpha: 0.4
 gather_mode: 'mean'
 enable_edge_sharpen: true
 enable_drift_compensation: true
+enable_pointcloud_publishing: true
 
 weight_file: 'config/weights.yaml'
 

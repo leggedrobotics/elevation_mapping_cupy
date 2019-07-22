@@ -14,7 +14,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   lowpassPosition_(0, 0, 0),
   lowpassOrientation_(0, 0, 0, 1),
   positionError_(0),
-  alpha_(0.1)
+  alpha_(0.1),
+  enablePointCloudPublishing_(false)
 {
   nh_ = nh;
   map_.initialize(nh_);
@@ -24,15 +25,18 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
   nh.param<double>("position_lowpass_alpha", alpha_, 0.2);
+  nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
+  pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
+  setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -68,6 +72,10 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
   mapPub_.publish(msg);
 
+  if (enablePointCloudPublishing_) {
+    publishAsPointCloud();
+  }
+
   ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
 }
@@ -84,6 +92,12 @@ void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceS
   positionError_ = (position3 - lowpassPosition_).norm() + (orientation - lowpassOrientation_).norm();
 }
 
+void ElevationMappingNode::publishAsPointCloud() {
+  sensor_msgs::PointCloud2 msg;
+  grid_map::GridMapRosConverter::toPointCloud(gridMap_, "elevation", msg);
+  pointPub_.publish(msg);
+}
+
 bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response)
 {
   grid_map::Position requestedSubmapPosition(request.position_x, request.position_y);
@@ -96,7 +110,8 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
 
   if (request.layers.empty()) {
     grid_map::GridMapRosConverter::toMessage(subMap, response.map);
-  } else {
+  }
+  else {
     std::vector<std::string> layers;
     for (const auto& layer : request.layers) {
       layers.push_back(layer);
@@ -110,6 +125,12 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
 {
   ROS_INFO("Clearing map.");
   map_.clear();
+  return true;
+}
+
+bool ElevationMappingNode::setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response) {
+  enablePointCloudPublishing_ = request.data;
+  response.success = true;
   return true;
 }
 
