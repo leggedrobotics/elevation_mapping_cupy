@@ -1,4 +1,6 @@
 # Elevation Mapping cupy
+[![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=bitbucket_leggedrobotics/elevation_mapping_cupy/master)](https://ci.leggedrobotics.com/job/<repo_host>_leggedrobotics/job/elevation_mapping_cupy/job/master/)
+
 ## Overview
 This is a ros package of elevation mapping on GPU.  
 Code are written in python and numpy, cupy backend can be selected.
