@@ -1,5 +1,5 @@
 resolution: 0.04
-map_length: 10
+map_length: 4
 dilation_size: 3
 sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0
