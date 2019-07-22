@@ -20,6 +20,9 @@ class Parameter(object):
         self.wall_num_thresh = 100
         self.min_height_drift_cnt = 100
 
+        self.safe_thresh = 0.5
+        self.max_unsafe_n = 20
+
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
 
@@ -84,3 +87,9 @@ class Parameter(object):
 
     def set_enable_drift_compensation(self, enable_drift_compensation):
         self.enable_drift_compensation = enable_drift_compensation
+
+    def set_safe_thresh(self, safe_thresh):
+        self.safe_thresh = safe_thresh
+
+    def set_max_unsafe_n(self, max_unsafe_n):
+        self.max_unsafe_n = max_unsafe_n

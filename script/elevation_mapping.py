@@ -46,8 +46,8 @@ class ElevationMap(object):
 
         self.enable_edge_sharpen = param.enable_edge_sharpen
         self.enable_drift_compensation = param.enable_drift_compensation
-        self.safe_thresh = 0.5
-        self.max_unsafe_n = 20
+        self.safe_thresh = param.safe_thresh
+        self.max_unsafe_n = param.max_unsafe_n
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))

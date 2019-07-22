@@ -31,8 +31,8 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
-  float time_variance, initial_variance, traversability_inlier;
-  int dilation_size, wall_num_thresh, min_height_drift_cnt;
+  float time_variance, initial_variance, traversability_inlier, safe_thresh;
+  int dilation_size, wall_num_thresh, min_height_drift_cnt, max_unsafe_n;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
   param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
@@ -64,6 +64,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<float>("traversability_inlier", traversability_inlier, 0.1);
   param_.attr("set_traversability_inlier")(traversability_inlier);
 
+  nh.param<float>("safe_thresh", safe_thresh, 0.5);
+  param_.attr("set_safe_thresh")(safe_thresh);
+
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
 
@@ -72,6 +75,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<int>("min_height_drift_cnt", min_height_drift_cnt, 100);
   param_.attr("set_min_height_drift_cnt")(min_height_drift_cnt);
+
+  nh.param<int>("max_unsafe_n", max_unsafe_n, 20);
+  param_.attr("set_max_unsafe_n")(max_unsafe_n);
 
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);

@@ -12,6 +12,9 @@ dilation_size: 3
 wall_num_thresh: 100
 min_height_drift_cnt: 100
 
+safe_thresh: 0.5
+max_unsafe_n: 20
+
 gather_mode: 'mean'
 enable_edge_sharpen: true
 enable_drift_compensation: true
