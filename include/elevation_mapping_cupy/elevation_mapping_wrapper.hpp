@@ -30,7 +30,8 @@ class ElevationMappingWrapper {
     ~ElevationMappingWrapper()=default;
     void initialize(ros::NodeHandle& nh);
 
-    void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t);
+    void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
+               const double positionNoise, const double orientationNoise);
     void move_to(const Eigen::VectorXd& p);
     void clear();
     void get_maps(std::vector<Eigen::MatrixXd>& maps);
@@ -44,30 +45,6 @@ class ElevationMappingWrapper {
     double resolution_;
     double map_length_;
     int map_n_;
-};
-
-
-class ElevationMappingNode {
-  public:
-    ElevationMappingNode(ros::NodeHandle& nh);
-    ~ElevationMappingNode() = default;
-
-  private:
-    void readParameters();
-    void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
-    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
-    bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
-    bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
-    ros::NodeHandle nh_;
-    std::vector<ros::Subscriber> pointcloudSubs_;
-    ros::Subscriber poseSub_;
-    ros::Publisher mapPub_;
-    ros::ServiceServer rawSubmapService_;
-    ros::ServiceServer clearMapService_;
-    tf::TransformListener transformListener_;
-    ElevationMappingWrapper map_;
-    std::string mapFrameId_;
-    grid_map::GridMap gridMap_;
 };
 
 }

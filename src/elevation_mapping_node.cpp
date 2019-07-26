@@ -9,7 +9,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
+#include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
 
 using namespace elevation_mapping_cupy;
 
