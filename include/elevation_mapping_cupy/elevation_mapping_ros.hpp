@@ -6,6 +6,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
 #include <tf/transform_listener.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -33,14 +34,18 @@ class ElevationMappingNode {
     void readParameters();
     void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
     void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
+    void publishAsPointCloud();
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
     ros::Publisher mapPub_;
+    ros::Publisher pointPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
+    ros::ServiceServer setPublishPointService_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
@@ -52,6 +57,7 @@ class ElevationMappingNode {
     double orientationError_;
     double positionAlpha_;
     double orientationAlpha_;
+    bool enablePointCloudPublishing_;
 };
 
 }
