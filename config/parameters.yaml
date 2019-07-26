@@ -24,7 +24,7 @@ gather_mode: 'mean'
 enable_edge_sharpen: true
 enable_visibility_cleanup: true
 enable_drift_compensation: true
-enable_pointcloud_publishing: true
+enable_pointcloud_publishing: false
 
 weight_file: 'config/weights.yaml'
 

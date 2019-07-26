@@ -133,12 +133,10 @@ class ElevationMap(object):
                                    self.center[0], self.center[1], R, t,
                                    self.new_map, error, error_cnt,
                                    size=(points.shape[0]))
-        print(self.enable_drift_compensation, error, error_cnt, position_noise, orientation_noise)
         if (self.enable_drift_compensation
                 and error_cnt > self.min_height_drift_cnt
                 and (position_noise > self.position_noise_thresh
                      or orientation_noise > self.orientation_noise_thresh)):
-            print("compensation on ")
             mean_error = error / error_cnt
             self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
