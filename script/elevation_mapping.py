@@ -33,6 +33,7 @@ class ElevationMap(object):
         self.sensor_noise_factor = param.sensor_noise_factor
         self.mahalanobis_thresh = param.mahalanobis_thresh
         self.outlier_variance = param.outlier_variance
+        self.drift_compensation_variance_inlier = param.drift_compensation_variance_inlier
         self.time_variance = param.time_variance
 
         self.max_variance = param.max_variance
@@ -40,9 +41,14 @@ class ElevationMap(object):
         self.traversability_inlier = param.traversability_inlier
         self.wall_num_thresh = param.wall_num_thresh
         self.min_height_drift_cnt = param.min_height_drift_cnt
+        self.max_ray_length = param.max_ray_length
+        self.cleanup_step = param.cleanup_step
 
         self.enable_edge_sharpen = param.enable_edge_sharpen
+        self.enable_visibility_cleanup = param.enable_visibility_cleanup
         self.enable_drift_compensation = param.enable_drift_compensation
+        self.position_noise_thresh = param.position_noise_thresh
+        self.orientation_noise_thresh = param.orientation_noise_thresh
 
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -61,8 +67,7 @@ class ElevationMap(object):
     def clear(self):
         self.elevation_map *= 0.0
         # Initial variance
-        self.elevation_map[1] += self.initial_variance
-
+        self.elevation_map[1] += self.initial_variance 
     def get_position(self, position):
         position[0][:] = xp.asnumpy(self.center)
 
@@ -104,21 +109,23 @@ class ElevationMap(object):
                                                    self.mahalanobis_thresh,
                                                    self.outlier_variance,
                                                    self.wall_num_thresh,
-                                                   self.enable_edge_sharpen)
+                                                   self.max_ray_length,
+                                                   self.cleanup_step,
+                                                   self.enable_edge_sharpen,
+                                                   self.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
                                                            self.cell_n,
                                                            self.cell_n,
                                                            self.sensor_noise_factor,
                                                            self.mahalanobis_thresh,
-                                                           self.outlier_variance,
+                                                           self.drift_compensation_variance_inlier,
                                                            self.traversability_inlier)
-
         self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
 
-    def update_map_with_kernel(self, points, R, t):
+    def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
         error = xp.array([0.0], dtype=xp.float32)
         error_cnt = xp.array([0], dtype=xp.float32)
@@ -127,7 +134,9 @@ class ElevationMap(object):
                                    self.new_map, error, error_cnt,
                                    size=(points.shape[0]))
         if (self.enable_drift_compensation
-                and error_cnt > self.min_height_drift_cnt):
+                and error_cnt > self.min_height_drift_cnt
+                and (position_noise > self.position_noise_thresh
+                     or orientation_noise > self.orientation_noise_thresh)):
             mean_error = error / error_cnt
             self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
@@ -149,10 +158,10 @@ class ElevationMap(object):
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
-    def input(self, raw_points, R, t):
+    def input(self, raw_points, R, t, position_noise, orientation_noise):
         raw_points = xp.asarray(raw_points)
         raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points, xp.asarray(R), xp.asarray(t))
+        self.update_map_with_kernel(raw_points, xp.asarray(R), xp.asarray(t), position_noise, orientation_noise)
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,

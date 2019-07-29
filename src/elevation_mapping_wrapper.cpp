@@ -29,9 +29,10 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 }
 
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  bool enable_edge_sharpen, enable_drift_compensation;
-  float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance;
-  float time_variance, initial_variance, traversability_inlier;
+  bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup;
+  float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
+  float time_variance, initial_variance, traversability_inlier, position_noise_thresh,
+        orientation_noise_thresh, max_ray_length, cleanup_step;
   int dilation_size, wall_num_thresh, min_height_drift_cnt;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
@@ -39,6 +40,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<bool>("enable_drift_compensation", enable_drift_compensation, true);
   param_.attr("set_enable_drift_compensation")(enable_drift_compensation);
+
+  nh.param<bool>("enable_visibility_cleanup", enable_visibility_cleanup, true);
+  param_.attr("set_enable_visibility_cleanup")(enable_visibility_cleanup);
 
   nh.param<float>("resolution", resolution, 0.02);
   param_.attr("set_resolution")(resolution);
@@ -55,6 +59,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<float>("outlier_variance", outlier_variance, 0.01);
   param_.attr("set_outlier_variance")(outlier_variance);
 
+  nh.param<float>("drift_compensation_variance_inlier", drift_compensation_variance_inlier, 0.1);
+  param_.attr("set_drift_compensation_variance_inlier")(drift_compensation_variance_inlier);
+
   nh.param<float>("time_variance", time_variance, 0.01);
   param_.attr("set_time_variance")(time_variance);
 
@@ -63,6 +70,18 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<float>("traversability_inlier", traversability_inlier, 0.1);
   param_.attr("set_traversability_inlier")(traversability_inlier);
+
+  nh.param<float>("position_noise_thresh", position_noise_thresh, 0.1);
+  param_.attr("set_position_noise_thresh")(position_noise_thresh);
+
+  nh.param<float>("orientation_noise_thresh", orientation_noise_thresh, 0.1);
+  param_.attr("set_orientation_noise_thresh")(orientation_noise_thresh);
+
+  nh.param<float>("max_ray_length", max_ray_length, 2.0);
+  param_.attr("set_max_ray_length")(max_ray_length);
+
+  nh.param<float>("cleanup_step", cleanup_step, 0.01);
+  param_.attr("set_cleanup_step")(cleanup_step);
 
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
@@ -88,13 +107,14 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 }
 
 
-void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t) {
+void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t, const double positionNoise, const double orientationNoise) {
   
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
   map_.attr("input")(static_cast<Eigen::Ref<const RowMatrixXd>>(points),
                      static_cast<Eigen::Ref<const RowMatrixXd>>(R),
-                     static_cast<Eigen::Ref<const Eigen::VectorXd>>(t));
+                     static_cast<Eigen::Ref<const Eigen::VectorXd>>(t),
+                     positionNoise, orientationNoise);
 }
 
 

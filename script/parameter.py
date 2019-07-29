@@ -11,6 +11,7 @@ class Parameter(object):
         self.sensor_noise_factor = 0.05
         self.mahalanobis_thresh = 2.0
         self.outlier_variance = 0.01
+        self.drift_compensation_variance_inlier = 0.1
         self.time_variance = 0.01
 
         self.max_variance = 1.0
@@ -20,8 +21,14 @@ class Parameter(object):
         self.wall_num_thresh = 100
         self.min_height_drift_cnt = 100
 
+        self.max_ray_length = 2.0
+        self.cleanup_step = 0.01
+
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
+        self.enable_visibility_cleanup = True
+        self.position_noise_thresh = 0.1
+        self.orientation_noise_thresh = 0.1
 
         self.initial_variance = 10.0
         self.w1 = np.zeros((4, 1, 3, 3))
@@ -58,6 +65,9 @@ class Parameter(object):
     def set_outlier_variance(self, outlier_variance):
         self.outlier_variance = outlier_variance
 
+    def set_drift_compensation_variance_inlier(self, drift_compensation_variance_inlier):
+        self.drift_compensation_variance_inlier = drift_compensation_variance_inlier
+
     def set_time_variance(self, time_variance):
         self.time_variance = time_variance
 
@@ -73,14 +83,29 @@ class Parameter(object):
     def set_traversability_inlier(self, traversability_inlier):
         self.traversability_inlier = traversability_inlier
 
+    def set_position_noise_thresh(self, position_noise_thresh):
+        self.position_noise_thresh = position_noise_thresh
+
+    def set_orientation_noise_thresh(self, orientation_noise_thresh):
+        self.orientation_noise_thresh = orientation_noise_thresh
+
     def set_wall_num_thresh(self, wall_num_thresh):
         self.wall_num_thresh = wall_num_thresh
 
     def set_min_height_drift_cnt(self, min_height_drift_cnt):
         self.min_height_drift_cnt = min_height_drift_cnt
 
+    def set_max_ray_length(self, max_ray_length):
+        self.max_ray_length = max_ray_length
+
+    def set_cleanup_step(self, cleanup_step):
+        self.cleanup_step = cleanup_step
+
     def set_enable_edge_sharpen(self, enable_edge_sharpen):
         self.enable_edge_sharpen = enable_edge_sharpen
 
     def set_enable_drift_compensation(self, enable_drift_compensation):
         self.enable_drift_compensation = enable_drift_compensation
+
+    def set_enable_visibility_cleanup(self, enable_visibility_cleanup):
+        self.enable_visibility_cleanup = enable_visibility_cleanup
