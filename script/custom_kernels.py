@@ -88,6 +88,8 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
+            if (z - t[2] > 1.0) {return;}
+            if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
             int idx = get_idx(x, y, center_x, center_y);
             if (!is_inside(idx)) {
                 return;
@@ -107,24 +109,24 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                 atomicAdd(&newmap[get_map_idx(idx, 2)], 1.0);
                 map[get_map_idx(idx, 2)] = 1;
                 // visibility cleanup
-                if (${enable_visibility_cleanup}) {
-                    if (rz > ${max_ray_length}) {continue;}
-                    float16 ray_x, ray_y, ray_z;
-                    float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
-                    ray_length = min(ray_length, (float16)${max_ray_length});
-                    for (float16 s=${ray_step}; s < ray_length; s+=${ray_step}) {
-                        U nx = t[0] + ray_x * s;
-                        U ny = t[1] + ray_y * s;
-                        U nz = t[2] + ray_z * s;
-                        int nidx = get_idx(nx, ny, center_x, center_y);
-                        U nmap_h = map[get_map_idx(nidx, 0)];
-                        U nmap_v = map[get_map_idx(nidx, 1)];
-                        if (nmap_h > nz + nmap_v * 3) {
-                            // map[get_map_idx(nidx, 1)] = 100;
-                            // map[get_map_idx(nidx, 2)] = 0;
-                            // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-                            atomicAdd(&map[get_map_idx(idx, 2)], -${cleanup_step});
-                        }
+            }
+            if (${enable_visibility_cleanup}) {
+                // if (rz > ${max_ray_length}) {continue;}
+                float16 ray_x, ray_y, ray_z;
+                float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
+                ray_length = min(ray_length, (float16)${max_ray_length});
+                for (float16 s=${ray_step}; s < ray_length; s+=${ray_step}) {
+                    U nx = t[0] + ray_x * s;
+                    U ny = t[1] + ray_y * s;
+                    U nz = t[2] + ray_z * s;
+                    int nidx = get_idx(nx, ny, center_x, center_y);
+                    U nmap_h = map[get_map_idx(nidx, 0)];
+                    U nmap_v = map[get_map_idx(nidx, 1)];
+                    if (nmap_h > nz + nmap_v * 3) {
+                        // map[get_map_idx(nidx, 1)] = 100;
+                        // map[get_map_idx(nidx, 2)] = 0;
+                        // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
+                        atomicAdd(&map[get_map_idx(idx, 2)], -${cleanup_step});
                     }
                 }
             }
@@ -157,6 +159,8 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
+            if (z - t[2] > 1.0) {return;}
+            if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
             int idx = get_idx(x, y, center_x, center_y);
             if (!is_inside(idx)) {
                 return;

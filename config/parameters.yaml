@@ -1,6 +1,5 @@
 resolution: 0.04
 map_length: 6
-dilation_size: 3
 sensor_noise_factor: 0.05
 mahalanobis_thresh: 2.0
 outlier_variance: 0.001
