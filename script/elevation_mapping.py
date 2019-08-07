@@ -36,6 +36,7 @@ class ElevationMap(object):
         self.sensor_noise_factor = param.sensor_noise_factor
         self.mahalanobis_thresh = param.mahalanobis_thresh
         self.outlier_variance = param.outlier_variance
+        self.drift_compensation_variance_inlier = param.drift_compensation_variance_inlier
         self.time_variance = param.time_variance
 
         self.max_variance = param.max_variance
@@ -43,12 +44,16 @@ class ElevationMap(object):
         self.traversability_inlier = param.traversability_inlier
         self.wall_num_thresh = param.wall_num_thresh
         self.min_height_drift_cnt = param.min_height_drift_cnt
+        self.max_ray_length = param.max_ray_length
+        self.cleanup_step = param.cleanup_step
 
         self.enable_edge_sharpen = param.enable_edge_sharpen
+        self.enable_visibility_cleanup = param.enable_visibility_cleanup
         self.enable_drift_compensation = param.enable_drift_compensation
+        self.position_noise_thresh = param.position_noise_thresh
+        self.orientation_noise_thresh = param.orientation_noise_thresh
         self.safe_thresh = param.safe_thresh
         self.max_unsafe_n = param.max_unsafe_n
-
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
         # Initial variance
@@ -110,7 +115,10 @@ class ElevationMap(object):
                                                    self.mahalanobis_thresh,
                                                    self.outlier_variance,
                                                    self.wall_num_thresh,
-                                                   self.enable_edge_sharpen)
+                                                   self.max_ray_length,
+                                                   self.cleanup_step,
+                                                   self.enable_edge_sharpen,
+                                                   self.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
                                                            self.cell_n,
                                                            self.cell_n,
@@ -123,10 +131,9 @@ class ElevationMap(object):
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
+         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
 
-        self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
-
-    def update_map_with_kernel(self, points, R, t):
+    def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
         error = xp.array([0.0], dtype=xp.float32)
         error_cnt = xp.array([0], dtype=xp.float32)
@@ -135,7 +142,9 @@ class ElevationMap(object):
                                    self.new_map, error, error_cnt,
                                    size=(points.shape[0]))
         if (self.enable_drift_compensation
-                and error_cnt > self.min_height_drift_cnt):
+                and error_cnt > self.min_height_drift_cnt
+                and (position_noise > self.position_noise_thresh
+                     or orientation_noise > self.orientation_noise_thresh)):
             mean_error = error / error_cnt
             self.elevation_map[0] += mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
@@ -157,10 +166,10 @@ class ElevationMap(object):
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
-    def input(self, raw_points, R, t):
+    def input(self, raw_points, R, t, position_noise, orientation_noise):
         raw_points = xp.asarray(raw_points)
         raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points, xp.asarray(R), xp.asarray(t))
+        self.update_map_with_kernel(raw_points, xp.asarray(R), xp.asarray(t), position_noise, orientation_noise)
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,
@@ -186,52 +195,19 @@ class ElevationMap(object):
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
 
-    def get_polygon_traversability(self, polygon, result):
-        polygon = xp.asarray(polygon)
-        area = calculate_area(polygon)
-        pmin = self.center - self.map_length / 2 + self.resolution
-        pmax = self.center + self.map_length / 2 - self.resolution
-        polygon[:, 0] = polygon[:, 0].clip(pmin[0], pmax[0])
-        polygon[:, 1] = polygon[:, 1].clip(pmin[1], pmax[1])
-        polygon_min = polygon.min(axis=0)
-        polygon_max = polygon.max(axis=0)
-        polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
-        polygon_n = polygon.shape[0]
-        self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
-                                 polygon_n, polygon_bbox, self.mask,
-                                 size=(self.cell_n * self.cell_n))
-        masked = get_masked_traversability(self.elevation_map[3], self.mask)
-        t = masked.sum()
-        safe = is_traversable(masked, self.safe_thresh, self.max_unsafe_n)
-        result[...] = np.array([safe, t, area])
-        return t
-
 
 if __name__ == '__main__':
     #  Test script for profiling.
     #  $ python -m cProfile -o profile.stats elevation_mapping.py
     #  $ snakeviz profile.stats
     xp.random.seed(123)
-    points = xp.random.rand(100000, 3) * 10
-    points[:, 2] *= 0.2
-    # R = xp.random.rand(3, 3)
-    R = xp.eye(3)
-    t = xp.random.rand(3) * 0.1
-    print(points)
+    points = xp.random.rand(100000, 3)
+    R = xp.random.rand(3, 3)
+    t = xp.random.rand(3)
     print(R, t)
     param = Parameter()
     param.load_weights('../config/weights.yaml')
     elevation = ElevationMap(param)
     for i in range(200):
-        print(i)
         elevation.input(points, R, t)
-        import random
-        a = cp.zeros((100, 100)) 
-        n = random.randint(3, 3)
-
-        # polygon = cp.array([[-1, -1], [3, 4], [2, 4], [1, 3]], dtype=float)
-        polygon = cp.array([[(random.random() - 0.5) * 20, (random.random() - 0.5) * 20] for i in range(n)], dtype=float)
-        result = cp.zeros(3)
-        print('area ', calculate_area(polygon))
-        print('sum', elevation.get_polygon_traversability(polygon, result))
-        print('result ', result)
+        print(i)
