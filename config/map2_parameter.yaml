@@ -28,7 +28,7 @@ enable_pointcloud_publishing: false
 weight_file: 'config/weights.yaml'
 
 pointcloud_topics: ['/point_cloud_filter/velodyne/point_cloud_cropped']
-# pose_topic: '/state_estimator/pose_in_odom'
-# /state_estimator_standalone/pose_in_odom
-pose_topic: '/state_estimator_standalone/pose_in_odom'
+# pointcloud_topics: ['/velodyne/point_cloud']
+pose_topic: '/state_estimator/pose_in_odom'
+# pose_topic: '/state_estimator_standalone/pose_in_odom'
 map_frame: 'odom'
