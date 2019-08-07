@@ -206,12 +206,20 @@ class ElevationMap(object):
         polygon_max = polygon.max(axis=0)
         polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
         polygon_n = polygon.shape[0]
+        clipped_area = calculate_area(polygon)
+        print('area', clipped_area)
         self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
                                  polygon_n, polygon_bbox, self.mask,
                                  size=(self.cell_n * self.cell_n))
-        masked = get_masked_traversability(self.elevation_map[3], self.mask)
+        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask)
         t = masked.sum()
+        isvalid_cnt = masked_isvalid.sum()
+        print(masked_isvalid)
+        print(isvalid_cnt)
         safe = is_traversable(masked, self.safe_thresh, self.max_unsafe_n)
+        if clipped_area < 0.001:
+            safe = False
+            print('requested polygon is outside of the map')
         result[...] = np.array([safe, t, area])
         return t
 

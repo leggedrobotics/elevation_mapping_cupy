@@ -3,10 +3,15 @@ import cupy as cp
 
 
 def get_masked_traversability(map_array, mask):
-    traversability = map_array[1:-1, 1:-1]
+    traversability = map_array[3][1:-1, 1:-1]
+    is_valid = map_array[2][1:-1, 1:-1]
     mask = mask[1:-1, 1:-1]
+
+    # invalid place is 0 traversability value
+    traversability = cp.where(is_valid < 0.5, traversability, 0)
     masked = traversability * mask
-    return masked
+    masked_isvalid = (1 - is_valid) * mask
+    return masked, masked_isvalid
 
 
 def is_traversable(masked_traversability, thresh, max_over_n):
