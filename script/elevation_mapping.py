@@ -131,7 +131,7 @@ class ElevationMap(object):
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
-         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
+        self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
@@ -194,6 +194,26 @@ class ElevationMap(object):
         # elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
+
+    def get_polygon_traversability(self, polygon, result):
+        polygon = xp.asarray(polygon)
+        area = calculate_area(polygon)
+        pmin = self.center - self.map_length / 2 + self.resolution
+        pmax = self.center + self.map_length / 2 - self.resolution
+        polygon[:, 0] = polygon[:, 0].clip(pmin[0], pmax[0])
+        polygon[:, 1] = polygon[:, 1].clip(pmin[1], pmax[1])
+        polygon_min = polygon.min(axis=0)
+        polygon_max = polygon.max(axis=0)
+        polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
+        polygon_n = polygon.shape[0]
+        self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
+                                 polygon_n, polygon_bbox, self.mask,
+                                 size=(self.cell_n * self.cell_n))
+        masked = get_masked_traversability(self.elevation_map[3], self.mask)
+        t = masked.sum()
+        safe = is_traversable(masked, self.safe_thresh, self.max_unsafe_n)
+        result[...] = np.array([safe, t, area])
+        return t
 
 
 if __name__ == '__main__':
