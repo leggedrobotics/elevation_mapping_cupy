@@ -113,6 +113,12 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
   bool isSuccess;
   grid_map::Index index;
   grid_map::GridMap subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
+  const auto& length = subMap.getLength();
+  Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(length(0), length(1));
+  subMap.add("horizontal_variance_x", zero.cast<float>());
+  subMap.add("horizontal_variance_y", zero.cast<float>());
+  subMap.add("horizontal_variance_xy", zero.cast<float>());
+  subMap.add("time", zero.cast<float>());
 
   if (request.layers.empty()) {
     grid_map::GridMapRosConverter::toMessage(subMap, response.map);
