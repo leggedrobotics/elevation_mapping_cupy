@@ -153,13 +153,13 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   gridMap.setGeometry(length, resolution_, position);
   std::vector<Eigen::MatrixXd> maps;
   get_maps(maps);
-  gridMap.add("elevation", maps[0].cast<float>());
-  gridMap.add("traversability", maps[2].cast<float>());
+  // gridMap.add("elevation", maps[0].cast<float>());
+  // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  // std::vector<std::string> layerNames = {"elevation", "variance", "traversability"};
-  // for(int i = 0; i < maps.size() ; ++i) {
-  //   gridMap.add(layerNames[i], maps[i].cast<float>());
-  // }
+  std::vector<std::string> layerNames = {"elevation", "variance", "traversability"};
+  for(int i = 0; i < maps.size() ; ++i) {
+    gridMap.add(layerNames[i], maps[i].cast<float>());
+  }
   // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(map_n_, map_n_);
   // gridMap.add("horizontal_variance_x", zero.cast<float>());
   // gridMap.add("horizontal_variance_y", zero.cast<float>());
