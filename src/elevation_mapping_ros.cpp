@@ -119,6 +119,11 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
   subMap.add("horizontal_variance_y", zero.cast<float>());
   subMap.add("horizontal_variance_xy", zero.cast<float>());
   subMap.add("time", zero.cast<float>());
+  subMap.add("color", zero.cast<float>());
+  subMap.add("lowest_scan_point", zero.cast<float>());
+  subMap.add("sensor_x_at_lowest_scan", zero.cast<float>());
+  subMap.add("sensor_y_at_lowest_scan", zero.cast<float>());
+  subMap.add("sensor_z_at_lowest_scan", zero.cast<float>());
 
   if (request.layers.empty()) {
     grid_map::GridMapRosConverter::toMessage(subMap, response.map);
