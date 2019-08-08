@@ -8,7 +8,6 @@ find_package(Eigen3 REQUIRED)
 find_package(catkin REQUIRED
   roscpp
   rospy
-  ros_numpy
   tf
   tf_conversions
   sensor_msgs
@@ -26,7 +25,6 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     rospy
-    ros_numpy
     tf
     tf_conversions
     sensor_msgs
