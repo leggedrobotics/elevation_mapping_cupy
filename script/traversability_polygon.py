@@ -8,7 +8,7 @@ def get_masked_traversability(map_array, mask):
     mask = mask[1:-1, 1:-1]
 
     # invalid place is 0 traversability value
-    traversability = cp.where(is_valid < 0.5, traversability, 0)
+    traversability = cp.where(is_valid > 0.5, traversability, 0)
     masked = traversability * mask
     masked_isvalid = (1 - is_valid) * mask
     return masked, masked_isvalid
@@ -18,10 +18,10 @@ def is_traversable(masked_traversability, thresh, max_over_n):
     traversability_map = cp.where(masked_traversability == 0, cp.nan, masked_traversability)
     over_thresh = cp.where(masked_traversability > thresh, 1, 0)
     # print(traversability_map)
-    # print('over_thresh', over_thresh.sum())
+    print('over_thresh', over_thresh.sum())
     max_traversability = masked_traversability.max()
-    # print('max_traversability ', max_traversability)
-    # print('mean', masked_traversability.mean())
+    print('max_traversability ', max_traversability)
+    print('mean', masked_traversability.mean())
     if over_thresh.sum() > max_over_n:
         return False
     else:

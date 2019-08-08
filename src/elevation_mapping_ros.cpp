@@ -37,6 +37,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
+  polygonPub_ = nh_.advertise<geometry_msgs::PolygonStamped>("foot_print", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -144,11 +145,33 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
 
 bool ElevationMappingNode::checkFootprintPath(traversability_msgs::CheckFootprintPath::Request& request, traversability_msgs::CheckFootprintPath::Response& response) {
 
+  ROS_INFO_STREAM("request polygon n " << request.path.size());
+  ROS_INFO_STREAM(request);
   for (auto& path_elem: request.path) {
     std::vector<Eigen::Vector2d> polygon;
     Eigen::Vector3d result;
-    for (auto& p: path_elem.footprint.polygon.points) {
-      polygon.push_back(Eigen::Vector2d(p.x, p.y));
+    const auto& polygonstamped = path_elem.footprint;
+    polygonPub_.publish(polygonstamped);
+    const auto& polygonFrameId = polygonstamped.header.frame_id;
+    const auto& timeStamp = polygonstamped.header.stamp;
+    Eigen::Affine3d transformationBaseToMap;
+    tf::StampedTransform transformTf;
+
+    // Get tf from map frame to base frame
+    try {
+      transformListener_.waitForTransform(mapFrameId_, polygonFrameId, timeStamp, ros::Duration(1.0));
+      transformListener_.lookupTransform(mapFrameId_, polygonFrameId, timeStamp, transformTf);
+      poseTFToEigen(transformTf, transformationBaseToMap);
+    }
+    catch (tf::TransformException &ex) {
+      ROS_ERROR("%s", ex.what());
+      return false;
+    }
+
+    for (const auto& p: path_elem.footprint.polygon.points) {
+      const auto& pvector = Eigen::Vector3d(p.x, p.y, p.z);
+      const auto transformed_p = transformationBaseToMap * pvector;
+      polygon.push_back(Eigen::Vector2d(transformed_p.x(), transformed_p.y()));
     }
     double traversability = map_.get_polygon_traversability(polygon, result);
     traversability_msgs::TraversabilityResult traversability_result;
