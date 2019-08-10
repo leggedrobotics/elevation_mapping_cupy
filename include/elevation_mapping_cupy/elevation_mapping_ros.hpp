@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
 #include <tf/transform_listener.h>
@@ -41,6 +42,7 @@ class ElevationMappingNode {
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
+    ros::Publisher alivePub_;
     ros::Publisher mapPub_;
     ros::Publisher pointPub_;
     ros::ServiceServer rawSubmapService_;

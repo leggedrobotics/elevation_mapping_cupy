@@ -36,6 +36,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
+  alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -75,6 +76,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
   mapPub_.publish(msg);
+  alivePub_.publish(std_msgs::Empty());
 
   if (enablePointCloudPublishing_) {
     publishAsPointCloud();
