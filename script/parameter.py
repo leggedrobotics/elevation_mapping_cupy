@@ -23,6 +23,8 @@ class Parameter(object):
 
         self.max_ray_length = 2.0
         self.cleanup_step = 0.01
+        self.min_valid_distance = 0.3
+        self.max_height_range = 1.0
 
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
@@ -97,6 +99,12 @@ class Parameter(object):
 
     def set_max_ray_length(self, max_ray_length):
         self.max_ray_length = max_ray_length
+
+    def set_min_valid_distance(self, min_valid_distance):
+        self.min_valid_distance = min_valid_distance
+
+    def set_max_height_range(self, max_height_range):
+        self.max_height_range = max_height_range
 
     def set_cleanup_step(self, cleanup_step):
         self.cleanup_step = cleanup_step

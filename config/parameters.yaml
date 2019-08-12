@@ -15,6 +15,8 @@ position_noise_thresh: 0.001
 orientation_noise_thresh: 0.001
 position_lowpass_alpha: 0.1
 orientation_lowpass_alpha: 0.1
+min_valid_distance: 0.3
+max_height_range: 1.0
 
 max_ray_length: 4.0
 cleanup_step: 0.01
