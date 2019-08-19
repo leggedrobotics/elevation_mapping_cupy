@@ -70,6 +70,7 @@ class ElevationMap(object):
         self.elevation_map *= 0.0
         # Initial variance
         self.elevation_map[1] += self.initial_variance 
+
     def get_position(self, position):
         position[0][:] = xp.asnumpy(self.center)
 

@@ -17,7 +17,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   orientationError_(0),
   positionAlpha_(0.1),
   orientationAlpha_(0.1),
-  enablePointCloudPublishing_(false)
+  enablePointCloudPublishing_(false),
+  recordableFps_(0.0)
 {
   nh_ = nh;
   map_.initialize(nh_);
@@ -28,6 +29,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<std::string>("map_frame", mapFrameId_, "map");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
+  nh.param<double>("recordable_fps", recordableFps_, 3.0);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
@@ -35,12 +37,19 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     pointcloudSubs_.push_back(sub);
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
+  recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
+
+  if (recordableFps_ > 0) {
+    double duration = 1.0 / (recordableFps_ + 0.00001);
+    recordableTimer_= nh_.createTimer(ros::Duration(duration),
+                                      &ElevationMappingNode::timerCallback, this, false, true);
+  }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -71,10 +80,12 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
              transformationSensorToMap.translation(),
              positionError_,
              orientationError_);
+  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   map_.get_grid_map(gridMap_);
   gridMap_.setTimestamp(ros::Time::now().toSec());
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
+  scopedLockForGridMap.unlock();
   mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
 
@@ -151,6 +162,18 @@ bool ElevationMappingNode::setPublishPoint(std_srvs::SetBool::Request& request, 
   enablePointCloudPublishing_ = request.data;
   response.success = true;
   return true;
+}
+
+void ElevationMappingNode::timerCallback(const ros::TimerEvent&) {
+  grid_map_msgs::GridMap msg;
+  std::vector<std::string> layers;
+  if (gridMap_.exists("elevation")) {
+    layers.push_back("elevation");
+    boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+    grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
+    recordablePub_.publish(msg);
+  }
+  return;
 }
 
 }

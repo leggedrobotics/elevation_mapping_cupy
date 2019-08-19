@@ -17,6 +17,7 @@ position_lowpass_alpha: 0.1
 orientation_lowpass_alpha: 0.1
 min_valid_distance: 0.3
 max_height_range: 1.0
+recordable_fps: 3.0
 
 max_ray_length: 20.0
 cleanup_step: 0.01
