@@ -5,7 +5,9 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
 #include <tf/transform_listener.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -15,6 +17,7 @@
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
@@ -33,18 +36,38 @@ class ElevationMappingNode {
     void readParameters();
     void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
     void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
+    void publishAsPointCloud();
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
+    void timerCallback(const ros::TimerEvent&);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
+    ros::Publisher alivePub_;
     ros::Publisher mapPub_;
+    ros::Publisher recordablePub_;
+    ros::Publisher pointPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
+    ros::ServiceServer setPublishPointService_;
+    ros::Timer recordableTimer_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
     grid_map::GridMap gridMap_;
+
+    Eigen::Vector3d lowpassPosition_;
+    Eigen::Vector4d lowpassOrientation_;
+
+    boost::recursive_mutex mapMutex_;
+
+    double positionError_;
+    double orientationError_;
+    double positionAlpha_;
+    double orientationAlpha_;
+    double recordableFps_;
+    bool enablePointCloudPublishing_;
 };
 
 }

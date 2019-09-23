@@ -1,8 +1,8 @@
-resolution: 0.04
-map_length: 6
-sensor_noise_factor: 0.05
+resolution: 0.2
+map_length: 30
+sensor_noise_factor: 0.02
 mahalanobis_thresh: 2.0
-outlier_variance: 0.001
+outlier_variance: 0.01
 drift_compensation_variance_inler: 0.1
 time_variance: 0.01
 max_variance: 100.0
@@ -19,7 +19,7 @@ min_valid_distance: 0.3
 max_height_range: 1.0
 recordable_fps: 3.0
 
-max_ray_length: 4.0
+max_ray_length: 20.0
 cleanup_step: 0.01
 
 gather_mode: 'mean'
@@ -30,8 +30,8 @@ enable_pointcloud_publishing: false
 
 weight_file: 'config/weights.yaml'
 
-pointcloud_topics: ['/realsense_d435_front/depth/color/points',
-                    '/realsense_d435_rear/depth/color/points']
+pointcloud_topics: ['/point_cloud_filter/velodyne/point_cloud_cropped']
+# pointcloud_topics: ['/velodyne/point_cloud']
 pose_topic: '/state_estimator/pose_in_odom'
 # pose_topic: '/state_estimator_standalone/pose_in_odom'
 map_frame: 'odom'
