@@ -82,10 +82,10 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
              orientationError_);
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   map_.get_grid_map(gridMap_);
-  gridMap_.setTimestamp(ros::Time::now().toSec());
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
   scopedLockForGridMap.unlock();
+  msg.info.header.stamp = ros::Time::now(); // setting time into msg since on grid map msg seems not to work.
   mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
 
