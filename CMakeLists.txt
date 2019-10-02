@@ -16,6 +16,7 @@ find_package(catkin REQUIRED
   grid_map_msgs
   grid_map_ros
   pcl_ros
+  pybind11_catkin
 )
 
 catkin_package(
@@ -32,6 +33,7 @@ catkin_package(
     geometry_msgs
     grid_map_ros
     pcl_ros
+    pybind11_catkin
 )
 
 include_directories(
