@@ -1,5 +1,5 @@
 # %Tag(FULLTEXT)%
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 2.8.12)
 project(elevation_mapping_cupy)
 
 # find_package(pybind11 REQUIRED)  # or add_subdirectory(pybind11)
