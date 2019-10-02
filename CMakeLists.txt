@@ -1,5 +1,6 @@
 # %Tag(FULLTEXT)%
-cmake_minimum_required(VERSION 2.8.3)
+# cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.7.0)
 project(elevation_mapping_cupy)
 
 find_package(pybind11 REQUIRED)  # or add_subdirectory(pybind11)
@@ -46,6 +47,7 @@ add_library(elevation_mapping_ros
     src/elevation_mapping_wrapper.cpp
     src/elevation_mapping_ros.cpp)
 target_link_libraries(elevation_mapping_ros ${catkin_LIBRARIES} pybind11::embed)
+# target_link_libraries(elevation_mapping_ros ${catkin_LIBRARIES})
 
 add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
 target_link_libraries(elevation_mapping_node elevation_mapping_ros)
