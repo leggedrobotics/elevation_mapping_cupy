@@ -1,6 +1,6 @@
 #include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
-#include <pybind11/embed.h> 
-#include <pybind11/eigen.h>
+#include <pybind11_catkin/pybind11/embed.h> 
+#include <pybind11_catkin/pybind11/eigen.h>
 #include <iostream>
 #include <Eigen/Dense>
 #include <pcl/common/projection_matrix.h>
