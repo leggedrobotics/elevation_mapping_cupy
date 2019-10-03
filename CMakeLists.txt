@@ -51,9 +51,7 @@ add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
 target_link_libraries(elevation_mapping_node elevation_mapping_ros)
 
 install(
-  PROGRAMS
-    scripts/elevation_mapping.py
-    scripts/elevation_mapping_node.py
-  DESTINATION
-    ${CATKIN_PACKAGE_BIN_DESTINATION})
-
+  TARGETS elevation_mapping_ros elevation_mapping_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
