@@ -11,7 +11,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>rospy</depend>
-  <depend>ros_numpy</depend>
   <depend>tf</depend>
   <depend>tf_conversions</depend>
   <depend>sensor_msgs</depend>
@@ -21,5 +20,6 @@
   <depend>traversability_msgs</depend>
   <depend>grid_map_ros</depend>
   <depend>pcl_ros</depend>
+  <depend>pybind11_catkin</depend>
 
 </package>

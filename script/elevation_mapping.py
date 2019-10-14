@@ -52,6 +52,8 @@ class ElevationMap(object):
         self.enable_drift_compensation = param.enable_drift_compensation
         self.position_noise_thresh = param.position_noise_thresh
         self.orientation_noise_thresh = param.orientation_noise_thresh
+        self.min_valid_distance = param.min_valid_distance
+        self.max_height_range = param.max_height_range
         self.safe_thresh = param.safe_thresh
         self.max_unsafe_n = param.max_unsafe_n
         # layers: elevation, variance, is_valid, traversability
@@ -117,6 +119,8 @@ class ElevationMap(object):
                                                    self.wall_num_thresh,
                                                    self.max_ray_length,
                                                    self.cleanup_step,
+                                                   self.min_valid_distance,
+                                                   self.max_height_range,
                                                    self.enable_edge_sharpen,
                                                    self.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
@@ -124,9 +128,10 @@ class ElevationMap(object):
                                                            self.cell_n,
                                                            self.sensor_noise_factor,
                                                            self.mahalanobis_thresh,
-                                                           self.outlier_variance,
-                                                           self.traversability_inlier)
-
+                                                           self.drift_compensation_variance_inlier,
+                                                           self.traversability_inlier,
+                                                           self.min_valid_distance,
+                                                           self.max_height_range)
         self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
                                                      self.max_variance, self.initial_variance)
 

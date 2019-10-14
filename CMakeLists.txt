@@ -1,14 +1,12 @@
 # %Tag(FULLTEXT)%
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 2.8.12)
 project(elevation_mapping_cupy)
 
-find_package(pybind11 REQUIRED)  # or add_subdirectory(pybind11)
 find_package(Eigen3 REQUIRED)
 
 find_package(catkin REQUIRED
   roscpp
   rospy
-  ros_numpy
   tf
   tf_conversions
   sensor_msgs
@@ -18,6 +16,7 @@ find_package(catkin REQUIRED
   grid_map_msgs
   grid_map_ros
   pcl_ros
+  pybind11_catkin
 )
 
 catkin_package(
@@ -27,7 +26,6 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     rospy
-    ros_numpy
     tf
     tf_conversions
     sensor_msgs
@@ -36,6 +34,7 @@ catkin_package(
     traversability_msgs
     grid_map_ros
     pcl_ros
+    pybind11_catkin
 )
 
 include_directories(
@@ -47,15 +46,14 @@ include_directories(
 add_library(elevation_mapping_ros
     src/elevation_mapping_wrapper.cpp
     src/elevation_mapping_ros.cpp)
-target_link_libraries(elevation_mapping_ros ${catkin_LIBRARIES} pybind11::embed)
+
+target_link_libraries(elevation_mapping_ros ${catkin_LIBRARIES})
 
 add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
 target_link_libraries(elevation_mapping_node elevation_mapping_ros)
 
 install(
-  PROGRAMS
-    scripts/elevation_mapping.py
-    scripts/elevation_mapping_node.py
-  DESTINATION
-    ${CATKIN_PACKAGE_BIN_DESTINATION})
-
+  TARGETS elevation_mapping_ros elevation_mapping_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

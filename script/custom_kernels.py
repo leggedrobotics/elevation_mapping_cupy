@@ -2,7 +2,7 @@ import cupy as cp
 import string
 
 
-def map_utils(resolution, width, height, sensor_noise_factor):
+def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range):
     util_preamble = string.Template('''
         __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
 
@@ -44,6 +44,26 @@ def map_utils(resolution, width, height, sensor_noise_factor):
             return ${sensor_noise_factor} * z * z;
         }
 
+        __device__ float point_sensor_distance(float16 x, float16 y, float16 z,
+                                               float16 sx, float16 sy, float16 sz) {
+            float d = (x - sx) * (x - sx) + (y - sy) * (y - sy) + (z - sz) * (z - sz);
+            return d;
+        }
+
+        __device__ bool is_valid(float16 x, float16 y, float16 z,
+                               float16 sx, float16 sy, float16 sz) {
+            float d = point_sensor_distance(x, y, z, sx, sy, sz);
+            if (d < ${min_valid_distance} * ${min_valid_distance}) {
+                return false;
+            }
+            else if (z - sz > ${max_height_range}) {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+
         __device__ float ray_vector(float16 tx, float16 ty, float16 tz,
                                     float16 px, float16 py, float16 pz,
                                     float16& rx, float16& ry, float16& rz){
@@ -65,19 +85,21 @@ def map_utils(resolution, width, height, sensor_noise_factor):
         }
 
         ''').substitute(resolution=resolution, width=width, height=height,
-                        sensor_noise_factor=sensor_noise_factor)
+                        sensor_noise_factor=sensor_noise_factor,
+                        min_valid_distance=min_valid_distance,
+                        max_height_range=max_height_range)
     return util_preamble
 
 
 def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       mahalanobis_thresh, outlier_variance, wall_num_thresh,
-                      max_ray_length, cleanup_step,
+                      max_ray_length, cleanup_step, min_valid_distance, max_height_range,
                       enable_edge_shaped=True, enable_visibility_cleanup=True):
 
     add_points_kernel = cp.ElementwiseKernel(
             in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
             out_params='raw U map, raw T newmap',
-            preamble=map_utils(resolution, width, height, sensor_noise_factor),
+            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
             operation=\
             string.Template(
             '''
@@ -88,8 +110,8 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
-            if (z - t[2] > 1.0) {return;}
-            if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
+            if (!is_valid(x, y, z, t[0], t[1], t[2])) {return;}
+            // if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
             int idx = get_idx(x, y, center_x, center_y);
             if (!is_inside(idx)) {
                 return;
@@ -143,12 +165,13 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
 
 
 def error_counting_kernel(resolution, width, height, sensor_noise_factor,
-                          mahalanobis_thresh, outlier_variance, traversability_inlier):
+                          mahalanobis_thresh, outlier_variance,
+                          traversability_inlier, min_valid_distance, max_height_range):
 
     error_counting_kernel = cp.ElementwiseKernel(
             in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
             out_params='raw U newmap, raw T error, raw T error_cnt',
-            preamble=map_utils(resolution, width, height, sensor_noise_factor),
+            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
             operation=\
             string.Template(
             '''
@@ -159,8 +182,9 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
-            if (z - t[2] > 1.0) {return;}
-            if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
+            // if (!is_valid(z, t[2])) {return;}
+            if (!is_valid(x, y, z, t[0], t[1], t[2])) {return;}
+            // if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
             int idx = get_idx(x, y, center_x, center_y);
             if (!is_inside(idx)) {
                 return;

@@ -1,4 +1,4 @@
-#include <pybind11/embed.h> // everything needed for embedding
+#include <pybind11_catkin/pybind11/embed.h> // everything needed for embedding
 #include <iostream>
 #include <Eigen/Dense>
 
@@ -18,6 +18,7 @@
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
@@ -42,16 +43,20 @@ class ElevationMappingNode {
                             traversability_msgs::CheckFootprintPath::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
+    void timerCallback(const ros::TimerEvent&);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
+    ros::Publisher alivePub_;
     ros::Publisher mapPub_;
+    ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
     ros::Publisher polygonPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
     ros::ServiceServer setPublishPointService_;
     ros::ServiceServer footprintPathService_;
+    ros::Timer recordableTimer_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
@@ -59,10 +64,14 @@ class ElevationMappingNode {
 
     Eigen::Vector3d lowpassPosition_;
     Eigen::Vector4d lowpassOrientation_;
+
+    boost::recursive_mutex mapMutex_;
+
     double positionError_;
     double orientationError_;
     double positionAlpha_;
     double orientationAlpha_;
+    double recordableFps_;
     bool enablePointCloudPublishing_;
 };
 
