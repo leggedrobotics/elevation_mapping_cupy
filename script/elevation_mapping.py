@@ -55,6 +55,7 @@ class ElevationMap(object):
         self.min_valid_distance = param.min_valid_distance
         self.max_height_range = param.max_height_range
         self.safe_thresh = param.safe_thresh
+        self.safe_max_thresh = param.safe_max_thresh
         self.max_unsafe_n = param.max_unsafe_n
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
@@ -224,7 +225,7 @@ class ElevationMap(object):
         isvalid_cnt = masked_isvalid.sum()
         print(masked_isvalid)
         print(isvalid_cnt)
-        safe = is_traversable(masked, self.safe_thresh, self.max_unsafe_n)
+        safe = is_traversable(masked, self.safe_thresh, self.safe_max_thresh, self.max_unsafe_n)
         if clipped_area < 0.001:
             safe = False
             print('requested polygon is outside of the map')
