@@ -31,7 +31,7 @@ Also, on jetson you need to install fortran beforehand.
 sudo apt-get install gfortran
 ```
 
-cupy can be installed with specific CUDA versions. (On jetson, only from source could work)
+cupy can be installed with specific CUDA versions. (On jetson, only "from source" could work)
 > (For CUDA 9.0)
 > % pip install cupy-cuda90
 > 
@@ -47,22 +47,8 @@ cupy can be installed with specific CUDA versions. (On jetson, only from source 
 > (Install CuPy from source)
 > % pip install cupy
 
-### pybind11
-```bash
-pip install pytest
-pip3 install pytest
-git clone https://github.com/pybind/pybind11.git
-cd pybind11
-mkdir build
-cd build
-sudo mkdir /opt/pybind11
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/pybind11
-make -j8
-sudo make install
-```
-
 ### ROS package dependencies
-- [ros_numpy](https://github.com/eric-wieser/ros_numpy)
+- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
 - [grid_map_msgs](https://github.com/ANYbotics/grid_map)
 
 #### On Jetson
