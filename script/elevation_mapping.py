@@ -195,6 +195,7 @@ class ElevationMap(object):
 
     def get_maps_ref(self, elevation_data, variance_data, traversability_data):
         maps = self.get_maps()
+        # somehow elevation_data copy in non_blocking mode does not work.
         elevation_data[...] = xp.asnumpy(maps[0])
         stream = cp.cuda.Stream(non_blocking=True)
         # elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
