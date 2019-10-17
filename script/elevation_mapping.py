@@ -203,7 +203,6 @@ class ElevationMap(object):
 
     def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)
-        print('polygon', polygon)
         area = calculate_area(polygon)
         pmin = self.center - self.map_length / 2 + self.resolution
         pmax = self.center + self.map_length / 2 - self.resolution
@@ -214,23 +213,18 @@ class ElevationMap(object):
         polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
         polygon_n = polygon.shape[0]
         clipped_area = calculate_area(polygon)
-        print('polygon', polygon)
-        print('area', clipped_area)
         self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
                                  polygon_n, polygon_bbox, self.mask,
                                  size=(self.cell_n * self.cell_n))
-        print(self.mask.sum())
-        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask)
+        masked, masked_isvalid = get_masked_traversability(self.elevation_map,
+                                                           self.mask)
         t = masked.sum()
-        isvalid_cnt = masked_isvalid.sum()
-        print(masked_isvalid)
-        print(isvalid_cnt)
-        safe = is_traversable(masked, self.safe_thresh, self.safe_max_thresh, self.max_unsafe_n)
+        safe = is_traversable(masked, self.safe_thresh,
+                              self.safe_max_thresh, self.max_unsafe_n)
         if clipped_area < 0.001:
             safe = False
             print('requested polygon is outside of the map')
         result[...] = np.array([safe, t, area])
-        print(result)
         return t
 
 
