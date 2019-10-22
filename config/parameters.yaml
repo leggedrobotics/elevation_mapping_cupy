@@ -1,32 +1,32 @@
-resolution: 0.04
-map_length: 6
-sensor_noise_factor: 0.05
-mahalanobis_thresh: 2.0
-outlier_variance: 0.001
-drift_compensation_variance_inler: 0.1
-time_variance: 0.01
-max_variance: 100.0
-initial_variance: 100.0
-traversability_inlier: 0.9
-dilation_size: 3
-wall_num_thresh: 100
-min_height_drift_cnt: 100
-position_noise_thresh: 0.001
-orientation_noise_thresh: 0.001
-position_lowpass_alpha: 0.1
-orientation_lowpass_alpha: 0.1
-min_valid_distance: 0.3
-max_height_range: 1.0
-recordable_fps: 3.0
+resolution: 0.04                                # resolution in m.
+map_length: 6                                   # map's size in m.
+sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
+mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
+outlier_variance: 0.001                         # if point is outlier, add this value to the cell.
+drift_compensation_variance_inler: 0.1          # cells under this value is used for drift compensation.
+time_variance: 0.01                             # add this value when update_variance is called.
+max_variance: 100.0                             # maximum variance for each cell.
+initial_variance: 100.0                         # initial variance for each cell.
+traversability_inlier: 0.9                      # cells with higher traversability are used for drift compensation.
+dilation_size: 2                                # dilation filter size before traversability filter.
+wall_num_thresh: 100                            # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
+position_noise_thresh: 0.001                    # if the position change is bigger than this value, the drift compensation happens.
+orientation_noise_thresh: 0.001                 # if the orientation change is bigger than this value, the drift compensation happens.
+position_lowpass_alpha: 0.1                     # lowpass filter alpha used for detecting drift compensation.
+orientation_lowpass_alpha: 0.1                  # lowpass filter alpha used for detecting drift compensation.
+min_valid_distance: 0.3                         # points with shorter distance will be filtered out.
+max_height_range: 1.0                           # points higher than this value from sensor will be filtered out.
+recordable_fps: 3.0                             # fps for publishing map (in slower rate to record).
 
-max_ray_length: 4.0
-cleanup_step: 0.01
+max_ray_length: 4.0                             # maximum length for ray trasing.
+cleanup_step: 0.01                              # subtitute this number from validity value at visibiltiy cleanup.
 
-safe_thresh: 0.3
-safe_max_thresh: 0.6
-max_unsafe_n: 10
+safe_thresh: 0.7                                # safety threshold in traversability value.
+safe_min_thresh: 0.4                            # it is unsafe if there are lower traversability than this.
+max_unsafe_n: 10                                # if the number of cells under safe_thresh exceeds this value, it is unsafe.
 
-gather_mode: 'mean'
+gather_mode: 'mean'                             # gather mode (currently only mean is possible).
 enable_edge_sharpen: true
 enable_visibility_cleanup: true
 enable_drift_compensation: true
