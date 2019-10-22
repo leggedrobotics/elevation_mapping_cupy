@@ -27,7 +27,7 @@ class Parameter(object):
         self.max_height_range = 1.0
 
         self.safe_thresh = 0.5
-        self.safe_max_thresh = 0.5
+        self.safe_min_thresh = 0.5
         self.max_unsafe_n = 20
 
         self.enable_edge_sharpen = True
@@ -125,8 +125,8 @@ class Parameter(object):
     def set_safe_thresh(self, safe_thresh):
         self.safe_thresh = safe_thresh
 
-    def set_safe_max_thresh(self, safe_max_thresh):
-        self.safe_max_thresh = safe_max_thresh
+    def set_safe_min_thresh(self, safe_min_thresh):
+        self.safe_min_thresh = safe_min_thresh
 
     def set_max_unsafe_n(self, max_unsafe_n):
         self.max_unsafe_n = max_unsafe_n

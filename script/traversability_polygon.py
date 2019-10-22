@@ -14,19 +14,19 @@ def get_masked_traversability(map_array, mask):
     return masked, masked_isvalid
 
 
-def is_traversable(masked_traversability, thresh, max_thresh, max_over_n):
+def is_traversable(masked_traversability, thresh, min_thresh, max_over_n):
     # traversability_map = cp.where(masked_traversability == 0,
     #                               cp.nan,
     #                               masked_traversability)
-    over_thresh = cp.where(masked_traversability > thresh, 1, 0)
+    under_thresh = cp.where(masked_traversability < thresh, 1, 0)
     # print(traversability_map)
     # print('over_thresh', over_thresh.sum())
-    max_traversability = masked_traversability.max()
+    min_traversability = masked_traversability.min()
     # print('max_traversability ', max_traversability)
     # print('mean', masked_traversability.mean())
-    if over_thresh.sum() > max_over_n:
+    if under_thresh.sum() > max_over_n:
         return False
-    elif max_traversability > max_thresh:
+    elif min_traversability > min_thresh:
         return False
     else:
         return True
