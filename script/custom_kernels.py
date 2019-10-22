@@ -118,12 +118,12 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             }
             U map_h = map[get_map_idx(idx, 0)];
             U map_v = map[get_map_idx(idx, 1)];
-            U num_points = newmap[get_map_idx(idx, 3)];
+            U num_points = newmap[get_map_idx(idx, 4)];
             if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
                 atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
             }
             else {
-                if (${enable_edge_shaped} && num_points > ${wall_num_thresh} && z < map_h) { continue; }
+                if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) { continue; }
                 T new_h = (map_h * v + z * map_v) / (map_v + v);
                 T new_v = (map_v * v) / (map_v + v);
                 atomicAdd(&newmap[get_map_idx(idx, 0)], new_h);
@@ -195,12 +195,13 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
             U map_t = map[get_map_idx(idx, 3)];
             if (map_valid > 0.5 && (abs(map_h - z) < (map_v * ${mahalanobis_thresh}))
                 && map_v < ${outlier_variance} / 2.0
-                && map_t < ${traversability_inlier}) {
+                && map_t > ${traversability_inlier}) {
                 T e = z - map_h;
                 atomicAdd(&error[0], e);
                 atomicAdd(&error_cnt[0], 1);
                 atomicAdd(&newmap[get_map_idx(idx, 3)], 1.0);
             }
+            atomicAdd(&newmap[get_map_idx(idx, 4)], 1.0);
             ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
                             outlier_variance=outlier_variance,
                             traversability_inlier=traversability_inlier),

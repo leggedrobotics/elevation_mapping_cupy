@@ -108,7 +108,7 @@ class ElevationMap(object):
                                          cval=0)
 
     def compile_kernels(self):
-        self.new_map = cp.zeros((4, self.cell_n, self.cell_n))
+        self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
         self.mask = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = add_points_kernel(self.resolution,

@@ -7,7 +7,7 @@ drift_compensation_variance_inler: 0.1
 time_variance: 0.01
 max_variance: 100.0
 initial_variance: 100.0
-traversability_inlier: 0.1
+traversability_inlier: 0.9
 dilation_size: 3
 wall_num_thresh: 100
 min_height_drift_cnt: 100
