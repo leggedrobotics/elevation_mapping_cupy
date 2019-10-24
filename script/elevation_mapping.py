@@ -181,7 +181,8 @@ class ElevationMap(object):
         elevation = xp.where(self.elevation_map[2] > 0.5,
                              self.elevation_map[0].copy(), xp.nan)
         variance = self.elevation_map[1].copy()
-        traversability = self.elevation_map[3].copy()
+        traversability = xp.where(self.elevation_map[2] > 0.5,
+                                  self.elevation_map[3].copy(), xp.nan)
         elevation = elevation[1:-1, 1:-1]
         variance = variance[1:-1, 1:-1]
         traversability = traversability[1:-1, 1:-1]
