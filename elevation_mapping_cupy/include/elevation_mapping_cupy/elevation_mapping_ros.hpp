@@ -13,7 +13,7 @@
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
 #include <grid_map_msgs/GetGridMap.h>
-#include <traversability_msgs/CheckFootprintPath.h>
+#include <elevation_map_msgs/CheckSafety.h>
 // PCL
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
@@ -39,8 +39,8 @@ class ElevationMappingNode {
     void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
     void publishAsPointCloud();
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
-    bool checkFootprintPath(traversability_msgs::CheckFootprintPath::Request& request,
-                            traversability_msgs::CheckFootprintPath::Response& response);
+    bool checkSafety(elevation_map_msgs::CheckSafety::Request& request,
+                     elevation_map_msgs::CheckSafety::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void timerCallback(const ros::TimerEvent&);
@@ -55,7 +55,7 @@ class ElevationMappingNode {
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
     ros::ServiceServer setPublishPointService_;
-    ros::ServiceServer footprintPathService_;
+    ros::ServiceServer checkSafetyService_;
     ros::Timer recordableTimer_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;

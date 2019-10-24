@@ -12,7 +12,7 @@ find_package(catkin REQUIRED
   sensor_msgs
   std_msgs
   geometry_msgs
-  traversability_msgs
+  elevation_map_msgs
   grid_map_msgs
   grid_map_ros
   pcl_ros
@@ -31,7 +31,7 @@ catkin_package(
     sensor_msgs
     std_msgs
     geometry_msgs
-    traversability_msgs
+    elevation_map_msgs
     grid_map_ros
     pcl_ros
     pybind11_catkin

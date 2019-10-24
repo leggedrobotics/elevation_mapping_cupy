@@ -6,7 +6,9 @@
 #include <pcl/common/projection_matrix.h>
 #include <tf_conversions/tf_eigen.h>
 #include <ros/package.h>
-#include <traversability_msgs/TraversabilityResult.h>
+// #include <traversability_msgs/TraversabilityResult.h>
+#include <geometry_msgs/Point32.h>
+#include <elevation_map_msgs/CheckSafety.h>
 
 namespace elevation_mapping_cupy{
 
@@ -46,7 +48,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
-  footprintPathService_ = nh_.advertiseService("check_footprint_path", &ElevationMappingNode::checkFootprintPath, this);
+  checkSafetyService_ = nh_.advertiseService("check_safety", &ElevationMappingNode::checkSafety, this);
   if (recordableFps_ > 0) {
     double duration = 1.0 / (recordableFps_ + 0.00001);
     recordableTimer_= nh_.createTimer(ros::Duration(duration),
@@ -161,42 +163,66 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
   return true;
 }
 
-bool ElevationMappingNode::checkFootprintPath(traversability_msgs::CheckFootprintPath::Request& request, traversability_msgs::CheckFootprintPath::Response& response) {
+bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request& request,
+                                       elevation_map_msgs::CheckSafety::Response& response) {
 
-  ROS_INFO_STREAM("request polygon n " << request.path.size());
-  ROS_INFO_STREAM(request);
-  for (auto& path_elem: request.path) {
+  // ROS_INFO_STREAM("request polygon n " << request.polygons.size());
+  // ROS_INFO_STREAM(request);
+  for (auto& polygonstamped: request.polygons) {
     std::vector<Eigen::Vector2d> polygon;
+    std::vector<Eigen::Vector2d> untraversable_polygon;
     Eigen::Vector3d result;
-    const auto& polygonstamped = path_elem.footprint;
-    polygonPub_.publish(polygonstamped);
+    result.setZero();
+    // polygonPub_.publish(polygonstamped);
     const auto& polygonFrameId = polygonstamped.header.frame_id;
     const auto& timeStamp = polygonstamped.header.stamp;
-    Eigen::Affine3d transformationBaseToMap;
-    tf::StampedTransform transformTf;
+    double polygon_z = polygonstamped.polygon.points[0].z;
 
-    // Get tf from map frame to base frame
-    try {
-      transformListener_.waitForTransform(mapFrameId_, polygonFrameId, timeStamp, ros::Duration(1.0));
-      transformListener_.lookupTransform(mapFrameId_, polygonFrameId, timeStamp, transformTf);
-      poseTFToEigen(transformTf, transformationBaseToMap);
+    // Get tf from map frame to polygon frame
+    if (mapFrameId_ != polygonFrameId) {
+      Eigen::Affine3d transformationBaseToMap;
+      tf::StampedTransform transformTf;
+      try {
+        transformListener_.waitForTransform(mapFrameId_, polygonFrameId, timeStamp, ros::Duration(1.0));
+        transformListener_.lookupTransform(mapFrameId_, polygonFrameId, timeStamp, transformTf);
+        poseTFToEigen(transformTf, transformationBaseToMap);
+      }
+      catch (tf::TransformException &ex) {
+        ROS_ERROR("%s", ex.what());
+        return false;
+      }
+      for (const auto& p: polygonstamped.polygon.points) {
+        const auto& pvector = Eigen::Vector3d(p.x, p.y, p.z);
+        const auto transformed_p = transformationBaseToMap * pvector;
+        polygon.push_back(Eigen::Vector2d(transformed_p.x(), transformed_p.y()));
+      }
     }
-    catch (tf::TransformException &ex) {
-      ROS_ERROR("%s", ex.what());
-      return false;
+    else {
+      for (const auto& p: polygonstamped.polygon.points) {
+        polygon.push_back(Eigen::Vector2d(p.x, p.y));
+      }
     }
 
-    for (const auto& p: path_elem.footprint.polygon.points) {
-      const auto& pvector = Eigen::Vector3d(p.x, p.y, p.z);
-      const auto transformed_p = transformationBaseToMap * pvector;
-      polygon.push_back(Eigen::Vector2d(transformed_p.x(), transformed_p.y()));
+    map_.get_polygon_traversability(polygon, result, untraversable_polygon);
+
+    geometry_msgs::PolygonStamped untraversable_polygonstamped;
+    untraversable_polygonstamped.header.stamp = ros::Time::now();
+    untraversable_polygonstamped.header.frame_id = mapFrameId_;
+    for (const auto& p: untraversable_polygon) {
+      geometry_msgs::Point32 point;
+      point.x = p.x();
+      point.y = p.y();
+      point.z = polygon_z;
+      untraversable_polygonstamped.polygon.points.push_back(point);
     }
-    double traversability = map_.get_polygon_traversability(polygon, result);
-    traversability_msgs::TraversabilityResult traversability_result;
-    traversability_result.is_safe = bool(result[0] > 0.5);
-    traversability_result.traversability = result[1];
-    traversability_result.area = result[2];
-    response.result.push_back(traversability_result);
+    // elevation_map_msgs::C traversability_result;
+    response.is_safe.push_back(bool(result[0] > 0.5));
+    response.traversability.push_back(result[1]);
+    response.untraversable_polygons.push_back(untraversable_polygonstamped);
+    // traversability_result.is_safe = bool(result[0] > 0.5);
+    // traversability_result.traversability = result[1];
+    // traversability_result.area = result[2];
+    // response.result.push_back(traversability_result);
   }
   return true;
 }

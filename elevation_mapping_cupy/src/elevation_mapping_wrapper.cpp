@@ -183,20 +183,34 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
 }
 
 
-double ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon, Eigen::Vector3d& result) {
+void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon, Eigen::Vector3d& result,
+                                                           std::vector<Eigen::Vector2d> &untraversable_polygon) {
   RowMatrixXd polygon_m(polygon.size(), 2);
   if (polygon.size() < 3)
-    return 0;
+    return;
   int i = 0;
   for (auto& p: polygon) {
     polygon_m(i, 0) = p.x();
     polygon_m(i, 1) = p.y();
     i++;
   }
-  double traversability = map_.attr("get_polygon_traversability")(
+  const int untraversable_polygon_num = map_.attr("get_polygon_traversability")(
       static_cast<Eigen::Ref<const RowMatrixXd>>(polygon_m),
-      static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<double>();
-  return traversability;
+      static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<int>();
+
+  untraversable_polygon.clear();
+  if (untraversable_polygon_num > 0) {
+    RowMatrixXd untraversable_polygon_m(untraversable_polygon_num, 2);
+    map_.attr("get_untraversable_polygon")(static_cast<Eigen::Ref<RowMatrixXd>>(untraversable_polygon_m));
+    for (int i = 0; i < untraversable_polygon_num; i++) {
+      Eigen::Vector2d p;
+      p.x() = untraversable_polygon_m(i, 0);
+      p.y() = untraversable_polygon_m(i, 1);
+      untraversable_polygon.push_back(p);
+    }
+  }
+
+  return;
 }
 
 

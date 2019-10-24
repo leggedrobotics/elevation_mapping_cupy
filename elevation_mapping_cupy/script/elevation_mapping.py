@@ -10,7 +10,7 @@ from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
 from custom_kernels import polygon_mask_kernel
 
-from traversability_polygon import get_masked_traversability, is_traversable, calculate_area
+from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -70,6 +70,7 @@ class ElevationMap(object):
                                                           param.w3,
                                                           param.w_out)
         self.traversability_filter.to_gpu()
+        self.untraversable_polygon = xp.zeros((1, 2))
 
     def clear(self):
         self.elevation_map *= 0.0
@@ -221,13 +222,31 @@ class ElevationMap(object):
         masked, masked_isvalid = get_masked_traversability(self.elevation_map,
                                                            self.mask)
         t = masked.sum()
-        safe = is_traversable(masked, self.safe_thresh,
-                              self.safe_min_thresh, self.max_unsafe_n)
+        is_safe, un_polygon = is_traversable(masked,
+                                             self.safe_thresh,
+                                             self.safe_min_thresh,
+                                             self.max_unsafe_n)
+        # print(untraversable_polygon)
+        untraversable_polygon_num = 0
+        if un_polygon is not None:
+            un_polygon = transform_to_map_position(un_polygon,
+                                                   self.center,
+                                                   self.cell_n,
+                                                   self.resolution)
+            # print(un_polygon)
+            untraversable_polygon_num = un_polygon.shape[0]
+            # print(untraversable_polygon_num)
+        # print(untraversable_polygon)
         if clipped_area < 0.001:
-            safe = False
+            is_safe = False
             print('requested polygon is outside of the map')
-        result[...] = np.array([safe, t, area])
-        return t
+        result[...] = np.array([is_safe, t, area])
+        self.untraversable_polygon = un_polygon
+        return untraversable_polygon_num
+
+    def get_untraversable_polygon(self, untraversable_polygon):
+        # print(self.untraversable_polygon)
+        untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
 
 
 if __name__ == '__main__':

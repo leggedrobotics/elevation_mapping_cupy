@@ -36,7 +36,7 @@ class ElevationMappingWrapper {
     void clear();
     void get_maps(std::vector<Eigen::MatrixXd>& maps);
     void get_grid_map(grid_map::GridMap& gridMap);
-    double get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result);
+    void get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result, std::vector<Eigen::Vector2d> &untraversable_polygon);
 
     void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
   private:
