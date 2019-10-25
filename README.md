@@ -20,9 +20,10 @@ The tested versions are CUDA10.0, cuDNN7.
 - [scipy](https://www.scipy.org/)
 - [cupy](https://cupy.chainer.org/)
 - [chainer](https://chainer.org/)
+- [shapely](https://github.com/Toblerity/Shapely)
 
 ```bash
-pip install numpy scipy cupy chainer
+pip install numpy scipy cupy chainer shapely
 ```
 On jetson, pip builds the packages from source so it would take time.
 
