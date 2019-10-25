@@ -59,6 +59,7 @@ class ElevationMap(object):
         self.max_unsafe_n = param.max_unsafe_n
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
+        self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
@@ -185,9 +186,10 @@ class ElevationMap(object):
         variance = self.elevation_map[1].copy()
         traversability = xp.where(self.elevation_map[2] > 0.5,
                                   self.elevation_map[3].copy(), xp.nan)
+        self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         elevation = elevation[1:-1, 1:-1]
         variance = variance[1:-1, 1:-1]
-        traversability = traversability[1:-1, 1:-1]
+        traversability = self.traversability_data[1:-1, 1:-1]
 
         maps = xp.stack([elevation, variance, traversability], axis=0)
         # maps = xp.transpose(maps, axes=(0, 2, 1))
