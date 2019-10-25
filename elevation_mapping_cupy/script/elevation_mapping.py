@@ -62,6 +62,7 @@ class ElevationMap(object):
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
+        self.elevation_map[3] += 1.0
 
         self.compile_kernels()
 
@@ -221,7 +222,10 @@ class ElevationMap(object):
                                  size=(self.cell_n * self.cell_n))
         masked, masked_isvalid = get_masked_traversability(self.elevation_map,
                                                            self.mask)
-        t = masked.sum()
+        if masked_isvalid.sum() > 0:
+            t = masked.sum() / masked_isvalid.sum()
+        else:
+            t = 0.0
         is_safe, un_polygon = is_traversable(masked,
                                              self.safe_thresh,
                                              self.safe_min_thresh,

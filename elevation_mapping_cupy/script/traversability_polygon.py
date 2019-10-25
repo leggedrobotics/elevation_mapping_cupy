@@ -11,7 +11,7 @@ def get_masked_traversability(map_array, mask):
     # invalid place is 0 traversability value
     untraversability = cp.where(is_valid > 0.5, 1 - traversability, 0)
     masked = untraversability * mask
-    masked_isvalid = (1 - is_valid) * mask
+    masked_isvalid = is_valid * mask
     return masked, masked_isvalid
 
 
@@ -56,7 +56,7 @@ def calculate_untraversable_polygon(over_thresh):
     # now = time.time()
     convex_hull = MultiPoint(points).convex_hull
     # print('convex_hull took ', time.time() - now)
-    if convex_hull.is_empty or convex_hull.geom_type == "Point":
+    if convex_hull.is_empty or convex_hull.geom_type == "Point" or convex_hull.geom_type == "LineString":
         return None
     else:
         return cp.array(convex_hull.exterior.coords)
