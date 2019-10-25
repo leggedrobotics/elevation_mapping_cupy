@@ -8,8 +8,11 @@ Code are written in python and numpy, cupy backend can be selected.
 ![screenshot](doc/sim.png)
 
 ## Installation
-### CUDA
-First, install CUDA.  
+
+### CUDA & cuDNN
+The tested versions are CUDA10.0, cuDNN7.
+
+#### CUDA
 You can download CUDA10.0 from [here](https://developer.nvidia.com/cuda-10.0-download-archive?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=deblocal).  
 You can follow the instruction.
 ```bash
@@ -19,7 +22,7 @@ sudo apt-get update
 sudo apt-get install cuda
 ```
 
-### cuDNN
+#### cuDNN
 You can download specific version from [here](https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/).  
 For example, the tested version is with `libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64.deb` and `libcudnn7_7.5.1.10-1+cuda10.0_amd64.deb`.
 
@@ -29,11 +32,9 @@ sudo dpkg -i libcudnn7_7.5.1.10-1+cuda10.0_amd64.deb
 sudo dpkg -i libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64.deb
 ```
 
-### Other information
+#### Other information
 [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation)  
 [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux).
-
-The tested versions are CUDA10.0, cuDNN7.
 
 ### python dependencies
 - [numpy](https://www.numpy.org/)
