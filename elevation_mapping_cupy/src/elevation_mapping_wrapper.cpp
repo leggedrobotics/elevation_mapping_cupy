@@ -32,8 +32,8 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
   float time_variance, initial_variance, traversability_inlier, position_noise_thresh,
-        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range;
-  int dilation_size, wall_num_thresh, min_height_drift_cnt;
+        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
+  int dilation_size, wall_num_thresh, min_height_drift_cnt, max_unsafe_n;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
   param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
@@ -89,6 +89,12 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<float>("max_height_range", max_height_range, 1.0);
   param_.attr("set_max_height_range")(max_height_range);
 
+  nh.param<float>("safe_min_thresh", safe_min_thresh, 0.5);
+  param_.attr("set_safe_min_thresh")(safe_min_thresh);
+
+  nh.param<float>("safe_thresh", safe_thresh, 0.5);
+  param_.attr("set_safe_thresh")(safe_thresh);
+
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
 
@@ -97,6 +103,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<int>("min_height_drift_cnt", min_height_drift_cnt, 100);
   param_.attr("set_min_height_drift_cnt")(min_height_drift_cnt);
+
+  nh.param<int>("max_unsafe_n", max_unsafe_n, 20);
+  param_.attr("set_max_unsafe_n")(max_unsafe_n);
 
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);
@@ -166,6 +175,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }
+  gridMap.setBasicLayers({"elevation", "traversability"});
   // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(map_n_, map_n_);
   // gridMap.add("horizontal_variance_x", zero.cast<float>());
   // gridMap.add("horizontal_variance_y", zero.cast<float>());
@@ -173,6 +183,36 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   // gridMap.add("time", zero.cast<float>());
 }
 
+
+void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon, Eigen::Vector3d& result,
+                                                           std::vector<Eigen::Vector2d> &untraversable_polygon) {
+  RowMatrixXd polygon_m(polygon.size(), 2);
+  if (polygon.size() < 3)
+    return;
+  int i = 0;
+  for (auto& p: polygon) {
+    polygon_m(i, 0) = p.x();
+    polygon_m(i, 1) = p.y();
+    i++;
+  }
+  const int untraversable_polygon_num = map_.attr("get_polygon_traversability")(
+      static_cast<Eigen::Ref<const RowMatrixXd>>(polygon_m),
+      static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<int>();
+
+  untraversable_polygon.clear();
+  if (untraversable_polygon_num > 0) {
+    RowMatrixXd untraversable_polygon_m(untraversable_polygon_num, 2);
+    map_.attr("get_untraversable_polygon")(static_cast<Eigen::Ref<RowMatrixXd>>(untraversable_polygon_m));
+    for (int i = 0; i < untraversable_polygon_num; i++) {
+      Eigen::Vector2d p;
+      p.x() = untraversable_polygon_m(i, 0);
+      p.y() = untraversable_polygon_m(i, 1);
+      untraversable_polygon.push_back(p);
+    }
+  }
+
+  return;
+}
 
 
 void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud,

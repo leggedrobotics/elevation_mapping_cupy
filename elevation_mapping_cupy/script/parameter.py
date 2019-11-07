@@ -26,6 +26,10 @@ class Parameter(object):
         self.min_valid_distance = 0.3
         self.max_height_range = 1.0
 
+        self.safe_thresh = 0.5
+        self.safe_min_thresh = 0.5
+        self.max_unsafe_n = 20
+
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
         self.enable_visibility_cleanup = True
@@ -117,3 +121,12 @@ class Parameter(object):
 
     def set_enable_visibility_cleanup(self, enable_visibility_cleanup):
         self.enable_visibility_cleanup = enable_visibility_cleanup
+
+    def set_safe_thresh(self, safe_thresh):
+        self.safe_thresh = safe_thresh
+
+    def set_safe_min_thresh(self, safe_min_thresh):
+        self.safe_min_thresh = safe_min_thresh
+
+    def set_max_unsafe_n(self, max_unsafe_n):
+        self.max_unsafe_n = max_unsafe_n

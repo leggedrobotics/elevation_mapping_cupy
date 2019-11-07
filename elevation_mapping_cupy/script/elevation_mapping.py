@@ -8,6 +8,9 @@ from custom_kernels import add_points_kernel
 from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
+from custom_kernels import polygon_mask_kernel
+
+from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -51,12 +54,16 @@ class ElevationMap(object):
         self.orientation_noise_thresh = param.orientation_noise_thresh
         self.min_valid_distance = param.min_valid_distance
         self.max_height_range = param.max_height_range
-
+        self.safe_thresh = param.safe_thresh
+        self.safe_min_thresh = param.safe_min_thresh
+        self.max_unsafe_n = param.max_unsafe_n
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
+        self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
+        self.elevation_map[3] += 1.0
 
         self.compile_kernels()
 
@@ -65,11 +72,12 @@ class ElevationMap(object):
                                                           param.w3,
                                                           param.w_out)
         self.traversability_filter.to_gpu()
+        self.untraversable_polygon = xp.zeros((1, 2))
 
     def clear(self):
         self.elevation_map *= 0.0
         # Initial variance
-        self.elevation_map[1] += self.initial_variance 
+        self.elevation_map[1] += self.initial_variance
 
     def get_position(self, position):
         position[0][:] = xp.asnumpy(self.center)
@@ -103,8 +111,9 @@ class ElevationMap(object):
                                          cval=0)
 
     def compile_kernels(self):
-        self.new_map = cp.zeros((4, self.cell_n, self.cell_n))
+        self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
+        self.mask = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = add_points_kernel(self.resolution,
                                                    self.cell_n,
                                                    self.cell_n,
@@ -131,6 +140,7 @@ class ElevationMap(object):
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
+        self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
@@ -174,10 +184,12 @@ class ElevationMap(object):
         elevation = xp.where(self.elevation_map[2] > 0.5,
                              self.elevation_map[0].copy(), xp.nan)
         variance = self.elevation_map[1].copy()
-        traversability = self.elevation_map[3].copy()
+        traversability = xp.where(self.elevation_map[2] > 0.5,
+                                  self.elevation_map[3].copy(), xp.nan)
+        self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         elevation = elevation[1:-1, 1:-1]
         variance = variance[1:-1, 1:-1]
-        traversability = traversability[1:-1, 1:-1]
+        traversability = self.traversability_data[1:-1, 1:-1]
 
         maps = xp.stack([elevation, variance, traversability], axis=0)
         # maps = xp.transpose(maps, axes=(0, 2, 1))
@@ -188,11 +200,59 @@ class ElevationMap(object):
 
     def get_maps_ref(self, elevation_data, variance_data, traversability_data):
         maps = self.get_maps()
+        # somehow elevation_data copy in non_blocking mode does not work.
         elevation_data[...] = xp.asnumpy(maps[0])
         stream = cp.cuda.Stream(non_blocking=True)
         # elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
+
+    def get_polygon_traversability(self, polygon, result):
+        polygon = xp.asarray(polygon)
+        area = calculate_area(polygon)
+        pmin = self.center - self.map_length / 2 + self.resolution
+        pmax = self.center + self.map_length / 2 - self.resolution
+        polygon[:, 0] = polygon[:, 0].clip(pmin[0], pmax[0])
+        polygon[:, 1] = polygon[:, 1].clip(pmin[1], pmax[1])
+        polygon_min = polygon.min(axis=0)
+        polygon_max = polygon.max(axis=0)
+        polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
+        polygon_n = polygon.shape[0]
+        clipped_area = calculate_area(polygon)
+        self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
+                                 polygon_n, polygon_bbox, self.mask,
+                                 size=(self.cell_n * self.cell_n))
+        masked, masked_isvalid = get_masked_traversability(self.elevation_map,
+                                                           self.mask)
+        if masked_isvalid.sum() > 0:
+            t = masked.sum() / masked_isvalid.sum()
+        else:
+            t = 0.0
+        is_safe, un_polygon = is_traversable(masked,
+                                             self.safe_thresh,
+                                             self.safe_min_thresh,
+                                             self.max_unsafe_n)
+        # print(untraversable_polygon)
+        untraversable_polygon_num = 0
+        if un_polygon is not None:
+            un_polygon = transform_to_map_position(un_polygon,
+                                                   self.center,
+                                                   self.cell_n,
+                                                   self.resolution)
+            # print(un_polygon)
+            untraversable_polygon_num = un_polygon.shape[0]
+            # print(untraversable_polygon_num)
+        # print(untraversable_polygon)
+        if clipped_area < 0.001:
+            is_safe = False
+            print('requested polygon is outside of the map')
+        result[...] = np.array([is_safe, t, area])
+        self.untraversable_polygon = un_polygon
+        return untraversable_polygon_num
+
+    def get_untraversable_polygon(self, untraversable_polygon):
+        # print(self.untraversable_polygon)
+        untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
 
 
 if __name__ == '__main__':

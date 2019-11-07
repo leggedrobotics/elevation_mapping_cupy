@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>elevation_map_msgs</name>
+  <version>0.0.0</version>
+  <description>ROS Message definitions for elevation mapping.</description>
+  <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
+  <author email="takahiro.miki1992@gmail.com">Takahiro Miki</author>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  
+  <run_depend>geometry_msgs</run_depend>
+
+  <export>
+  </export>
+</package>
