@@ -28,6 +28,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   std::string pose_topic, map_frame;
   std::vector<std::string>pointcloud_topics;
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
+  nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
@@ -52,7 +53,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   if (recordableFps_ > 0) {
     double duration = 1.0 / (recordableFps_ + 0.00001);
     recordableTimer_= nh_.createTimer(ros::Duration(duration),
-                                      &ElevationMappingNode::timerCallback, this, false, true);
+                                      &ElevationMappingNode::publishRecordableMap, this, false, true);
   }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
@@ -90,7 +91,6 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
   scopedLockForGridMap.unlock();
-  // msg.info.header.stamp = ros::Time::now(); // setting time into msg since on grid map msg seems not to work.
   mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
 
@@ -98,7 +98,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
     publishAsPointCloud();
   }
 
-  ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
+  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
 }
@@ -166,14 +166,11 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
 bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request& request,
                                        elevation_map_msgs::CheckSafety::Response& response) {
 
-  // ROS_INFO_STREAM("request polygon n " << request.polygons.size());
-  // ROS_INFO_STREAM(request);
   for (auto& polygonstamped: request.polygons) {
     std::vector<Eigen::Vector2d> polygon;
     std::vector<Eigen::Vector2d> untraversable_polygon;
     Eigen::Vector3d result;
     result.setZero();
-    // polygonPub_.publish(polygonstamped);
     const auto& polygonFrameId = polygonstamped.header.frame_id;
     const auto& timeStamp = polygonstamped.header.stamp;
     double polygon_z = polygonstamped.polygon.points[0].z;
@@ -219,10 +216,6 @@ bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request&
     response.is_safe.push_back(bool(result[0] > 0.5));
     response.traversability.push_back(result[1]);
     response.untraversable_polygons.push_back(untraversable_polygonstamped);
-    // traversability_result.is_safe = bool(result[0] > 0.5);
-    // traversability_result.traversability = result[1];
-    // traversability_result.area = result[2];
-    // response.result.push_back(traversability_result);
   }
   return true;
 }
@@ -233,15 +226,22 @@ bool ElevationMappingNode::setPublishPoint(std_srvs::SetBool::Request& request, 
   return true;
 }
 
-void ElevationMappingNode::timerCallback(const ros::TimerEvent&) {
+
+void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
   grid_map_msgs::GridMap msg;
   std::vector<std::string> layers;
-  if (gridMap_.exists("elevation")) {
-    layers.push_back("elevation");
-    boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-    grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
-    recordablePub_.publish(msg);
+  for (const auto& layer: recordable_map_layers_) {
+    if (gridMap_.exists(layer)) {
+      layers.push_back(layer);
+    }
   }
+  if (layers.size() == 0) 
+    return;
+  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+  grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
+  scopedLockForGridMap.unlock();
+  msg.basic_layers = layers;
+  recordablePub_.publish(msg);
   return;
 }
 

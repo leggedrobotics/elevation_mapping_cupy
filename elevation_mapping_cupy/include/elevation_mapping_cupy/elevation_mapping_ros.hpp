@@ -43,7 +43,7 @@ class ElevationMappingNode {
                      elevation_map_msgs::CheckSafety::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
-    void timerCallback(const ros::TimerEvent&);
+    void publishRecordableMap(const ros::TimerEvent&);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
@@ -61,6 +61,7 @@ class ElevationMappingNode {
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
     grid_map::GridMap gridMap_;
+    std::vector<std::string> recordable_map_layers_;
 
     Eigen::Vector3d lowpassPosition_;
     Eigen::Vector4d lowpassOrientation_;

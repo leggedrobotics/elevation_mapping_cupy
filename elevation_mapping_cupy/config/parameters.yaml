@@ -39,5 +39,6 @@ pointcloud_topics: ['/realsense_d435_front/depth/color/points',
 # pointcloud_topics: ['/realsense_d435_front/depth_reconstructed/points',
 #                     '/realsense_d435_rear/depth/color/points']
 pose_topic: '/state_estimator/pose_in_odom'
+recordable_map_layers: ['elevation']
 # pose_topic: '/state_estimator_standalone/pose_in_odom'
 map_frame: 'odom'

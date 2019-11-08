@@ -33,5 +33,6 @@ weight_file: 'config/weights.yaml'
 pointcloud_topics: ['/point_cloud_filter/velodyne/point_cloud_cropped']
 # pointcloud_topics: ['/velodyne/point_cloud']
 pose_topic: '/state_estimator/pose_in_odom'
+recordable_map_layers: ['elevation']
 # pose_topic: '/state_estimator_standalone/pose_in_odom'
 map_frame: 'odom'
