@@ -44,7 +44,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
-  polygonPub_ = nh_.advertise<geometry_msgs::PolygonStamped>("foot_print", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -166,7 +165,9 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
 bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request& request,
                                        elevation_map_msgs::CheckSafety::Response& response) {
 
-  for (auto& polygonstamped: request.polygons) {
+  for (const auto& polygonstamped: request.polygons) {
+    if (polygonstamped.polygon.points.size() == 0)
+      continue;
     std::vector<Eigen::Vector2d> polygon;
     std::vector<Eigen::Vector2d> untraversable_polygon;
     Eigen::Vector3d result;
@@ -174,6 +175,7 @@ bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request&
     const auto& polygonFrameId = polygonstamped.header.frame_id;
     const auto& timeStamp = polygonstamped.header.stamp;
     double polygon_z = polygonstamped.polygon.points[0].z;
+
 
     // Get tf from map frame to polygon frame
     if (mapFrameId_ != polygonFrameId) {
@@ -212,7 +214,7 @@ bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request&
       point.z = polygon_z;
       untraversable_polygonstamped.polygon.points.push_back(point);
     }
-    // elevation_map_msgs::C traversability_result;
+    // traversability_result;
     response.is_safe.push_back(bool(result[0] > 0.5));
     response.traversability.push_back(result[1]);
     response.untraversable_polygons.push_back(untraversable_polygonstamped);
