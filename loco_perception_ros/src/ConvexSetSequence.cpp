@@ -62,9 +62,7 @@ bool ConvexSetSequence::update(const std::vector<loco_perception_utils::ConvexSe
       convexSetSequence.pose.orientation.w = 1.0;
       convexSetSequence.action = visualization_msgs::Marker::ADD;
       convexSetSequence.type = visualization_msgs::Marker::LINE_STRIP;
-      convexSetSequence.scale.x = 0.00200;
-      convexSetSequence.scale.y = 0.00200;
-      convexSetSequence.scale.z = 0.00200;
+      convexSetSequence.scale.x = 0.02000;
       convexSetSequence.color.a = 1.0;
       convexSetSequence.header.frame_id = "odom";
 
