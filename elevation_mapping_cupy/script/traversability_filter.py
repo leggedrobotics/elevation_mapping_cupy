@@ -38,4 +38,5 @@ class TraversabilityFilter(chainer.Chain):
         out1 = out1[:, :, 2:-2, 2:-2]
         out2 = out2[:, :, 1:-1, 1:-1]
         out = F.concat((out1, out2, out3), axis=1)
-        return 1.0 - self.conv_out(F.absolute(out)).array
+        out = self.conv_out(F.absolute(out))
+        return F.exp(-out).array

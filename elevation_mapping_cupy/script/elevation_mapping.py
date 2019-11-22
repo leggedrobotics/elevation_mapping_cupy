@@ -265,7 +265,7 @@ if __name__ == '__main__':
     t = xp.random.rand(3)
     print(R, t)
     param = Parameter()
-    param.load_weights('../config/weights.yaml')
+    param.load_weights('../config/weights.dat')
     elevation = ElevationMap(param)
     for i in range(200):
         elevation.input(points, R, t)
