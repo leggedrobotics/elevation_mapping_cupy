@@ -1,4 +1,4 @@
-import yaml
+import pickle
 import numpy as np
 
 
@@ -44,11 +44,11 @@ class Parameter(object):
 
     def load_weights(self, filename):
         with open(filename) as file:
-            weights = yaml.load(file)
-            self.w1 = np.array(weights['w1'])
-            self.w2 = np.array(weights['w2'])
-            self.w3 = np.array(weights['w3'])
-            self.w_out = np.array(weights['w_out'])
+            weights = pickle.load(file)
+            self.w1 = weights['conv1.weight']
+            self.w2 = weights['conv2.weight']
+            self.w3 = weights['conv3.weight']
+            self.w_out = weights['conv_final.weight']
 
     def set_use_cupy(self, use_cupy):
         self.use_cupy = use_cupy
