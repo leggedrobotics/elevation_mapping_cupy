@@ -1,5 +1,5 @@
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
-#include <pybind11_catkin/pybind11/embed.h> 
+#include <pybind11_catkin/pybind11/embed.h>
 #include <pybind11_catkin/pybind11/eigen.h>
 #include <iostream>
 #include <Eigen/Dense>
@@ -110,7 +110,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);
 
-  nh.param<std::string>("weight_file", weight_file, "config/weights.yaml");
+  nh.param<std::string>("weight_file", weight_file, "config/weights.dat");
   std::string path = ros::package::getPath("elevation_mapping_cupy");
 
   weight_file = path + "/" + weight_file;
@@ -123,7 +123,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
 
 void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t, const double positionNoise, const double orientationNoise) {
-  
+
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
   map_.attr("input")(static_cast<Eigen::Ref<const RowMatrixXd>>(points),

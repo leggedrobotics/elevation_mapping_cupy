@@ -32,7 +32,7 @@ enable_visibility_cleanup: true
 enable_drift_compensation: true
 enable_pointcloud_publishing: false
 
-weight_file: 'config/weights.yaml'
+weight_file: 'config/weights.dat'
 
 pointcloud_topics: ['/realsense_d435_front/depth/color/points',
                     '/realsense_d435_rear/depth/color/points']

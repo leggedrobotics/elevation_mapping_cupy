@@ -28,7 +28,7 @@ enable_visibility_cleanup: true
 enable_drift_compensation: true
 enable_pointcloud_publishing: false
 
-weight_file: 'config/weights.yaml'
+weight_file: 'config/weights.dat'
 
 pointcloud_topics: ['/point_cloud_filter/velodyne/point_cloud_cropped']
 # pointcloud_topics: ['/velodyne/point_cloud']
