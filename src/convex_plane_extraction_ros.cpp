@@ -13,7 +13,6 @@
 #include  "geometry_msgs/PolygonStamped.h"
 #include  "jsk_recognition_msgs/PolygonArray.h"
 
-#include <opencv2/imgproc.hpp>
 
 #include "convex_plane_extraction_ros.hpp"
 
@@ -48,58 +47,68 @@ bool ConvexPlaneExtractionROS::readParameters()
     return false;
   }
   if (!nodeHandle_.getParam("ransac_probability", ransac_parameters_.probability)) {
-    ROS_WARN("Could not read parameter `ransac_probability`. Setting parameter to default value.");
+    ROS_ERROR("Could not read parameter `ransac_probability`. Setting parameter to default value.");
     ransac_parameters_.probability = 0.01;
     return false;
   }
   if (!nodeHandle_.getParam("ransac_min_points", ransac_parameters_.min_points)) {
-    ROS_WARN("Could not read parameter `ransac_min_points`. Setting parameter to default value.");
+    ROS_ERROR("Could not read parameter `ransac_min_points`. Setting parameter to default value.");
     ransac_parameters_.min_points = 200;
     return false;
   }
   if (!nodeHandle_.getParam("ransac_epsilon", ransac_parameters_.epsilon)) {
-    ROS_WARN("Could not read parameter `ransac_epsilon`. Setting parameter to default value.");
+    ROS_ERROR("Could not read parameter `ransac_epsilon`. Setting parameter to default value.");
     ransac_parameters_.epsilon = 0.004;
     return false;
   }
   if (!nodeHandle_.getParam("ransac_cluster_epsilon", ransac_parameters_.cluster_epsilon)) {
-    ROS_WARN("Could not read parameter `ransac_cluster_epsilon`. Setting parameter to default value.");
+    ROS_ERROR("Could not read parameter `ransac_cluster_epsilon`. Setting parameter to default value.");
     ransac_parameters_.cluster_epsilon = 0.0282842712475;
     return false;
   }
   if (!nodeHandle_.getParam("ransac_normal_threshold", ransac_parameters_.normal_threshold)) {
-    ROS_WARN("Could not read parameter `ransac_cluster_epsilon`. Setting parameter to default value.");
+    ROS_ERROR("Could not read parameter `ransac_cluster_epsilon`. Setting parameter to default value.");
     ransac_parameters_.normal_threshold = 0.98;
     return false;
+  }
+  std::string extractor_type;
+  if (!nodeHandle_.getParam("plane_extractor_type", extractor_type)) {
+    ROS_ERROR("Could not read parameter `ransac_cluster_epsilon`. Setting parameter to default value.");
+    ransac_parameters_.normal_threshold = 0.98;
+    return false;
+  }
+  if (extractor_type.compare("ransac") == 0){
+    plane_extractor_selector_ = kRansacExtractor;
+  } else{
+    plane_extractor_selector_ = kSlidingWindowExtractor;
   }
   return true;
 }
 
-void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message)
-{
+void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   // Convert message to map.
   ROS_INFO("Reading input map...");
-  GridMap inputMap;
-  GridMapRosConverter::fromMessage(message, inputMap);
-  Eigen::MatrixXf height_layer = inputMap.get("elevation");
-  cv::Mat height_image;
-  cv::eigen2cv(height_layer, height_image);
-  cv::Mat blurred_image;
-  cv::medianBlur(height_image, blurred_image, 5);
-  cv::cv2eigen(blurred_image, inputMap.get("elevation"));
+  GridMap messageMap;
+  GridMapRosConverter::fromMessage(message, messageMap);
+  bool success;
+  GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(6, 6), success);
+  CHECK(success);
   ROS_INFO("...done.");
+  applyMedianFilter(inputMap.get("elevation"), 5);
   // Compute planar region segmentation
   ROS_INFO("Initializing plane extractor...");
   PlaneExtractor extractor(inputMap, inputMap.getResolution(), "normal_vectors_", "elevation");
   ROS_INFO("...done.");
-  extractor.setRansacParameters(ransac_parameters_);
-  extractor.runRansacPlaneExtractor();
-  extractor.augmentMapWithRansacPlanes();
+  if (plane_extractor_selector_ == kRansacExtractor) {
+    extractor.setRansacParameters(ransac_parameters_);
+    extractor.runRansacPlaneExtractor();
+    extractor.augmentMapWithRansacPlanes();
+  }
 
 
   //Display RANSAC planes as image.
   cv_bridge::CvImage ransacImage;
-  grid_map::GridMapRosConverter::toCvImage(extractor.getMap(), "ransac_planes", "bgr8", ransacImage);
+  //grid_map::GridMapRosConverter::toCvImage(extractor.getMap(), "ransac_planes", "bgr8", ransacImage);
 
   cv::Mat coloredImage;
   // Apply the colormap:

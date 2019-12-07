@@ -32,8 +32,7 @@ find_package(OpenCV REQUIRED
   CONFIG
 )
 
-
-
+find_package(glog 0.4.0 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -157,7 +156,9 @@ add_executable(${PROJECT_NAME}_node
 	src/convex_plane_extraction_ros.cpp
 	src/plane_extractor.cpp
 	src/ransac_plane_extractor.cpp
-	src/point_with_normal_container.cpp include/types.hpp)
+	src/point_with_normal_container.cpp
+	include/types.hpp
+	src/grid_map_preprocessing.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -174,6 +175,7 @@ target_link_libraries(${PROJECT_NAME}_node
 	${catkin_LIBRARIES} 
 	${CGAL_LIBRARIES} 
 	${CGAL_3RD_PARTY_LIBRARIES}
+	glog
 )
 
 #############

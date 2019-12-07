@@ -9,8 +9,11 @@
 #include "convex_plane_extraction_ros.hpp"
 #include <ros/ros.h>
 
+#include <glog/logging.h>
+
 int main(int argc, char** argv)
 {
+  google::InitGoogleLogging(argv[0]);
   ros::init(argc, argv, "grid_map_segmentation_demo");
   ros::NodeHandle nodeHandle("~");
   bool success;

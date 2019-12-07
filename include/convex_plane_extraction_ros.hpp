@@ -11,18 +11,23 @@
 
 #include <string>
 
+#include <glog/logging.h>
 #include <ros/ros.h>
 
 #include <image_transport/image_transport.h>
 
 #include <grid_map_ros/grid_map_ros.hpp>
 
+#include "grid_map_preprocessing.hpp"
 #include "plane_extractor.hpp"
-
 #include "ransac_plane_extractor.hpp"
 
 namespace convex_plane_extraction {
 
+enum PlaneExtractorType : int {
+  kRansacExtractor = 0,
+  kSlidingWindowExtractor = 1
+};
 /*!
  * Applies a chain of grid map filters to a topic and
  * republishes the resulting grid map.
@@ -79,6 +84,8 @@ class ConvexPlaneExtractionROS
 
   //! Ransac plane extractor parameters.
   ransac_plane_extractor::RansacParameters ransac_parameters_;
+
+  PlaneExtractorType plane_extractor_selector_;
 
 };
 
