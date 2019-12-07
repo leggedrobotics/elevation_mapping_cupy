@@ -69,6 +69,8 @@ class ConvexPlaneExtractionROS
   //! Grid map subscriber
   ros::Subscriber subscriber_;
 
+  ros::Publisher grid_map_publisher_;
+
   //! image_transport nodehandle
   image_transport::ImageTransport it_;
 

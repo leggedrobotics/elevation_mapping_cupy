@@ -13,6 +13,8 @@
 #include  "geometry_msgs/PolygonStamped.h"
 #include  "jsk_recognition_msgs/PolygonArray.h"
 
+#include <opencv2/imgproc.hpp>
+
 #include "convex_plane_extraction_ros.hpp"
 
 using namespace grid_map;
@@ -30,6 +32,7 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, 
 
   subscriber_ = nodeHandle_.subscribe(inputTopic_, 1, &ConvexPlaneExtractionROS::callback, this);
   ransacPublisher_ = it_.advertise("ransac_planes", 1);
+  grid_map_publisher_ = nodeHandle_.advertise<grid_map_msgs::GridMap>("convex_plane_extraction", 1, true);
 
   success = true;
 }
@@ -78,6 +81,12 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message)
   ROS_INFO("Reading input map...");
   GridMap inputMap;
   GridMapRosConverter::fromMessage(message, inputMap);
+  Eigen::MatrixXf height_layer = inputMap.get("elevation");
+  cv::Mat height_image;
+  cv::eigen2cv(height_layer, height_image);
+  cv::Mat blurred_image;
+  cv::medianBlur(height_image, blurred_image, 5);
+  cv::cv2eigen(blurred_image, inputMap.get("elevation"));
   ROS_INFO("...done.");
   // Compute planar region segmentation
   ROS_INFO("Initializing plane extractor...");
@@ -100,6 +109,10 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message)
 
   // Publish filtered output grid map.
   ransacPublisher_.publish(img_msg);
+
+  grid_map_msgs::GridMap outputMessage;
+  GridMapRosConverter::toMessage(inputMap, outputMessage);
+  grid_map_publisher_.publish(outputMessage);
 
   ROS_INFO("RANSAC planes published as image!");
 

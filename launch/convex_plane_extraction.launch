@@ -5,10 +5,10 @@
     <!-- Input topic -->
     <param name="input_topic" value="/grid_map_filter_demo/filtered_map" />
   	<!--><param name="input_topic" value="/elevation_mapping/elevation_map" /> -->
-	<param name="ransac_probability" value="0.08" />
-	<param name="ransac_min_points" value="400" />
+	<param name="ransac_probability" value="0.05" />
+	<param name="ransac_min_points" value="100" />
 	<param name="ransac_epsilon" value="0.01" />
-	<param name="ransac_cluster_epsilon" value="0.03" />
-	<param name="ransac_normal_threshold" value="0.9" />
+	<param name="ransac_cluster_epsilon" value="0.02" />
+	<param name="ransac_normal_threshold" value="0.98" />
   </node>
 </launch>
