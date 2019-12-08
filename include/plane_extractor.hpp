@@ -54,6 +54,10 @@ namespace convex_plane_extraction {
 
     void augmentMapWithSlidingWindowPlanes();
 
+    void generatePlanes(){
+      sliding_window_plane_extractor_.generatePlanes();
+    }
+
    private:
 
     // Grid map related

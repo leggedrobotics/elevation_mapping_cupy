@@ -112,6 +112,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
       extractor.setSlidingWindowParameters(sliding_window_parameters_);
       extractor.runSlidingWindowPlaneExtractor();
       extractor.augmentMapWithSlidingWindowPlanes();
+      extractor.generatePlanes();
       break;
       }
   }

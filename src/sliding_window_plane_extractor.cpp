@@ -12,6 +12,7 @@ namespace sliding_window_plane_extractor{
         elevation_layer_(layer_height),
         kernel_size_(parameters.kernel_size),
         plane_error_threshold_(parameters.plane_error_threshold){
+    number_of_extracted_planes_ = 0;
   }
 
   SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
@@ -21,6 +22,7 @@ namespace sliding_window_plane_extractor{
         elevation_layer_(layer_height) {
     kernel_size_ = 5;
     plane_error_threshold_ = 0.004;
+    number_of_extracted_planes_ = 0;
   }
 
 
@@ -79,7 +81,7 @@ namespace sliding_window_plane_extractor{
     }
     cv::Mat binary_image(binary_map.rows(), binary_map.cols(), CV_8U, binary_map.data());
     cv::eigen2cv(binary_map, binary_image);
-    cv::connectedComponents(binary_image, labeled_image_, 8, CV_32S);
+    number_of_extracted_planes_ = cv::connectedComponents(binary_image, labeled_image_, 8, CV_32SC1);
   }
 
   void SlidingWindowPlaneExtractor::setParameters(const SlidingWindowParameters& parameters){
@@ -92,5 +94,28 @@ namespace sliding_window_plane_extractor{
     cv::cv2eigen(labeled_image_, new_layer);
     map_.add("sliding_window_planes", new_layer);
     std::cout << "Added ransac plane layer!" << std::endl;
+  }
+
+  void SlidingWindowPlaneExtractor::generatePlanes(){
+    for (int label_it = 1; label_it < number_of_extracted_planes_; ++label_it) {
+      std::vector<std::vector<cv::Point>> contours;
+      std::vector<cv::Vec4i> hierarchy;
+      cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
+      binary_image = labeled_image_ == label_it;
+      findContours(binary_image, contours, hierarchy,
+                   CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+      std::list<std::vector<cv::Point>> approx_contours;
+      for (auto& contour : contours) {
+        std::vector<cv::Point> approx_contour;
+        cv::approxPolyDP(contour, approx_contour, 2, true);
+        if(convex_plane_extraction::isContourSimple<std::vector<cv::Point>::reverse_iterator>(approx_contour.rbegin(), approx_contour.rend())) {
+          ROS_ERROR("Polygon not simple!");
+          // for (auto point : approx_contour)
+            // std::cout << point << std::endl;
+        }
+        //CHECK(convex_plane_extraction::isContourSimple<std::vector<cv::Point>::iterator>(approx_contour.begin(), approx_contour.end()));
+        approx_contours.push_back(approx_contour);
+      }
+    }
   }
 }

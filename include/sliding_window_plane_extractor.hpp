@@ -12,6 +12,8 @@
 
 #include "grid_map_ros/grid_map_ros.hpp"
 
+#include "polygon.hpp"
+
 
 namespace sliding_window_plane_extractor {
   struct SlidingWindowParameters{
@@ -34,6 +36,8 @@ namespace sliding_window_plane_extractor {
 
     void slidingWindowPlaneVisualization();
 
+    void generatePlanes();
+
    private:
 
     grid_map::GridMap& map_;
@@ -43,6 +47,7 @@ namespace sliding_window_plane_extractor {
     int kernel_size_;
     double plane_error_threshold_;
     cv::Mat labeled_image_;
+    int number_of_extracted_planes_;
 
   };
 }
