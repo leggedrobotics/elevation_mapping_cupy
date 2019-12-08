@@ -22,7 +22,6 @@ RansacPlaneExtractor::RansacPlaneExtractor(grid_map::GridMap &map, double resolu
       map.getVector(normals_layer_prefix, *iterator, normal);
       points_with_normal_.addPointNormalPair(point, normal);
   }
-  std::cout << "Before reference handover!" << std::endl;
   ransac_.set_input(points_with_normal_.getReference());
   ransac_.add_shape_factory<Plane>();
   // Set parameters for shape detection.
@@ -68,7 +67,6 @@ void RansacPlaneExtractor::setParameters(const RansacParameters& parameters){
 void RansacPlaneExtractor::ransacPlaneVisualization(){
   Eigen::MatrixXf plane_map = Eigen::MatrixXf::Zero(map_.getSize().x(), map_.getSize().y());
   int32_t plane_label_iterator = 1;
-  std::cout << "Extracted " << ransac_.shapes().size() << " planes." << std::endl;
   for (auto plane : ransac_.shapes()){
     const std::vector<std::size_t>& plane_points =  (*plane.get()).indices_of_assigned_points();
     auto plane_points_it = plane_points.begin();

@@ -13,10 +13,16 @@
 #include "opencv2/core/mat.hpp"
 
 #include "ransac_plane_extractor.hpp"
+#include "sliding_window_plane_extractor.hpp"
 #include "types.hpp"
 
 namespace convex_plane_extraction {
   using namespace grid_map;
+
+  enum PlaneExtractorType : int {
+    kRansacExtractor = 0,
+    kSlidingWindowExtractor = 1
+  };
 
   class PlaneExtractor {
    public:
@@ -34,13 +40,19 @@ namespace convex_plane_extraction {
 
     grid_map::GridMap& getMap();
 
-    void preprocessMapGround(const float& ground_threshold);
-
+    // Ransac plane extractor related functions.
     void setRansacParameters(const ransac_plane_extractor::RansacParameters& parameters);
 
     void runRansacPlaneExtractor();
 
     void augmentMapWithRansacPlanes();
+
+    // Sliding window plane extractor related functions.
+    void setSlidingWindowParameters(const sliding_window_plane_extractor::SlidingWindowParameters& parameters);
+
+    void runSlidingWindowPlaneExtractor();
+
+    void augmentMapWithSlidingWindowPlanes();
 
    private:
 
@@ -52,6 +64,7 @@ namespace convex_plane_extraction {
     Vector2i map_size_;
 
     ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor_;
+    sliding_window_plane_extractor::SlidingWindowPlaneExtractor sliding_window_plane_extractor_;
   };
 
 }

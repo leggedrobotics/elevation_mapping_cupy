@@ -24,10 +24,6 @@
 
 namespace convex_plane_extraction {
 
-enum PlaneExtractorType : int {
-  kRansacExtractor = 0,
-  kSlidingWindowExtractor = 1
-};
 /*!
  * Applies a chain of grid map filters to a topic and
  * republishes the resulting grid map.
@@ -86,6 +82,8 @@ class ConvexPlaneExtractionROS
   ransac_plane_extractor::RansacParameters ransac_parameters_;
 
   PlaneExtractorType plane_extractor_selector_;
+
+  sliding_window_plane_extractor::SlidingWindowParameters sliding_window_parameters_;
 
 };
 

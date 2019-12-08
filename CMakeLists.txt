@@ -158,7 +158,8 @@ add_executable(${PROJECT_NAME}_node
 	src/ransac_plane_extractor.cpp
 	src/point_with_normal_container.cpp
 	include/types.hpp
-	src/grid_map_preprocessing.cpp)
+	src/grid_map_preprocessing.cpp
+	src/sliding_window_plane_extractor.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

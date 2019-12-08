@@ -11,5 +11,6 @@
 	<param name="ransac_cluster_epsilon" value="0.02" />
 	<param name="ransac_normal_threshold" value="0.98" />
 	<param name="plane_extractor_type" value="sliding" />
+	<param name="sliding_window_plane_error" value="0.004" />
   </node>
 </launch>

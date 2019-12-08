@@ -13,7 +13,8 @@ using namespace grid_map;
                                  resolution_(resolution),
                                  normal_layer_prefix_(normals_layer_prefix),
                                  height_layer_(height_layer),
-                                 ransac_plane_extractor_(ransac_plane_extractor::RansacPlaneExtractor(map, resolution, normals_layer_prefix, height_layer)){
+                                 ransac_plane_extractor_(ransac_plane_extractor::RansacPlaneExtractor(map, resolution, normals_layer_prefix, height_layer)),
+                                 sliding_window_plane_extractor_(sliding_window_plane_extractor::SlidingWindowPlaneExtractor(map,resolution, height_layer)){
       map_size_ = map.getSize();
       ROS_INFO("Plane extractor initialization successful!");
   }
@@ -22,16 +23,6 @@ using namespace grid_map;
 
   grid_map::GridMap& PlaneExtractor::getMap(){
     return map_;
-  }
-
-  void PlaneExtractor::preprocessMapGround(const float& ground_threshold){
-    auto& data_from = map_[height_layer_];
-    for (GridMapIterator iterator(map_); !iterator.isPastEnd(); ++iterator) {
-      const size_t i = iterator.getLinearIndex();
-      if (data_from(i) < ground_threshold){
-        data_from(i) = 0;
-      }
-    }
   }
 
   void PlaneExtractor::setRansacParameters(const ransac_plane_extractor::RansacParameters& parameters){
@@ -48,5 +39,20 @@ using namespace grid_map;
   void PlaneExtractor::augmentMapWithRansacPlanes(){
     ransac_plane_extractor_.ransacPlaneVisualization();
   }
+
+  void PlaneExtractor::setSlidingWindowParameters(const sliding_window_plane_extractor::SlidingWindowParameters & parameters) {
+    sliding_window_plane_extractor_.setParameters(parameters);
+    ROS_INFO("Sliding window parameters set!");
+  }
+
+  void PlaneExtractor::runSlidingWindowPlaneExtractor(){
+    ROS_INFO("Starting sliding window plane extraction...");
+    sliding_window_plane_extractor_.runDetection();
+    ROS_INFO("... done.");
+  }
+
+void PlaneExtractor::augmentMapWithSlidingWindowPlanes(){
+  sliding_window_plane_extractor_.slidingWindowPlaneVisualization();
+}
 
 }
