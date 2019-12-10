@@ -23,6 +23,7 @@ template <typename Iter>
     Polygon_2 polygon;
     for (auto it = begin; it < end; ++it) {
       polygon.push_back(Point((*it).x, (*it).y));
+      std::cout << *it << std::endl;
     }
     std::vector<Segment_2> segments;
     std::list<Point> points;
@@ -37,7 +38,7 @@ template <typename Iter>
     if (!segments.empty())
       CGAL::compute_intersection_points(segments.begin(), segments.end(),std::back_inserter(points));
     std::cout << "done.";
-    for (auto point : points){
+    for (const auto point : points){
       std::cout << point << std::endl;
     }
     return polygon.is_simple();

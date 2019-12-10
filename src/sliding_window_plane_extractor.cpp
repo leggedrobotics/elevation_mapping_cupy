@@ -102,13 +102,17 @@ namespace sliding_window_plane_extractor{
       std::vector<cv::Vec4i> hierarchy;
       cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
       binary_image = labeled_image_ == label_it;
-      findContours(binary_image, contours, hierarchy,
+      cv::Mat binary_image_upsampled;
+      cv::resize(binary_image, binary_image_upsampled, cv::Size(3*binary_image.size().height, 3*binary_image.size().width));
+      findContours(binary_image_upsampled, contours, hierarchy,
                    CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
       std::list<std::vector<cv::Point>> approx_contours;
       for (auto& contour : contours) {
         std::vector<cv::Point> approx_contour;
         cv::approxPolyDP(contour, approx_contour, 2, true);
-        if(convex_plane_extraction::isContourSimple<std::vector<cv::Point>::reverse_iterator>(approx_contour.rbegin(), approx_contour.rend())) {
+        if (approx_contour.size() < 2)
+          continue;
+        if(!convex_plane_extraction::isContourSimple<std::vector<cv::Point>::reverse_iterator>(approx_contour.rbegin(), approx_contour.rend())) {
           ROS_ERROR("Polygon not simple!");
           // for (auto point : approx_contour)
             // std::cout << point << std::endl;
