@@ -98,6 +98,7 @@ namespace sliding_window_plane_extractor{
 
   void SlidingWindowPlaneExtractor::generatePlanes(){
     for (int label_it = 1; label_it < number_of_extracted_planes_; ++label_it) {
+      convex_plane_extraction::CgalPolygon2dListContainer convex_plane;
       std::vector<std::vector<cv::Point>> contours;
       std::vector<cv::Vec4i> hierarchy;
       cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
@@ -110,16 +111,18 @@ namespace sliding_window_plane_extractor{
       for (auto& contour : contours) {
         std::vector<cv::Point> approx_contour;
         cv::approxPolyDP(contour, approx_contour, 2, true);
-        if (approx_contour.size() < 2)
+        if (approx_contour.size() <= 2) {
           continue;
-        if(!convex_plane_extraction::isContourSimple<std::vector<cv::Point>::reverse_iterator>(approx_contour.rbegin(), approx_contour.rend())) {
-          ROS_ERROR("Polygon not simple!");
-          // for (auto point : approx_contour)
-            // std::cout << point << std::endl;
         }
-        //CHECK(convex_plane_extraction::isContourSimple<std::vector<cv::Point>::iterator>(approx_contour.begin(), approx_contour.end()));
-        approx_contours.push_back(approx_contour);
+        convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end());
+        if(!polygon.is_simple()) {
+          LOG(WARNING) << "Polygon not simple, will be ignored!";
+          continue;
+        }
+        convex_plane_extraction::CgalPolygon2dListContainer convex_polygons;
+        convex_plane_extraction::performConvexDecomposition(polygon, &convex_polygons);
       }
     }
+
   }
 }

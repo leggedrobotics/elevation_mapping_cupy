@@ -12,6 +12,7 @@
 
 #include "grid_map_ros/grid_map_ros.hpp"
 
+#include "convex_polygon_decomposition.hpp"
 #include "polygon.hpp"
 
 
