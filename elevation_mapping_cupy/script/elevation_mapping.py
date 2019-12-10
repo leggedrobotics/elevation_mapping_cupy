@@ -76,10 +76,8 @@ class ElevationMap(object):
         self.traversability_filter.to_gpu()
         self.untraversable_polygon = xp.zeros((1, 2))
 
-        print('initialize map')
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
                                               xp=cp, method='points')
-        print('initialize map done')
 
     def clear(self):
         self.elevation_map *= 0.0
@@ -273,11 +271,12 @@ class ElevationMap(object):
                                          self.resolution)
         points[:, :2] = indices.astype(points.dtype)
         self.map_initializer(self.elevation_map, points, method)
-        self.dilation_filter_kernel_initializer(self.elevation_map[0],
-                                                self.elevation_map[2],
-                                                self.elevation_map[0],
-                                                self.elevation_map[2],
-                                                size=(self.cell_n * self.cell_n))
+        if self.dilation_size_initialize > 0:
+            self.dilation_filter_kernel_initializer(self.elevation_map[0],
+                                                    self.elevation_map[2],
+                                                    self.elevation_map[0],
+                                                    self.elevation_map[2],
+                                                    size=(self.cell_n * self.cell_n))
 
 
 if __name__ == '__main__':
