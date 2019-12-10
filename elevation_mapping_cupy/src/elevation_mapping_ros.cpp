@@ -47,6 +47,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
+  initializeMapService_ = nh_.advertiseService("initialize", &ElevationMappingNode::initializeMap, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
   checkSafetyService_ = nh_.advertiseService("check_safety", &ElevationMappingNode::checkSafety, this);
   if (recordableFps_ > 0) {
@@ -245,6 +246,56 @@ void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
   msg.basic_layers = layers;
   recordablePub_.publish(msg);
   return;
+}
+
+bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,
+                                         elevation_map_msgs::Initialize::Response& response) {
+
+  // If initialize method is points
+  if (request.type == request.POINTS) {
+    std::vector<Eigen::Vector3d> points;
+    for (const auto& point: request.points) {
+      const auto& pointFrameId = point.header.frame_id;
+      const auto& timeStamp = point.header.stamp;
+      const auto& pvector = Eigen::Vector3d(point.point.x, point.point.y, point.point.z);
+
+      // Get tf from map frame to points' frame
+      if (mapFrameId_ != pointFrameId) {
+        Eigen::Affine3d transformationBaseToMap;
+        tf::StampedTransform transformTf;
+        try {
+          transformListener_.waitForTransform(mapFrameId_, pointFrameId, timeStamp, ros::Duration(1.0));
+          transformListener_.lookupTransform(mapFrameId_, pointFrameId, timeStamp, transformTf);
+          poseTFToEigen(transformTf, transformationBaseToMap);
+        }
+        catch (tf::TransformException &ex) {
+          ROS_ERROR("%s", ex.what());
+          return false;
+        }
+        const auto transformed_p = transformationBaseToMap * pvector;
+        points.push_back(transformed_p);
+        }
+      else {
+        points.push_back(pvector);
+      }
+    }
+    std::string method;
+    switch (request.method){
+      case request.NEAREST:
+        method = "nearest";
+        break;
+      case request.LINEAR:
+        method = "linear";
+        break;
+      case request.CUBIC:
+        method = "cubic";
+        break;
+    }
+    ROS_INFO_STREAM("Initializing map with points using " << method);
+    map_.initializeWithPoints(points, method);
+  }
+  response.success = true;
+  return true;
 }
 
 }

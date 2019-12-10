@@ -14,6 +14,7 @@
 #include <grid_map_msgs/GridMap.h>
 #include <grid_map_msgs/GetGridMap.h>
 #include <elevation_map_msgs/CheckSafety.h>
+#include <elevation_map_msgs/Initialize.h>
 // PCL
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
@@ -41,6 +42,8 @@ class ElevationMappingNode {
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     bool checkSafety(elevation_map_msgs::CheckSafety::Request& request,
                      elevation_map_msgs::CheckSafety::Response& response);
+    bool initializeMap(elevation_map_msgs::Initialize::Request& request,
+                       elevation_map_msgs::Initialize::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
@@ -53,6 +56,7 @@ class ElevationMappingNode {
     ros::Publisher pointPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
+    ros::ServiceServer initializeMapService_;
     ros::ServiceServer setPublishPointService_;
     ros::ServiceServer checkSafetyService_;
     ros::Timer recordableTimer_;

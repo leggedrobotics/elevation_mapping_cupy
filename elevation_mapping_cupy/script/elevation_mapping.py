@@ -9,8 +9,9 @@ from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
 from custom_kernels import polygon_mask_kernel
+from map_initializer import MapInitializer
 
-from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position
+from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -73,6 +74,11 @@ class ElevationMap(object):
                                                           param.w_out)
         self.traversability_filter.to_gpu()
         self.untraversable_polygon = xp.zeros((1, 2))
+
+        print('initialize map')
+        self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
+                                              xp=cp, method='points')
+        print('initialize map done')
 
     def clear(self):
         self.elevation_map *= 0.0
@@ -253,6 +259,16 @@ class ElevationMap(object):
     def get_untraversable_polygon(self, untraversable_polygon):
         # print(self.untraversable_polygon)
         untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
+
+    def initialize_map(self, points, method='cubic'):
+        self.clear()
+        points = cp.asarray(points)
+        indices = transform_to_map_index(points[:, :2],
+                                         self.center,
+                                         self.cell_n,
+                                         self.resolution)
+        points[:, :2] = indices.astype(points.dtype)
+        self.map_initializer(self.elevation_map, points, method)
 
 
 if __name__ == '__main__':

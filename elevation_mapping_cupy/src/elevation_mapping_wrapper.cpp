@@ -214,6 +214,19 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
   return;
 }
 
+void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> &points, std::string method) {
+  RowMatrixXd points_m(points.size(), 3);
+  int i = 0;
+  for (auto& p: points) {
+    points_m(i, 0) = p.x();
+    points_m(i, 1) = p.y();
+    points_m(i, 2) = p.z();
+    i++;
+  }
+  map_.attr("initialize_map")(static_cast<Eigen::Ref<const RowMatrixXd>>(points_m), method);
+  return;
+}
+
 
 void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud,
                                                  RowMatrixXd& points)

@@ -37,6 +37,7 @@ class Parameter(object):
         self.orientation_noise_thresh = 0.1
 
         self.initial_variance = 10.0
+        self.initialized_variance = 10.0
         self.w1 = np.zeros((4, 1, 3, 3))
         self.w2 = np.zeros((4, 1, 3, 3))
         self.w3 = np.zeros((4, 1, 3, 3))
@@ -82,6 +83,9 @@ class Parameter(object):
 
     def set_initial_variance(self, initial_variance):
         self.initial_variance = initial_variance
+
+    def set_initialezed_variance(self, initialized_variance):
+        self.initialized_variance = initialized_variance
 
     def set_dilation_size(self, dilation_size):
         self.dilation_size = dilation_size
