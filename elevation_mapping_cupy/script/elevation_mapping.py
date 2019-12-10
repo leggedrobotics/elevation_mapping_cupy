@@ -42,6 +42,7 @@ class ElevationMap(object):
 
         self.max_variance = param.max_variance
         self.dilation_size = param.dilation_size
+        self.dilation_size_initialize = param.dilation_size_initialize
         self.traversability_inlier = param.traversability_inlier
         self.wall_num_thresh = param.wall_num_thresh
         self.min_height_drift_cnt = param.min_height_drift_cnt
@@ -119,6 +120,7 @@ class ElevationMap(object):
     def compile_kernels(self):
         self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
+        self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n))
         self.mask = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = add_points_kernel(self.resolution,
                                                    self.cell_n,
@@ -146,6 +148,7 @@ class ElevationMap(object):
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
+        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size_initialize)
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
@@ -173,6 +176,7 @@ class ElevationMap(object):
         self.dilation_filter_kernel(self.elevation_map[0],
                                     self.elevation_map[2],
                                     self.traversability_input,
+                                    self.traversability_mask_dummy,
                                     size=(self.cell_n * self.cell_n))
         # calculate traversability
         traversability = self.traversability_filter(self.traversability_input)
@@ -269,6 +273,11 @@ class ElevationMap(object):
                                          self.resolution)
         points[:, :2] = indices.astype(points.dtype)
         self.map_initializer(self.elevation_map, points, method)
+        self.dilation_filter_kernel_initializer(self.elevation_map[0],
+                                                self.elevation_map[2],
+                                                self.elevation_map[0],
+                                                self.elevation_map[2],
+                                                size=(self.cell_n * self.cell_n))
 
 
 if __name__ == '__main__':

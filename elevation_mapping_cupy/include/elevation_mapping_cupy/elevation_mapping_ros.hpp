@@ -45,8 +45,10 @@ class ElevationMappingNode {
     bool initializeMap(elevation_map_msgs::Initialize::Request& request,
                        elevation_map_msgs::Initialize::Response& response);
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
+    void initializeWithTF();
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
@@ -56,6 +58,7 @@ class ElevationMappingNode {
     ros::Publisher pointPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
+    ros::ServiceServer clearMapWithInitializerService_;
     ros::ServiceServer initializeMapService_;
     ros::ServiceServer setPublishPointService_;
     ros::ServiceServer checkSafetyService_;
@@ -65,6 +68,9 @@ class ElevationMappingNode {
     std::string mapFrameId_;
     grid_map::GridMap gridMap_;
     std::vector<std::string> recordable_map_layers_;
+    std::vector<std::string> initialize_frame_id_;
+    std::vector<double> initialize_tf_offset_;
+    std::string initializeMethod_;
 
     Eigen::Vector3d lowpassPosition_;
     Eigen::Vector4d lowpassOrientation_;
@@ -77,6 +83,7 @@ class ElevationMappingNode {
     double orientationAlpha_;
     double recordableFps_;
     bool enablePointCloudPublishing_;
+    double initializeTfGridSize_;
 };
 
 }

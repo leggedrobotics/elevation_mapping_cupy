@@ -16,6 +16,7 @@ class Parameter(object):
 
         self.max_variance = 1.0
         self.dilation_size = 2
+        self.dilation_size_initialize = 10
 
         self.traversability_inlier = 0.1
         self.wall_num_thresh = 100
@@ -89,6 +90,9 @@ class Parameter(object):
 
     def set_dilation_size(self, dilation_size):
         self.dilation_size = dilation_size
+
+    def set_dilation_size_initialize(self, dilation_size_initialize):
+        self.dilation_size_initialize = dilation_size_initialize
 
     def set_traversability_inlier(self, traversability_inlier):
         self.traversability_inlier = traversability_inlier
