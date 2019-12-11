@@ -93,6 +93,9 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   GridMapRosConverter::fromMessage(message, messageMap);
   bool success;
   GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(6, 6), success);
+  Position3 position;
+  inputMap.getPosition3("elevation", Index(0,0), position);
+  std::cout << inputMap.getPosition() << std::endl;
   CHECK(success);
   ROS_INFO("...done.");
   applyMedianFilter(inputMap.get("elevation"), 5);

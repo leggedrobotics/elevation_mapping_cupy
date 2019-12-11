@@ -15,8 +15,8 @@ namespace convex_plane_extraction {
       polygon_stamped.header.frame_id = "odom";
       for (const auto &point : polygon) {
         geometry_msgs::Point32 point_ros;
-        point_ros.x = -point.x();
-        point_ros.y = -point.y();
+        point_ros.x = point.x();
+        point_ros.y = point.y();
         point_ros.z = point(2);
         polygon_stamped.polygon.points.push_back(point_ros);
       }

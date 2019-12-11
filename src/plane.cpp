@@ -64,16 +64,15 @@ namespace convex_plane_extraction{
       LOG(INFO) << "No convex polygons to convert!";
       return false;
     }
-    LOG(INFO) << "Map position: " << map_position;
     for (const auto& polygon : convex_polygon_list_){
       if (polygon.is_empty()){
         continue;
       }
       Polygon3d polygon_temp;
       for (const auto& point : polygon){
-        double x = point.x() + map_position.x();
+        double x = -point.x() + 100*0.02 + map_position.x();
         LOG_IF(FATAL, !isfinite(x)) << "Not finite x value!";
-        double y = point.y() + map_position.y();
+        double y = -point.y() + 100*0.02 + map_position.y();
         LOG_IF(FATAL, !isfinite(y)) << "Not finite y value!";
         double z = (-(x - support_vector_.x())*normal_vector_.x() -
             (y - support_vector_.y())* normal_vector_.y())/normal_vector_(2) + support_vector_(2);

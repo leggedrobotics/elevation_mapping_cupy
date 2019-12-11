@@ -15,6 +15,7 @@
 #include <Eigen/Core>
 #include <glog/logging.h>
 
+#include "grid_map_core/GridMap.hpp"
 #include "types.hpp"
 
 namespace convex_plane_extraction{
@@ -46,16 +47,17 @@ namespace convex_plane_extraction{
   };
 
   template <typename Iter>
-  CgalPolygon2d createCgalPolygonFromOpenCvPoints_impl(Iter begin, Iter end, double resolution, std::bidirectional_iterator_tag){
+  CgalPolygon2d createCgalPolygonFromOpenCvPoints_impl(Iter begin, Iter end, const double& resolution, std::bidirectional_iterator_tag){
     CgalPolygon2d polygon;
     for (auto it = begin; it < end; ++it) {
+
       polygon.push_back(CgalPoint2d(static_cast<double>((*it).y * resolution), static_cast<double>((*it).x) * resolution));
     }
     return polygon;
   };
 
   template <typename Iter>
-  CgalPolygon2d createCgalPolygonFromOpenCvPoints(Iter begin, Iter end, double resolution){
+  CgalPolygon2d createCgalPolygonFromOpenCvPoints(Iter begin, Iter end, const double& resolution){
     return createCgalPolygonFromOpenCvPoints_impl(begin, end, resolution,
                                                   typename std::iterator_traits<Iter>::iterator_category());
   };

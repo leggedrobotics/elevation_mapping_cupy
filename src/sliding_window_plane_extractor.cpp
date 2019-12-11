@@ -154,7 +154,7 @@ namespace sliding_window_plane_extractor{
       for (int col = 0; col < binary_image.cols; ++col){
         if (binary_image.at<bool>(row, col)) {
           Eigen::Vector2i index;
-          index << col, row;
+          index << row, col;
           Eigen::Vector3d normal_vector_temp;
           Eigen::Vector3d support_vector_temp;
           if(map_.getVector(normal_layer_prefix_, index, normal_vector_temp)){
@@ -184,6 +184,8 @@ namespace sliding_window_plane_extractor{
     }
     for (const auto& plane : planes_){
       convex_plane_extraction::Polygon3dVectorContainer polygon_container;
+      grid_map::Vector map_position;
+      map_.getPosition(Eigen::Vector2i::Zero(), map_position);
       if(!plane.convertConvexPolygonsToWorldFrame(&polygon_container, map_.getPosition())){
         continue;
       }
