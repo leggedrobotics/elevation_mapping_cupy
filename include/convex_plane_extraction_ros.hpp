@@ -72,11 +72,7 @@ class ConvexPlaneExtractionROS
 
   ros::Publisher grid_map_publisher_;
 
-  //! image_transport nodehandle
-  image_transport::ImageTransport it_;
-
-  //! Image publisher
-  image_transport::Publisher ransacPublisher_;
+  ros::Publisher polygonPublisher_;
 
   //! Ransac plane extractor parameters.
   ransac_plane_extractor::RansacParameters ransac_parameters_;

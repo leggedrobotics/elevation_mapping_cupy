@@ -6,20 +6,22 @@ namespace sliding_window_plane_extractor{
   using namespace grid_map;
 
   SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
-      const std::string& layer_height, SlidingWindowParameters& parameters)
+      const std::string& layer_height, const std::string& normal_layer_prefix, SlidingWindowParameters& parameters)
       : map_(map),
         resolution_(resolution),
         elevation_layer_(layer_height),
+        normal_layer_prefix_(normal_layer_prefix),
         kernel_size_(parameters.kernel_size),
         plane_error_threshold_(parameters.plane_error_threshold){
     number_of_extracted_planes_ = 0;
   }
 
   SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
-                                                           const std::string& layer_height)
+                         const std::string& normal_layer_prefix, const std::string& layer_height)
       : map_(map),
         resolution_(resolution),
-        elevation_layer_(layer_height) {
+        elevation_layer_(layer_height),
+        normal_layer_prefix_(normal_layer_prefix){
     kernel_size_ = 5;
     plane_error_threshold_ = 0.004;
     number_of_extracted_planes_ = 0;
@@ -97,32 +99,96 @@ namespace sliding_window_plane_extractor{
   }
 
   void SlidingWindowPlaneExtractor::generatePlanes(){
-    for (int label_it = 1; label_it < number_of_extracted_planes_; ++label_it) {
-      convex_plane_extraction::CgalPolygon2dListContainer convex_plane;
+    for (int label_it = 1; label_it <= number_of_extracted_planes_; ++label_it) {
+      convex_plane_extraction::Plane plane;
       std::vector<std::vector<cv::Point>> contours;
       std::vector<cv::Vec4i> hierarchy;
       cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
       binary_image = labeled_image_ == label_it;
+      constexpr int kUpSamplingFactor = 3;
       cv::Mat binary_image_upsampled;
-      cv::resize(binary_image, binary_image_upsampled, cv::Size(3*binary_image.size().height, 3*binary_image.size().width));
+      cv::resize(binary_image, binary_image_upsampled, cv::Size(kUpSamplingFactor*binary_image.size().height, kUpSamplingFactor*binary_image.size().width));
       findContours(binary_image_upsampled, contours, hierarchy,
                    CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
       std::list<std::vector<cv::Point>> approx_contours;
+      int hierachy_it = 0;
       for (auto& contour : contours) {
         std::vector<cv::Point> approx_contour;
-        cv::approxPolyDP(contour, approx_contour, 2, true);
+        cv::approxPolyDP(contour, approx_contour, 6, true);
         if (approx_contour.size() <= 2) {
           continue;
         }
-        convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end());
+        convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end(), resolution_ / kUpSamplingFactor);
         if(!polygon.is_simple()) {
-          LOG(WARNING) << "Polygon not simple, will be ignored!";
+          convex_plane_extraction::Vector2i index;
+          index << (*polygon.begin()).x(), (*polygon.begin()).y();
+          LOG(WARNING) << "Polygon starting at " << index << " is not simple, will be ignored!";
           continue;
         }
-        convex_plane_extraction::CgalPolygon2dListContainer convex_polygons;
-        convex_plane_extraction::performConvexDecomposition(polygon, &convex_polygons);
+        constexpr int kParentFlagIndex = 3;
+        if (hierarchy[hierachy_it][kParentFlagIndex] < 0) {
+          CHECK(plane.addOuterPolygon(polygon));
+        } else {
+          CHECK(plane.addHolePolygon(polygon));
+        }
+        ++hierachy_it;
+      }
+      if(plane.hasOuterContour()) {
+        computePlaneFrameFromLabeledImage(binary_image, &plane);
+        if(plane.isValid()) {
+          CHECK(plane.decomposePlaneInConvexPolygons());
+          planes_.push_back(plane);
+        }
       }
     }
+  }
 
+  void SlidingWindowPlaneExtractor::computePlaneFrameFromLabeledImage(const cv::Mat& binary_image,
+      convex_plane_extraction::Plane* plane){
+    CHECK_NOTNULL(plane);
+    Eigen::Vector3d normal_vector = Eigen::Vector3d::Zero();
+    Eigen::Vector3d support_vector = Eigen::Vector3d::Zero();
+    int number_of_normal_instances = 0;
+    int number_of_position_instances = 0;
+    for (int row = 0; row < binary_image.rows; ++row){
+      for (int col = 0; col < binary_image.cols; ++col){
+        if (binary_image.at<bool>(row, col)) {
+          Eigen::Vector2i index;
+          index << col, row;
+          Eigen::Vector3d normal_vector_temp;
+          Eigen::Vector3d support_vector_temp;
+          if(map_.getVector(normal_layer_prefix_, index, normal_vector_temp)){
+            normal_vector += normal_vector_temp;
+            ++number_of_normal_instances;
+          }
+          if (map_.getPosition3(elevation_layer_, index, support_vector_temp)) {
+            support_vector += support_vector_temp;
+            ++number_of_position_instances;
+          }
+        }
+      }
+    }
+    if (number_of_normal_instances == 0 || number_of_position_instances == 0){
+      return;
+    }
+    normal_vector = normal_vector / static_cast<double>(number_of_normal_instances);
+    support_vector = support_vector / static_cast<double>(number_of_position_instances);
+    CHECK(plane->setNormalAndSupportVector(normal_vector, support_vector));
+  }
+
+  void SlidingWindowPlaneExtractor::visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array){
+    CHECK_NOTNULL(ros_polygon_array);
+    if (planes_.empty()){
+      LOG(INFO) << "No convex polygons to visualize!";
+      return;
+    }
+    for (const auto& plane : planes_){
+      convex_plane_extraction::Polygon3dVectorContainer polygon_container;
+      if(!plane.convertConvexPolygonsToWorldFrame(&polygon_container, map_.getPosition())){
+        continue;
+      }
+      convex_plane_extraction::addRosPolygons(polygon_container, ros_polygon_array);
+    }
+    return;
   }
 }

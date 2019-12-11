@@ -21,8 +21,7 @@ using namespace grid_map;
 namespace convex_plane_extraction {
 
 ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, bool& success)
-    : nodeHandle_(nodeHandle),
-      it_(nodeHandle)
+    : nodeHandle_(nodeHandle)
 {
   if (!readParameters()) {
     success = false;
@@ -30,8 +29,8 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, 
   }
 
   subscriber_ = nodeHandle_.subscribe(inputTopic_, 1, &ConvexPlaneExtractionROS::callback, this);
-  ransacPublisher_ = it_.advertise("ransac_planes", 1);
   grid_map_publisher_ = nodeHandle_.advertise<grid_map_msgs::GridMap>("convex_plane_extraction", 1, true);
+  polygonPublisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("polygons", 1);
 
   success = true;
 }
@@ -101,6 +100,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   ROS_INFO("Initializing plane extractor...");
   PlaneExtractor extractor(inputMap, inputMap.getResolution(), "normal_vectors_", "elevation");
   ROS_INFO("...done.");
+  jsk_recognition_msgs::PolygonArray ros_polygon_array;
   switch (plane_extractor_selector_) {
     case kRansacExtractor : {
       extractor.setRansacParameters(ransac_parameters_);
@@ -113,29 +113,18 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
       extractor.runSlidingWindowPlaneExtractor();
       extractor.augmentMapWithSlidingWindowPlanes();
       extractor.generatePlanes();
+      extractor.visualizeConvexDecomposition(&ros_polygon_array);
       break;
       }
   }
-
-
-  //Display RANSAC planes as image.
-  cv_bridge::CvImage ransacImage;
-  //grid_map::GridMapRosConverter::toCvImage(extractor.getMap(), "ransac_planes", "bgr8", ransacImage);
-
-  cv::Mat coloredImage;
-  // Apply the colormap:
-  cv::applyColorMap(ransacImage.image, coloredImage, 2);
-  ransacImage.image = coloredImage;
-  sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", ransacImage.image).toImageMsg();
-
-  // Publish filtered output grid map.
-  ransacPublisher_.publish(img_msg);
 
   grid_map_msgs::GridMap outputMessage;
   GridMapRosConverter::toMessage(inputMap, outputMessage);
   grid_map_publisher_.publish(outputMessage);
 
-  ROS_INFO("RANSAC planes published as image!");
+  polygonPublisher_.publish(ros_polygon_array);
+
+  LOG(INFO) << "RANSAC planes published as image!";
 
 }
 

@@ -12,8 +12,9 @@
 
 #include "grid_map_ros/grid_map_ros.hpp"
 
-#include "convex_polygon_decomposition.hpp"
+#include "plane.hpp"
 #include "polygon.hpp"
+#include "ros_visualizations.hpp"
 
 
 namespace sliding_window_plane_extractor {
@@ -25,9 +26,10 @@ namespace sliding_window_plane_extractor {
    public:
 
     SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height,
-        SlidingWindowParameters& parameters);
+        const std::string& normal_layer_prefix, SlidingWindowParameters& parameters);
 
-    SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height);
+    SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& normal_layer_prefix,
+        const std::string& layer_height);
 
     virtual ~SlidingWindowPlaneExtractor();
 
@@ -39,16 +41,23 @@ namespace sliding_window_plane_extractor {
 
     void generatePlanes();
 
+    void computePlaneFrameFromLabeledImage(const cv::Mat& binary_image, convex_plane_extraction::Plane* plane);
+
+    void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
+
    private:
 
     grid_map::GridMap& map_;
     std::string elevation_layer_;
+    std::string normal_layer_prefix_;
     double resolution_;
 
     int kernel_size_;
     double plane_error_threshold_;
     cv::Mat labeled_image_;
     int number_of_extracted_planes_;
+
+    convex_plane_extraction::PlaneListContainer planes_;
 
   };
 }

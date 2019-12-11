@@ -14,7 +14,7 @@ using namespace grid_map;
                                  normal_layer_prefix_(normals_layer_prefix),
                                  height_layer_(height_layer),
                                  ransac_plane_extractor_(ransac_plane_extractor::RansacPlaneExtractor(map, resolution, normals_layer_prefix, height_layer)),
-                                 sliding_window_plane_extractor_(sliding_window_plane_extractor::SlidingWindowPlaneExtractor(map,resolution, height_layer)){
+                                 sliding_window_plane_extractor_(sliding_window_plane_extractor::SlidingWindowPlaneExtractor(map,resolution, normals_layer_prefix, height_layer)){
       map_size_ = map.getSize();
       ROS_INFO("Plane extractor initialization successful!");
   }

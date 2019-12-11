@@ -34,7 +34,8 @@ namespace convex_plane_extraction {
   typedef Eigen::Vector2i Vector2i;
   typedef Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> MatrixXb;
 
-  typedef cv::Point2f   PointCV;
+  typedef cv::Point     CvPoint2i;
+  typedef cv::Point2f   CvPoint2f;
 
 }
 

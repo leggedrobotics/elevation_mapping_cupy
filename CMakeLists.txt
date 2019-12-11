@@ -159,7 +159,10 @@ add_executable(${PROJECT_NAME}_node
 	src/point_with_normal_container.cpp
 	include/types.hpp
 	src/grid_map_preprocessing.cpp
-	src/sliding_window_plane_extractor.cpp src/plane.cpp include/polygon.hpp src/polygon.cpp src/convex_polygon_decomposition.cpp)
+	src/sliding_window_plane_extractor.cpp
+	src/plane.cpp
+	src/polygon.cpp
+	src/ros_visualizations.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
