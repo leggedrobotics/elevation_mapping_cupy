@@ -42,6 +42,8 @@ namespace sliding_window_plane_extractor {
 
     void generatePlanes();
 
+    void computeMapTransformation();
+
     void computePlaneFrameFromLabeledImage(const cv::Mat& binary_image, convex_plane_extraction::Plane* plane);
 
     void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
@@ -52,6 +54,9 @@ namespace sliding_window_plane_extractor {
     std::string elevation_layer_;
     std::string normal_layer_prefix_;
     double resolution_;
+
+    Eigen::Matrix2d transformation_xy_to_world_frame_;
+    Eigen::Vector2d map_offset_;
 
     int kernel_size_;
     double plane_error_threshold_;

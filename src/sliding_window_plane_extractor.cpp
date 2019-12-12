@@ -14,6 +14,7 @@ namespace sliding_window_plane_extractor{
         kernel_size_(parameters.kernel_size),
         plane_error_threshold_(parameters.plane_error_threshold){
     number_of_extracted_planes_ = 0;
+    computeMapTransformation();
   }
 
   SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
@@ -25,10 +26,22 @@ namespace sliding_window_plane_extractor{
     kernel_size_ = 5;
     plane_error_threshold_ = 0.004;
     number_of_extracted_planes_ = 0;
+    computeMapTransformation();
   }
 
 
   SlidingWindowPlaneExtractor::~SlidingWindowPlaneExtractor() = default;
+
+  void SlidingWindowPlaneExtractor::computeMapTransformation(){
+    Eigen::Vector2i map_size = map_.getSize();
+    CHECK(map_.getPosition(Eigen::Vector2i::Zero(), map_offset_));
+    Eigen::Vector2d lower_left_cell_position;
+    CHECK(map_.getPosition(Eigen::Vector2i(map_size.x() - 1, 0), lower_left_cell_position));
+    Eigen::Vector2d upper_right_cell_position;
+    CHECK(map_.getPosition(Eigen::Vector2i(0, map_size.y() - 1), upper_right_cell_position));
+    transformation_xy_to_world_frame_.col(0) = (lower_left_cell_position - map_offset_).normalized();
+    transformation_xy_to_world_frame_.col(1) = (upper_right_cell_position - map_offset_).normalized();
+  }
 
   void SlidingWindowPlaneExtractor::runDetection(){
     std::cout << "Starting detection!" << std::endl;
@@ -113,9 +126,15 @@ namespace sliding_window_plane_extractor{
       std::list<std::vector<cv::Point>> approx_contours;
       int hierachy_it = 0;
       for (auto& contour : contours) {
+        ++hierachy_it;
         std::vector<cv::Point> approx_contour;
-        cv::approxPolyDP(contour, approx_contour, 6, true);
+        if (contour.size() <= 10){
+          approx_contour = contour;
+        } else {
+          cv::approxPolyDP(contour, approx_contour, 6, true);
+        }
         if (approx_contour.size() <= 2) {
+          LOG_IF(WARNING, hierarchy[hierachy_it-1][3] < 0 && contour.size() > 4) << "Removing parental polygon since too few vertices!";
           continue;
         }
         convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end(), resolution_ / kUpSamplingFactor);
@@ -126,18 +145,20 @@ namespace sliding_window_plane_extractor{
           continue;
         }
         constexpr int kParentFlagIndex = 3;
-        if (hierarchy[hierachy_it][kParentFlagIndex] < 0) {
+        if (hierarchy[hierachy_it-1][kParentFlagIndex] < 0) {
           CHECK(plane.addOuterPolygon(polygon));
         } else {
           CHECK(plane.addHolePolygon(polygon));
         }
-        ++hierachy_it;
       }
       if(plane.hasOuterContour()) {
+        //LOG(WARNING) << "Dropping plane, no outer contour detected!";
         computePlaneFrameFromLabeledImage(binary_image, &plane);
         if(plane.isValid()) {
           CHECK(plane.decomposePlaneInConvexPolygons());
           planes_.push_back(plane);
+        } else {
+          LOG(WARNING) << "Dropping plane, normal vector could not be inferred!";
         }
       }
     }
@@ -184,13 +205,10 @@ namespace sliding_window_plane_extractor{
     }
     for (const auto& plane : planes_){
       convex_plane_extraction::Polygon3dVectorContainer polygon_container;
-      grid_map::Vector map_position;
-      map_.getPosition(Eigen::Vector2i::Zero(), map_position);
-      if(!plane.convertConvexPolygonsToWorldFrame(&polygon_container, map_.getPosition())){
+      if(!plane.convertConvexPolygonsToWorldFrame(&polygon_container, transformation_xy_to_world_frame_, map_offset_)){
         continue;
       }
       convex_plane_extraction::addRosPolygons(polygon_container, ros_polygon_array);
     }
-    return;
   }
 }

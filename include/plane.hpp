@@ -29,7 +29,7 @@ namespace convex_plane_extraction {
 
     bool isValid();
 
-    bool convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Vector2d& map_position) const;
+    bool convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
 
    private:
 

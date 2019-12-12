@@ -59,7 +59,7 @@ namespace convex_plane_extraction{
     return true;
   }
 
-  bool Plane::convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Vector2d& map_position) const{
+  bool Plane::convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const{
     if (convex_polygon_list_.empty()){
       LOG(INFO) << "No convex polygons to convert!";
       return false;
@@ -70,9 +70,12 @@ namespace convex_plane_extraction{
       }
       Polygon3d polygon_temp;
       for (const auto& point : polygon){
-        double x = -point.x() + 100*0.02 + map_position.x();
+        Eigen::Vector2d point_vector(point.x(), point.y());
+        point_vector = transformation * point_vector;
+        point_vector = point_vector + map_position;
+        double x = point_vector.x();
         LOG_IF(FATAL, !isfinite(x)) << "Not finite x value!";
-        double y = -point.y() + 100*0.02 + map_position.y();
+        double y = point_vector.y();
         LOG_IF(FATAL, !isfinite(y)) << "Not finite y value!";
         double z = (-(x - support_vector_.x())*normal_vector_.x() -
             (y - support_vector_.y())* normal_vector_.y())/normal_vector_(2) + support_vector_(2);

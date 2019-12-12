@@ -6,6 +6,7 @@ namespace convex_plane_extraction {
     CHECK_GE(polygon.size(), 3);
     CHECK(polygon.is_simple());
     LOG(INFO) << "Started convex decomposition...";
+    size_t old_list_size = output_polygon_list->size();
     CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
                                      polygon.vertices_end(),
                                      std::back_inserter(*output_polygon_list));
@@ -14,6 +15,7 @@ namespace convex_plane_extraction {
                                       polygon.vertices_end(),
                                       polygon_list.begin(),
                                       polygon_list.end()));
+    CHECK_GT(output_polygon_list->size(), old_list_size);
     LOG(INFO) << "done.";
   }
 

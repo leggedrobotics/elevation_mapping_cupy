@@ -13,6 +13,8 @@
 
 int main(int argc, char** argv)
 {
+  FLAGS_alsologtostderr = 1;
+  FLAGS_colorlogtostderr = 1;
   google::InitGoogleLogging(argv[0]);
   ros::init(argc, argv, "grid_map_segmentation_demo");
   ros::NodeHandle nodeHandle("~");
