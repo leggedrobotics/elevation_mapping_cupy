@@ -27,9 +27,25 @@ namespace convex_plane_extraction {
 
     bool hasOuterContour() const;
 
-    bool isValid();
+    CgalPolygon2dVertexConstIterator outerPolygonVertexBegin() const;
+
+    CgalPolygon2dVertexConstIterator outerPolygonVertexEnd() const;
+
+    CgalPolygon2dListConstIterator holePolygonBegin() const;
+
+    CgalPolygon2dListConstIterator holePolygonEnd() const;
+
+    bool isValid() const;
 
     bool convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
+
+    bool convertOuterPolygonToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
+
+    bool convertHolePolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
+
+    void convertPoint2dToWorldFrame(const CgalPoint2d& point, Vector2d* output_point, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
+
+    void computePoint3dWorldFrame(const Vector2d& input_point, Vector3d* output_point) const;
 
    private:
 

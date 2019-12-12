@@ -211,4 +211,24 @@ namespace sliding_window_plane_extractor{
       convex_plane_extraction::addRosPolygons(polygon_container, ros_polygon_array);
     }
   }
+
+  void SlidingWindowPlaneExtractor::visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const {
+    CHECK_NOTNULL(outer_polygons);
+    CHECK_NOTNULL(hole_poylgons);
+    if (planes_.empty()){
+      LOG(INFO) << "No convex polygons to visualize!";
+      return;
+    }
+    for (const auto& plane : planes_){
+      convex_plane_extraction::Polygon3dVectorContainer outer_contour;
+      if(plane.convertOuterPolygonToWorldFrame(&outer_contour, transformation_xy_to_world_frame_, map_offset_)){
+        convex_plane_extraction::addRosPolygons(outer_contour, outer_polygons);
+      }
+      convex_plane_extraction::Polygon3dVectorContainer hole_contours;
+      if (plane.convertHolePolygonsToWorldFrame(&hole_contours, transformation_xy_to_world_frame_, map_offset_)){
+        convex_plane_extraction::addRosPolygons(hole_contours, hole_poylgons);
+      }
+    }
+  }
 }
+

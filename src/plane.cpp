@@ -46,7 +46,7 @@ namespace convex_plane_extraction{
     return true;
   }
 
-  bool Plane::isValid(){
+  bool Plane::isValid() const{
     return !outer_polygon_.is_empty() && initialized_;
   }
 
@@ -60,6 +60,7 @@ namespace convex_plane_extraction{
   }
 
   bool Plane::convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const{
+    CHECK_NOTNULL(output_container);
     if (convex_polygon_list_.empty()){
       LOG(INFO) << "No convex polygons to convert!";
       return false;
@@ -70,24 +71,97 @@ namespace convex_plane_extraction{
       }
       Polygon3d polygon_temp;
       for (const auto& point : polygon){
-        Eigen::Vector2d point_vector(point.x(), point.y());
-        point_vector = transformation * point_vector;
-        point_vector = point_vector + map_position;
-        double x = point_vector.x();
-        LOG_IF(FATAL, !isfinite(x)) << "Not finite x value!";
-        double y = point_vector.y();
-        LOG_IF(FATAL, !isfinite(y)) << "Not finite y value!";
-        double z = (-(x - support_vector_.x())*normal_vector_.x() -
-            (y - support_vector_.y())* normal_vector_.y())/normal_vector_(2) + support_vector_(2);
-        LOG_IF(FATAL, !isfinite(z)) << "Not finite z value!";
-        polygon_temp.push_back(Eigen::Vector3d(x, y, z));
+        Vector2d point_2d_world_frame;
+        convertPoint2dToWorldFrame(point, &point_2d_world_frame, transformation, map_position);
+        Vector3d point_3d_world_frame;
+        computePoint3dWorldFrame(point_2d_world_frame, &point_3d_world_frame);
+        polygon_temp.push_back(point_3d_world_frame);
       }
       output_container->push_back(polygon_temp);
     }
     return true;
   }
 
+  bool Plane::convertOuterPolygonToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const{
+    CHECK_NOTNULL(output_container);
+    if (outer_polygon_.is_empty()){
+      LOG(INFO) << "No convex polygons to convert!";
+      return false;
+    }
+    Polygon3d polygon_temp;
+    for (const auto& point : outer_polygon_){
+      Vector2d point_2d_world_frame;
+      convertPoint2dToWorldFrame(point, &point_2d_world_frame, transformation, map_position);
+      Vector3d point_3d_world_frame;
+      computePoint3dWorldFrame(point_2d_world_frame, &point_3d_world_frame);
+      polygon_temp.push_back(point_3d_world_frame);
+    }
+    output_container->push_back(polygon_temp);
+    return true;
+  }
+
+  bool Plane::convertHolePolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const{
+    CHECK_NOTNULL(output_container);
+    if (hole_polygon_list_.empty()){
+      LOG(INFO) << "No convex polygons to convert!";
+      return false;
+    }
+    for (const auto& polygon : hole_polygon_list_){
+      if (polygon.is_empty()){
+        continue;
+      }
+      Polygon3d polygon_temp;
+      for (const auto& point : polygon){
+        Vector2d point_2d_world_frame;
+        convertPoint2dToWorldFrame(point, &point_2d_world_frame, transformation, map_position);
+        Vector3d point_3d_world_frame;
+        computePoint3dWorldFrame(point_2d_world_frame, &point_3d_world_frame);
+        polygon_temp.push_back(point_3d_world_frame);
+      }
+      output_container->push_back(polygon_temp);
+    }
+    return true;
+  }
+
+  void Plane::convertPoint2dToWorldFrame(const CgalPoint2d& point, Vector2d* output_point, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const{
+    CHECK_NOTNULL(output_point);
+    Eigen::Vector2d point_vector(point.x(), point.y());
+    point_vector = transformation * point_vector;
+    point_vector = point_vector + map_position;
+    LOG_IF(FATAL, !isfinite(point_vector.x())) << "Not finite x value!";
+    LOG_IF(FATAL, !isfinite(point_vector.y())) << "Not finite y value!";
+    *output_point = point_vector;
+  }
+
+  void Plane::computePoint3dWorldFrame(const Vector2d& input_point, Vector3d* output_point) const{
+    CHECK_NOTNULL(output_point);
+    double z = (-(input_point.x() - support_vector_.x())*normal_vector_.x() -
+        (input_point.y() - support_vector_.y())* normal_vector_.y())/normal_vector_(2) + support_vector_(2);
+    LOG_IF(FATAL, !isfinite(z)) << "Not finite z value!";
+    *output_point = Vector3d(input_point.x(), input_point.y(), z);
+  }
+
   bool Plane::hasOuterContour() const{
     return !outer_polygon_.is_empty();
+  }
+
+  CgalPolygon2dVertexConstIterator Plane::outerPolygonVertexBegin() const{
+    CHECK(isValid());
+    return outer_polygon_.vertices_begin();
+  }
+
+  CgalPolygon2dVertexConstIterator Plane::outerPolygonVertexEnd() const{
+    CHECK(isValid());
+    return outer_polygon_.vertices_end();
+  }
+
+  CgalPolygon2dListConstIterator Plane::holePolygonBegin() const{
+    CHECK(isValid());
+    return hole_polygon_list_.begin();
+  }
+
+  CgalPolygon2dListConstIterator Plane::holePolygonEnd() const{
+    CHECK(isValid());
+    return hole_polygon_list_.end();
   }
 }

@@ -48,6 +48,8 @@ namespace sliding_window_plane_extractor {
 
     void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
 
+    void visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const;
+
    private:
 
     grid_map::GridMap& map_;

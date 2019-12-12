@@ -72,7 +72,11 @@ class ConvexPlaneExtractionROS
 
   ros::Publisher grid_map_publisher_;
 
-  ros::Publisher polygonPublisher_;
+  ros::Publisher convex_polygon_publisher_;
+
+  ros::Publisher outer_contours_publisher_;
+
+  ros::Publisher hole_contours_publsiher_;
 
   //! Ransac plane extractor parameters.
   ransac_plane_extractor::RansacParameters ransac_parameters_;

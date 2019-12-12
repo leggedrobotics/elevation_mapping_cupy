@@ -30,8 +30,9 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, 
 
   subscriber_ = nodeHandle_.subscribe(inputTopic_, 1, &ConvexPlaneExtractionROS::callback, this);
   grid_map_publisher_ = nodeHandle_.advertise<grid_map_msgs::GridMap>("convex_plane_extraction", 1, true);
-  polygonPublisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("polygons", 1);
-
+  convex_polygon_publisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("convex_polygons", 1);
+  outer_contours_publisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("outer_contours", 1);
+  hole_contours_publsiher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("hole_contours", 1);
   success = true;
 }
 
@@ -104,6 +105,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   PlaneExtractor extractor(inputMap, inputMap.getResolution(), "normal_vectors_", "elevation");
   ROS_INFO("...done.");
   jsk_recognition_msgs::PolygonArray ros_polygon_array;
+  jsk_recognition_msgs::PolygonArray ros_polygon_outer_contours;
+  jsk_recognition_msgs::PolygonArray ros_polygon_hole_contours;
   switch (plane_extractor_selector_) {
     case kRansacExtractor : {
       extractor.setRansacParameters(ransac_parameters_);
@@ -117,6 +120,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
       extractor.augmentMapWithSlidingWindowPlanes();
       extractor.generatePlanes();
       extractor.visualizeConvexDecomposition(&ros_polygon_array);
+      extractor.visualizePlaneContours(&ros_polygon_outer_contours, &ros_polygon_hole_contours);
       break;
       }
   }
@@ -125,9 +129,9 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   GridMapRosConverter::toMessage(inputMap, outputMessage);
   grid_map_publisher_.publish(outputMessage);
 
-  polygonPublisher_.publish(ros_polygon_array);
-
-  LOG(INFO) << "RANSAC planes published as image!";
+  convex_polygon_publisher_.publish(ros_polygon_array);
+  outer_contours_publisher_.publish(ros_polygon_outer_contours);
+  hole_contours_publsiher_.publish(ros_polygon_hole_contours);
 
 }
 

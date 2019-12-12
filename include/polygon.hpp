@@ -25,6 +25,8 @@ namespace convex_plane_extraction{
   typedef Traits::Point_2                                       CgalPoint2d;
   typedef Traits::Polygon_2                                     CgalPolygon2d;
   typedef std::list<CgalPolygon2d>                              CgalPolygon2dListContainer;
+  typedef CgalPolygon2dListContainer::const_iterator            CgalPolygon2dListConstIterator;
+  typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
 
   typedef std::vector<Eigen::Vector3d>                          Polygon3d;
   typedef std::vector<Polygon3d>                                Polygon3dVectorContainer;

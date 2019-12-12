@@ -63,6 +63,10 @@ namespace convex_plane_extraction {
       sliding_window_plane_extractor_.visualizeConvexDecomposition(ros_polygon_array);
     }
 
+    void visualizePlaneContours(jsk_recognition_msgs::PolygonArray* ros_polygon_outer_contours, jsk_recognition_msgs::PolygonArray* ros_polygon_hole_contours){
+      sliding_window_plane_extractor_.visualizePlaneContours(ros_polygon_outer_contours, ros_polygon_hole_contours);
+    }
+
    private:
 
     // Grid map related
