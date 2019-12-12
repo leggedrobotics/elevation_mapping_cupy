@@ -13,4 +13,5 @@
 	<param name="plane_extractor_type" value="sliding" />
 	<param name="sliding_window_plane_error" value="0.004" />
   </node>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find convex_plane_extraction)/rviz/config.rviz" />
 </launch>

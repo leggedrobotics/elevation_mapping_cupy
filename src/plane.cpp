@@ -34,12 +34,17 @@ namespace convex_plane_extraction{
 
   bool Plane::setNormalAndSupportVector(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector){
     if (initialized_){
-      LOG(ERROR) << "Could not set normal and support vector of planbe since already initialized!";
+      LOG(ERROR) << "Could not set normal and support vector of plane since already initialized!";
       return false;
     }
     normal_vector_ = normal_vector;
     support_vector_ = support_vector;
-    if (!outer_polygon_.is_empty()) {
+    constexpr double inclinationThreshold = 0.35; // cos(70°)
+    Eigen::Vector3d upwards(0,0,1);
+    if (abs(normal_vector.transpose()*upwards < inclinationThreshold)){
+      initialized_ = false;
+      LOG(WARNING) << "Inclination to high, plane will be ignored!";
+    } else if (!outer_polygon_.is_empty()) {
       initialized_ = true;
       LOG(INFO) << "Initialized plane located around support vector " << support_vector << " !";
     }
