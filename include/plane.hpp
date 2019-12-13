@@ -3,6 +3,7 @@
 
 #include <list>
 
+#include "geometry_utils.hpp"
 #include "polygon.hpp"
 
 namespace convex_plane_extraction {
@@ -48,6 +49,10 @@ namespace convex_plane_extraction {
     void computePoint3dWorldFrame(const Vector2d& input_point, Vector3d* output_point) const;
 
    private:
+
+    void extractSlConcavityPointsOfHole(const CgalPolygon2d& hole, std::vector<int>* concavity_positions);
+
+    void resolveHoles();
 
     bool initialized_;
 

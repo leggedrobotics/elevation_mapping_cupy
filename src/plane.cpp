@@ -177,75 +177,71 @@ namespace convex_plane_extraction{
     while(!hole_polygon_list_.empty()) {
       // Compute distance to outer contour for each hole.
       std::vector<double> distance_to_outer_polygon;
-      std::vector<Polygon::iterator> outer_contour_connection_vertices; // closest outer contour vertex for each hole
-      std::vector<Polygon::iterator> hole_connection_vertices;
-    }
-  }
-
-double scalarCrossProduct(const Vector2d& leftVector, const Vector2d& rightVector) {
-  return leftVector.y() * rightVector.x() - leftVector.x() * rightVector.y();
-}
-
-// Return the non-normalized distance of a 2D-point to a line given by support vector and direction vector.
-// Negative distance corresponds to a point on the left of the direction vector
-double distanceToLine(const Vector2d& lineSupportVector, const Vector2d& lineDirectionalVector, const Vector2d& testPoint){
-  Vector2d secondPointOnLine = lineSupportVector + lineDirectionalVector;
-  return scalarCrossProduct(lineDirectionalVector, testPoint) + scalarCrossProduct(lineSupportVector, secondPointOnLine);
-}
-
-void Plane::extractSlConcavityPointsOfHole(const CgalPolygon2d& hole, std::vector<int>* concavity_positions){
-  CHECK_NOTNULL(concavity_positions);
-  if (hole.is_empty()) {
-    return;
-  } else if (hole.size() == 1){
-    concavity_positions->push_back(0);
-  } else if (hole.size() == 2){
-    concavity_positions->push_back(0);
-    concavity_positions->push_back(1);
-  } else {
-    MatrixXd data_matrix(hole.size(), 2);
-    Eigen::Vector2d mean_position = Eigen::Vector2d::Zero(2,1);
-    auto hole_vertex_it = hole.vertices_begin();
-    for (int row = 0; row < hole.size(); ++row){
-      data_matrix(row, 0) = (*hole_vertex_it).x();
-      data_matrix(row, 1) = (*hole_vertex_it).y();
-      mean_position(0) += (*hole_vertex_it).x();
-      mean_position(1) += (*hole_vertex_it).y();
-      ++hole_vertex_it;
-    }
-    mean_position *= (1.0 / static_cast<double>(hole.size()));
-    for (int row = 0; row < data_matrix.rows(); ++row) {
-      data_matrix.row(row) -= mean_position.transpose();
-    }
-    Eigen::BDCSVD<MatrixXd> svd = data_matrix.bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::Vector2d orthonormal_to_PC_axis = svd.matrixV().col(1);
-    // Place vector to mean position of hole.
-    Eigen::Vector2d second_point_axis = mean_position + orthonormal_to_PC_axis;
-    double max_distance = 0;
-    double min_distance = 0;
-    int position_right_concavity_point;
-    int position_left_concavity_point;
-    hole_vertex_it = hole.vertices_begin();
-    for (; hole_vertex_it != hole.vertices_end(); ++hole_vertex_it){
-      Eigen::Vector2d vertex_point;
-      vertex_point << (*hole_vertex_it).x(), (*hole_vertex_it).y();
-      double current_distance = distanceToLine(mean_position, orthonormal_to_PC_axis, vertex_point);
-      if (current_distance > max_distance) {
-        max_distance = current_distance;
-        position_right_concavity_point = std::distance(hole.begin(), hole_vertex_it);
-      } else if (current_distance < min_distance){
-        min_distance = current_distance;
-        position_left_concavity_point = std::distance(hole.begin(), hole_vertex_it);
+      std::vector<int> outer_contour_connection_vertex_positions; // closest outer contour vertex for each hole
+      std::vector<int> hole_connection_vertex_positions;
+      for (auto hole_it = hole_polygon_list_.begin(); hole_it != hole_polygon_list_.end(); ++hole_it) {
+        if (hole_it->is_empty()) {
+          hole_polygon_list_.erase(hole_it);
+        } else {
+          std::vector<int> connection_candidates;
+          extractSlConcavityPointsOfHole(*hole_it, &connection_candidates);
+          CHECK(connection_candidates.size() == 2);
+          // Instead of extracting only the 2 SL-concavity points, sort vertices according to SL-concavity measure.
+          // Then iterate over sorted vertices until a connection to the outer contour is not intersecting the polyogn.
+          // Implement function that checks for intersections with existing polygon contour.
+        }
       }
     }
-    Polygon::iterator it = hole.begin();
-    std::advance(it, position_left_concavity_point);
-    concavity_points.push_back(it);
-    it = hole.begin();
-    std::advance(it, position_right_concavity_point);
-    concavity_points.push_back(it);
   }
-  return;
-}
+
+  void Plane::extractSlConcavityPointsOfHole(const CgalPolygon2d& hole, std::vector<int>* concavity_positions){
+    CHECK_NOTNULL(concavity_positions);
+    if (hole.is_empty()) {
+      return;
+    } else if (hole.size() == 1){
+      concavity_positions->push_back(0);
+    } else if (hole.size() == 2){
+      concavity_positions->push_back(0);
+      concavity_positions->push_back(1);
+    } else {
+      MatrixXd data_matrix(hole.size(), 2);
+      Eigen::Vector2d mean_position = Eigen::Vector2d::Zero(2,1);
+      auto hole_vertex_it = hole.vertices_begin();
+      for (int row = 0; row < hole.size(); ++row){
+        data_matrix(row, 0) = (*hole_vertex_it).x();
+        data_matrix(row, 1) = (*hole_vertex_it).y();
+        mean_position(0) += (*hole_vertex_it).x();
+        mean_position(1) += (*hole_vertex_it).y();
+        ++hole_vertex_it;
+      }
+      mean_position *= (1.0 / static_cast<double>(hole.size()));
+      for (int row = 0; row < data_matrix.rows(); ++row) {
+        data_matrix.row(row) -= mean_position.transpose();
+      }
+      Eigen::BDCSVD<MatrixXd> svd = data_matrix.bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
+      Eigen::Vector2d orthonormal_to_PC_axis = svd.matrixV().col(1);
+      // Place vector to mean position of hole.
+      Eigen::Vector2d second_point_axis = mean_position + orthonormal_to_PC_axis;
+      double max_distance = 0;
+      double min_distance = 0;
+      int position_right_concavity_point;
+      int position_left_concavity_point;
+      hole_vertex_it = hole.vertices_begin();
+      for (; hole_vertex_it != hole.vertices_end(); ++hole_vertex_it){
+        Eigen::Vector2d vertex_point;
+        vertex_point << (*hole_vertex_it).x(), (*hole_vertex_it).y();
+        double current_distance = distanceToLine(mean_position, orthonormal_to_PC_axis, vertex_point);
+        if (current_distance > max_distance) {
+          max_distance = current_distance;
+          position_right_concavity_point = std::distance(hole.vertices_begin(), hole_vertex_it);
+        } else if (current_distance < min_distance){
+          min_distance = current_distance;
+          position_left_concavity_point = std::distance(hole.vertices_begin(), hole_vertex_it);
+        }
+      }
+      concavity_positions->push_back(position_left_concavity_point);
+      concavity_positions->push_back(position_right_concavity_point);
+    }
+  }
 
 }
