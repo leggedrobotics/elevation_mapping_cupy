@@ -1,11 +1,3 @@
-/*
- * FiltersDemo.cpp
- *
- *  Created on: Aug 16, 2017
- *      Author: Peter Fankhauser
- *   Institute: ETH Zurich, ANYbotics
- *
- */
 #include <chrono>
 
 

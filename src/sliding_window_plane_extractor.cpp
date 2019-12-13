@@ -85,12 +85,17 @@ namespace sliding_window_plane_extractor{
       data_points.col(1) = Eigen::Map<Eigen::VectorXd>(&col_position.front(), col_position.size()) * resolution_;
       data_points.col(2) = Eigen::Map<Eigen::VectorXd>(&height_instances.front(), height_instances.size());
       Eigen::BDCSVD<Eigen::MatrixXd> svd = data_points.bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
-      CHECK(svd.rank() >= 3);
+      if(svd.rank() < 3){
+        LOG(WARNING) << "Rank loss, cell will be ignored!";
+        continue;
+      }
       Eigen::Matrix3d V = svd.matrixV();
       Eigen::Vector3d n = (V.col(0)).cross(V.col(1));
       Index index = *window_iterator;
       double mean_error = ((data_points * n).cwiseAbs()).sum() / height_instances.size();
-      if (mean_error < plane_error_threshold_) {
+      Eigen::Vector3d upwards(0,0,1);
+      constexpr double kInclinationThreshold = 0.35;
+      if (mean_error < plane_error_threshold_ && abs(n.transpose()*upwards) > kInclinationThreshold) {
         binary_map((*window_iterator).x(), (*window_iterator).y()) = true;
       }
     }
@@ -131,7 +136,7 @@ namespace sliding_window_plane_extractor{
         if (contour.size() <= 10){
           approx_contour = contour;
         } else {
-          cv::approxPolyDP(contour, approx_contour, 6, true);
+          cv::approxPolyDP(contour, approx_contour, 3, true);
         }
         if (approx_contour.size() <= 2) {
           LOG_IF(WARNING, hierarchy[hierachy_it-1][3] < 0 && contour.size() > 4) << "Removing parental polygon since too few vertices!";
