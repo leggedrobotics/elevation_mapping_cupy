@@ -52,6 +52,8 @@ namespace convex_plane_extraction {
 
     void extractSlConcavityPointsOfHole(const CgalPolygon2d& hole, std::vector<int>* concavity_positions);
 
+    void slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::vector<int>* concavity_positions)
+
     void resolveHoles();
 
     bool initialized_;

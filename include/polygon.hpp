@@ -2,13 +2,17 @@
 #define CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_
 
 #include <iostream>
+#include <limits>
 #include <list>
 #include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/intersections.h>
 #include <CGAL/partition_2.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Polygon_2.h>
+#include <CGAL/Polygon_set_2.h>
+#include <CGAL/squared_distance_2.h>
 #include <CGAL/Surface_sweep_2_algorithms.h>
 
 #include <Eigen/Dense>
@@ -24,8 +28,10 @@ namespace convex_plane_extraction{
   typedef CGAL::Partition_traits_2<K>                           Traits;
   typedef Traits::Point_2                                       CgalPoint2d;
   typedef Traits::Polygon_2                                     CgalPolygon2d;
+  typedef Traits::Segment_2                                     CgalSegment2d;
   typedef std::list<CgalPolygon2d>                              CgalPolygon2dListContainer;
   typedef CgalPolygon2dListContainer::const_iterator            CgalPolygon2dListConstIterator;
+  typedef CGAL::Polygon_set_2<K, std::vector<CgalPoint2d>>      CgalPolygon2dSetContainer;
   typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
 
   typedef std::vector<Eigen::Vector3d>                          Polygon3d;
@@ -65,6 +71,13 @@ namespace convex_plane_extraction{
   };
 
   void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dListContainer* output_polyong_list);
+
+  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment);
+
+  int getClosestPolygonVertexPosition(const CgalPolygon2d& polygon, const CgalPoint2d& point);
+
+  void getVertexPositionsInAscendingDistanceToPoint(const CgalPolygon2d& polygon, const CgalPoint2d& point,
+                                                    std::multimap<double, int>* vertex_positions);
 
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

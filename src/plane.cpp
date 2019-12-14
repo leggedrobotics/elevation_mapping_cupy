@@ -184,11 +184,39 @@ namespace convex_plane_extraction{
           hole_polygon_list_.erase(hole_it);
         } else {
           std::vector<int> connection_candidates;
-          extractSlConcavityPointsOfHole(*hole_it, &connection_candidates);
-          CHECK(connection_candidates.size() == 2);
+          slConcavityHoleVertexSorting(*hole_it, &connection_candidates);
+          CHECK_GT(connection_candidates.size(), 0);
           // Instead of extracting only the 2 SL-concavity points, sort vertices according to SL-concavity measure.
           // Then iterate over sorted vertices until a connection to the outer contour is not intersecting the polyogn.
           // Implement function that checks for intersections with existing polygon contour.
+          int hole_connection_vertex_position;
+          int outer_polygon_connection_vertex_position;
+          bool valid_connection;
+          for (const auto& position : connection_candidates){
+            auto hole_vertex_it = hole_it->vertices_begin();
+            std::advance(hole_vertex_it, position);
+            CgalPoint2d hole_vertex = *hole_vertex_it;
+            // Get outer contour connection vertices sorted according to distance to hole vertex.
+            std::multimap<double, int> outer_polygon_vertices;
+            getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, hole_vertex, &outer_polygon_vertices);
+            for (const auto& distance_position_pair : outer_polygon_vertices){
+              auto outer_vertex_it = outer_polygon_.vertices_begin();
+              std::advance(outer_vertex_it, distance_position_pair.second);
+              CgalSegment2d connection(hole_vertex, *outer_vertex_it);
+              if (doPolygonAndSegmentIntersect(outer_polygon_, connection) &&
+                  doPolygonAndSegmentIntersect(*hole_it, connection)){
+                valid_connection = true;
+                hole_connection_vertex_position = position;
+                outer_polygon_connection_vertex_position = distance_position_pair.second;
+                break;
+              }
+            }
+            if (valid_connection){
+              break;
+            }
+          }
+          CHECK(valid_connection);
+          // Perform the connection.
         }
       }
     }
@@ -241,6 +269,14 @@ namespace convex_plane_extraction{
       }
       concavity_positions->push_back(position_left_concavity_point);
       concavity_positions->push_back(position_right_concavity_point);
+    }
+  }
+
+  void Plane::slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::vector<int>* concavity_positions){
+    // TODO(andrej): Implement correctly. For now just return vertex positions in order.
+    CHECK_NOTNULL(concavity_positions);
+    for (auto vertex_it = hole.vertices_begin(); vertex_it != hole.vertices_end(); ++vertex_it){
+      concavity_positions->push_back(std::distance(hole.vertices_begin(), vertex_it));
     }
   }
 

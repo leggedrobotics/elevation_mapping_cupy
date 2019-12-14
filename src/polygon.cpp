@@ -19,4 +19,43 @@ namespace convex_plane_extraction {
     LOG(INFO) << "done.";
   }
 
+  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment){
+    for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
+      auto next_vertex_it = std::next(vertex_it);
+      if (next_vertex_it == polygon.vertices_end()){
+        next_vertex_it = polygon.vertices_begin();
+      }
+      CgalSegment2d test_segment(*vertex_it, *next_vertex_it);
+      if (do_intersect(test_segment, segment)){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  int getClosestPolygonVertexPosition(const CgalPolygon2d& polygon, const CgalPoint2d& point){
+    int closest_vertex_position = 0;
+    double smallest_distance = std::numeric_limits<double>::infinity();
+    int position = 0;
+    for(auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
+      double temp_distance = squared_distance(*vertex_it, point);
+      if (temp_distance < smallest_distance){
+        smallest_distance = temp_distance;
+        closest_vertex_position = position;
+      }
+      ++position;
+    }
+    return closest_vertex_position;
+  }
+
+  void getVertexPositionsInAscendingDistanceToPoint(const CgalPolygon2d& polygon, const CgalPoint2d& point,
+      std::multimap<double, int>* vertex_positions){
+    CHECK_NOTNULL(vertex_positions);
+    int position = 0;
+    for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it) {
+      vertex_positions->insert(std::pair<double, int>(squared_distance(*vertex_it, point), position));
+      ++position;
+    }
+  }
+
 }
