@@ -160,6 +160,9 @@ namespace sliding_window_plane_extractor{
         //LOG(WARNING) << "Dropping plane, no outer contour detected!";
         computePlaneFrameFromLabeledImage(binary_image, &plane);
         if(plane.isValid()) {
+          LOG(INFO) << "Starting resolving holes...";
+          plane.resolveHoles();
+          LOG(INFO) << "done.";
           CHECK(plane.decomposePlaneInConvexPolygons());
           planes_.push_back(plane);
         } else {

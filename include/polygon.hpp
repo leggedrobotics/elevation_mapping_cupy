@@ -14,6 +14,7 @@
 #include <CGAL/Polygon_set_2.h>
 #include <CGAL/squared_distance_2.h>
 #include <CGAL/Surface_sweep_2_algorithms.h>
+#include <CGAL/Vector_2.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -27,6 +28,7 @@ namespace convex_plane_extraction{
   typedef CGAL::Exact_predicates_inexact_constructions_kernel   K;
   typedef CGAL::Partition_traits_2<K>                           Traits;
   typedef Traits::Point_2                                       CgalPoint2d;
+  typedef Traits::Vector_2                                      CgalVector2d;
   typedef Traits::Polygon_2                                     CgalPolygon2d;
   typedef Traits::Segment_2                                     CgalSegment2d;
   typedef std::list<CgalPolygon2d>                              CgalPolygon2dListContainer;
@@ -78,6 +80,8 @@ namespace convex_plane_extraction{
 
   void getVertexPositionsInAscendingDistanceToPoint(const CgalPolygon2d& polygon, const CgalPoint2d& point,
                                                     std::multimap<double, int>* vertex_positions);
+
+  void getSegmentNormalVector(const CgalSegment2d& segment, Eigen::Vector2d* normal_vector);
 
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

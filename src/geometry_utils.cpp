@@ -16,5 +16,24 @@ namespace convex_plane_extraction {
         + scalarCrossProduct(lineSupportVector, secondPointOnLine);
   }
 
+  bool isPointOnRightSide(const Vector2d& line_support_vector, const Vector2d& line_direction_vector, const Vector2d& point){
+    Vector2d normal_vector(line_direction_vector.y(), (-1.0)*line_direction_vector.x());
+    normal_vector.normalize();
+    Vector2d point_vector = point - line_support_vector;
+    return point_vector.transpose() * normal_vector > 0;
+  }
+
+  bool isPointOnLeftSide(const Vector2d& line_support_vector, const Vector2d& line_direction_vector, const Vector2d& point){
+    Vector2d normal_vector(line_direction_vector.y(), (-1.0)*line_direction_vector.x());
+    normal_vector.normalize();
+    Vector2d point_vector = point - line_support_vector;
+    return point_vector.transpose() * normal_vector < 0;
+  }
+
+  double computeAngleBetweenVectors(const Vector2d& first_vector, const Vector2d& second_vector){
+    double scalar_product = first_vector.transpose() * second_vector;
+    return acos( scalar_product / (first_vector.norm() * second_vector.norm()));
+  }
+
 }
 

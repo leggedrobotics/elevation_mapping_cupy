@@ -26,9 +26,12 @@ namespace convex_plane_extraction {
         next_vertex_it = polygon.vertices_begin();
       }
       CgalSegment2d test_segment(*vertex_it, *next_vertex_it);
+      LOG(INFO) << "Source: " << test_segment.source() << " target: " << test_segment.target();
       if (do_intersect(test_segment, segment)){
+        LOG(INFO) << "OK!";
         return true;
       }
+      LOG(INFO) << "OK!";
     }
     return false;
   }
@@ -56,6 +59,17 @@ namespace convex_plane_extraction {
       vertex_positions->insert(std::pair<double, int>(squared_distance(*vertex_it, point), position));
       ++position;
     }
+  }
+
+  void getSegmentNormalVector(const CgalSegment2d& segment, Eigen::Vector2d* normal_vector){
+    CHECK_NOTNULL(normal_vector);
+    const auto first_vertex = segment.source();
+    const auto second_vertex = segment.target();
+    double d_x = second_vertex.x() - first_vertex.x();
+    double d_y = second_vertex.y() - first_vertex.y();
+    Eigen::Vector2d normal(d_y, -d_x);
+    normal.normalize();
+    *normal_vector = normal;
   }
 
 }

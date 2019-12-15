@@ -108,7 +108,7 @@ namespace convex_plane_extraction{
   bool Plane::convertHolePolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const{
     CHECK_NOTNULL(output_container);
     if (hole_polygon_list_.empty()){
-      LOG(INFO) << "No convex polygons to convert!";
+      LOG(INFO) << "No hole polygons to convert!";
       return false;
     }
     for (const auto& polygon : hole_polygon_list_){
@@ -133,8 +133,8 @@ namespace convex_plane_extraction{
     Eigen::Vector2d point_vector(point.x(), point.y());
     point_vector = transformation * point_vector;
     point_vector = point_vector + map_position;
-    LOG_IF(FATAL, !isfinite(point_vector.x())) << "Not finite x value!";
-    LOG_IF(FATAL, !isfinite(point_vector.y())) << "Not finite y value!";
+    LOG_IF(FATAL, !std::isfinite(point_vector.x())) << "Not finite x value!";
+    LOG_IF(FATAL, !std::isfinite(point_vector.y())) << "Not finite y value!";
     *output_point = point_vector;
   }
 
@@ -142,7 +142,7 @@ namespace convex_plane_extraction{
     CHECK_NOTNULL(output_point);
     double z = (-(input_point.x() - support_vector_.x())*normal_vector_.x() -
         (input_point.y() - support_vector_.y())* normal_vector_.y())/normal_vector_(2) + support_vector_(2);
-    LOG_IF(FATAL, !isfinite(z)) << "Not finite z value!";
+    LOG_IF(FATAL, !std::isfinite(z)) << "Not finite z value!";
     *output_point = Vector3d(input_point.x(), input_point.y(), z);
   }
 
@@ -174,50 +174,162 @@ namespace convex_plane_extraction{
     if (hole_polygon_list_.empty()) {
       return;
     }
+    auto hole_it = hole_polygon_list_.begin();
     while(!hole_polygon_list_.empty()) {
+      if (hole_it == hole_polygon_list_.end()){
+        hole_it = hole_polygon_list_.begin();
+      }
       // Compute distance to outer contour for each hole.
       std::vector<double> distance_to_outer_polygon;
       std::vector<int> outer_contour_connection_vertex_positions; // closest outer contour vertex for each hole
       std::vector<int> hole_connection_vertex_positions;
-      for (auto hole_it = hole_polygon_list_.begin(); hole_it != hole_polygon_list_.end(); ++hole_it) {
-        if (hole_it->is_empty()) {
-          hole_polygon_list_.erase(hole_it);
-        } else {
-          std::vector<int> connection_candidates;
-          slConcavityHoleVertexSorting(*hole_it, &connection_candidates);
-          CHECK_GT(connection_candidates.size(), 0);
-          // Instead of extracting only the 2 SL-concavity points, sort vertices according to SL-concavity measure.
-          // Then iterate over sorted vertices until a connection to the outer contour is not intersecting the polyogn.
-          // Implement function that checks for intersections with existing polygon contour.
-          int hole_connection_vertex_position;
-          int outer_polygon_connection_vertex_position;
-          bool valid_connection;
-          for (const auto& position : connection_candidates){
-            auto hole_vertex_it = hole_it->vertices_begin();
-            std::advance(hole_vertex_it, position);
-            CgalPoint2d hole_vertex = *hole_vertex_it;
-            // Get outer contour connection vertices sorted according to distance to hole vertex.
-            std::multimap<double, int> outer_polygon_vertices;
-            getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, hole_vertex, &outer_polygon_vertices);
-            for (const auto& distance_position_pair : outer_polygon_vertices){
-              auto outer_vertex_it = outer_polygon_.vertices_begin();
-              std::advance(outer_vertex_it, distance_position_pair.second);
-              CgalSegment2d connection(hole_vertex, *outer_vertex_it);
-              if (doPolygonAndSegmentIntersect(outer_polygon_, connection) &&
-                  doPolygonAndSegmentIntersect(*hole_it, connection)){
-                valid_connection = true;
-                hole_connection_vertex_position = position;
-                outer_polygon_connection_vertex_position = distance_position_pair.second;
+      LOG(INFO) << "Here";
+      if (hole_it->size() < 3) {
+        ++hole_it;
+        hole_polygon_list_.erase(std::prev(hole_it));
+      } else if (abs(hole_it->area()) < 2e-3) {
+        ++hole_it;
+        hole_polygon_list_.erase(std::prev(hole_it));
+      }  else {
+        std::multimap<double, int> connection_candidates;
+        slConcavityHoleVertexSorting(*hole_it, &connection_candidates);
+        CHECK_GT(connection_candidates.size(), 0);
+        // Instead of extracting only the 2 SL-concavity points, sort vertices according to SL-concavity measure.
+        // Then iterate over sorted vertices until a connection to the outer contour is not intersecting the polyogn.
+        // Implement function that checks for intersections with existing polygon contour.
+        int hole_connection_vertex_position;
+        int outer_polygon_connection_vertex_position;
+        bool valid_connection = true;
+        for (const auto& position : connection_candidates){
+          auto hole_vertex_it = hole_it->vertices_begin();
+          std::advance(hole_vertex_it, position.second);
+          CgalPoint2d hole_vertex = *hole_vertex_it;
+          // Get outer contour connection vertices sorted according to distance to hole vertex.
+          std::multimap<double, int> outer_polygon_vertices;
+          getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, hole_vertex, &outer_polygon_vertices);
+          auto outer_vertex_it = outer_polygon_.vertices_begin();
+          std::advance(outer_vertex_it, outer_polygon_vertices.begin()->second);
+          CgalVector2d direction = *outer_vertex_it - hole_vertex;
+          direction = (1.0/direction.squared_length()) * direction;
+          CgalSegment2d connection(hole_vertex + 0.001 * direction, *outer_vertex_it - 0.001 * direction);
+          if (!doPolygonAndSegmentIntersect(outer_polygon_, connection)){
+            LOG(INFO) << "Got here!";
+            for (auto hole_iterator = hole_polygon_list_.begin(); hole_iterator != hole_polygon_list_.end(); ++hole_iterator){
+              if (hole_iterator->size() < 3){
+                continue;
+              }
+              LOG(INFO) << "Here ok!";
+              if (doPolygonAndSegmentIntersect(*hole_iterator, connection)) {
+                LOG(INFO) << "Detected intersection!";
+                valid_connection = false;
                 break;
               }
+              LOG(INFO) << "All fine!";
             }
-            if (valid_connection){
-              break;
-            }
+          } else {
+            valid_connection = false;
           }
-          CHECK(valid_connection);
-          // Perform the connection.
+          if (valid_connection){
+            hole_connection_vertex_position = position.second;
+            outer_polygon_connection_vertex_position = outer_polygon_vertices.begin()->second;
+            break;
+          }
+          LOG(INFO) << "Here";
         }
+        if (!valid_connection){
+          LOG(INFO) << "Here!";
+          ++hole_it;
+          continue;
+        }
+        CHECK(valid_connection);
+        LOG(INFO) << "Hole position: " << hole_connection_vertex_position << " Outer position: " << outer_polygon_connection_vertex_position;
+        // Perform the integration of the hole into the outer contour.
+        auto outer_contour_connection_vertex = outer_polygon_.vertices_begin();
+        std::advance(outer_contour_connection_vertex, outer_polygon_connection_vertex_position);
+        auto hole_contour_connection_vertex = hole_it->vertices_begin();
+        std::advance(hole_contour_connection_vertex, hole_connection_vertex_position);
+        CgalPolygon2d new_polygon;
+        // Start filling new polygon with outer contour.
+        for (auto vertex_it = outer_polygon_.vertices_begin(); vertex_it != outer_contour_connection_vertex; ++vertex_it){
+          new_polygon.push_back(*vertex_it);
+        }
+        new_polygon.push_back(*outer_contour_connection_vertex);
+        auto hole_vertex_it = hole_contour_connection_vertex;
+        do {
+          new_polygon.push_back(*hole_vertex_it);
+          if (hole_vertex_it != std::prev(hole_it->vertices_end())){
+            hole_vertex_it = std::next(hole_vertex_it);
+          } else {
+            hole_vertex_it = hole_it->vertices_begin();
+          }
+        } while(hole_vertex_it != hole_contour_connection_vertex);
+        LOG(INFO) << "Here!";
+        // Create new vertices next to connection points to avoid same enter and return path.
+        CgalSegment2d enter_connection(*outer_contour_connection_vertex, *hole_contour_connection_vertex);
+        Eigen::Vector2d normal_vector;
+        getSegmentNormalVector(enter_connection, &normal_vector);
+        // Check for possible intersections.
+        Eigen::Vector2d line_start_point(hole_contour_connection_vertex->x(), hole_contour_connection_vertex->y());
+        Eigen::Vector2d direction_vector(outer_contour_connection_vertex->x() - hole_contour_connection_vertex->x(),
+            outer_contour_connection_vertex->y() - hole_contour_connection_vertex->y());
+        auto next_vertex = std::next(outer_contour_connection_vertex);
+        if (next_vertex == outer_polygon_.vertices_end()){
+          next_vertex = outer_polygon_.begin();
+        }
+        Eigen::Vector2d test_point(next_vertex->x(), next_vertex->y());
+        constexpr double kPointOffset = 0.001;
+        Eigen::Vector2d outer_point(outer_contour_connection_vertex->x(), outer_contour_connection_vertex->y());
+        if (isPointOnLeftSide(line_start_point, direction_vector, test_point)){
+          Eigen::Vector2d translation_vector(next_vertex->x() - outer_contour_connection_vertex->x(),
+              next_vertex->y() - outer_contour_connection_vertex->y());
+          translation_vector.normalize();
+          outer_point += kPointOffset * translation_vector;
+        } else {
+          outer_point += kPointOffset * normal_vector;
+        }
+        next_vertex = hole_contour_connection_vertex;
+        if (next_vertex == hole_it->vertices_begin()){
+          next_vertex = hole_it->vertices_end();
+          next_vertex = std::prev(next_vertex);
+        } else {
+          next_vertex = std::prev(next_vertex);
+        }
+        Eigen::Vector2d hole_point(hole_contour_connection_vertex->x(), hole_contour_connection_vertex->y());
+        test_point << next_vertex->x(), next_vertex->y();
+        constexpr double kPiHalf = 3.1416 / 2;
+        if (isPointOnLeftSide(line_start_point, direction_vector, test_point)
+            && computeAngleBetweenVectors(test_point - line_start_point, direction_vector) < kPiHalf){
+          Eigen::Vector2d translation_vector(next_vertex->x() - hole_contour_connection_vertex->x(),
+              next_vertex->y() - hole_contour_connection_vertex->y());
+          translation_vector.normalize();
+          hole_point += kPointOffset * translation_vector;
+        } else {
+          hole_point += kPointOffset * normal_vector;
+        }
+        LOG(INFO) << "Here";
+        // Add new vertices to outer contour.
+        new_polygon.push_back(CgalPoint2d(hole_point.x(), hole_point.y()));
+        new_polygon.push_back(CgalPoint2d(outer_point.x(), outer_point.y()));
+        // Add remaining outer contour vertices to new polygon.
+        auto vertex_it = outer_contour_connection_vertex;
+        vertex_it = std::next(vertex_it);
+        for (; vertex_it != outer_polygon_.vertices_end(); ++vertex_it){
+          new_polygon.push_back(*vertex_it);
+        }
+        LOG(INFO) << "Here";
+        if (new_polygon.is_simple()){
+          std::cout << "Hole orientation: " << hole_it->orientation() << std::endl;
+          std::cout <<"Hole vertex: " << *hole_contour_connection_vertex << std::endl;
+          std::cout <<"Outer vertex: " << *outer_contour_connection_vertex << std::endl;
+          for (auto& point : new_polygon)
+            std::cout << point << std::endl;
+        }
+        LOG(INFO) << "Here";
+        CHECK(new_polygon.is_simple());
+        outer_polygon_ = new_polygon;
+        ++hole_it;
+        hole_polygon_list_.erase(std::prev(hole_it));
+        LOG(INFO) << "Here";
       }
     }
   }
@@ -272,11 +384,13 @@ namespace convex_plane_extraction{
     }
   }
 
-  void Plane::slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::vector<int>* concavity_positions){
-    // TODO(andrej): Implement correctly. For now just return vertex positions in order.
+  void Plane::slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::multimap<double, int>* concavity_positions){
     CHECK_NOTNULL(concavity_positions);
     for (auto vertex_it = hole.vertices_begin(); vertex_it != hole.vertices_end(); ++vertex_it){
-      concavity_positions->push_back(std::distance(hole.vertices_begin(), vertex_it));
+      std::multimap<double, int> outer_polygon_vertices;
+      getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, *vertex_it, &outer_polygon_vertices);
+      concavity_positions->insert(std::pair<double, int>(outer_polygon_vertices.begin()->first,
+          std::distance(hole.vertices_begin(), vertex_it)));
     }
   }
 
