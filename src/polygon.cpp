@@ -26,12 +26,9 @@ namespace convex_plane_extraction {
         next_vertex_it = polygon.vertices_begin();
       }
       CgalSegment2d test_segment(*vertex_it, *next_vertex_it);
-      LOG(INFO) << "Source: " << test_segment.source() << " target: " << test_segment.target();
       if (do_intersect(test_segment, segment)){
-        LOG(INFO) << "OK!";
         return true;
       }
-      LOG(INFO) << "OK!";
     }
     return false;
   }

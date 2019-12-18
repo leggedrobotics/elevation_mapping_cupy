@@ -183,7 +183,6 @@ namespace convex_plane_extraction{
       std::vector<double> distance_to_outer_polygon;
       std::vector<int> outer_contour_connection_vertex_positions; // closest outer contour vertex for each hole
       std::vector<int> hole_connection_vertex_positions;
-      LOG(INFO) << "Here";
       if (hole_it->size() < 3) {
         ++hole_it;
         hole_polygon_list_.erase(std::prev(hole_it));
@@ -213,18 +212,14 @@ namespace convex_plane_extraction{
           direction = (1.0/direction.squared_length()) * direction;
           CgalSegment2d connection(hole_vertex + 0.001 * direction, *outer_vertex_it - 0.001 * direction);
           if (!doPolygonAndSegmentIntersect(outer_polygon_, connection)){
-            LOG(INFO) << "Got here!";
             for (auto hole_iterator = hole_polygon_list_.begin(); hole_iterator != hole_polygon_list_.end(); ++hole_iterator){
               if (hole_iterator->size() < 3){
                 continue;
               }
-              LOG(INFO) << "Here ok!";
               if (doPolygonAndSegmentIntersect(*hole_iterator, connection)) {
-                LOG(INFO) << "Detected intersection!";
                 valid_connection = false;
                 break;
               }
-              LOG(INFO) << "All fine!";
             }
           } else {
             valid_connection = false;
@@ -234,15 +229,12 @@ namespace convex_plane_extraction{
             outer_polygon_connection_vertex_position = outer_polygon_vertices.begin()->second;
             break;
           }
-          LOG(INFO) << "Here";
         }
         if (!valid_connection){
-          LOG(INFO) << "Here!";
           ++hole_it;
           continue;
         }
         CHECK(valid_connection);
-        LOG(INFO) << "Hole position: " << hole_connection_vertex_position << " Outer position: " << outer_polygon_connection_vertex_position;
         // Perform the integration of the hole into the outer contour.
         auto outer_contour_connection_vertex = outer_polygon_.vertices_begin();
         std::advance(outer_contour_connection_vertex, outer_polygon_connection_vertex_position);
@@ -263,7 +255,6 @@ namespace convex_plane_extraction{
             hole_vertex_it = hole_it->vertices_begin();
           }
         } while(hole_vertex_it != hole_contour_connection_vertex);
-        LOG(INFO) << "Here!";
         // Create new vertices next to connection points to avoid same enter and return path.
         CgalSegment2d enter_connection(*outer_contour_connection_vertex, *hole_contour_connection_vertex);
         Eigen::Vector2d normal_vector;
@@ -306,7 +297,6 @@ namespace convex_plane_extraction{
         } else {
           hole_point += kPointOffset * normal_vector;
         }
-        LOG(INFO) << "Here";
         // Add new vertices to outer contour.
         new_polygon.push_back(CgalPoint2d(hole_point.x(), hole_point.y()));
         new_polygon.push_back(CgalPoint2d(outer_point.x(), outer_point.y()));
@@ -316,7 +306,6 @@ namespace convex_plane_extraction{
         for (; vertex_it != outer_polygon_.vertices_end(); ++vertex_it){
           new_polygon.push_back(*vertex_it);
         }
-        LOG(INFO) << "Here";
         if (new_polygon.is_simple()){
           std::cout << "Hole orientation: " << hole_it->orientation() << std::endl;
           std::cout <<"Hole vertex: " << *hole_contour_connection_vertex << std::endl;
@@ -324,12 +313,10 @@ namespace convex_plane_extraction{
           for (auto& point : new_polygon)
             std::cout << point << std::endl;
         }
-        LOG(INFO) << "Here";
         CHECK(new_polygon.is_simple());
         outer_polygon_ = new_polygon;
         ++hole_it;
         hole_polygon_list_.erase(std::prev(hole_it));
-        LOG(INFO) << "Here";
       }
     }
   }
