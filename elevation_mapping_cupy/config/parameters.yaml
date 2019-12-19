@@ -1,5 +1,5 @@
 resolution: 0.04                                # resolution in m.
-map_length: 12                                   # map's size in m.
+map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.001                         # if point is outlier, add this value to the cell.
@@ -20,7 +20,7 @@ max_height_range: 1.0                           # points higher than this value 
 recordable_fps: 3.0                             # fps for publishing map (in slower rate to record).
 
 max_ray_length: 4.0                             # maximum length for ray tracing.
-cleanup_step: 0.2                               # subtitute this value from validity layer at visibiltiy cleanup.
+cleanup_step: 0.01                              # subtitute this value from validity layer at visibiltiy cleanup.
 
 safe_thresh: 0.7                                # if traversability is smaller, it is counted as unsafe cell.
 safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
@@ -30,7 +30,7 @@ gather_mode: 'mean'                             # gather mode (currently only me
 enable_edge_sharpen: true
 enable_visibility_cleanup: true
 enable_drift_compensation: true
-enable_pointcloud_publishing: true
+enable_pointcloud_publishing: false
 
 weight_file: 'config/weights.dat'
 
@@ -39,11 +39,11 @@ pointcloud_topics: ['/realsense_d435_front/depth/color/points',
                     '/velodyne/point_cloud']
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
-initialize_method: 'linear'
-initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']
-initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]
-dilation_size_initialize: 3
-# initialize_frame_id: ['footprint']
-# initialize_tf_offset: [0.0]
-initialize_tf_grid_size: 1.0  # This is not used if initialize_frame_id is more than 3.
 map_frame: 'odom'
+
+#  Initialization
+initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
+initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
+initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
+dilation_size_initialize: 3                                         # dilation size after the init.
+initialize_tf_grid_size: 1.0                                        # This is not used if number of tf is more than 3.
