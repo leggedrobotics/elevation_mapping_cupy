@@ -29,11 +29,15 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   std::vector<std::string>pointcloud_topics;
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
+  nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
+  nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
+  nh.param<std::string>("initialize_method", initializeMethod_, "cubic");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
   nh.param<double>("recordable_fps", recordableFps_, 3.0);
+  nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
@@ -47,6 +51,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
+  initializeMapService_ = nh_.advertiseService("initialize", &ElevationMappingNode::initializeMap, this);
+  clearMapWithInitializerService_ = nh_.advertiseService("clear_map_with_initializer", &ElevationMappingNode::clearMapWithInitializer, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
   checkSafetyService_ = nh_.advertiseService("check_safety", &ElevationMappingNode::checkSafety, this);
   if (recordableFps_ > 0) {
@@ -162,6 +168,48 @@ bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs:
   return true;
 }
 
+bool ElevationMappingNode::clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+  ROS_INFO("Clearing map with initializer.");
+  map_.clear();
+  initializeWithTF();
+  return true;
+}
+
+void ElevationMappingNode::initializeWithTF() {
+    std::vector<Eigen::Vector3d> points;
+    const auto& timeStamp = ros::Time::now();
+    int i = 0;
+    Eigen::Vector3d p;
+    for (const auto& frame_id: initialize_frame_id_) {
+      // Get tf from map frame to tf frame
+      Eigen::Affine3d transformationBaseToMap;
+      tf::StampedTransform transformTf;
+      try {
+        transformListener_.waitForTransform(mapFrameId_, frame_id, timeStamp, ros::Duration(1.0));
+        transformListener_.lookupTransform(mapFrameId_, frame_id, timeStamp, transformTf);
+        poseTFToEigen(transformTf, transformationBaseToMap);
+      }
+      catch (tf::TransformException &ex) {
+        ROS_ERROR("%s", ex.what());
+        return;
+      }
+      p = transformationBaseToMap.translation();
+      p.z() += initialize_tf_offset_[i];
+      points.push_back(p);
+      i++;
+    }
+    if (points.size() > 0 && points.size() < 3) {
+      points.push_back(p + Eigen::Vector3d(initializeTfGridSize_, initializeTfGridSize_, 0));
+      points.push_back(p + Eigen::Vector3d(-initializeTfGridSize_, initializeTfGridSize_, 0));
+      points.push_back(p + Eigen::Vector3d(initializeTfGridSize_, -initializeTfGridSize_, 0));
+      points.push_back(p + Eigen::Vector3d(-initializeTfGridSize_, -initializeTfGridSize_, 0));
+    }
+    ROS_INFO_STREAM("Initializing map with points using " << initializeMethod_);
+    map_.initializeWithPoints(points, initializeMethod_);
+}
+
+
 bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request& request,
                                        elevation_map_msgs::CheckSafety::Response& response) {
 
@@ -245,6 +293,56 @@ void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
   msg.basic_layers = layers;
   recordablePub_.publish(msg);
   return;
+}
+
+bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,
+                                         elevation_map_msgs::Initialize::Response& response) {
+
+  // If initialize method is points
+  if (request.type == request.POINTS) {
+    std::vector<Eigen::Vector3d> points;
+    for (const auto& point: request.points) {
+      const auto& pointFrameId = point.header.frame_id;
+      const auto& timeStamp = point.header.stamp;
+      const auto& pvector = Eigen::Vector3d(point.point.x, point.point.y, point.point.z);
+
+      // Get tf from map frame to points' frame
+      if (mapFrameId_ != pointFrameId) {
+        Eigen::Affine3d transformationBaseToMap;
+        tf::StampedTransform transformTf;
+        try {
+          transformListener_.waitForTransform(mapFrameId_, pointFrameId, timeStamp, ros::Duration(1.0));
+          transformListener_.lookupTransform(mapFrameId_, pointFrameId, timeStamp, transformTf);
+          poseTFToEigen(transformTf, transformationBaseToMap);
+        }
+        catch (tf::TransformException &ex) {
+          ROS_ERROR("%s", ex.what());
+          return false;
+        }
+        const auto transformed_p = transformationBaseToMap * pvector;
+        points.push_back(transformed_p);
+        }
+      else {
+        points.push_back(pvector);
+      }
+    }
+    std::string method;
+    switch (request.method){
+      case request.NEAREST:
+        method = "nearest";
+        break;
+      case request.LINEAR:
+        method = "linear";
+        break;
+      case request.CUBIC:
+        method = "cubic";
+        break;
+    }
+    ROS_INFO_STREAM("Initializing map with points using " << method);
+    map_.initializeWithPoints(points, method);
+  }
+  response.success = true;
+  return true;
 }
 
 }

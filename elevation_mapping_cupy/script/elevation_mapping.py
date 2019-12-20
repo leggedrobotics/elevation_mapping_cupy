@@ -9,8 +9,9 @@ from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
 from custom_kernels import polygon_mask_kernel
+from map_initializer import MapInitializer
 
-from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position
+from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -41,6 +42,7 @@ class ElevationMap(object):
 
         self.max_variance = param.max_variance
         self.dilation_size = param.dilation_size
+        self.dilation_size_initialize = param.dilation_size_initialize
         self.traversability_inlier = param.traversability_inlier
         self.wall_num_thresh = param.wall_num_thresh
         self.min_height_drift_cnt = param.min_height_drift_cnt
@@ -73,6 +75,9 @@ class ElevationMap(object):
                                                           param.w_out)
         self.traversability_filter.to_gpu()
         self.untraversable_polygon = xp.zeros((1, 2))
+
+        self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
+                                              xp=cp, method='points')
 
     def clear(self):
         self.elevation_map *= 0.0
@@ -113,6 +118,7 @@ class ElevationMap(object):
     def compile_kernels(self):
         self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
+        self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n))
         self.mask = cp.zeros((self.cell_n, self.cell_n))
         self.add_points_kernel = add_points_kernel(self.resolution,
                                                    self.cell_n,
@@ -140,6 +146,7 @@ class ElevationMap(object):
                                                      self.max_variance, self.initial_variance)
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
+        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size_initialize)
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
@@ -167,6 +174,7 @@ class ElevationMap(object):
         self.dilation_filter_kernel(self.elevation_map[0],
                                     self.elevation_map[2],
                                     self.traversability_input,
+                                    self.traversability_mask_dummy,
                                     size=(self.cell_n * self.cell_n))
         # calculate traversability
         traversability = self.traversability_filter(self.traversability_input)
@@ -253,6 +261,22 @@ class ElevationMap(object):
     def get_untraversable_polygon(self, untraversable_polygon):
         # print(self.untraversable_polygon)
         untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
+
+    def initialize_map(self, points, method='cubic'):
+        self.clear()
+        points = cp.asarray(points)
+        indices = transform_to_map_index(points[:, :2],
+                                         self.center,
+                                         self.cell_n,
+                                         self.resolution)
+        points[:, :2] = indices.astype(points.dtype)
+        self.map_initializer(self.elevation_map, points, method)
+        if self.dilation_size_initialize > 0:
+            self.dilation_filter_kernel_initializer(self.elevation_map[0],
+                                                    self.elevation_map[2],
+                                                    self.elevation_map[0],
+                                                    self.elevation_map[2],
+                                                    size=(self.cell_n * self.cell_n))
 
 
 if __name__ == '__main__':

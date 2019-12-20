@@ -1,0 +1,14 @@
+# Initialization methods
+# TODO add more methods.
+uint8 POINTS=0
+
+uint8 NEAREST=0
+uint8 LINEAR=1
+uint8 CUBIC=2
+
+uint8 type
+uint8 method
+geometry_msgs/PointStamped[] points
+
+---
+bool success

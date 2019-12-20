@@ -33,7 +33,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
   float time_variance, initial_variance, traversability_inlier, position_noise_thresh,
         orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
-  int dilation_size, wall_num_thresh, min_height_drift_cnt, max_unsafe_n;
+  int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
   param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
@@ -97,6 +97,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
+
+  nh.param<int>("dilation_size_initialize", dilation_size_initialize, 10);
+  param_.attr("set_dilation_size_initialize")(dilation_size_initialize);
 
   nh.param<int>("wall_num_thresh", wall_num_thresh, 100);
   param_.attr("set_wall_num_thresh")(wall_num_thresh);
@@ -211,6 +214,19 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
     }
   }
 
+  return;
+}
+
+void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> &points, std::string method) {
+  RowMatrixXd points_m(points.size(), 3);
+  int i = 0;
+  for (auto& p: points) {
+    points_m(i, 0) = p.x();
+    points_m(i, 1) = p.y();
+    points_m(i, 2) = p.z();
+    i++;
+  }
+  map_.attr("initialize_map")(static_cast<Eigen::Ref<const RowMatrixXd>>(points_m), method);
   return;
 }
 

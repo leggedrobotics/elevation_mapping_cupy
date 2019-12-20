@@ -67,6 +67,11 @@ def transform_to_map_position(polygon, center, cell_n, resolution):
     return polygon
 
 
+def transform_to_map_index(points, center, cell_n, resolution):
+    indices = ((points - center.reshape(1, 2)) / resolution + cell_n / 2).astype(cp.int)
+    return indices
+
+
 
 if __name__ == '__main__':
     polygon = [[0, 0], [2, 0], [0, 2]]

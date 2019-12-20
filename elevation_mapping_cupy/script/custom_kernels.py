@@ -144,6 +144,8 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     int nidx = get_idx(nx, ny, center_x, center_y);
                     U nmap_h = map[get_map_idx(nidx, 0)];
                     U nmap_v = map[get_map_idx(nidx, 1)];
+                    // float16 d = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz));
+                    // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
                     if (nmap_h > nz + nmap_v * 3) {
                         // map[get_map_idx(nidx, 1)] = 100;
                         // map[get_map_idx(nidx, 2)] = 0;
@@ -254,7 +256,7 @@ def average_map_kernel(width, height, max_variance, initial_variance):
 def dilation_filter_kernel(width, height, dilation_size):
     dilation_filter_kernel = cp.ElementwiseKernel(
             in_params='raw U map, raw U mask',
-            out_params='raw U newmap',
+            out_params='raw U newmap, raw U newmask',
             preamble=\
             string.Template('''
             __device__ int get_map_idx(int idx, int layer_n) {
@@ -287,7 +289,7 @@ def dilation_filter_kernel(width, height, dilation_size):
                 }
                 if(distance < 100) {
                     newmap[get_map_idx(i, 0)] = near_value;
-                    // newmap[get_map_idx(i, 0)] = 10;
+                    newmask[get_map_idx(i, 0)] = 1.0;
                 }
             }
             ''').substitute(dilation_size=dilation_size),

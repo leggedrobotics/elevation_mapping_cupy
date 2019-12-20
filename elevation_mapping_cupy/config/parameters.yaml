@@ -1,5 +1,5 @@
 resolution: 0.04                                # resolution in m.
-map_length: 6                                   # map's size in m.
+map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.001                         # if point is outlier, add this value to the cell.
@@ -35,10 +35,15 @@ enable_pointcloud_publishing: false
 weight_file: 'config/weights.dat'
 
 pointcloud_topics: ['/realsense_d435_front/depth/color/points',
-                    '/realsense_d435_rear/depth/color/points']
-# pointcloud_topics: ['/realsense_d435_front/depth_reconstructed/points',
-#                     '/realsense_d435_rear/depth/color/points']
+                    '/realsense_d435_rear/depth/color/points',
+                    '/velodyne/point_cloud']
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
-# pose_topic: '/state_estimator_standalone/pose_in_odom'
 map_frame: 'odom'
+
+#  Initialization
+initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
+initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
+initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
+dilation_size_initialize: 3                                         # dilation size after the init.
+initialize_tf_grid_size: 1.0                                        # This is not used if number of tf is more than 3.
