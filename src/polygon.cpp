@@ -134,4 +134,37 @@ namespace convex_plane_extraction {
     }
   }
 
+  void upSampleLongEdges(CgalPolygon2d* polygon){
+    CHECK_NOTNULL(polygon);
+    for (auto vertex_it = polygon->vertices_begin(); vertex_it != polygon->vertices_end(); ++vertex_it) {
+      double edge_length = getEdgeLength(vertex_it, *polygon);
+      CHECK_GT(edge_length, 0);
+      double kEdgeLengthThreshold = 0.5;
+      if (edge_length > 2 * kEdgeLengthThreshold){
+        int number_of_intervals = static_cast<int>(round(ceil(edge_length / kEdgeLengthThreshold)));
+        CgalPoint2d source_point = *vertex_it;
+        CgalPoint2d destination_point = *(next(vertex_it, *polygon));
+        CHECK_NE(number_of_intervals , 0);
+        CgalPoint2d direction_vector = CgalPoint2d((destination_point.x() - source_point.x()) /
+            static_cast<double>(number_of_intervals),(destination_point.y() - source_point.y()) /
+            static_cast<double>(number_of_intervals));
+
+        CHECK_LE(abs(sqrt(pow(direction_vector.x(),2) + pow(direction_vector.y(),2))),edge_length);
+        std::cout << "Direction vector: " << direction_vector << std::endl;
+        auto inserter_it = next(vertex_it, *polygon);
+        for (int i = 0; i < number_of_intervals-1; ++i){
+          CgalVector2d new_point = *inserter_it - direction_vector;
+          inserter_it = polygon->insert(inserter_it, CgalPoint2d(new_point.x(), new_point.y()));
+        }
+        std::advance(vertex_it, number_of_intervals - 1);
+      }
+    }
+  }
+
+  double getEdgeLength(const CgalPolygon2dVertexIterator& source, const CgalPolygon2d& polygon) {
+    CgalPoint2d source_point = *source;
+    CgalPoint2d destination_point = *(next(source, polygon));
+    return abs(sqrt((destination_point.x() - source_point.x()) * (destination_point.x() - source_point.x())
+        + (destination_point.y() - source_point.y()) * (destination_point.y() - source_point.y())));
+  }
 }

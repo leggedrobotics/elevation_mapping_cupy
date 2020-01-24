@@ -91,5 +91,9 @@ namespace convex_plane_extraction{
 
   void approximateContour(CgalPolygon2d* polygon);
 
+  void upSampleLongEdges(CgalPolygon2d* polygon);
+
+  double getEdgeLength(const CgalPolygon2dVertexIterator& source, const CgalPolygon2d& polygon);
+
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_
