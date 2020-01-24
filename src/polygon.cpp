@@ -69,4 +69,69 @@ namespace convex_plane_extraction {
     *normal_vector = normal;
   }
 
+  void approximateContour(CgalPolygon2d* polygon){
+    CHECK_NOTNULL(polygon);
+    if (polygon->size() < 4){
+      return;
+    }
+    CHECK(polygon->orientation() == CGAL::COUNTERCLOCKWISE);
+    int old_size;
+    auto first_vertex_it = polygon->vertices_begin();
+    auto second_vertex_it = std::next(first_vertex_it);
+    auto third_vertex_it = std::next(second_vertex_it);
+    double area = polygon->area();
+    do {
+      old_size = polygon->size();
+      for (int vertex_position = 0; vertex_position < old_size; ++vertex_position){
+        if (polygon->size() < 4){
+          break;
+        }
+        Vector2d first_point(first_vertex_it->x(), first_vertex_it->y());
+        Vector2d second_point(second_vertex_it->x(), second_vertex_it->y());
+        Vector2d third_point(third_vertex_it->x(), third_vertex_it->y());
+        if (isPointOnRightSide(first_point, third_point - first_point, second_point)) {
+          LOG(INFO) << "Point on right side!";
+          double a = (third_point - first_point).norm();
+          double b = (second_point - third_point).norm();
+          double c = (first_point - second_point).norm();
+          constexpr double areaThresholdFactor = 0.01;
+          if (computeTriangleArea(a, b, c) < areaThresholdFactor * area) {
+            LOG(INFO) << "Area sufficiently small!";
+            CgalPolygon2d new_polygon(*polygon);
+            int vertex_position_offset = std::distance(polygon->vertices_begin(), second_vertex_it);
+            CgalPolygon2dVertexIterator tmp_iterator = new_polygon.vertices_begin();
+            std::advance(tmp_iterator, vertex_position_offset);
+            LOG(INFO) << "Before erase call!";
+            new_polygon.erase(tmp_iterator);
+            LOG(INFO) << "After ease call!";
+            if (new_polygon.is_simple()) {
+              first_vertex_it = third_vertex_it;
+              polygon->erase(second_vertex_it);
+              second_vertex_it = next(first_vertex_it, *polygon);
+              third_vertex_it = next(second_vertex_it, *polygon);
+              LOG(INFO) << "Removed one vertex!";
+              continue;
+            }
+          }
+        }
+        first_vertex_it = second_vertex_it;
+        second_vertex_it = third_vertex_it;
+        third_vertex_it = next(second_vertex_it, *polygon);
+      }
+    } while (polygon->size() < old_size);
+  }
+
+  double computeTriangleArea(double side_length_a, double side_length_b, double side_length_c){
+    double s = (side_length_a + side_length_b + side_length_c) / 2.0;
+    return sqrt(s * (s-side_length_a) * (s - side_length_b) * (s - side_length_c));
+  }
+
+  CgalPolygon2dVertexIterator next(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon){
+    if (std::next(iterator) == polygon.vertices_end()){
+      return polygon.vertices_begin();
+    } else {
+      return std::next(iterator);
+    }
+  }
+
 }

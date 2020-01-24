@@ -319,6 +319,8 @@ namespace convex_plane_extraction{
         hole_polygon_list_.erase(std::prev(hole_it));
       }
     }
+    approximateContour(&outer_polygon_);
+    CHECK(outer_polygon_.is_simple());
   }
 
   void Plane::extractSlConcavityPointsOfHole(const CgalPolygon2d& hole, std::vector<int>* concavity_positions){

@@ -21,6 +21,7 @@
 #include <glog/logging.h>
 
 #include "grid_map_core/GridMap.hpp"
+#include "geometry_utils.hpp"
 #include "types.hpp"
 
 namespace convex_plane_extraction{
@@ -35,6 +36,7 @@ namespace convex_plane_extraction{
   typedef CgalPolygon2dListContainer::const_iterator            CgalPolygon2dListConstIterator;
   typedef CGAL::Polygon_set_2<K, std::vector<CgalPoint2d>>      CgalPolygon2dSetContainer;
   typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
+  typedef CgalPolygon2d::Vertex_iterator                        CgalPolygon2dVertexIterator;
 
   typedef std::vector<Eigen::Vector3d>                          Polygon3d;
   typedef std::vector<Polygon3d>                                Polygon3dVectorContainer;
@@ -82,6 +84,12 @@ namespace convex_plane_extraction{
                                                     std::multimap<double, int>* vertex_positions);
 
   void getSegmentNormalVector(const CgalSegment2d& segment, Eigen::Vector2d* normal_vector);
+
+  double computeTriangleArea(double side_length_a, double side_length_b, double side_length_c);
+
+  CgalPolygon2dVertexIterator next(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
+
+  void approximateContour(CgalPolygon2d* polygon);
 
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_
