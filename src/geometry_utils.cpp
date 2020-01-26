@@ -1,3 +1,4 @@
+#include <glog/logging.h>
 #include "geometry_utils.hpp"
 
 namespace convex_plane_extraction {
@@ -33,6 +34,25 @@ namespace convex_plane_extraction {
   double computeAngleBetweenVectors(const Vector2d& first_vector, const Vector2d& second_vector){
     double scalar_product = first_vector.transpose() * second_vector;
     return acos( scalar_product / (first_vector.norm() * second_vector.norm()));
+  }
+
+  bool intersectRayWithLineSegment(const Vector2d& ray_source, const Vector2d& ray_direction,
+      const Vector2d& segment_source, const Vector2d& segment_target, Vector2d* intersection_point){
+    CHECK_NOTNULL(intersection_point);
+    Vector2d segment_direction = segment_target - segment_source;
+    Matrix2d A;
+    A.row(0) = ray_direction;
+    A.row(1) = - segment_direction;
+    Vector2d b = segment_source - ray_source;
+    Vector2d solution = A.householderQr().solve(b);
+    if (solution(0) <= 0 || solution(1) <= 0){
+      return false;
+    }
+    *intersection_point = segment_source + solution(1) * segment_direction;
+  }
+
+  double distanceBetweenPoints(Vector2d first, Vector2d second){
+    return (second - first).norm();
   }
 
 }

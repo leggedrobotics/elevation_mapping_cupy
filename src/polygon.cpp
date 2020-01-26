@@ -134,6 +134,14 @@ namespace convex_plane_extraction {
     }
   }
 
+  CgalPolygon2dVertexIterator previous(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon){
+    if (iterator == polygon.vertices_begin()){
+      return std::prev(polygon.vertices_end());
+    } else {
+      return std::prev(iterator);
+    }
+  }
+
   void upSampleLongEdges(CgalPolygon2d* polygon){
     CHECK_NOTNULL(polygon);
     for (auto vertex_it = polygon->vertices_begin(); vertex_it != polygon->vertices_end(); ++vertex_it) {
@@ -167,4 +175,175 @@ namespace convex_plane_extraction {
     return abs(sqrt((destination_point.x() - source_point.x()) * (destination_point.x() - source_point.x())
         + (destination_point.y() - source_point.y()) * (destination_point.y() - source_point.y())));
   }
+
+  void detectDentLocations(std::vector<int>* dent_locations, const CgalPolygon2d& polygon){
+    CHECK_NOTNULL(dent_locations);
+    CHECK(dent_locations->empty());
+    CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
+    for (auto source_it = polygon.vertices_begin(); source_it != polygon.vertices_end(); ++source_it){
+      auto dent_it = next(source_it, polygon);
+      auto destination_it = next(dent_it, polygon);
+      Vector2d source_point = Vector2d(source_it->x(), source_it->y());
+      Vector2d direction_vector = Vector2d(destination_it->x() - source_it->x(), destination_it->y() - source_it->y());
+      Vector2d test_point = Vector2d(dent_it->x(), dent_it->y());
+      if(isPointOnLeftSide(source_point, direction_vector, test_point)){
+        dent_locations->push_back(std::distance(polygon.vertices_begin(), dent_it));
+      }
+    }
+  }
+
+  std::list<CgalPolygon2d> decomposeInnerApproximation(const CgalPolygon2d& polygon){
+    CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
+    std::list<CgalPolygon2d> return_list;
+    // If polygon ceonvex terminate recursion.
+    if(polygon.is_convex()){
+      return_list.push_back(polygon);
+      return return_list;
+    }
+    std::vector<int> dent_locations;
+    detectDentLocations(&dent_locations, polygon);
+    CHECK(!dent_locations.empty()); // If no dents, polygon would be convex, which should have terminated recursion.
+    Intersection intersection_clockwise;
+    Intersection intersection_counterclockwise;
+    intersectPolygonWithRay(dent_locations.at(0), CGAL::COUNTERCLOCKWISE,
+        polygon, &intersection_counterclockwise);
+    intersectPolygonWithRay(dent_locations.at(0), CGAL::CLOCKWISE,
+        polygon, &intersection_clockwise);
+    // Generate resulting polygons from cut.
+    // Resulting cut from counter clockwise ray intersection.
+    CgalPolygon2d polygon_counterclockwise_1 = polygon;
+    CgalPolygon2d polygon_counterclockwise_2;
+    auto ray_source_it = polygon.vertices_begin();
+    std::advance(ray_source_it, dent_locations.at(0));
+    auto first_vertex_to_erase_it = ray_source_it;
+    for (int i = 0; i < 2; ++i){
+      first_vertex_to_erase_it = next(first_vertex_to_erase_it, polygon);
+    }
+    auto last_vertex_to_erase_it = polygon.vertices_begin();
+    std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
+    polygon_counterclockwise_2.push_back(*next(ray_source_it, polygon));
+    polygon_counterclockwise_2.insert(polygon_counterclockwise_2.vertices_end(),
+        first_vertex_to_erase_it, last_vertex_to_erase_it);
+    polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
+    auto element_behind_deleted_it = polygon_counterclockwise_1.erase(first_vertex_to_erase_it, std::next(last_vertex_to_erase_it));
+    polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
+    // Resulting cut from clockwise ray intersection.
+    CgalPolygon2d polygon_clockwise_1 = polygon;
+    CgalPolygon2d polygon_clockwise_2;
+    polygon_clockwise_2.push_back(intersection_clockwise.intersection_point_);
+    first_vertex_to_erase_it = polygon.vertices_begin();
+    std::advance(first_vertex_to_erase_it, intersection_clockwise.edge_target_location_);
+    last_vertex_to_erase_it = previous(ray_source_it, polygon);
+    erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
+    auto first_element_to_insert_it = polygon.vertices_begin();
+    std::advance(first_element_to_insert_it, intersection_clockwise.edge_target_location_);
+    copyVertices(polygon, first_element_to_insert_it, ray_source_it, &polygon_clockwise_2,
+        polygon_clockwise_2.vertices_end());
+    // Take the cut with smallest min. area of resulting polygons.
+    double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(),
+                      polygon_clockwise_1.area(), polygon_clockwise_2.area()};
+    double* min_area_strategy = std::min_element(area, area+4);
+    std::list<CgalPolygon2d> recursion_1;
+    std::list<CgalPolygon2d> recursion_2;
+    if ((min_area_strategy - area) < 2){
+      // In this case the counter clockwise intersection leads to less loss in area.
+      // Perform recursion with this split.
+      recursion_1 = decomposeInnerApproximation(polygon_counterclockwise_1);
+      recursion_2 = decomposeInnerApproximation(polygon_counterclockwise_2);
+    } else {
+      // In this case the clockwise intersection leads to less loss in area.
+      recursion_1 = decomposeInnerApproximation(polygon_clockwise_1);
+      recursion_2 = decomposeInnerApproximation(polygon_clockwise_2);
+    }
+    return_list.splice(return_list.end(), recursion_1);
+    return_list.splice(return_list.end(), recursion_2);
+    // Check that returned decomposition is in fact convex.
+    for (const CgalPolygon2d& polygon_under_test : return_list){
+      CHECK(polygon_under_test.is_convex());
+    }
+    return return_list;
+  }
+
+  void intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
+                               Intersection* intersection){
+    CHECK_NOTNULL(intersection);
+    CHECK(orientation == CGAL::COUNTERCLOCKWISE || orientation == CGAL::CLOCKWISE);
+    CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
+    Intersection intersection_tmp;
+    constexpr double kLargeDistanceValue = 1000;
+    double min_distance = kLargeDistanceValue;
+    bool one_intersection_at_least = false;
+    auto vertex_it = polygon.vertices_begin();
+    std::advance(vertex_it, ray_source_location);
+    auto ray_source_it = vertex_it;
+    Vector2d ray_source = Vector2d(vertex_it->x(), vertex_it->y());
+    if (orientation == CGAL::COUNTERCLOCKWISE) {
+      vertex_it = next(vertex_it, polygon);
+    } else {
+      vertex_it = previous(vertex_it, polygon);
+    }
+    auto ray_target_it = vertex_it;
+    Vector2d ray_target = Vector2d(vertex_it->x(), vertex_it->y());
+    Vector2d ray_direction = ray_target - ray_source;
+    vertex_it = next(vertex_it, polygon);
+    auto condition_it = ray_source_it;
+    if (orientation == CGAL::CLOCKWISE){
+      vertex_it = next(vertex_it, polygon); // Compensate for previous above.
+      condition_it = ray_target_it;
+    }
+    while(next(vertex_it, polygon) != condition_it){
+      Vector2d segment_source = Vector2d(vertex_it->x(), vertex_it->y());
+      auto segment_target_it = next(vertex_it, polygon);
+      Vector2d segment_target = Vector2d(segment_target_it->x(), segment_target_it->y());
+      Vector2d intersection_point;
+      if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
+          &intersection_point)){
+          double current_distance = distanceBetweenPoints(ray_target, intersection_point);
+        if (current_distance < min_distance){
+          one_intersection_at_least = true;
+          min_distance = current_distance;
+          intersection_tmp.setAllMembers(std::distance(polygon.vertices_begin(), vertex_it),
+          std::distance(polygon.vertices_begin(), segment_target_it), CgalPoint2d(intersection_point.x(), intersection_point.y()));
+        }
+      }
+      vertex_it = next(vertex_it, polygon);
+    }
+    CHECK(one_intersection_at_least);
+    intersection->setAllMembers(intersection_tmp.edge_source_location_, intersection_tmp.edge_target_location_,
+        intersection_tmp.intersection_point_);
+  }
+
+  CgalPolygon2dVertexIterator erase(CgalPolygon2dVertexIterator first, CgalPolygon2dVertexIterator last,
+      CgalPolygon2d* polygon){
+    CHECK_NOTNULL(polygon);
+    CHECK(first != last);
+    if (std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first) > 0){
+      return polygon->erase(first, last);
+    } else {
+      int last_iterator_distance = std::distance(polygon->vertices_begin(), last);
+      polygon->erase(first, polygon->vertices_end());
+      auto erase_iterator = polygon->vertices_begin();
+      std::advance(erase_iterator, last_iterator_distance);
+      return polygon->erase(polygon->vertices_begin(), erase_iterator);
+    }
+  }
+  // Solves the wrap around issue.
+  // [first last) are copied to new_polygon before the position indicated ny insert_position.
+  void copyVertices(const CgalPolygon2d& old_polygon, const CgalPolygon2dVertexIterator first, const CgalPolygon2dVertexIterator last,
+      CgalPolygon2d* new_polygon, const CgalPolygon2dVertexIterator insert_position){
+    CHECK_NOTNULL(new_polygon);
+    CHECK(first != last);
+    if (std::distance(old_polygon.vertices_begin(), last) - std::distance(old_polygon.vertices_begin(), first) > 0){
+      return new_polygon->insert(insert_position, first, last);
+    } else {
+      int insert_position_distance = std::distance(new_polygon->vertices_begin(), insert_position);
+      int number_of_inserted_elements = std::distance(first, old_polygon.vertices_end());
+      new_polygon->insert(insert_position, first, old_polygon.vertices_end());
+      CgalPolygon2dVertexIterator insert_position_mutable = new_polygon->vertices_begin();
+      std::advance(insert_position_mutable, insert_position_distance + number_of_inserted_elements);
+      new_polygon->insert(insert_position_mutable, old_polygon.vertices_begin(), last);
+      return;
+    }
+  }
+
 }

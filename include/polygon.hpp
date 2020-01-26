@@ -95,5 +95,36 @@ namespace convex_plane_extraction{
 
   double getEdgeLength(const CgalPolygon2dVertexIterator& source, const CgalPolygon2d& polygon);
 
+  void detectDentLocations(std::vector<int>* dent_locations, const CgalPolygon2d& polygon);
+
+  struct Intersection{
+    void setEdgeSourceLocation(const int location){
+      this->edge_source_location_ = location;
+    }
+    void setEdgeTargetLocation(const int location){
+      this->edge_target_location_ = location;
+    }
+    void setIntersectionPoint(const CgalPoint2d& intersection_point){
+      this->intersection_point_ = intersection_point;
+    }
+    void setAllMembers(const int source_location, const int target_location, const CgalPoint2d& intersection_point){
+      this->edge_source_location_ = source_location;
+      this->edge_target_location_ = target_location;
+      this->intersection_point_ = intersection_point;
+    }
+
+    int edge_source_location_;
+    int edge_target_location_;
+    CgalPoint2d intersection_point_;
+  };
+
+  void intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
+      Intersection* intersection);
+
+  CgalPolygon2dVertexIterator erase(CgalPolygon2dVertexIterator first, CgalPolygon2dVertexIterator last,
+                                    CgalPolygon2d* polygon);
+
+  void copyVertices(const CgalPolygon2d& old_polygon, const CgalPolygon2dVertexIterator first, const CgalPolygon2dVertexIterator last,
+                    CgalPolygon2d* new_polygon, const CgalPolygon2dVertexIterator insert_position);
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_
