@@ -152,7 +152,7 @@ namespace sliding_window_plane_extractor{
         }
         constexpr int kParentFlagIndex = 3;
         if (hierarchy[hierachy_it-1][kParentFlagIndex] < 0) {
-          convex_plane_extraction::upSampleLongEdges(&polygon);
+          //convex_plane_extraction::upSampleLongEdges(&polygon);
           CHECK(plane.addOuterPolygon(polygon));
         } else {
           CHECK(plane.addHolePolygon(polygon));

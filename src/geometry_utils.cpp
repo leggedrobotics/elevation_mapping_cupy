@@ -41,14 +41,15 @@ namespace convex_plane_extraction {
     CHECK_NOTNULL(intersection_point);
     Vector2d segment_direction = segment_target - segment_source;
     Matrix2d A;
-    A.row(0) = ray_direction;
-    A.row(1) = - segment_direction;
+    A.col(0) = ray_direction;
+    A.col(1) = - segment_direction;
     Vector2d b = segment_source - ray_source;
-    Vector2d solution = A.householderQr().solve(b);
-    if (solution(0) <= 0 || solution(1) <= 0){
+    Vector2d solution = A.fullPivHouseholderQr().solve(b);
+    if (solution(0) <= 0 || solution(1) < 0 || solution(1) > 1){
       return false;
     }
     *intersection_point = segment_source + solution(1) * segment_direction;
+    return true;
   }
 
   double distanceBetweenPoints(Vector2d first, Vector2d second){

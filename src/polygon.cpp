@@ -7,14 +7,15 @@ namespace convex_plane_extraction {
     CHECK(polygon.is_simple());
     LOG(INFO) << "Started convex decomposition...";
     size_t old_list_size = output_polygon_list->size();
-    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
-                                     polygon.vertices_end(),
-                                     std::back_inserter(*output_polygon_list));
-
-    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
-                                      polygon.vertices_end(),
-                                      polygon_list.begin(),
-                                      polygon_list.end()));
+//    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
+//                                     polygon.vertices_end(),
+//                                     std::back_inserter(*output_polygon_list));
+//
+//    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
+//                                      polygon.vertices_end(),
+//                                      polygon_list.begin(),
+//                                      polygon_list.end()));
+    *output_polygon_list = decomposeInnerApproximation(polygon);
     CHECK_GT(output_polygon_list->size(), old_list_size);
     LOG(INFO) << "done.";
   }
@@ -203,6 +204,12 @@ namespace convex_plane_extraction {
     std::vector<int> dent_locations;
     detectDentLocations(&dent_locations, polygon);
     CHECK(!dent_locations.empty()); // If no dents, polygon would be convex, which should have terminated recursion.
+    std::cout << "Dent locations:" << std::endl;
+    for (int location : dent_locations){
+      std::cout << location << std::endl;
+    }
+    std::cout << "Polygon:" << std::endl;
+    std::cout << polygon << std::endl;
     Intersection intersection_clockwise;
     Intersection intersection_counterclockwise;
     intersectPolygonWithRay(dent_locations.at(0), CGAL::COUNTERCLOCKWISE,
@@ -213,32 +220,45 @@ namespace convex_plane_extraction {
     // Resulting cut from counter clockwise ray intersection.
     CgalPolygon2d polygon_counterclockwise_1 = polygon;
     CgalPolygon2d polygon_counterclockwise_2;
-    auto ray_source_it = polygon.vertices_begin();
-    std::advance(ray_source_it, dent_locations.at(0));
-    auto first_vertex_to_erase_it = ray_source_it;
-    for (int i = 0; i < 2; ++i){
-      first_vertex_to_erase_it = next(first_vertex_to_erase_it, polygon);
-    }
-    auto last_vertex_to_erase_it = polygon.vertices_begin();
+    auto first_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
+    std::advance(first_vertex_to_erase_it, dent_locations.at(0));
+    polygon_counterclockwise_2.push_back(*first_vertex_to_erase_it);
+    first_vertex_to_erase_it = next(first_vertex_to_erase_it, polygon_counterclockwise_1);
+//    for (int i = 0; i < 2; ++i){
+//      first_vertex_to_erase_it = previous(first_vertex_to_erase_it, polygon);
+//    }
+    auto last_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
     std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
-    polygon_counterclockwise_2.push_back(*next(ray_source_it, polygon));
-    polygon_counterclockwise_2.insert(polygon_counterclockwise_2.vertices_end(),
-        first_vertex_to_erase_it, last_vertex_to_erase_it);
+//    auto last_vertex_to_erase_it = polygon.vertices_begin();
+//    std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
+    last_vertex_to_erase_it = next(last_vertex_to_erase_it, polygon_counterclockwise_1);
+    copyVertices(polygon_counterclockwise_1,first_vertex_to_erase_it,last_vertex_to_erase_it,
+    &polygon_counterclockwise_2, polygon_counterclockwise_2.vertices_end());
+    std::cout << "Copy succeeded without problems!" << std::endl;
+//    polygon_counterclockwise_2.insert(polygon_counterclockwise_2.vertices_end(),
+//        first_vertex_to_erase_it, last_vertex_to_erase_it);
     polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
-    auto element_behind_deleted_it = polygon_counterclockwise_1.erase(first_vertex_to_erase_it, std::next(last_vertex_to_erase_it));
+//    auto element_behind_deleted_it = polygon_counterclockwise_1.erase(first_vertex_to_erase_it, std::next(last_vertex_to_erase_it));
+    CgalPolygon2dVertexIterator element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
     polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
+    std::cout << "First polygon counter-clockwise: " << polygon_counterclockwise_1 << std::endl;
+    std::cout << "Second polygon counter-clockwise: " << polygon_counterclockwise_2 << std::endl;
     // Resulting cut from clockwise ray intersection.
     CgalPolygon2d polygon_clockwise_1 = polygon;
     CgalPolygon2d polygon_clockwise_2;
     polygon_clockwise_2.push_back(intersection_clockwise.intersection_point_);
-    first_vertex_to_erase_it = polygon.vertices_begin();
+    first_vertex_to_erase_it = polygon_clockwise_1.vertices_begin();
     std::advance(first_vertex_to_erase_it, intersection_clockwise.edge_target_location_);
-    last_vertex_to_erase_it = previous(ray_source_it, polygon);
+    last_vertex_to_erase_it = polygon_clockwise_1.vertices_begin();
+    std::advance(last_vertex_to_erase_it, dent_locations.at(0));
+    copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
+                 polygon_clockwise_2.vertices_end());
     erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
-    auto first_element_to_insert_it = polygon.vertices_begin();
-    std::advance(first_element_to_insert_it, intersection_clockwise.edge_target_location_);
-    copyVertices(polygon, first_element_to_insert_it, ray_source_it, &polygon_clockwise_2,
-        polygon_clockwise_2.vertices_end());
+    polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
+//    std::advance(first_element_to_insert_it, intersection_clockwise.edge_target_location_);
+//    copyVertices(polygon, first_element_to_insert_it, first_vertex_to_erase_it, &polygon_clockwise_2,
+//        polygon_clockwise_2.vertices_end());
+
     // Take the cut with smallest min. area of resulting polygons.
     double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(),
                       polygon_clockwise_1.area(), polygon_clockwise_2.area()};
@@ -248,10 +268,22 @@ namespace convex_plane_extraction {
     if ((min_area_strategy - area) < 2){
       // In this case the counter clockwise intersection leads to less loss in area.
       // Perform recursion with this split.
+      if(polygon_counterclockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){
+        LOG(FATAL) << polygon_counterclockwise_1;
+      }
+      if(polygon_counterclockwise_2.orientation() != CGAL::COUNTERCLOCKWISE){
+        LOG(FATAL) << polygon_counterclockwise_2;
+      }
       recursion_1 = decomposeInnerApproximation(polygon_counterclockwise_1);
       recursion_2 = decomposeInnerApproximation(polygon_counterclockwise_2);
     } else {
       // In this case the clockwise intersection leads to less loss in area.
+      if(polygon_clockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){
+        LOG(FATAL) << polygon_clockwise_1;
+      }
+      if(polygon_clockwise_2.orientation() == CGAL::COUNTERCLOCKWISE){
+        LOG(FATAL) << polygon_clockwise_2;
+      }
       recursion_1 = decomposeInnerApproximation(polygon_clockwise_1);
       recursion_2 = decomposeInnerApproximation(polygon_clockwise_2);
     }
@@ -276,19 +308,21 @@ namespace convex_plane_extraction {
     auto vertex_it = polygon.vertices_begin();
     std::advance(vertex_it, ray_source_location);
     auto ray_source_it = vertex_it;
-    Vector2d ray_source = Vector2d(vertex_it->x(), vertex_it->y());
+    CgalPolygon2dVertexIterator ray_target_it = vertex_it;
     if (orientation == CGAL::COUNTERCLOCKWISE) {
-      vertex_it = next(vertex_it, polygon);
+      ray_source_it = previous(vertex_it, polygon);
     } else {
-      vertex_it = previous(vertex_it, polygon);
+      vertex_it = next(vertex_it, polygon);
+      ray_source_it = vertex_it;
     }
-    auto ray_target_it = vertex_it;
-    Vector2d ray_target = Vector2d(vertex_it->x(), vertex_it->y());
+    Vector2d ray_source = Vector2d(ray_source_it->x(), ray_source_it->y());
+    Vector2d ray_target = Vector2d(ray_target_it->x(), ray_target_it->y());
     Vector2d ray_direction = ray_target - ray_source;
+    std::cout << "Ray direction: " << ray_direction << std::endl;
     vertex_it = next(vertex_it, polygon);
     auto condition_it = ray_source_it;
     if (orientation == CGAL::CLOCKWISE){
-      vertex_it = next(vertex_it, polygon); // Compensate for previous above.
+      //vertex_it = next(vertex_it, polygon); // Compensate for previous above.
       condition_it = ray_target_it;
     }
     while(next(vertex_it, polygon) != condition_it){
@@ -298,6 +332,10 @@ namespace convex_plane_extraction {
       Vector2d intersection_point;
       if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
           &intersection_point)){
+        std::cout << "Intersection succeeded with: " << std::endl;
+        std::cout << "Segment source: " << segment_source << std::endl;
+        std::cout << "Segment target: " << segment_target << std::endl;
+        std::cout << "Intersection point: " << intersection_point << std::endl;
           double current_distance = distanceBetweenPoints(ray_target, intersection_point);
         if (current_distance < min_distance){
           one_intersection_at_least = true;
@@ -317,9 +355,12 @@ namespace convex_plane_extraction {
       CgalPolygon2d* polygon){
     CHECK_NOTNULL(polygon);
     CHECK(first != last);
-    if (std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first) > 0){
+    std::cout << "Starting erasing!" << std::endl;
+    if ((std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first)) > 0){
+      std::cout << (std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first)) << std::endl;
       return polygon->erase(first, last);
     } else {
+      std::cout << "Erasing overflow!" << std::endl;
       int last_iterator_distance = std::distance(polygon->vertices_begin(), last);
       polygon->erase(first, polygon->vertices_end());
       auto erase_iterator = polygon->vertices_begin();
