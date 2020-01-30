@@ -28,12 +28,12 @@ namespace convex_plane_extraction {
     Vector2d normal_vector(line_direction_vector.y(), (-1.0)*line_direction_vector.x());
     normal_vector.normalize();
     Vector2d point_vector = point - line_support_vector;
-    return point_vector.transpose() * normal_vector < 0;
+    return point_vector.dot(normal_vector) < 0;
   }
 
   double computeAngleBetweenVectors(const Vector2d& first_vector, const Vector2d& second_vector){
     double scalar_product = first_vector.transpose() * second_vector;
-    return acos( scalar_product / (first_vector.norm() * second_vector.norm()));
+    return acos( abs(scalar_product) / (first_vector.norm() * second_vector.norm()));
   }
 
   bool intersectRayWithLineSegment(const Vector2d& ray_source, const Vector2d& ray_direction,

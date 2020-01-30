@@ -7,15 +7,15 @@ namespace convex_plane_extraction {
     CHECK(polygon.is_simple());
     LOG(INFO) << "Started convex decomposition...";
     size_t old_list_size = output_polygon_list->size();
-//    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
-//                                     polygon.vertices_end(),
-//                                     std::back_inserter(*output_polygon_list));
-//
-//    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
-//                                      polygon.vertices_end(),
-//                                      polygon_list.begin(),
-//                                      polygon_list.end()));
-    *output_polygon_list = decomposeInnerApproximation(polygon);
+    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
+                                     polygon.vertices_end(),
+                                     std::back_inserter(*output_polygon_list));
+
+    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
+                                      polygon.vertices_end(),
+                                      polygon_list.begin(),
+                                      polygon_list.end()));
+//    *output_polygon_list = decomposeInnerApproximation(polygon);
     CHECK_GT(output_polygon_list->size(), old_list_size);
     LOG(INFO) << "done.";
   }
@@ -187,8 +187,12 @@ namespace convex_plane_extraction {
       Vector2d source_point = Vector2d(source_it->x(), source_it->y());
       Vector2d direction_vector = Vector2d(destination_it->x() - source_it->x(), destination_it->y() - source_it->y());
       Vector2d test_point = Vector2d(dent_it->x(), dent_it->y());
+      const double kAngleThreshold = 0.001;//0.1 * M_PI / 180.0;
       if(isPointOnLeftSide(source_point, direction_vector, test_point)){
-        dent_locations->push_back(std::distance(polygon.vertices_begin(), dent_it));
+        std::cout << "Computed angle " << (abs(computeAngleBetweenVectors(direction_vector, test_point - source_point)) > kAngleThreshold) <<
+        std::endl;
+        if ( abs(computeAngleBetweenVectors(direction_vector, test_point - source_point)) > kAngleThreshold)
+          dent_locations->push_back(std::distance(polygon.vertices_begin(), dent_it));
       }
     }
   }
@@ -197,19 +201,25 @@ namespace convex_plane_extraction {
     CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
     std::list<CgalPolygon2d> return_list;
     // If polygon ceonvex terminate recursion.
-    if(polygon.is_convex()){
+//    if(polygon.is_convex()){
+//      return_list.push_back(polygon);
+//      return return_list;
+//    }
+    std::vector<int> dent_locations;
+    detectDentLocations(&dent_locations, polygon);
+    if (dent_locations.empty()){
+//      printPolygon(polygon);
+//      LOG(FATAL) << "No dents detected, but polygon not convex!";
       return_list.push_back(polygon);
       return return_list;
     }
-    std::vector<int> dent_locations;
-    detectDentLocations(&dent_locations, polygon);
-    CHECK(!dent_locations.empty()); // If no dents, polygon would be convex, which should have terminated recursion.
+    //CHECK(!dent_locations.empty()); // If no dents, polygon would be convex, which should have terminated recursion.
     std::cout << "Dent locations:" << std::endl;
     for (int location : dent_locations){
       std::cout << location << std::endl;
     }
     std::cout << "Polygon:" << std::endl;
-    std::cout << polygon << std::endl;
+    printPolygon(polygon);
     Intersection intersection_clockwise;
     Intersection intersection_counterclockwise;
     intersectPolygonWithRay(dent_locations.at(0), CGAL::COUNTERCLOCKWISE,
@@ -253,8 +263,9 @@ namespace convex_plane_extraction {
     std::advance(last_vertex_to_erase_it, dent_locations.at(0));
     copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
                  polygon_clockwise_2.vertices_end());
-    erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
     polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
+    element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
+    polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
 //    std::advance(first_element_to_insert_it, intersection_clockwise.edge_target_location_);
 //    copyVertices(polygon, first_element_to_insert_it, first_vertex_to_erase_it, &polygon_clockwise_2,
 //        polygon_clockwise_2.vertices_end());
@@ -269,30 +280,42 @@ namespace convex_plane_extraction {
       // In this case the counter clockwise intersection leads to less loss in area.
       // Perform recursion with this split.
       if(polygon_counterclockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){
-        LOG(FATAL) << polygon_counterclockwise_1;
+        LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
+        printPolygon(polygon_counterclockwise_1);
+        recursion_1 = std::list<CgalPolygon2d>();
+      } else {
+        recursion_1 = decomposeInnerApproximation(polygon_counterclockwise_1);
       }
       if(polygon_counterclockwise_2.orientation() != CGAL::COUNTERCLOCKWISE){
-        LOG(FATAL) << polygon_counterclockwise_2;
+        LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
+        printPolygon(polygon_counterclockwise_2);
+        recursion_2 = std::list<CgalPolygon2d>();
+      } else{
+        recursion_2 = decomposeInnerApproximation(polygon_counterclockwise_2);
       }
-      recursion_1 = decomposeInnerApproximation(polygon_counterclockwise_1);
-      recursion_2 = decomposeInnerApproximation(polygon_counterclockwise_2);
     } else {
       // In this case the clockwise intersection leads to less loss in area.
       if(polygon_clockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){
-        LOG(FATAL) << polygon_clockwise_1;
+        LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
+        printPolygon(polygon_clockwise_1);
+        recursion_1 = std::list<CgalPolygon2d>();
+      } else{
+        recursion_1 = decomposeInnerApproximation(polygon_clockwise_1);
       }
-      if(polygon_clockwise_2.orientation() == CGAL::COUNTERCLOCKWISE){
-        LOG(FATAL) << polygon_clockwise_2;
+      if(polygon_clockwise_2.orientation() != CGAL::COUNTERCLOCKWISE){
+        LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
+        printPolygon(polygon_clockwise_2);
+        recursion_2 = std::list<CgalPolygon2d>();
+      } else{
+        recursion_2 = decomposeInnerApproximation(polygon_clockwise_2);
       }
-      recursion_1 = decomposeInnerApproximation(polygon_clockwise_1);
-      recursion_2 = decomposeInnerApproximation(polygon_clockwise_2);
     }
     return_list.splice(return_list.end(), recursion_1);
     return_list.splice(return_list.end(), recursion_2);
     // Check that returned decomposition is in fact convex.
-    for (const CgalPolygon2d& polygon_under_test : return_list){
-      CHECK(polygon_under_test.is_convex());
-    }
+//    for (const CgalPolygon2d& polygon_under_test : return_list){
+//      CHECK(polygon_under_test.is_convex());
+//    }
     return return_list;
   }
 
@@ -333,6 +356,7 @@ namespace convex_plane_extraction {
       if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
           &intersection_point)){
         std::cout << "Intersection succeeded with: " << std::endl;
+        std::cout << "Ray target" << ray_target << std::endl;
         std::cout << "Segment source: " << segment_source << std::endl;
         std::cout << "Segment target: " << segment_target << std::endl;
         std::cout << "Intersection point: " << intersection_point << std::endl;
@@ -384,6 +408,13 @@ namespace convex_plane_extraction {
       std::advance(insert_position_mutable, insert_position_distance + number_of_inserted_elements);
       new_polygon->insert(insert_position_mutable, old_polygon.vertices_begin(), last);
       return;
+    }
+  }
+
+  void printPolygon(const CgalPolygon2d& polygon){
+    std::cout << "Polygon has " << polygon.size() << " vertices." << std::endl;
+    for (const CgalPoint2d& vertex : polygon){
+      std::cout << vertex.x() << " , " << vertex.y() << " ; " << std::endl;
     }
   }
 

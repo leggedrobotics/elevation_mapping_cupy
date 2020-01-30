@@ -128,5 +128,7 @@ namespace convex_plane_extraction{
                     CgalPolygon2d* new_polygon, const CgalPolygon2dVertexIterator insert_position);
 
   std::list<CgalPolygon2d> decomposeInnerApproximation(const CgalPolygon2d& polygon);
+
+  void printPolygon(const CgalPolygon2d& polygon);
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_
