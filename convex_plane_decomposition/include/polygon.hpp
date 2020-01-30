@@ -2,20 +2,26 @@
 #define CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_
 
 #include <iostream>
+#include <limits>
 #include <list>
 #include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/intersections.h>
 #include <CGAL/partition_2.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Polygon_2.h>
+#include <CGAL/Polygon_set_2.h>
+#include <CGAL/squared_distance_2.h>
 #include <CGAL/Surface_sweep_2_algorithms.h>
+#include <CGAL/Vector_2.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <glog/logging.h>
 
 #include "grid_map_core/GridMap.hpp"
+#include "geometry_utils.hpp"
 #include "types.hpp"
 
 namespace convex_plane_extraction{
@@ -23,10 +29,14 @@ namespace convex_plane_extraction{
   typedef CGAL::Exact_predicates_inexact_constructions_kernel   K;
   typedef CGAL::Partition_traits_2<K>                           Traits;
   typedef Traits::Point_2                                       CgalPoint2d;
+  typedef Traits::Vector_2                                      CgalVector2d;
   typedef Traits::Polygon_2                                     CgalPolygon2d;
+  typedef Traits::Segment_2                                     CgalSegment2d;
   typedef std::list<CgalPolygon2d>                              CgalPolygon2dListContainer;
   typedef CgalPolygon2dListContainer::const_iterator            CgalPolygon2dListConstIterator;
+  typedef CGAL::Polygon_set_2<K, std::vector<CgalPoint2d>>      CgalPolygon2dSetContainer;
   typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
+  typedef CgalPolygon2d::Vertex_iterator                        CgalPolygon2dVertexIterator;
 
   typedef std::vector<Eigen::Vector3d>                          Polygon3d;
   typedef std::vector<Polygon3d>                                Polygon3dVectorContainer;
@@ -66,5 +76,59 @@ namespace convex_plane_extraction{
 
   void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dListContainer* output_polyong_list);
 
+  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment);
+
+  int getClosestPolygonVertexPosition(const CgalPolygon2d& polygon, const CgalPoint2d& point);
+
+  void getVertexPositionsInAscendingDistanceToPoint(const CgalPolygon2d& polygon, const CgalPoint2d& point,
+                                                    std::multimap<double, int>* vertex_positions);
+
+  void getSegmentNormalVector(const CgalSegment2d& segment, Eigen::Vector2d* normal_vector);
+
+  double computeTriangleArea(double side_length_a, double side_length_b, double side_length_c);
+
+  CgalPolygon2dVertexIterator next(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
+
+  void approximateContour(CgalPolygon2d* polygon);
+
+  void upSampleLongEdges(CgalPolygon2d* polygon);
+
+  double getEdgeLength(const CgalPolygon2dVertexIterator& source, const CgalPolygon2d& polygon);
+
+  void detectDentLocations(std::vector<int>* dent_locations, const CgalPolygon2d& polygon);
+
+  struct Intersection{
+    void setEdgeSourceLocation(const int location){
+      this->edge_source_location_ = location;
+    }
+    void setEdgeTargetLocation(const int location){
+      this->edge_target_location_ = location;
+    }
+    void setIntersectionPoint(const CgalPoint2d& intersection_point){
+      this->intersection_point_ = intersection_point;
+    }
+    void setAllMembers(const int source_location, const int target_location, const CgalPoint2d& intersection_point){
+      this->edge_source_location_ = source_location;
+      this->edge_target_location_ = target_location;
+      this->intersection_point_ = intersection_point;
+    }
+
+    int edge_source_location_;
+    int edge_target_location_;
+    CgalPoint2d intersection_point_;
+  };
+
+  void intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
+      Intersection* intersection);
+
+  CgalPolygon2dVertexIterator erase(CgalPolygon2dVertexIterator first, CgalPolygon2dVertexIterator last,
+                                    CgalPolygon2d* polygon);
+
+  void copyVertices(const CgalPolygon2d& old_polygon, const CgalPolygon2dVertexIterator first, const CgalPolygon2dVertexIterator last,
+                    CgalPolygon2d* new_polygon, const CgalPolygon2dVertexIterator insert_position);
+
+  std::list<CgalPolygon2d> decomposeInnerApproximation(const CgalPolygon2d& polygon);
+
+  void printPolygon(const CgalPolygon2d& polygon);
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

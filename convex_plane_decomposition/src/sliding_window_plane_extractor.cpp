@@ -136,13 +136,14 @@ namespace sliding_window_plane_extractor{
         if (contour.size() <= 10){
           approx_contour = contour;
         } else {
-          cv::approxPolyDP(contour, approx_contour, 3, true);
+          cv::approxPolyDP(contour, approx_contour, 9, true);
         }
         if (approx_contour.size() <= 2) {
           LOG_IF(WARNING, hierarchy[hierachy_it-1][3] < 0 && contour.size() > 4) << "Removing parental polygon since too few vertices!";
           continue;
         }
         convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end(), resolution_ / kUpSamplingFactor);
+
         if(!polygon.is_simple()) {
           convex_plane_extraction::Vector2i index;
           index << (*polygon.begin()).x(), (*polygon.begin()).y();
@@ -151,6 +152,7 @@ namespace sliding_window_plane_extractor{
         }
         constexpr int kParentFlagIndex = 3;
         if (hierarchy[hierachy_it-1][kParentFlagIndex] < 0) {
+          //convex_plane_extraction::upSampleLongEdges(&polygon);
           CHECK(plane.addOuterPolygon(polygon));
         } else {
           CHECK(plane.addHolePolygon(polygon));
@@ -160,6 +162,9 @@ namespace sliding_window_plane_extractor{
         //LOG(WARNING) << "Dropping plane, no outer contour detected!";
         computePlaneFrameFromLabeledImage(binary_image, &plane);
         if(plane.isValid()) {
+          LOG(INFO) << "Starting resolving holes...";
+          // plane.resolveHoles();
+          LOG(INFO) << "done.";
           CHECK(plane.decomposePlaneInConvexPolygons());
           planes_.push_back(plane);
         } else {
