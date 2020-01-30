@@ -204,7 +204,9 @@ namespace convex_plane_extraction {
     CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
     std::list<CgalPolygon2d> return_list;
     std::map<double, int> dent_locations;
+    LOG(INFO) << "Before dent detection";
     detectDentLocations(&dent_locations, polygon);
+    LOG(INFO) << "Passed dent detection";
     if (dent_locations.empty()){
       // No dents detected, polygon must be convex.
       // CGAL convexity check might still fail, since very shallow dents are ignored.
@@ -248,11 +250,12 @@ namespace convex_plane_extraction {
     if ((intersection_counterclockwise.intersection_point_ - point_before_intersection).squared_length() > kSquaredLengthThreshold) {
       polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
     }
+    LOG(INFO) << "Before erase!";
     CgalPolygon2dVertexIterator element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
     // Add intersection vertex to first polygon if existing vertex too far away.
-//    if ((intersection_counterclockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
+    if ((intersection_counterclockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
       polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
-//    }
+    }
     // Resulting cut from clockwise ray intersection.
     CgalPolygon2d polygon_clockwise_1 = polygon;
     CgalPolygon2d polygon_clockwise_2;
@@ -268,12 +271,18 @@ namespace convex_plane_extraction {
                  polygon_clockwise_2.vertices_end());
     polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
     element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
-//    if ((intersection_clockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
+    LOG(INFO) << "After erase!";
+    if ((intersection_clockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
       polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
-//    }
+    }
+    printPolygon(polygon_counterclockwise_1);
+    printPolygon(polygon_counterclockwise_2);
+    printPolygon(polygon_clockwise_1);
+    printPolygon(polygon_clockwise_2);
     // Take the cut with smallest min. area of resulting polygons.
     double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(),
                       polygon_clockwise_1.area(), polygon_clockwise_2.area()};
+    LOG(INFO) << "Passed area computation!";
     double* min_area_strategy = std::min_element(area, area+4);
     std::list<CgalPolygon2d> recursion_1;
     std::list<CgalPolygon2d> recursion_2;
@@ -313,7 +322,7 @@ namespace convex_plane_extraction {
     }
     return_list.splice(return_list.end(), recursion_1);
     return_list.splice(return_list.end(), recursion_2);
-
+    LOG(INFO) << "Reached bottom!";
     return return_list;
   }
 
@@ -338,6 +347,7 @@ namespace convex_plane_extraction {
       ray_source_it = vertex_it;
     }
     Vector2d ray_source = Vector2d(ray_source_it->x(), ray_source_it->y());
+    LOG(INFO) << "Source ray:" << ray_source;
     Vector2d ray_target = Vector2d(ray_target_it->x(), ray_target_it->y());
     Vector2d ray_direction = ray_target - ray_source;
     vertex_it = next(vertex_it, polygon);
@@ -353,6 +363,12 @@ namespace convex_plane_extraction {
       Vector2d intersection_point;
       if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
           &intersection_point)){
+        LOG(INFO) << "Intersection point:" << intersection_point;
+        LOG(INFO) << segment_source;
+        if ((ray_target - intersection_point).norm() < 0.001){
+          LOG(INFO) << segment_source;
+          continue;
+        }
         double current_distance = distanceBetweenPoints(ray_target, intersection_point);
         // Take first intersection on ray.
         if (current_distance < min_distance){

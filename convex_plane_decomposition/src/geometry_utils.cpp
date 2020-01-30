@@ -44,10 +44,14 @@ namespace convex_plane_extraction {
     A.col(0) = ray_direction;
     A.col(1) = - segment_direction;
     Vector2d b = segment_source - ray_source;
-    Vector2d solution = A.fullPivHouseholderQr().solve(b);
+    auto householder_qr = A.fullPivHouseholderQr();
+    if (householder_qr.rank() < 2){
+      return false;
+    }
+    Vector2d solution = householder_qr.solve(b);
     Vector2d ray_solution = ray_source + solution(0) * segment_direction;
     Vector2d segment_solution = segment_source + solution(1) * segment_direction;
-    if (solution(0) <= 0 || solution(1) <= 0 || solution(1) > 1){
+    if (solution(0) <= 1 || solution(1) < 0 || solution(1) > 1){
       return false;
     }
     *intersection_point = segment_solution;
