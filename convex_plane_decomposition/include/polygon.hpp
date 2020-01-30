@@ -118,7 +118,7 @@ namespace convex_plane_extraction{
     CgalPoint2d intersection_point_;
   };
 
-  void intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
+  bool intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
       Intersection* intersection);
 
   CgalPolygon2dVertexIterator erase(CgalPolygon2dVertexIterator first, CgalPolygon2dVertexIterator last,

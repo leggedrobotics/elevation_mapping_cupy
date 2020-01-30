@@ -45,10 +45,12 @@ namespace convex_plane_extraction {
     A.col(1) = - segment_direction;
     Vector2d b = segment_source - ray_source;
     Vector2d solution = A.fullPivHouseholderQr().solve(b);
-    if (solution(0) <= 0 || solution(1) < 0 || solution(1) > 1){
+    Vector2d ray_solution = ray_source + solution(0) * segment_direction;
+    Vector2d segment_solution = segment_source + solution(1) * segment_direction;
+    if (solution(0) <= 0 || solution(1) <= 0 || solution(1) > 1){ // || (ray_solution - segment_solution).norm() > 0.001) {
       return false;
     }
-    *intersection_point = segment_source + solution(1) * segment_direction;
+    *intersection_point = segment_solution;
     return true;
   }
 
