@@ -177,7 +177,9 @@ namespace convex_plane_extraction {
         + (destination_point.y() - source_point.y()) * (destination_point.y() - source_point.y())));
   }
 
-  void detectDentLocations(std::vector<int>* dent_locations, const CgalPolygon2d& polygon){
+  // A dent is a vertex, which lies in a counter-clockwise oriented polygon on the left side of its neighbors.
+  // Dents cause non-convexity.
+  void detectDentLocations(std::map<double, int>* dent_locations, const CgalPolygon2d& polygon){
     CHECK_NOTNULL(dent_locations);
     CHECK(dent_locations->empty());
     CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
@@ -185,14 +187,15 @@ namespace convex_plane_extraction {
       auto dent_it = next(source_it, polygon);
       auto destination_it = next(dent_it, polygon);
       Vector2d source_point = Vector2d(source_it->x(), source_it->y());
-      Vector2d direction_vector = Vector2d(destination_it->x() - source_it->x(), destination_it->y() - source_it->y());
+      Vector2d destination_point = Vector2d(destination_it->x(), destination_it->y());
+      Vector2d direction_vector = destination_point - source_point;
       Vector2d test_point = Vector2d(dent_it->x(), dent_it->y());
-      const double kAngleThreshold = 0.001;//0.1 * M_PI / 180.0;
+      const double kAngleThresholdRad = 0.001; // 0.05 deg in rad.
       if(isPointOnLeftSide(source_point, direction_vector, test_point)){
-        std::cout << "Computed angle " << (abs(computeAngleBetweenVectors(direction_vector, test_point - source_point)) > kAngleThreshold) <<
-        std::endl;
-        if ( abs(computeAngleBetweenVectors(direction_vector, test_point - source_point)) > kAngleThreshold)
-          dent_locations->push_back(std::distance(polygon.vertices_begin(), dent_it));
+        double angle = abs(computeAngleBetweenVectors(source_point - test_point, destination_point - test_point));
+        // Ignore very shallow dents. Approximate convex decomposition.
+        if ( angle > kAngleThresholdRad)
+          dent_locations->insert(std::make_pair(angle, std::distance(polygon.vertices_begin(), dent_it)));
       }
     }
   }
@@ -200,7 +203,7 @@ namespace convex_plane_extraction {
   std::list<CgalPolygon2d> decomposeInnerApproximation(const CgalPolygon2d& polygon){
     CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
     std::list<CgalPolygon2d> return_list;
-    std::vector<int> dent_locations;
+    std::map<double, int> dent_locations;
     detectDentLocations(&dent_locations, polygon);
     if (dent_locations.empty()){
       // No dents detected, polygon must be convex.
@@ -208,54 +211,48 @@ namespace convex_plane_extraction {
       return_list.push_back(polygon);
       return return_list;
     }
-    std::cout << "Dent locations:" << std::endl;
-    for (int location : dent_locations){
-      std::cout << location << std::endl;
-    }
-    std::cout << "Polygon:" << std::endl;
-    printPolygon(polygon);
+    int dent_location = dent_locations.begin()->second;
     bool intersection_clockwise_flag = false;
     Intersection intersection_clockwise;
     bool intersection_counterclockwise_flag = false;
     Intersection intersection_counterclockwise;
-    intersection_clockwise_flag = intersectPolygonWithRay(dent_locations.at(0), CGAL::COUNTERCLOCKWISE,
+    intersection_clockwise_flag = intersectPolygonWithRay(dent_location, CGAL::COUNTERCLOCKWISE,
         polygon, &intersection_counterclockwise);
-    intersection_counterclockwise_flag = intersectPolygonWithRay(dent_locations.at(0), CGAL::CLOCKWISE,
+    intersection_counterclockwise_flag = intersectPolygonWithRay(dent_location, CGAL::CLOCKWISE,
         polygon, &intersection_clockwise);
     if (!intersection_clockwise_flag || !intersection_counterclockwise_flag ){
-      // return return_list;
+      LOG(FATAL) << "At least one intersection of dent ray with polygon failed!";
     }
     // Generate resulting polygons from cut.
     // Resulting cut from counter clockwise ray intersection.
     CgalPolygon2d polygon_counterclockwise_1 = polygon;
     CgalPolygon2d polygon_counterclockwise_2;
     auto first_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
-    std::advance(first_vertex_to_erase_it, dent_locations.at(0));
+    std::advance(first_vertex_to_erase_it, dent_location);
+    // Add dent to second polygon.
     polygon_counterclockwise_2.push_back(*first_vertex_to_erase_it);
     first_vertex_to_erase_it = next(first_vertex_to_erase_it, polygon_counterclockwise_1);
-//    for (int i = 0; i < 2; ++i){
-//      first_vertex_to_erase_it = previous(first_vertex_to_erase_it, polygon);
-//    }
     auto last_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
+    // Intersection somewhere must be at or after source vertex of intersection edge.
     std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
-//    auto last_vertex_to_erase_it = polygon.vertices_begin();
-//    std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
+    // Take next vertex due to exclusive upper limit logic.
     last_vertex_to_erase_it = next(last_vertex_to_erase_it, polygon_counterclockwise_1);
+    // Copy vertices that will be deleted to second polygon.
     copyVertices(polygon_counterclockwise_1,first_vertex_to_erase_it,last_vertex_to_erase_it,
     &polygon_counterclockwise_2, polygon_counterclockwise_2.vertices_end());
-    std::cout << "Copy succeeded without problems!" << std::endl;
-//    polygon_counterclockwise_2.insert(polygon_counterclockwise_2.vertices_end(),
-//        first_vertex_to_erase_it, last_vertex_to_erase_it);
+    // Get last point that was erased.
     CgalPoint2d point_before_intersection = *(previous(last_vertex_to_erase_it, polygon_counterclockwise_2));
+    // To avoid numerical issues and duplicate vertices, intersection point is only inserted if sufficiently
+    // far away from exisiting vertex.
     constexpr double kSquaredLengthThreshold = 1e-6;
     if ((intersection_counterclockwise.intersection_point_ - point_before_intersection).squared_length() > kSquaredLengthThreshold) {
       polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
     }
-//    auto element_behind_deleted_it = polygon_counterclockwise_1.erase(first_vertex_to_erase_it, std::next(last_vertex_to_erase_it));
     CgalPolygon2dVertexIterator element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
-    polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
-    std::cout << "First polygon counter-clockwise: " << polygon_counterclockwise_1 << std::endl;
-    std::cout << "Second polygon counter-clockwise: " << polygon_counterclockwise_2 << std::endl;
+    // Add intersection vertex to first polygon if existing vertex too far away.
+//    if ((intersection_counterclockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
+      polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
+//    }
     // Resulting cut from clockwise ray intersection.
     CgalPolygon2d polygon_clockwise_1 = polygon;
     CgalPolygon2d polygon_clockwise_2;
@@ -266,16 +263,14 @@ namespace convex_plane_extraction {
       polygon_clockwise_2.push_back(intersection_clockwise.intersection_point_);
     }
     last_vertex_to_erase_it = polygon_clockwise_1.vertices_begin();
-    std::advance(last_vertex_to_erase_it, dent_locations.at(0));
+    std::advance(last_vertex_to_erase_it, dent_location);
     copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
                  polygon_clockwise_2.vertices_end());
     polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
     element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
-    polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
-//    std::advance(first_element_to_insert_it, intersection_clockwise.edge_target_location_);
-//    copyVertices(polygon, first_element_to_insert_it, first_vertex_to_erase_it, &polygon_clockwise_2,
-//        polygon_clockwise_2.vertices_end());
-
+//    if ((intersection_clockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
+      polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
+//    }
     // Take the cut with smallest min. area of resulting polygons.
     double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(),
                       polygon_clockwise_1.area(), polygon_clockwise_2.area()};
@@ -318,14 +313,12 @@ namespace convex_plane_extraction {
     }
     return_list.splice(return_list.end(), recursion_1);
     return_list.splice(return_list.end(), recursion_2);
-    // Check that returned decomposition is in fact convex.
-//    for (const CgalPolygon2d& polygon_under_test : return_list){
-//      CHECK(polygon_under_test.is_convex());
-//    }
+
     return return_list;
   }
 
-  bool intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
+  // Counter-clockwise orientation: ray source vertex is previous vertex in counter-clockwise polygon orientation.
+  bool intersectPolygonWithRay(int ray_target_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
                                Intersection* intersection){
     CHECK_NOTNULL(intersection);
     CHECK(orientation == CGAL::COUNTERCLOCKWISE || orientation == CGAL::CLOCKWISE);
@@ -335,7 +328,7 @@ namespace convex_plane_extraction {
     double min_distance = kLargeDistanceValue;
     bool one_intersection_at_least = false;
     auto vertex_it = polygon.vertices_begin();
-    std::advance(vertex_it, ray_source_location);
+    std::advance(vertex_it, ray_target_location);
     auto ray_source_it = vertex_it;
     CgalPolygon2dVertexIterator ray_target_it = vertex_it;
     if (orientation == CGAL::COUNTERCLOCKWISE) {
@@ -347,11 +340,10 @@ namespace convex_plane_extraction {
     Vector2d ray_source = Vector2d(ray_source_it->x(), ray_source_it->y());
     Vector2d ray_target = Vector2d(ray_target_it->x(), ray_target_it->y());
     Vector2d ray_direction = ray_target - ray_source;
-    std::cout << "Ray direction: " << ray_direction << std::endl;
     vertex_it = next(vertex_it, polygon);
+    // Do not intersect with adjacent edges since the intersect already in common vertex.
     auto condition_it = ray_source_it;
     if (orientation == CGAL::CLOCKWISE){
-      //vertex_it = next(vertex_it, polygon); // Compensate for previous above.
       condition_it = ray_target_it;
     }
     while(next(vertex_it, polygon) != condition_it){
@@ -361,12 +353,8 @@ namespace convex_plane_extraction {
       Vector2d intersection_point;
       if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
           &intersection_point)){
-        std::cout << "Intersection succeeded with: " << std::endl;
-        std::cout << "Ray source" << ray_source << std::endl;
-        std::cout << "Segment source: " << segment_source << std::endl;
-        std::cout << "Segment target: " << segment_target << std::endl;
-        std::cout << "Intersection point: " << intersection_point << std::endl;
-          double current_distance = distanceBetweenPoints(ray_target, intersection_point);
+        double current_distance = distanceBetweenPoints(ray_target, intersection_point);
+        // Take first intersection on ray.
         if (current_distance < min_distance){
           one_intersection_at_least = true;
           min_distance = current_distance;
@@ -376,7 +364,7 @@ namespace convex_plane_extraction {
       }
       vertex_it = next(vertex_it, polygon);
     }
-    //CHECK(one_intersection_at_least);
+
     if (!one_intersection_at_least){
       return false;
     }
@@ -385,16 +373,15 @@ namespace convex_plane_extraction {
     return true;
   }
 
+  // Erases vertices [first, last), takes warp around into account.
   CgalPolygon2dVertexIterator erase(CgalPolygon2dVertexIterator first, CgalPolygon2dVertexIterator last,
       CgalPolygon2d* polygon){
     CHECK_NOTNULL(polygon);
     CHECK(first != last);
-    std::cout << "Starting erasing!" << std::endl;
     if ((std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first)) > 0){
-      std::cout << (std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first)) << std::endl;
+      // std::cout << (std::distance(polygon->vertices_begin(), last) - std::distance(polygon->vertices_begin(), first)) << std::endl;
       return polygon->erase(first, last);
     } else {
-      std::cout << "Erasing overflow!" << std::endl;
       int last_iterator_distance = std::distance(polygon->vertices_begin(), last);
       polygon->erase(first, polygon->vertices_end());
       auto erase_iterator = polygon->vertices_begin();
@@ -402,8 +389,9 @@ namespace convex_plane_extraction {
       return polygon->erase(polygon->vertices_begin(), erase_iterator);
     }
   }
-  // Solves the wrap around issue.
-  // [first last) are copied to new_polygon before the position indicated ny insert_position.
+
+  // [first last) are copied to new_polygon before the position indicated by insert_position.
+  // Takes wrap around into account
   void copyVertices(const CgalPolygon2d& old_polygon, const CgalPolygon2dVertexIterator first, const CgalPolygon2dVertexIterator last,
       CgalPolygon2d* new_polygon, const CgalPolygon2dVertexIterator insert_position){
     CHECK_NOTNULL(new_polygon);

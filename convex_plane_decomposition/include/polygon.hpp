@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <map>
 #include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -95,7 +96,7 @@ namespace convex_plane_extraction{
 
   double getEdgeLength(const CgalPolygon2dVertexIterator& source, const CgalPolygon2d& polygon);
 
-  void detectDentLocations(std::vector<int>* dent_locations, const CgalPolygon2d& polygon);
+  void detectDentLocations(std::map<double, int>* dent_locations, const CgalPolygon2d& polygon);
 
   struct Intersection{
     void setEdgeSourceLocation(const int location){
@@ -118,7 +119,7 @@ namespace convex_plane_extraction{
     CgalPoint2d intersection_point_;
   };
 
-  bool intersectPolygonWithRay(int ray_source_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
+  bool intersectPolygonWithRay(int ray_target_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
       Intersection* intersection);
 
   CgalPolygon2dVertexIterator erase(CgalPolygon2dVertexIterator first, CgalPolygon2dVertexIterator last,
