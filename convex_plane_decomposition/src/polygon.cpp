@@ -367,6 +367,7 @@ namespace convex_plane_extraction {
         LOG(INFO) << segment_source;
         if ((ray_target - intersection_point).norm() < 0.001){
           LOG(INFO) << segment_source;
+          vertex_it = next(vertex_it, polygon);
           continue;
         }
         double current_distance = distanceBetweenPoints(ray_target, intersection_point);
