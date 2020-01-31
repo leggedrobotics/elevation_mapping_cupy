@@ -163,7 +163,8 @@ add_executable(${PROJECT_NAME}_node
 	src/plane.cpp
 	src/polygon.cpp
 	src/ros_visualizations.cpp
-	src/geometry_utils.cpp)
+	src/geometry_utils.cpp
+	src/export_utils.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

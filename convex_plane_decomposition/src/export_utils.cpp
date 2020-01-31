@@ -1,0 +1,23 @@
+#include "export_utils.hpp"
+
+
+namespace convex_plane_extraction {
+
+  bool exportPointsWithNormalsToCsv(grid_map::GridMap &map, const std::string &normals_layer_prefix,
+                                    const std::string &layer_height) {
+    std::ofstream output_file;
+    output_file.open("/home/andrej/sp_ws/points_and_normals.csv");
+    for (grid_map::GridMapIterator iterator(map);
+         !iterator.isPastEnd(); ++iterator) {
+      grid_map::Position3 position3;
+      Eigen::Vector3d point;
+      Eigen::Vector3d normal;
+      map.getPosition3(layer_height, *iterator, point);
+      map.getVector(normals_layer_prefix, *iterator, normal);
+      output_file << point(0) << ", " << point(1) << ", " << point(2) << ", " <<
+        normal(0) << ", " << normal(1) << ", " << normal(2) << "\n";
+    }
+    return true;
+  }
+
+}

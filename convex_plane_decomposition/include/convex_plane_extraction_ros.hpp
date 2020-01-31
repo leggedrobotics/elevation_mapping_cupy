@@ -1,12 +1,3 @@
-/*
- * FiltersDemo.hpp
- *
- *  Created on: Aug 16, 2017
- *      Author: Peter Fankhauser
- *	 Institute: ETH Zurich, ANYbotics
- *
- */
-
 #pragma once
 
 #include <string>
@@ -18,6 +9,7 @@
 
 #include <grid_map_ros/grid_map_ros.hpp>
 
+#include "export_utils.hpp"
 #include "grid_map_preprocessing.hpp"
 #include "plane_extractor.hpp"
 #include "ransac_plane_extractor.hpp"

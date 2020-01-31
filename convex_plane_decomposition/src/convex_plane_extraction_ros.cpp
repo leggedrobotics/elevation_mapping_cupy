@@ -91,6 +91,9 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   std::cout << inputMap.getPosition() << std::endl;
   CHECK(success);
   ROS_INFO("...done.");
+//  if(exportPointsWithNormalsToCsv(inputMap, "normal_vectors_", "elevation")){
+//    ROS_INFO("Map exported to csv.");
+//  }
   applyMedianFilter(inputMap.get("elevation"), 5);
   // Compute planar region segmentation
   ROS_INFO("Initializing plane extractor...");
