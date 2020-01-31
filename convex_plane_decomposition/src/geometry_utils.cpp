@@ -46,6 +46,32 @@ namespace convex_plane_extraction {
     Vector2d b = segment_source - ray_source;
     auto householder_qr = A.fullPivHouseholderQr();
     if (householder_qr.rank() < 2){
+      // Check whether segment and ray overlap.
+      Vector2d p_ray_source_segment_source = segment_source - ray_source;
+      Vector2d ray_parameter_solution = Vector2d(p_ray_source_segment_source.x() / ray_direction.x(),
+          p_ray_source_segment_source.y() / ray_direction.y());
+      constexpr double kSolutionDeviation = 0.0001;
+      if (abs(ray_parameter_solution.x() - ray_parameter_solution.y()) < kSolutionDeviation){
+        double parameter_solution_tmp = ray_parameter_solution.mean();
+        if (parameter_solution_tmp < 0){
+          return false;
+        }
+        CHECK_GT(parameter_solution_tmp, 0);
+        Vector2d p_ray_source_segment_target = segment_target - ray_source;
+        ray_parameter_solution = Vector2d(p_ray_source_segment_target.x() / ray_direction.x(),
+                                          p_ray_source_segment_target.y() / ray_direction.y());
+        // If ray is parallel (rank loss) and source point lies on ray, then target point has to as well.
+        CHECK(abs(ray_parameter_solution.x() - ray_parameter_solution.y()) < kSolutionDeviation);
+        if(ray_parameter_solution.mean() < 0){
+          return false;
+        }
+        if (ray_parameter_solution.mean() < parameter_solution_tmp){
+          *intersection_point = segment_target;
+        } else {
+          *intersection_point = segment_source;
+        }
+        return true;
+      }
       return false;
     }
     Vector2d solution = householder_qr.solve(b);
