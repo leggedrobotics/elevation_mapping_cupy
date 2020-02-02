@@ -41,6 +41,7 @@ namespace convex_plane_extraction{
 
   typedef std::vector<Eigen::Vector3d>                          Polygon3d;
   typedef std::vector<Polygon3d>                                Polygon3dVectorContainer;
+  typedef K::Intersect_2                                        Intersect_2;
 
 
   template <typename Iter>
@@ -77,7 +78,7 @@ namespace convex_plane_extraction{
 
   void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dListContainer* output_polyong_list);
 
-  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment);
+  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment, bool print_flag);
 
   int getClosestPolygonVertexPosition(const CgalPolygon2d& polygon, const CgalPoint2d& point);
 

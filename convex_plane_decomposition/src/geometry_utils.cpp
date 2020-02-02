@@ -84,6 +84,55 @@ namespace convex_plane_extraction {
     return true;
   }
 
+  bool intersectLineSegmentWithLineSegment(const Vector2d& segment_1_source, const Vector2d& segment_1_target,
+                                   const Vector2d& segment_2_source, const Vector2d& segment_2_target, Vector2d* intersection_point){
+    CHECK_NOTNULL(intersection_point);
+    Vector2d segment_1_direction = segment_1_target - segment_1_source;
+    Vector2d segment_2_direction = segment_2_target - segment_2_source;
+    Matrix2d A;
+    A.col(0) = segment_1_direction;
+    A.col(1) = - segment_2_direction;
+    Vector2d b = segment_2_source - segment_1_source;
+    auto householder_qr = A.fullPivHouseholderQr();
+    if (householder_qr.rank() < 2){
+      // Check whether segment and ray overlap.
+      Vector2d p_ray_source_segment_source = segment_2_source - segment_1_source;
+      Vector2d ray_parameter_solution = Vector2d(p_ray_source_segment_source.x() / segment_1_direction.x(),
+                                                 p_ray_source_segment_source.y() / segment_1_direction.y());
+      constexpr double kSolutionDeviation = 0.0001;
+      if (abs(ray_parameter_solution.x() - ray_parameter_solution.y()) < kSolutionDeviation){
+        double parameter_solution_tmp = ray_parameter_solution.mean();
+        if (parameter_solution_tmp < 0){
+          return false;
+        }
+        CHECK_GT(parameter_solution_tmp, 0);
+        Vector2d p_ray_source_segment_target = segment_2_target - segment_1_source;
+        ray_parameter_solution = Vector2d(p_ray_source_segment_target.x() / segment_1_direction.x(),
+                                          p_ray_source_segment_target.y() / segment_1_direction.y());
+        // If ray is parallel (rank loss) and source point lies on ray, then target point has to as well.
+        CHECK(abs(ray_parameter_solution.x() - ray_parameter_solution.y()) < kSolutionDeviation);
+        if(ray_parameter_solution.mean() < 0){
+          return false;
+        }
+        if (ray_parameter_solution.mean() < parameter_solution_tmp){
+          *intersection_point = segment_2_target;
+        } else {
+          *intersection_point = segment_2_source;
+        }
+        return true;
+      }
+      return false;
+    }
+    Vector2d solution = householder_qr.solve(b);
+    Vector2d ray_solution = segment_1_source + solution(0) * segment_2_direction;
+    Vector2d segment_solution = segment_2_source + solution(1) * segment_2_direction;
+    if (solution(0) < 0 || solution(0) > 1 || solution(1) < 0 || solution(1) > 1){
+      return false;
+    }
+    *intersection_point = segment_solution;
+    return true;
+  }
+
   double distanceBetweenPoints(Vector2d first, Vector2d second){
     return (second - first).norm();
   }

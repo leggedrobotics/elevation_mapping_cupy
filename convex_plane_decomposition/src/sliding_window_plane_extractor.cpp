@@ -153,6 +153,7 @@ namespace sliding_window_plane_extractor{
         constexpr int kParentFlagIndex = 3;
         if (hierarchy[hierachy_it-1][kParentFlagIndex] < 0) {
           //convex_plane_extraction::upSampleLongEdges(&polygon);
+//          convex_plane_extraction::approximateContour(&polygon);
           CHECK(plane.addOuterPolygon(polygon));
         } else {
           CHECK(plane.addHolePolygon(polygon));
@@ -163,7 +164,7 @@ namespace sliding_window_plane_extractor{
         computePlaneFrameFromLabeledImage(binary_image, &plane);
         if(plane.isValid()) {
           LOG(INFO) << "Starting resolving holes...";
-          // plane.resolveHoles();
+          plane.resolveHoles();
           LOG(INFO) << "done.";
           CHECK(plane.decomposePlaneInConvexPolygons());
           planes_.push_back(plane);

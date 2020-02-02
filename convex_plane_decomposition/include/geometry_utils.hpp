@@ -19,5 +19,8 @@ bool intersectRayWithLineSegment(const Vector2d& ray_source, const Vector2d& ray
                                  const Vector2d& segment_source, const Vector2d& segment_target, Vector2d* intersection_point);
 
 double distanceBetweenPoints(Vector2d first, Vector2d second);
+
+bool intersectLineSegmentWithLineSegment(const Vector2d& segment_1_source, const Vector2d& segment_1_target,
+                                    const Vector2d& segment_2_source, const Vector2d& segment_2_target, Vector2d* intersection_point);
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_GEOMETRY_UTILS_HPP_

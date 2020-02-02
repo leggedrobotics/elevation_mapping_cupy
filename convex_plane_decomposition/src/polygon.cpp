@@ -7,29 +7,53 @@ namespace convex_plane_extraction {
     CHECK(polygon.is_simple());
     LOG(INFO) << "Started convex decomposition...";
     size_t old_list_size = output_polygon_list->size();
-//    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
-//                                     polygon.vertices_end(),
-//                                     std::back_inserter(*output_polygon_list));
-//
-//    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
-//                                      polygon.vertices_end(),
-//                                      polygon_list.begin(),
-//                                      polygon_list.end()));
-    *output_polygon_list = decomposeInnerApproximation(polygon);
+    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
+                                     polygon.vertices_end(),
+                                     std::back_inserter(*output_polygon_list));
+
+    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
+                                      polygon.vertices_end(),
+                                      polygon_list.begin(),
+                                      polygon_list.end()));
+//    *output_polygon_list = decomposeInnerApproximation(polygon);
     CHECK_GT(output_polygon_list->size(), old_list_size);
     LOG(INFO) << "done.";
   }
 
-  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment){
+  bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment, bool print_flag){
     for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
       auto next_vertex_it = std::next(vertex_it);
       if (next_vertex_it == polygon.vertices_end()){
         next_vertex_it = polygon.vertices_begin();
       }
       CgalSegment2d test_segment(*vertex_it, *next_vertex_it);
-      if (do_intersect(test_segment, segment)){
-        return true;
+      CGAL::cpp11::result_of<Intersect_2(CgalSegment2d, CgalSegment2d)>::type
+          result = intersection(test_segment, segment);
+      if (result) {
+        if (const CgalSegment2d *s = boost::get<CgalSegment2d>(&*result)) {
+          std::cout << *s << std::endl;
+          return true;
+        } else {
+          const CgalPoint2d *p = boost::get<CgalPoint2d>(&*result);
+          if (print_flag) {
+            std::cout << *p << ";" << std::endl;
+          }
+          return true;
+        }
       }
+//      Vector2d test_segment_source(vertex_it->x(), vertex_it->y());
+//      Vector2d test_segment_target(next_vertex_it->x(), next_vertex_it->y());
+//      Vector2d segment_source(segment.source().x(), segment.source().y());
+//      Vector2d segment_target(segment.target().x(), segment.target().y());
+//      Vector2d intersection_point;
+//      if (intersectLineSegmentWithLineSegment(test_segment_source, test_segment_target,
+//      segment_source, segment_target, &intersection_point)){
+//        std::cout << intersection_point.x() << ", " << intersection_point.y() << ";" << std::endl;
+//        return true;
+//      }
+//      if (do_intersect(test_segment, segment)){
+//        return true;
+//      }
     }
     return false;
   }
@@ -95,7 +119,7 @@ namespace convex_plane_extraction {
           double a = (third_point - first_point).norm();
           double b = (second_point - third_point).norm();
           double c = (first_point - second_point).norm();
-          constexpr double areaThresholdFactor = 0.01;
+          constexpr double areaThresholdFactor = 0.025;
           if (computeTriangleArea(a, b, c) < areaThresholdFactor * area) {
             LOG(INFO) << "Area sufficiently small!";
             CgalPolygon2d new_polygon(*polygon);
