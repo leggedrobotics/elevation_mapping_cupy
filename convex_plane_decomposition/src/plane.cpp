@@ -220,6 +220,7 @@ namespace convex_plane_extraction{
           direction = (1.0/direction.squared_length()) * direction;
           CgalSegment2d connection(hole_vertex + 0.0001 * direction, *outer_vertex_it - 0.0001 * direction);
           if (!doPolygonAndSegmentIntersect(outer_polygon_, connection, print_flag)){
+            valid_connection = true;
             for (auto hole_iterator = hole_polygon_list_.begin(); hole_iterator != hole_polygon_list_.end(); ++hole_iterator){
               if (hole_iterator->size() < 3){
                 continue;
@@ -231,7 +232,6 @@ namespace convex_plane_extraction{
                 break;
               }
             }
-            valid_connection = true;
           } else {
             //std::cout << "Outer contour and connection intersect!" << std::endl;
             ++i;
@@ -283,7 +283,7 @@ namespace convex_plane_extraction{
           next_vertex = outer_polygon_.begin();
         }
         Eigen::Vector2d test_point(next_vertex->x(), next_vertex->y());
-        constexpr double kPointOffset = 0.001;
+        constexpr double kPointOffset = 0.0001;
         Eigen::Vector2d outer_point(outer_contour_connection_vertex->x(), outer_contour_connection_vertex->y());
         if (isPointOnLeftSide(line_start_point, direction_vector, test_point)){
           Eigen::Vector2d translation_vector(next_vertex->x() - outer_contour_connection_vertex->x(),
@@ -311,6 +311,31 @@ namespace convex_plane_extraction{
           hole_point += kPointOffset * translation_vector;
         } else {
           hole_point += kPointOffset * normal_vector;
+        }
+        Vector2d new_edge_direction = outer_point - hole_point;
+        new_edge_direction.normalize();
+        constexpr double kShiftFactor = 0.0001;
+        bool intersection_caused = false;
+        CgalSegment2d new_edge(CgalPoint2d(hole_point.x() + kShiftFactor * new_edge_direction.x(),
+            hole_point.y() + kShiftFactor * new_edge_direction.y()),CgalPoint2d(outer_point.x() -
+            kShiftFactor * new_edge_direction.x(), outer_point.y() - kShiftFactor * new_edge_direction.y()));
+        if (!doPolygonAndSegmentIntersect(outer_polygon_, new_edge, false)){
+          for (auto hole_iterator = hole_polygon_list_.begin(); hole_iterator != hole_polygon_list_.end(); ++hole_iterator){
+            if (hole_iterator->size() < 3){
+              continue;
+            }
+            if (doPolygonAndSegmentIntersect(*hole_iterator, new_edge, false)) {
+              intersection_caused = true;
+              break;
+            }
+          }
+        } else {
+          //std::cout << "Outer contour and connection intersect!" << std::endl;
+          intersection_caused = true;
+        }
+        if (intersection_caused){
+          ++hole_it;
+          continue;
         }
         // Add new vertices to outer contour.
         new_polygon.push_back(CgalPoint2d(hole_point.x(), hole_point.y()));
