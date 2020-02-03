@@ -424,4 +424,8 @@ namespace convex_plane_extraction{
     }
   }
 
+  const CgalPolygon2dListContainer& Plane::getConvexPolygons() const {
+    return convex_polygon_list_;
+  }
+
 }

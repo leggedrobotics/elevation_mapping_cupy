@@ -241,5 +241,30 @@ namespace sliding_window_plane_extractor{
       }
     }
   }
+
+  void SlidingWindowPlaneExtractor::exportConvexPolygons(const std::string& path) const {
+    std::ofstream output_file;
+    output_file.open(path + "convex_polygons.txt", std::ofstream::app);
+    std::chrono::milliseconds time_stamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch());
+    for (const auto& plane : planes_){
+      for (const auto& polygon : plane.getConvexPolygons()){
+        output_file << time_stamp.count() << ", ";
+        for (const auto& vertex : polygon){
+          output_file << vertex.x() << ", ";
+        }
+        for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
+          output_file << vertex_it->y();
+          if (vertex_it != std::prev(polygon.vertices_end())){
+            output_file << ", ";
+          } else {
+            output_file << "\n";
+          }
+        }
+      }
+    }
+    output_file.close();
+    LOG(INFO) << "Exported polygons!";
+  }
 }
 

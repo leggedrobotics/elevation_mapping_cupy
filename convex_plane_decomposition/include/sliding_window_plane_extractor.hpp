@@ -1,6 +1,7 @@
 #ifndef CONVEX_PLANE_EXTRACTION_INCLUDE_SLIDING_WINDOW_PLANE_EXTRACTOR_HPP_
 #define CONVEX_PLANE_EXTRACTION_INCLUDE_SLIDING_WINDOW_PLANE_EXTRACTOR_HPP_
 
+#include <chrono>
 #include <math.h>
 #include <numeric>
 #include <iostream>
@@ -49,6 +50,8 @@ namespace sliding_window_plane_extractor {
     void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
 
     void visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const;
+
+    void exportConvexPolygons(const std::string& path) const;
 
    private:
 
