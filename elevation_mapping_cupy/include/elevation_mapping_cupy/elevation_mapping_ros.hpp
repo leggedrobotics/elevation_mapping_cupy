@@ -1,4 +1,4 @@
-#include <pybind11_catkin/pybind11/embed.h> // everything needed for embedding
+#include <pybind11/embed.h> // everything needed for embedding
 #include <iostream>
 #include <Eigen/Dense>
 
