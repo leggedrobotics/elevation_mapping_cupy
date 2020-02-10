@@ -31,6 +31,9 @@ class Parameter(object):
         self.safe_min_thresh = 0.5
         self.max_unsafe_n = 20
 
+        self.min_filter_size = 5
+        self.min_filter_iteration = 3
+
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
         self.enable_visibility_cleanup = True
@@ -138,3 +141,9 @@ class Parameter(object):
 
     def set_max_unsafe_n(self, max_unsafe_n):
         self.max_unsafe_n = max_unsafe_n
+
+    def set_min_filter_size(self, x):
+        self.min_filter_size = x
+
+    def set_min_filter_iteration(self, x):
+        self.min_filter_iteration = x

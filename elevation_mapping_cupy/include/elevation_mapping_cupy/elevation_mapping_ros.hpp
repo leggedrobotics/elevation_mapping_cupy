@@ -1,4 +1,4 @@
-#include <pybind11/embed.h> // everything needed for embedding
+#include <pybind11_catkin/pybind11/embed.h> // everything needed for embedding
 #include <iostream>
 #include <Eigen/Dense>
 
@@ -54,6 +54,7 @@ class ElevationMappingNode {
     ros::Subscriber poseSub_;
     ros::Publisher alivePub_;
     ros::Publisher mapPub_;
+    ros::Publisher filteredMapPub_;
     ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
     ros::ServiceServer rawSubmapService_;

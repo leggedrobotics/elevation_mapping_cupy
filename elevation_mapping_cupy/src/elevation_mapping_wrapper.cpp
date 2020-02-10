@@ -1,6 +1,6 @@
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
-#include <pybind11/embed.h>
-#include <pybind11/eigen.h>
+#include <pybind11_catkin/pybind11/embed.h>
+#include <pybind11_catkin/pybind11/eigen.h>
 #include <iostream>
 #include <Eigen/Dense>
 #include <pcl/common/projection_matrix.h>
@@ -33,7 +33,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
   float time_variance, initial_variance, traversability_inlier, position_noise_thresh,
         orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
-  int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n;
+  int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
   param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
@@ -110,6 +110,12 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<int>("max_unsafe_n", max_unsafe_n, 20);
   param_.attr("set_max_unsafe_n")(max_unsafe_n);
 
+  nh.param<int>("min_filter_size", min_filter_size, 5);
+  param_.attr("set_min_filter_size")(min_filter_size);
+
+  nh.param<int>("min_filter_iteration", min_filter_iteration, 3);
+  param_.attr("set_min_filter_iteration")(min_filter_iteration);
+
   nh.param<std::string>("gather_mode", gather_mode, "mean");
   param_.attr("set_gather_mode")(gather_mode);
 
@@ -151,13 +157,16 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
   RowMatrixXd elevation(map_n_, map_n_);
   RowMatrixXd variance(map_n_, map_n_);
   RowMatrixXd traversability(map_n_, map_n_);
+  RowMatrixXd min_filtered(map_n_, map_n_);
   map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
                             static_cast<Eigen::Ref<RowMatrixXd>>(variance),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(traversability));
+                            static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
+                            static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered));
   maps.clear();
   maps.push_back(elevation);
   maps.push_back(variance);
   maps.push_back(traversability);
+  maps.push_back(min_filtered);
   return;
 }
 
@@ -174,7 +183,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   // gridMap.add("elevation", maps[0].cast<float>());
   // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  std::vector<std::string> layerNames = {"elevation", "variance", "traversability"};
+  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered"};
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }

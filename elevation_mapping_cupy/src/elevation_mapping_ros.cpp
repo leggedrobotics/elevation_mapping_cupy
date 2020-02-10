@@ -1,6 +1,6 @@
 #include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
-#include <pybind11/embed.h> 
-#include <pybind11/eigen.h>
+#include <pybind11_catkin/pybind11/embed.h> 
+#include <pybind11_catkin/pybind11/eigen.h>
 #include <iostream>
 #include <Eigen/Dense>
 #include <pcl/common/projection_matrix.h>
@@ -45,6 +45,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     pointcloudSubs_.push_back(sub);
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
+  filteredMapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_filtered", 1);
   recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
@@ -95,15 +96,20 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   gridMap_.setTimestamp(ros::Time::now().toNSec());
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
-  scopedLockForGridMap.unlock();
   mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
+
+  grid_map_msgs::GridMap filteredMsg;
+  grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
+  scopedLockForGridMap.unlock();
+  filteredMsg.basic_layers = {"min_filtered"};
+  filteredMapPub_.publish(filteredMsg);
 
   if (enablePointCloudPublishing_) {
     publishAsPointCloud();
   }
 
-  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
+  ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
 }

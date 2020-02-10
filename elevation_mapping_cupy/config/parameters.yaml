@@ -26,6 +26,9 @@ safe_thresh: 0.7                                # if traversability is smaller, 
 safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
 max_unsafe_n: 10                                # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
 
+min_filter_size: 3
+min_filter_iteration: 4
+
 gather_mode: 'mean'                             # gather mode (currently only mean is possible).
 enable_edge_sharpen: true
 enable_visibility_cleanup: true
