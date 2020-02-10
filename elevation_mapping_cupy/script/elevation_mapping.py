@@ -63,8 +63,8 @@ class ElevationMap(object):
         self.min_filter_size = param.min_filter_size
         self.min_filter_iteration = param.min_filter_iteration
 
-        # layers: elevation, variance, is_valid, traversability, min_filtered
-        self.elevation_map = xp.zeros((5, self.cell_n, self.cell_n))
+        # layers: elevation, variance, is_valid, traversability
+        self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
         self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
         # Initial variance
         self.initial_variance = param.initial_variance
