@@ -40,6 +40,7 @@ pointcloud_topics: ['/realsense_d435_front/depth/color/points',
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
 map_frame: 'odom'
+corrected_map_frame: 'corrected_odom'
 
 #  Initialization
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'

@@ -69,6 +69,7 @@ class ElevationMappingNode {
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
+    std::string correctedMapFrameId_;
     grid_map::GridMap gridMap_;
     std::vector<std::string> recordable_map_layers_;
     std::vector<std::string> initialize_frame_id_;

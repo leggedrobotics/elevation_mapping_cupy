@@ -87,6 +87,8 @@ class ElevationMap(object):
         self.elevation_map *= 0.0
         # Initial variance
         self.elevation_map[1] += self.initial_variance
+        self.mean_error = 0.0
+        self.additive_mean_error = 0.0
 
     def get_position(self, position):
         position[0][:] = xp.asnumpy(self.center)
@@ -185,8 +187,8 @@ class ElevationMap(object):
         traversability = self.traversability_filter(self.traversability_input)
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
-    def get_additive_mean_error(self, additive_error):
-        additive_error = self.additive_mean_error
+    def get_additive_mean_error(self):
+        return self.additive_mean_error
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]

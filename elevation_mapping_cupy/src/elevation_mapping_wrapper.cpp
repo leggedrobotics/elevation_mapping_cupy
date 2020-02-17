@@ -146,8 +146,7 @@ void ElevationMappingWrapper::clear() {
 }
 
 double ElevationMappingWrapper::get_additive_mean_error() {
-  double additive_error;
-  map_.attr("get_additive_mean_error")(&additive_error);
+  double additive_error = map_.attr("get_additive_mean_error")().cast<double>();
   return additive_error;
 }
 
