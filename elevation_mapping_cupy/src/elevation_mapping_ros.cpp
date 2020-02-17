@@ -20,13 +20,14 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   orientationError_(0),
   positionAlpha_(0.1),
   orientationAlpha_(0.1),
-  enablePointCloudPublishing_(false),
-  recordableFps_(0.0)
+  enablePointCloudPublishing_(false)
 {
   nh_ = nh;
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
   std::vector<std::string>pointcloud_topics;
+  double recordableFps, updateVarianceFps;
+
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
   nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
@@ -36,7 +37,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<std::string>("initialize_method", initializeMethod_, "cubic");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
-  nh.param<double>("recordable_fps", recordableFps_, 3.0);
+  nh.param<double>("recordable_fps", recordableFps, 3.0);
+  nh.param<double>("update_variance_fps", updateVarianceFps, 1.0);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
@@ -55,10 +57,16 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   clearMapWithInitializerService_ = nh_.advertiseService("clear_map_with_initializer", &ElevationMappingNode::clearMapWithInitializer, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
   checkSafetyService_ = nh_.advertiseService("check_safety", &ElevationMappingNode::checkSafety, this);
-  if (recordableFps_ > 0) {
-    double duration = 1.0 / (recordableFps_ + 0.00001);
+  if (recordableFps > 0) {
+    double duration = 1.0 / (recordableFps + 0.00001);
     recordableTimer_= nh_.createTimer(ros::Duration(duration),
                                       &ElevationMappingNode::publishRecordableMap, this, false, true);
+  }
+
+  if (updateVarianceFps > 0) {
+    double duration = 1.0 / (updateVarianceFps + 0.00001);
+    updateVarianceTimer_ = nh_.createTimer(ros::Duration(duration),
+                                           &ElevationMappingNode::updateVariance, this, false, true);
   }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
@@ -293,6 +301,10 @@ void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
   msg.basic_layers = layers;
   recordablePub_.publish(msg);
   return;
+}
+
+void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
+  map_.update_variance();
 }
 
 bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,

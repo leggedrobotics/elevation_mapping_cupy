@@ -4,7 +4,7 @@ sensor_noise_factor: 0.05                       # point's noise is sensor_noise_
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.001                         # if point is outlier, add this value to the cell.
 drift_compensation_variance_inler: 0.1          # cells under this value is used for drift compensation.
-time_variance: 0.01                             # add this value when update_variance is called.
+time_variance: 0.1                              # add this value when update_variance is called.
 max_variance: 100.0                             # maximum variance for each cell.
 initial_variance: 100.0                         # initial variance for each cell.
 traversability_inlier: 0.9                      # cells with higher traversability are used for drift compensation.
@@ -18,6 +18,7 @@ orientation_lowpass_alpha: 0.1                  # lowpass filter alpha used for 
 min_valid_distance: 0.3                         # points with shorter distance will be filtered out.
 max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
 recordable_fps: 3.0                             # fps for publishing map (in slower rate to record).
+update_variance_fps: 5.0                        # fps for updating variance.
 
 max_ray_length: 4.0                             # maximum length for ray tracing.
 cleanup_step: 0.01                              # subtitute this value from validity layer at visibiltiy cleanup.
@@ -28,15 +29,14 @@ max_unsafe_n: 10                                # if the number of cells under s
 
 gather_mode: 'mean'                             # gather mode (currently only mean is possible).
 enable_edge_sharpen: true
-enable_visibility_cleanup: true
+enable_visibility_cleanup: false
 enable_drift_compensation: true
 enable_pointcloud_publishing: false
 
 weight_file: 'config/weights.dat'
 
-pointcloud_topics: ['/realsense_d435_front/depth/color/points',
-                    '/realsense_d435_rear/depth/color/points',
-                    '/velodyne/point_cloud']
+pointcloud_topics: ['/point_cloud_filter/rslidar/point_cloud']
+                    
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
 map_frame: 'odom'
