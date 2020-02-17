@@ -6,6 +6,7 @@
 #include <pcl/common/projection_matrix.h>
 #include <tf_conversions/tf_eigen.h>
 #include <ros/package.h>
+#include <grid_map_core/grid_map_core.hpp>
 
 namespace elevation_mapping_cupy{
 using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
@@ -158,15 +159,25 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
   RowMatrixXd variance(map_n_, map_n_);
   RowMatrixXd traversability(map_n_, map_n_);
   RowMatrixXd min_filtered(map_n_, map_n_);
+  RowMatrixXd normal_x(map_n_, map_n_);
+  RowMatrixXd normal_y(map_n_, map_n_);
+  RowMatrixXd normal_z(map_n_, map_n_);
   map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
                             static_cast<Eigen::Ref<RowMatrixXd>>(variance),
                             static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered));
+                            static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered),
+                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
+                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
+                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_z)
+                           );
   maps.clear();
   maps.push_back(elevation);
   maps.push_back(variance);
   maps.push_back(traversability);
   maps.push_back(min_filtered);
+  maps.push_back(normal_x);
+  maps.push_back(normal_y);
+  maps.push_back(normal_z);
   return;
 }
 
@@ -183,11 +194,14 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   // gridMap.add("elevation", maps[0].cast<float>());
   // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered"};
+  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered",
+                                         "normal_x", "normal_y", "normal_z"};
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }
   gridMap.setBasicLayers({"elevation", "traversability"});
+  addNormalColorLayer(gridMap);
+
   // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(map_n_, map_n_);
   // gridMap.add("horizontal_variance_x", zero.cast<float>());
   // gridMap.add("horizontal_variance_y", zero.cast<float>());
@@ -249,6 +263,30 @@ void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::Poin
     points(i, 0) = static_cast<double>(point.x);
     points(i, 1) = static_cast<double>(point.y);
     points(i, 2) = static_cast<double>(point.z);
+  }
+  return;
+}
+
+void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map)
+{
+  const auto& normalX = map["normal_x"];
+  const auto& normalY = map["normal_y"];
+  const auto& normalZ = map["normal_z"];
+
+  map.add("color");
+  auto& color = map["color"];
+
+  // X: -1 to +1 : Red: 0 to 255
+  // Y: -1 to +1 : Green: 0 to 255
+  // Z:  0 to  1 : Blue: 128 to 255
+
+  // For each cell in map.
+  for (size_t i = 0; i < color.size(); ++i) {
+    const Eigen::Vector3f colorVector((normalX(i) + 1.0) / 2.0,
+                                      (normalY(i) + 1.0) / 2.0,
+                                      (normalZ(i)));
+    Eigen::Vector3i intColorVector = (colorVector * 255.0).cast<int>();
+    grid_map::colorVectorToValue(intColorVector, color(i));
   }
   return;
 }

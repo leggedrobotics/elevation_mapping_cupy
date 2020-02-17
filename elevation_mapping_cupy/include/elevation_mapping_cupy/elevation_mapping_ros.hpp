@@ -9,6 +9,8 @@
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
 #include <tf/transform_listener.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
@@ -48,7 +50,10 @@ class ElevationMappingNode {
     bool clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
+    void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
+
+    visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
@@ -57,6 +62,7 @@ class ElevationMappingNode {
     ros::Publisher filteredMapPub_;
     ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
+    ros::Publisher normalPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
     ros::ServiceServer clearMapWithInitializerService_;

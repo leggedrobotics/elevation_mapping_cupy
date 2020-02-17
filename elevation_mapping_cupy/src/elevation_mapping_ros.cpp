@@ -49,6 +49,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
+  normalPub_ = nh_.advertise<visualization_msgs::MarkerArray>("normal", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -101,6 +102,9 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
 
   grid_map_msgs::GridMap filteredMsg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
+
+  publishNormalAsArrow(gridMap_);
+
   scopedLockForGridMap.unlock();
   filteredMsg.basic_layers = {"min_filtered"};
   filteredMapPub_.publish(filteredMsg);
@@ -349,6 +353,72 @@ bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request
   }
   response.success = true;
   return true;
+}
+
+void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) {
+  auto start = ros::Time::now();
+
+  auto& normalX = map["normal_x"];
+  auto& normalY = map["normal_y"];
+  auto& normalZ = map["normal_z"];
+  double scale = 0.1;
+  
+  visualization_msgs::MarkerArray markerArray;
+  // For each cell in map.
+  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
+    const int i = iterator.getLinearIndex();
+    // ROS_INFO_STREAM("i " << i );
+    if (!map.isValid(*iterator, "elevation")) {
+      // ROS_INFO("invalid");
+      continue;}
+    grid_map::Position3 p;
+    map.getPosition3("elevation", *iterator, p);
+    // ROS_INFO("got position3");
+    Eigen::Vector3d start = (Eigen::Vector3d)p;
+    Eigen::Vector3d normal(normalX(i), normalY(i), normalZ(i));
+    // ROS_INFO_STREAM("start " << start << "normal " << normal);
+    Eigen::Vector3d end = start + normal * scale;
+    if (normal.norm() < 0.1) {
+      // ROS_INFO("skip");
+      continue;}
+    markerArray.markers.push_back(vectorToArrowMarker(start, end, i));
+  }
+  normalPub_.publish(markerArray);
+  ROS_INFO_THROTTLE(1.0, "publish as normal in %f sec.", (ros::Time::now() - start).toSec());
+  return;
+}
+
+visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) {
+
+  // ROS_INFO_STREAM("start " << start << "end " << end);
+
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = mapFrameId_;
+  marker.header.stamp = ros::Time::now();
+  marker.ns = "normal";
+  marker.id = id;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.points.resize(2);
+  marker.points[0].x = start.x();
+  marker.points[0].y = start.y();
+  marker.points[0].z = start.z();
+  marker.points[1].x = end.x();
+  marker.points[1].y = end.y();
+  marker.points[1].z = end.z();
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.01;
+  marker.scale.y = 0.01;
+  marker.scale.z = 0.01;
+  marker.color.a = 1.0; // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+
+  return marker;
 }
 
 }

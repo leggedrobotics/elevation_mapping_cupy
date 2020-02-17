@@ -269,6 +269,17 @@ def dilation_filter_kernel(width, height, dilation_size):
                 const int relative_idx = idx + ${width} * dy + dx;
                 return layer * layer_n + relative_idx;
             }
+            __device__ bool is_inside(int idx) {
+                int idx_x = idx / ${width};
+                int idx_y = idx % ${width};
+                if (idx_x <= 0 || idx_x >= ${width} - 1) {
+                    return false;
+                }
+                if (idx_y <= 0 || idx_y >= ${height} - 1) {
+                    return false;
+                }
+                return true;
+            }
             ''').substitute(width=width, height=height),
             operation=\
             string.Template('''
@@ -280,10 +291,12 @@ def dilation_filter_kernel(width, height, dilation_size):
                 U near_value = 0;
                 for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
                     for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
-                        U valid = mask[get_relative_map_idx(i, dx, dy, 0)];
+                        int idx = get_relative_map_idx(i, dx, dy, 0);
+                        if (!is_inside(idx)) {continue;}
+                        U valid = mask[idx];
                         if(valid > 0.5 && dx + dy < distance) {
                             distance = dx + dy;
-                            near_value = map[get_relative_map_idx(i, dx, dy, 0)];
+                            near_value = map[idx];
                         }
                     }
                 }
@@ -352,6 +365,60 @@ def min_filter_kernel(width, height, dilation_size):
             ''').substitute(dilation_size=dilation_size),
             name='min_filter_kernel')
     return min_filter_kernel
+
+
+def normal_filter_kernel(width, height, resolution):
+    normal_filter_kernel = cp.ElementwiseKernel(
+            in_params='raw U map, raw U mask',
+            out_params='raw U newmap',
+            preamble=\
+            string.Template('''
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+
+            __device__ int get_relative_map_idx(int idx, int dx, int dy, int layer_n) {
+                const int layer = ${width} * ${height};
+                const int relative_idx = idx + ${width} * dy + dx;
+                return layer * layer_n + relative_idx;
+            }
+            __device__ bool is_inside(int idx) {
+                int idx_x = idx / ${width};
+                int idx_y = idx % ${width};
+                if (idx_x <= 0 || idx_x >= ${width} - 1) {
+                    return false;
+                }
+                if (idx_y <= 0 || idx_y >= ${height} - 1) {
+                    return false;
+                }
+                return true;
+            }
+            __device__ float resolution() {
+                return ${resolution};
+            }
+            ''').substitute(width=width, height=height, resolution=resolution),
+            operation=\
+            string.Template('''
+            U h = map[get_map_idx(i, 0)];
+            U valid = mask[get_map_idx(i, 0)];
+            if (valid > 0.5) {
+                int idx_x = get_relative_map_idx(i, 1, 0, 0);
+                int idx_y = get_relative_map_idx(i, 0, 1, 0);
+                if (!is_inside(idx_x) || !is_inside(idx_y)) { return; }
+                float dzdx = (map[idx_x] - h);
+                float dzdy = (map[idx_y] - h);
+                float nx = -dzdy / resolution();
+                float ny = -dzdx / resolution();
+                float nz = 1;
+                float norm = sqrt((nx * nx) + (ny * ny) + 1);
+                newmap[get_map_idx(i, 0)] = nx / norm;
+                newmap[get_map_idx(i, 1)] = ny / norm;
+                newmap[get_map_idx(i, 2)] = nz / norm;
+            }
+            ''').substitute(),
+            name='normal_filter_kernel')
+    return normal_filter_kernel
 
 
 def polygon_mask_kernel(width, height, resolution):

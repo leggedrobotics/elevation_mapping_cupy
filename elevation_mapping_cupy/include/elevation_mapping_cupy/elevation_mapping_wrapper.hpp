@@ -40,6 +40,7 @@ class ElevationMappingWrapper {
 
     void initializeWithPoints(std::vector<Eigen::Vector3d> &points, std::string method);
     void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
+    void addNormalColorLayer(grid_map::GridMap& map);
   private:
     void setParameters(ros::NodeHandle& nh);
     py::object map_;

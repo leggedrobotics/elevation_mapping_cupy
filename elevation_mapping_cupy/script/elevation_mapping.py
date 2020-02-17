@@ -9,6 +9,7 @@ from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
 from custom_kernels import min_filter_kernel
+from custom_kernels import normal_filter_kernel
 from custom_kernels import polygon_mask_kernel
 from map_initializer import MapInitializer
 
@@ -17,6 +18,7 @@ import cupyx.scipy as csp
 import cupyx.scipy.ndimage
 
 from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
+import time
 
 xp = cp
 sp = csp
@@ -66,6 +68,7 @@ class ElevationMap(object):
         # layers: elevation, variance, is_valid, traversability
         self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
         self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
+        self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
@@ -155,6 +158,7 @@ class ElevationMap(object):
         self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size_initialize)
         self.min_filter_kernel = min_filter_kernel(self.cell_n, self.cell_n, self.min_filter_size)
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
+        self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
@@ -187,6 +191,9 @@ class ElevationMap(object):
         traversability = self.traversability_filter(self.traversability_input)
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
+        # calculate normal vectors
+        self.update_normal(self.traversability_input)
+
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
@@ -216,6 +223,9 @@ class ElevationMap(object):
         # print('min_filtered ', min_filtered.shape, min_filtered.max())
         return min_filtered
 
+    def update_normal(self, dilated_map):
+        self.normal_map *= 0.0
+        self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
 
     def get_maps(self):
         elevation = xp.where(self.elevation_map[2] > 0.5,
@@ -224,20 +234,26 @@ class ElevationMap(object):
         traversability = xp.where(self.elevation_map[2] > 0.5,
                                   self.elevation_map[3].copy(), xp.nan)
         min_filtered = self.get_min_filtered()
+        normal = self.normal_map.copy()
         self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         elevation = elevation[1:-1, 1:-1]
         variance = variance[1:-1, 1:-1]
         traversability = self.traversability_data[1:-1, 1:-1]
         min_filtered = min_filtered[1:-1, 1:-1]
+        normal_x = normal[0, 1:-1, 1:-1]
+        normal_y = normal[1, 1:-1, 1:-1]
+        normal_z = normal[2, 1:-1, 1:-1]
 
-        maps = xp.stack([elevation, variance, traversability, min_filtered], axis=0)
+        maps = xp.stack([elevation, variance, traversability, min_filtered,
+                         normal_x, normal_y, normal_z], axis=0)
         # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         maps = xp.asnumpy(maps)
         return maps
 
-    def get_maps_ref(self, elevation_data, variance_data, traversability_data, min_filtered_data):
+    def get_maps_ref(self, elevation_data, variance_data, traversability_data,
+                     min_filtered_data, normal_x_data, normal_y_data, normal_z_data):
         maps = self.get_maps()
         # somehow elevation_data copy in non_blocking mode does not work.
         elevation_data[...] = xp.asnumpy(maps[0])
@@ -246,6 +262,9 @@ class ElevationMap(object):
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
         min_filtered_data[...] = xp.asnumpy(maps[3], stream=stream)
+        normal_x_data[...] = xp.asnumpy(maps[4], stream=stream)
+        normal_y_data[...] = xp.asnumpy(maps[5], stream=stream)
+        normal_z_data[...] = xp.asnumpy(maps[6], stream=stream)
 
     def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)
@@ -324,5 +343,6 @@ if __name__ == '__main__':
     param.load_weights('../config/weights.dat')
     elevation = ElevationMap(param)
     for i in range(200):
-        elevation.input(points, R, t)
+        elevation.input(points, R, t, 0, 0)
+        elevation.update_normal(elevation.elevation_map[0])
         print(i)
