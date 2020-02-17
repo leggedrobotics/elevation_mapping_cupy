@@ -37,8 +37,17 @@ enable_pointcloud_publishing: false
 
 weight_file: 'config/weights.dat'
 
-pointcloud_topics: ['/realsense_d435_front/depth/color/points',
+# pointcloud_topics: ['/realsense_d435_front/depth/color/points',
+pointcloud_topics: [
+                    # '/point_cloud_filter/realsense_d435_front/point_cloud_filtered',
+                    # '/point_cloud_filter/realsense_d435_rear/point_cloud_filtered',
+                    '/point_cloud_filter/realsense_d435_left/point_cloud_filtered',
+                    '/point_cloud_filter/realsense_d435_right/point_cloud_filtered',
+                    '/realsense_d435_front/depth/color/points',
                     '/realsense_d435_rear/depth/color/points',
+                    # '/realsense_d435_left/depth/color/points',
+                    # '/realsense_d435_right/depth/color/points',
+                    # '/point_cloud_filter/quadruple_realsense/point_cloud_filtered',
                     '/velodyne/point_cloud']
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
