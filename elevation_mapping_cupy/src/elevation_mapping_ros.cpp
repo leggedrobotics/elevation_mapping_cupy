@@ -40,6 +40,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("recordable_fps", recordableFps_, 3.0);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
+  nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
@@ -92,7 +93,9 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
              positionError_,
              orientationError_);
   
-  publishMapToOdom(map_.get_additive_mean_error());
+  if (enableDriftCorrectedTFPublishing_) {
+    publishMapToOdom(map_.get_additive_mean_error());
+  }
 
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   map_.get_grid_map(gridMap_);

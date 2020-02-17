@@ -87,6 +87,7 @@ class ElevationMappingNode {
     double orientationAlpha_;
     double recordableFps_;
     bool enablePointCloudPublishing_;
+    bool enableDriftCorrectedTFPublishing_;
     double initializeTfGridSize_;
 };
 
