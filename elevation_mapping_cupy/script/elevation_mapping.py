@@ -67,6 +67,10 @@ class ElevationMap(object):
         self.elevation_map[1] += self.initial_variance
         self.elevation_map[3] += 1.0
 
+        # Initial mean_error
+        self.mean_error = 0.0
+        self.additive_mean_error = 0.0
+
         self.compile_kernels()
 
         self.traversability_filter = TraversabilityFilter(param.w1,
@@ -161,8 +165,9 @@ class ElevationMap(object):
                 and error_cnt > self.min_height_drift_cnt
                 and (position_noise > self.position_noise_thresh
                      or orientation_noise > self.orientation_noise_thresh)):
-            mean_error = error / error_cnt
-            self.elevation_map[0] += mean_error
+            self.mean_error = error / error_cnt
+            self.additive_mean_error += self.mean_error
+            self.elevation_map[0] += self.mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t,
                                self.elevation_map, self.new_map,
                                size=(points.shape[0]))
@@ -179,6 +184,9 @@ class ElevationMap(object):
         # calculate traversability
         traversability = self.traversability_filter(self.traversability_input)
         self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
+
+    def get_additive_mean_error(self, additive_error):
+        additive_error = self.additive_mean_error
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]

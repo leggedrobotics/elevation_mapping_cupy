@@ -9,6 +9,7 @@
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
 #include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
@@ -49,6 +50,8 @@ class ElevationMappingNode {
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
     void initializeWithTF();
+    void publishMapToOdom(double error);
+
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;

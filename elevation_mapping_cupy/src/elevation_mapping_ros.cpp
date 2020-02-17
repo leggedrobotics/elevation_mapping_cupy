@@ -90,6 +90,9 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
              transformationSensorToMap.translation(),
              positionError_,
              orientationError_);
+  
+  publishMapToOdom(map_.get_additive_mean_error());
+
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   map_.get_grid_map(gridMap_);
   gridMap_.setTimestamp(ros::Time::now().toNSec());
@@ -344,5 +347,17 @@ bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request
   response.success = true;
   return true;
 }
+
+void ElevationMappingNode::publishMapToOdom(double error)
+{
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(0.0, 0.0, error) );
+  tf::Quaternion q;
+  q.setRPY(0, 0, 0);
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", "map"));
+}
+
 
 }
