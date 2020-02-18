@@ -19,8 +19,9 @@ min_valid_distance: 0.3                         # points with shorter distance w
 max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
 recordable_fps: 3.0                             # fps for publishing map (in slower rate to record).
 
-max_ray_length: 4.0                             # maximum length for ray tracing.
-cleanup_step: 0.01                              # subtitute this value from validity layer at visibiltiy cleanup.
+max_ray_length: 10.0                            # maximum length for ray tracing.
+cleanup_step: 1.0                               # subtitute this value from validity layer at visibiltiy cleanup.
+cleanup_cos_thresh: 0.5                         # subtitute this value from validity layer at visibiltiy cleanup.
 
 safe_thresh: 0.7                                # if traversability is smaller, it is counted as unsafe cell.
 safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
@@ -31,7 +32,7 @@ min_filter_iteration: 4
 
 gather_mode: 'mean'                             # gather mode (currently only mean is possible).
 enable_edge_sharpen: true
-enable_visibility_cleanup: false
+enable_visibility_cleanup: true
 enable_drift_compensation: true
 enable_pointcloud_publishing: false
 enable_normal: true

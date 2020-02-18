@@ -32,7 +32,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
-  float time_variance, initial_variance, traversability_inlier, position_noise_thresh,
+  float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh,
         orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
   int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
@@ -86,6 +86,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<float>("cleanup_step", cleanup_step, 0.01);
   param_.attr("set_cleanup_step")(cleanup_step);
+
+  nh.param<float>("cleanup_cos_thresh", cleanup_cos_thresh, 0.5);
+  param_.attr("set_cleanup_cos_thresh")(cleanup_cos_thresh);
 
   nh.param<float>("min_valid_distance", min_valid_distance, 0.5);
   param_.attr("set_min_valid_distance")(min_valid_distance);

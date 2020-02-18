@@ -24,6 +24,7 @@ class Parameter(object):
 
         self.max_ray_length = 2.0
         self.cleanup_step = 0.01
+        self.cleanup_cos_thresh = 0.5
         self.min_valid_distance = 0.3
         self.max_height_range = 1.0
 
@@ -147,3 +148,6 @@ class Parameter(object):
 
     def set_min_filter_iteration(self, x):
         self.min_filter_iteration = x
+
+    def set_cleanup_cos_thresh(self, x):
+        self.cleanup_cos_thresh = x

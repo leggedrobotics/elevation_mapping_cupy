@@ -51,6 +51,7 @@ class ElevationMap(object):
         self.min_height_drift_cnt = param.min_height_drift_cnt
         self.max_ray_length = param.max_ray_length
         self.cleanup_step = param.cleanup_step
+        self.cleanup_cos_thresh = param.cleanup_cos_thresh
 
         self.enable_edge_sharpen = param.enable_edge_sharpen
         self.enable_visibility_cleanup = param.enable_visibility_cleanup
@@ -140,6 +141,7 @@ class ElevationMap(object):
                                                    self.cleanup_step,
                                                    self.min_valid_distance,
                                                    self.max_height_range,
+                                                   self.cleanup_cos_thresh,
                                                    self.enable_edge_sharpen,
                                                    self.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
@@ -174,7 +176,7 @@ class ElevationMap(object):
                      or orientation_noise > self.orientation_noise_thresh)):
             mean_error = error / error_cnt
             self.elevation_map[0] += mean_error
-        self.add_points_kernel(points, self.center[0], self.center[1], R, t,
+        self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
                                self.elevation_map, self.new_map,
                                size=(points.shape[0]))
         self.average_map_kernel(self.new_map, self.elevation_map,
