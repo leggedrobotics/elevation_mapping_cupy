@@ -34,6 +34,9 @@ enable_edge_sharpen: true
 enable_visibility_cleanup: false
 enable_drift_compensation: true
 enable_pointcloud_publishing: false
+enable_normal: true
+enable_normal_color: true
+enable_normal_arrow_publishing: false
 
 weight_file: 'config/weights.dat'
 

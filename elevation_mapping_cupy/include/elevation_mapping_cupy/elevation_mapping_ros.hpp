@@ -90,6 +90,7 @@ class ElevationMappingNode {
     double orientationAlpha_;
     double recordableFps_;
     bool enablePointCloudPublishing_;
+    bool enableNormalArrowPublishing_;
     double initializeTfGridSize_;
 };
 

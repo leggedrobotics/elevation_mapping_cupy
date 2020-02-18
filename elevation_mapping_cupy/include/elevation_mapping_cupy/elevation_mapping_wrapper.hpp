@@ -48,6 +48,8 @@ class ElevationMappingWrapper {
     double resolution_;
     double map_length_;
     int map_n_;
+    bool enable_normal_;
+    bool enable_normal_color_;
 };
 
 }

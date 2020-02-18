@@ -234,26 +234,32 @@ class ElevationMap(object):
         traversability = xp.where(self.elevation_map[2] > 0.5,
                                   self.elevation_map[3].copy(), xp.nan)
         min_filtered = self.get_min_filtered()
-        normal = self.normal_map.copy()
         self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         elevation = elevation[1:-1, 1:-1]
         variance = variance[1:-1, 1:-1]
         traversability = self.traversability_data[1:-1, 1:-1]
         min_filtered = min_filtered[1:-1, 1:-1]
-        normal_x = normal[0, 1:-1, 1:-1]
-        normal_y = normal[1, 1:-1, 1:-1]
-        normal_z = normal[2, 1:-1, 1:-1]
 
-        maps = xp.stack([elevation, variance, traversability, min_filtered,
-                         normal_x, normal_y, normal_z], axis=0)
+        maps = xp.stack([elevation, variance, traversability, min_filtered], axis=0)
         # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         maps = xp.asnumpy(maps)
         return maps
 
-    def get_maps_ref(self, elevation_data, variance_data, traversability_data,
-                     min_filtered_data, normal_x_data, normal_y_data, normal_z_data):
+    def get_normal_maps(self):
+        normal = self.normal_map.copy()
+        normal_x = normal[0, 1:-1, 1:-1]
+        normal_y = normal[1, 1:-1, 1:-1]
+        normal_z = normal[2, 1:-1, 1:-1]
+        maps = xp.stack([normal_x, normal_y, normal_z], axis=0)
+        maps = xp.flip(maps, 1)
+        maps = xp.flip(maps, 2)
+        maps = xp.asnumpy(maps)
+        return maps
+
+    def get_maps_ref(self, elevation_data, variance_data, traversability_data, min_filtered_data,
+                     normal_x_data, normal_y_data, normal_z_data, normal=False):
         maps = self.get_maps()
         # somehow elevation_data copy in non_blocking mode does not work.
         elevation_data[...] = xp.asnumpy(maps[0])
@@ -262,9 +268,18 @@ class ElevationMap(object):
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
         min_filtered_data[...] = xp.asnumpy(maps[3], stream=stream)
-        normal_x_data[...] = xp.asnumpy(maps[4], stream=stream)
-        normal_y_data[...] = xp.asnumpy(maps[5], stream=stream)
-        normal_z_data[...] = xp.asnumpy(maps[6], stream=stream)
+        if normal:
+            normal_maps = self.get_normal_maps()
+            normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=stream)
+            normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=stream)
+            normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=stream)
+
+    def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
+        maps = self.get_normal_maps()
+        stream = cp.cuda.Stream(non_blocking=True)
+        normal_x_data[...] = xp.asnumpy(maps[0], stream=stream)
+        normal_y_data[...] = xp.asnumpy(maps[1], stream=stream)
+        normal_z_data[...] = xp.asnumpy(maps[2], stream=stream)
 
     def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)
