@@ -13,11 +13,12 @@ from custom_kernels import normal_filter_kernel
 from custom_kernels import polygon_mask_kernel
 from map_initializer import MapInitializer
 
+from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
+
 import cupy as cp
 import cupyx.scipy as csp
 import cupyx.scipy.ndimage
 
-from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
 import time
 
 xp = cp
@@ -75,6 +76,10 @@ class ElevationMap(object):
         self.elevation_map[1] += self.initial_variance
         self.elevation_map[3] += 1.0
 
+        # Initial mean_error
+        self.mean_error = 0.0
+        self.additive_mean_error = 0.0
+
         self.compile_kernels()
 
         self.traversability_filter = TraversabilityFilter(param.w1,
@@ -91,6 +96,8 @@ class ElevationMap(object):
         self.elevation_map *= 0.0
         # Initial variance
         self.elevation_map[1] += self.initial_variance
+        self.mean_error = 0.0
+        self.additive_mean_error = 0.0
 
     def get_position(self, position):
         position[0][:] = xp.asnumpy(self.center)
@@ -174,8 +181,9 @@ class ElevationMap(object):
                 and error_cnt > self.min_height_drift_cnt
                 and (position_noise > self.position_noise_thresh
                      or orientation_noise > self.orientation_noise_thresh)):
-            mean_error = error / error_cnt
-            self.elevation_map[0] += mean_error
+            self.mean_error = error / error_cnt
+            self.additive_mean_error += self.mean_error
+            self.elevation_map[0] += self.mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
                                self.elevation_map, self.new_map,
                                size=(points.shape[0]))
@@ -196,9 +204,11 @@ class ElevationMap(object):
         # calculate normal vectors
         self.update_normal(self.traversability_input)
 
+    def get_additive_mean_error(self):
+        return self.additive_mean_error
+
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
-        self.elevation_map[1] = self.elevation_map[1].clip(0, self.max_variance)
 
     def input(self, raw_points, R, t, position_noise, orientation_noise):
         raw_points = xp.asarray(raw_points)

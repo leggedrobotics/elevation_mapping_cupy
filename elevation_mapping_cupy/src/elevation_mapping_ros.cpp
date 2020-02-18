@@ -34,6 +34,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
+  nh.param<std::string>("corrected_map_frame", correctedMapFrameId_, "corrected_map");
   nh.param<std::string>("initialize_method", initializeMethod_, "cubic");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
@@ -42,6 +43,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
+  nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
@@ -101,6 +103,11 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
              transformationSensorToMap.translation(),
              positionError_,
              orientationError_);
+  
+  if (enableDriftCorrectedTFPublishing_) {
+    publishMapToOdom(map_.get_additive_mean_error());
+  }
+
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   map_.get_grid_map(gridMap_);
   gridMap_.setTimestamp(ros::Time::now().toNSec());
@@ -124,7 +131,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
     publishAsPointCloud();
   }
 
-  ROS_INFO_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
+  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
 }
@@ -426,6 +433,17 @@ visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen
   marker.color.b = 0.0;
 
   return marker;
+}
+
+void ElevationMappingNode::publishMapToOdom(double error)
+{
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(0.0, 0.0, error) );
+  tf::Quaternion q;
+  q.setRPY(0, 0, 0);
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), mapFrameId_, correctedMapFrameId_));
 }
 
 }

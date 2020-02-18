@@ -11,6 +11,7 @@
 #include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <tf/transform_broadcaster.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
@@ -53,6 +54,7 @@ class ElevationMappingNode {
     void updateVariance(const ros::TimerEvent&);
     void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
+    void publishMapToOdom(double error);
 
     visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
     ros::NodeHandle nh_;
@@ -75,6 +77,7 @@ class ElevationMappingNode {
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
+    std::string correctedMapFrameId_;
     grid_map::GridMap gridMap_;
     std::vector<std::string> recordable_map_layers_;
     std::vector<std::string> initialize_frame_id_;
@@ -93,6 +96,7 @@ class ElevationMappingNode {
     double recordableFps_;
     bool enablePointCloudPublishing_;
     bool enableNormalArrowPublishing_;
+    bool enableDriftCorrectedTFPublishing_;
     double initializeTfGridSize_;
 };
 
