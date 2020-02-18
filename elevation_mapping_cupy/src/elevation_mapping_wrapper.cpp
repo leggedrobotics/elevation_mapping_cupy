@@ -32,7 +32,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
-  float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh,
+  float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh, max_variance,
         orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
   int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
@@ -62,6 +62,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<float>("outlier_variance", outlier_variance, 0.01);
   param_.attr("set_outlier_variance")(outlier_variance);
+
+  nh.param<float>("max_variance", max_variance, 10.0);
+  param_.attr("set_max_variance")(max_variance);
 
   nh.param<float>("drift_compensation_variance_inlier", drift_compensation_variance_inlier, 0.1);
   param_.attr("set_drift_compensation_variance_inlier")(drift_compensation_variance_inlier);
@@ -313,5 +316,9 @@ void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map)
   return;
 }
 
+void ElevationMappingWrapper::update_variance() {
+  map_.attr("update_variance")();
+  return;
+}
 
 }

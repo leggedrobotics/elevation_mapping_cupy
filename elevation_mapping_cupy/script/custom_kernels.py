@@ -163,7 +163,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
 
                     // If point is close, skip.
                     float16 d = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz));
-                    if (d < 0.5 ) {continue;}
+                    if (d < 0.1 ) {continue;}
 
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
                     if (nmap_h > nz + nmap_v * 2) {

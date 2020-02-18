@@ -50,6 +50,7 @@ class ElevationMappingNode {
     bool clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
+    void updateVariance(const ros::TimerEvent&);
     void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
 
@@ -70,6 +71,7 @@ class ElevationMappingNode {
     ros::ServiceServer setPublishPointService_;
     ros::ServiceServer checkSafetyService_;
     ros::Timer recordableTimer_;
+    ros::Timer updateVarianceTimer_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
