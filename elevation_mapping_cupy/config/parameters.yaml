@@ -29,13 +29,15 @@ max_unsafe_n: 10                                # if the number of cells under s
 
 gather_mode: 'mean'                             # gather mode (currently only mean is possible).
 enable_edge_sharpen: true
-enable_visibility_cleanup: false
+enable_visibility_cleanup: true
 enable_drift_compensation: true
 enable_pointcloud_publishing: false
 
 weight_file: 'config/weights.dat'
 
-pointcloud_topics: ['/point_cloud_filter/rslidar/point_cloud']
+pointcloud_topics: ['/realsense_d435_front/depth/color/points',
+                    '/realsense_d435_rear/depth/color/points',
+                    '/velodyne/point_cloud']
                     
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
