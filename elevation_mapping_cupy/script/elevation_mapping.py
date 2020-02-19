@@ -182,6 +182,7 @@ class ElevationMap(object):
 
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
+        self.elevation_map[1] = self.elevation_map[1].clip(0, self.max_variance)
 
     def input(self, raw_points, R, t, position_noise, orientation_noise):
         raw_points = xp.asarray(raw_points)
