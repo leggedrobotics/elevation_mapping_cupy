@@ -38,7 +38,7 @@ weight_file: 'config/weights.dat'
 pointcloud_topics: ['/realsense_d435_front/depth/color/points',
                     '/realsense_d435_rear/depth/color/points',
                     '/velodyne/point_cloud']
-                    
+
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
 map_frame: 'odom'
