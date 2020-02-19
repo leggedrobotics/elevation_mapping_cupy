@@ -269,6 +269,18 @@ def dilation_filter_kernel(width, height, dilation_size):
                 const int relative_idx = idx + ${width} * dy + dx;
                 return layer * layer_n + relative_idx;
             }
+
+            __device__ bool is_inside(int idx) {
+                int idx_x = idx / ${width};
+                int idx_y = idx % ${width};
+                if (idx_x <= 0 || idx_x >= ${width} - 1) {
+                    return false;
+                }
+                if (idx_y <= 0 || idx_y >= ${height} - 1) {
+                    return false;
+                }
+                return true;
+            }
             ''').substitute(width=width, height=height),
             operation=\
             string.Template('''
@@ -280,10 +292,12 @@ def dilation_filter_kernel(width, height, dilation_size):
                 U near_value = 0;
                 for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
                     for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
-                        U valid = mask[get_relative_map_idx(i, dx, dy, 0)];
+                        int idx = get_relative_map_idx(i, dx, dy, 0);
+                        if (!is_inside(idx)) {continue;}
+                        U valid = mask[idx];
                         if(valid > 0.5 && dx + dy < distance) {
                             distance = dx + dy;
-                            near_value = map[get_relative_map_idx(i, dx, dy, 0)];
+                            near_value = map[idx];
                         }
                     }
                 }
