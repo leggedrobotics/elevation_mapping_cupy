@@ -80,12 +80,14 @@ bool ConvexPlaneExtractionROS::readParameters()
 }
 
 void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
+  auto start_total = std::chrono::system_clock::now();
+
   // Convert message to map.
   ROS_INFO("Reading input map...");
   GridMap messageMap;
   GridMapRosConverter::fromMessage(message, messageMap);
   bool success;
-  GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(6, 6), success);
+  GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(4, 4), success);
   Position3 position;
   inputMap.getPosition3("elevation", Index(0,0), position);
   std::cout << inputMap.getPosition() << std::endl;
@@ -104,22 +106,47 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   jsk_recognition_msgs::PolygonArray ros_polygon_hole_contours;
   switch (plane_extractor_selector_) {
     case kRansacExtractor : {
+      auto start = std::chrono::system_clock::now();
       extractor.setRansacParameters(ransac_parameters_);
       extractor.runRansacPlaneExtractor();
+      auto end = std::chrono::system_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+      std::ofstream output_file;
+      output_file.open("/home/andrej/Desktop/computation_times_ransac_12.txt", std::ofstream::app);;
+      output_file << duration.count() << "\n";
+      output_file.close();
       extractor.augmentMapWithRansacPlanes();
       break;
     }
     case kSlidingWindowExtractor : {
       extractor.setSlidingWindowParameters(sliding_window_parameters_);
+      auto start = std::chrono::system_clock::now();
       extractor.runSlidingWindowPlaneExtractor();
-      extractor.augmentMapWithSlidingWindowPlanes();
+      auto intermediate = std::chrono::system_clock::now();
+      auto duration_intermediate = std::chrono::duration_cast<std::chrono::milliseconds>(intermediate - start);
+      std::ofstream intermediate_runtime_file;
+      intermediate_runtime_file.open("/home/andrej/Desktop/computation_times_SWE_plane_detect.txt", std::ofstream::app);
+      intermediate_runtime_file << duration_intermediate.count() << "\n";
+      intermediate_runtime_file.close();
+//      extractor.augmentMapWithSlidingWindowPlanes();
       extractor.generatePlanes();
+      auto end = std::chrono::system_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+      std::ofstream total_runtime_file;
+      total_runtime_file.open("/home/andrej/Desktop/computation_times_SWE_full_pipeline.txt", std::ofstream::app);
+      total_runtime_file << duration.count() << "\n";
+      total_runtime_file.close();
       extractor.visualizeConvexDecomposition(&ros_polygon_array);
       extractor.visualizePlaneContours(&ros_polygon_outer_contours, &ros_polygon_hole_contours);
       break;
       }
   }
-
+  auto end_total = std::chrono::system_clock::now();
+  auto duration_total = std::chrono::duration_cast<std::chrono::milliseconds>(end_total - start_total);
+  std::ofstream total_file;
+  total_file.open("/home/andrej/Desktop/computation_times_total.txt", std::ofstream::app);
+  total_file << duration_total.count() << "\n";
+  total_file.close();
   grid_map_msgs::GridMap outputMessage;
   GridMapRosConverter::toMessage(inputMap, outputMessage);
   grid_map_publisher_.publish(outputMessage);

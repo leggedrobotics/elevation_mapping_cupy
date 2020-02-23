@@ -84,13 +84,31 @@ namespace sliding_window_plane_extractor{
       data_points.col(0) = Eigen::Map<Eigen::VectorXd>(&row_position.front(), row_position.size()) * resolution_;
       data_points.col(1) = Eigen::Map<Eigen::VectorXd>(&col_position.front(), col_position.size()) * resolution_;
       data_points.col(2) = Eigen::Map<Eigen::VectorXd>(&height_instances.front(), height_instances.size());
-      Eigen::BDCSVD<Eigen::MatrixXd> svd = data_points.bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
-      if(svd.rank() < 3){
-        LOG(WARNING) << "Rank loss, cell will be ignored!";
-        continue;
+      const Eigen::Matrix3d covarianceMatrix(data_points.transpose() * data_points);
+      Vector3 eigenvalues = Vector3::Ones();
+      Eigen::Matrix3d eigenvectors = Eigen::Matrix3d::Identity();
+      const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver(covarianceMatrix);
+      eigenvalues = solver.eigenvalues().real();
+      eigenvectors = solver.eigenvectors().real();
+      //Eigen::BDCSVD<Eigen::MatrixXd> svd = data_points.bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
+//      if(svd.rank() < 3){
+//        LOG(WARNING) << "Rank loss, cell will be ignored!";
+//        continue;
+//      }
+//      Eigen::Matrix3d V = svd.matrixV();
+//      Eigen::Vector3d n = (V.col(0)).cross(V.col(1));
+      int smallestId(0);
+      double smallestValue(std::numeric_limits<double>::max());
+      for (int j = 0; j < eigenvectors.cols(); j++) {
+        if (eigenvalues(j) < smallestValue) {
+          smallestId = j;
+          smallestValue = eigenvalues(j);
+        }
       }
-      Eigen::Matrix3d V = svd.matrixV();
-      Eigen::Vector3d n = (V.col(0)).cross(V.col(1));
+      Vector3 eigenvector = eigenvectors.col(smallestId);
+      const Eigen::Vector3d normalVectorPositiveAxis_(0,0,1);
+      if (eigenvector.dot(normalVectorPositiveAxis_) < 0.0) eigenvector = -eigenvector;
+      Eigen::Vector3d n = eigenvector;
       Index index = *window_iterator;
       double mean_error = ((data_points * n).cwiseAbs()).sum() / height_instances.size();
       Eigen::Vector3d upwards(0,0,1);
@@ -117,7 +135,14 @@ namespace sliding_window_plane_extractor{
   }
 
   void SlidingWindowPlaneExtractor::generatePlanes(){
+    std::ofstream polygonizer_file;
+    polygonizer_file.open("/home/andrej/Desktop/polygonizer_time.txt", std::ofstream::app);
+    std::ofstream decomposer_file;
+    decomposer_file.open("/home/andrej/Desktop/decomposer_time.txt", std::ofstream::app);
+    std::chrono::milliseconds time_stamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch());
     for (int label_it = 1; label_it <= number_of_extracted_planes_; ++label_it) {
+      auto polygonizer_start = std::chrono::system_clock::now();
       convex_plane_extraction::Plane plane;
       std::vector<std::vector<cv::Point>> contours;
       std::vector<cv::Vec4i> hierarchy;
@@ -162,11 +187,18 @@ namespace sliding_window_plane_extractor{
       if(plane.hasOuterContour()) {
         //LOG(WARNING) << "Dropping plane, no outer contour detected!";
         computePlaneFrameFromLabeledImage(binary_image, &plane);
+        auto polygonizer_end = std::chrono::system_clock::now();
+        auto polygonizer_duration = std::chrono::duration_cast<std::chrono::microseconds>(polygonizer_end - polygonizer_start);
+        polygonizer_file << time_stamp.count() << ", " << polygonizer_duration.count() << "\n";
         if(plane.isValid()) {
           LOG(INFO) << "Starting resolving holes...";
           plane.resolveHoles();
           LOG(INFO) << "done.";
+          auto decomposer_start = std::chrono::system_clock::now();
           CHECK(plane.decomposePlaneInConvexPolygons());
+          auto decomposer_end = std::chrono::system_clock::now();
+          auto decomposer_duration = std::chrono::duration_cast<std::chrono::microseconds>(decomposer_end - decomposer_start);
+          decomposer_file << time_stamp.count() << ", " << decomposer_duration.count() << "\n";
           planes_.push_back(plane);
         } else {
           LOG(WARNING) << "Dropping plane, normal vector could not be inferred!";

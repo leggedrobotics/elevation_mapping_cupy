@@ -74,10 +74,14 @@ void RansacPlaneExtractor::ransacPlaneVisualization(){
       Point_3D& point = points_with_normal_.getPoint(*plane_points_it);
       Eigen::Array2i map_indices;
       map_.getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
-      ransac_map_(map_indices(0), map_indices(1)) = plane_label_iterator;
+      ransac_map_(map_indices(0), map_indices(1)) = 1;//plane_label_iterator;
     }
     ++plane_label_iterator;
   }
+  std::ofstream output_file;
+  output_file.open("/home/andrej/Desktop/number_of_planes_ransac_12.txt", std::ofstream::app);;
+  output_file << plane_label_iterator << "\n";
+  output_file.close();
   map_.add("ransac_planes", ransac_map_);
   std::cout << "Added ransac plane layer!" << std::endl;
 }
