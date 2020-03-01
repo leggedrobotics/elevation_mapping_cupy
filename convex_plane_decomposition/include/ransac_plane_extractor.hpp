@@ -19,65 +19,59 @@
 #include "CGAL/Shape_detection/Efficient_RANSAC.h"
 #include "Eigen/Core"
 #include "Eigen/Dense"
+#include <glog/logging.h>
 
 #include "grid_map_ros/grid_map_ros.hpp"
 
-#include "point_with_normal_container.hpp"
-
-
-
-
 namespace ransac_plane_extractor {
 
-    using namespace point_with_normal_container;
-    // Type declarations.
-    typedef CGAL::First_of_pair_property_map<PointWithNormal> PointMap;
-    typedef CGAL::Second_of_pair_property_map<PointWithNormal> NormalMap;
-    typedef CGAL::Shape_detection::Efficient_RANSAC_traits
-            <Kernel, PwnVector, PointMap, NormalMap> Traits;
-    typedef CGAL::Shape_detection::Efficient_RANSAC<Traits> EfficientRansac;
-    typedef CGAL::Shape_detection::Plane<Traits> Plane;
+  // Point with normal related type declarations.
+  using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+  using Point3D = Kernel::Point_3;
+  using Vector3D = Kernel::Vector_3;
+  using PointWithNormal = std::pair<Kernel::Point_3, Kernel::Vector_3>;
+  using PwnVector =  std::vector<PointWithNormal>;
 
+  // RANSAC plane extractor related type declarations.
+  using PointMap = CGAL::First_of_pair_property_map<PointWithNormal>;
+  using NormalMap = CGAL::Second_of_pair_property_map<PointWithNormal>;
+  using Traits = CGAL::Shape_detection::Efficient_RANSAC_traits
+          <Kernel, PwnVector, PointMap, NormalMap>;
+  using EfficientRansac = CGAL::Shape_detection::Efficient_RANSAC<Traits>;
+  using Plane = CGAL::Shape_detection::Plane<Traits>;
 
-    struct RansacParameters{
-      double probability;
-      double min_points;
-      double epsilon;
-      double cluster_epsilon;
-      double normal_threshold;
+    struct RansacPlaneExtractorParameters{
+      // Set probability to miss the largest primitive at each iteration.
+      double probability = 0.01;
+      // Detect shapes with at least 200 points.
+      double min_points = 200;
+      // Set maximum Euclidean distance between a point and a shape.
+      double epsilon = 0.004;
+      // Set maximum Euclidean distance between points to be clustered.
+      double cluster_epsilon = 0.0282842712475;
+      // Set maximum normal deviation. 0.98 < dot(surface_normal, point_normal);
+      double normal_threshold = 0.98;
     };
 
     class RansacPlaneExtractor {
     public:
 
-        /*!
-        * Constructor.
-        */
-        explicit RansacPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string &normals_layer_prefix,
-                             const std::string &layer_height);
+        RansacPlaneExtractor(std::vector<PointWithNormal>& points_with_normal, const RansacPlaneExtractorParameters& parameters);
 
-        /*!
-        * Destructor.
-        */
-        virtual ~RansacPlaneExtractor();
-
-        void setParameters(const RansacParameters& parameters);
+        void setParameters(const RansacPlaneExtractorParameters& parameters);
 
         void runDetection();
 
-        void ransacPlaneVisualization();
+      const auto& getDetectedPlanes() const{
+        return ransac_.shapes();
+      };
+
+//        void ransacPlaneVisualization();
 
     private:
 
-        grid_map::GridMap& map_;
-        double resolution_;
-
-        PointWithNormalContainer points_with_normal_;
-
         EfficientRansac ransac_;
         EfficientRansac::Parameters parameters_;
-
-        Eigen::MatrixXf ransac_map_;
 
     };
 

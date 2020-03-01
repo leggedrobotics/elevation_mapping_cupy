@@ -41,7 +41,7 @@ namespace convex_plane_extraction {
     grid_map::GridMap& getMap();
 
     // Ransac plane extractor related functions.
-    void setRansacParameters(const ransac_plane_extractor::RansacParameters& parameters);
+    void setRansacParameters(const ransac_plane_extractor::RansacPlaneExtractorParameters& parameters);
 
     void runRansacPlaneExtractor();
 

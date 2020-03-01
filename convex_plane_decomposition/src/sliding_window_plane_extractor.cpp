@@ -6,65 +6,46 @@ namespace sliding_window_plane_extractor{
   using namespace grid_map;
 
   SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
-      const std::string& layer_height, const std::string& normal_layer_prefix, SlidingWindowParameters& parameters)
+      const std::string& layer_height, const std::string& normal_layer_prefix,
+      const SlidingWindowPlaneExtractorParameters& parameters,
+      const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters)
       : map_(map),
         resolution_(resolution),
         elevation_layer_(layer_height),
         normal_layer_prefix_(normal_layer_prefix),
-        kernel_size_(parameters.kernel_size),
-        plane_error_threshold_(parameters.plane_error_threshold){
-    number_of_extracted_planes_ = 0;
+        parameters_(parameters),
+        ransac_parameters_(ransac_parameters){
+    number_of_extracted_planes_ = -1;
+    const grid_map::Size map_size = map.getSize();
+    binary_image_patch_ = cv::Mat(map_size(0), map_size(1), CV_8U, false);
+    binary_image_angle_ = cv::Mat(map_size(0), map_size(1), CV_8U, false);
     computeMapTransformation();
-  }
-
-  SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
-                         const std::string& normal_layer_prefix, const std::string& layer_height)
-      : map_(map),
-        resolution_(resolution),
-        elevation_layer_(layer_height),
-        normal_layer_prefix_(normal_layer_prefix){
-    kernel_size_ = 5;
-    plane_error_threshold_ = 0.004;
-    number_of_extracted_planes_ = 0;
-    computeMapTransformation();
-  }
-
-
-  SlidingWindowPlaneExtractor::~SlidingWindowPlaneExtractor() = default;
-
-  void SlidingWindowPlaneExtractor::computeMapTransformation(){
-    Eigen::Vector2i map_size = map_.getSize();
-    CHECK(map_.getPosition(Eigen::Vector2i::Zero(), map_offset_));
-    Eigen::Vector2d lower_left_cell_position;
-    CHECK(map_.getPosition(Eigen::Vector2i(map_size.x() - 1, 0), lower_left_cell_position));
-    Eigen::Vector2d upper_right_cell_position;
-    CHECK(map_.getPosition(Eigen::Vector2i(0, map_size.y() - 1), upper_right_cell_position));
-    transformation_xy_to_world_frame_.col(0) = (lower_left_cell_position - map_offset_).normalized();
-    transformation_xy_to_world_frame_.col(1) = (upper_right_cell_position - map_offset_).normalized();
   }
 
   void SlidingWindowPlaneExtractor::runDetection(){
-    std::cout << "Starting detection!" << std::endl;
-    Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> binary_map =
-        Eigen::Matrix<bool,Eigen::Dynamic, Eigen::Dynamic>::Zero(map_.getSize().x(), map_.getSize().y());
-    CHECK(map_.getSize().x() >= kernel_size_);
-    CHECK(map_.getSize().y() >= kernel_size_);
+    VLOG(1) << "Starting detection!";
+    const grid_map::Size map_size = map_.getSize();
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> normal_x(map_size(0), map_size(1));
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> normal_y(map_size(0), map_size(1));
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> normal_z(map_size(0), map_size(1));
+    CHECK(map_.getSize().x() >= parameters_.kernel_size);
+    CHECK(map_.getSize().y() >= parameters_.kernel_size);
     SlidingWindowIterator window_iterator(map_, elevation_layer_, SlidingWindowIterator::EdgeHandling::INSIDE,
-        kernel_size_);
+        parameters_.kernel_size);
     for (; !window_iterator.isPastEnd(); ++window_iterator) {
       Eigen::MatrixXf window_data = window_iterator.getData();
       int instance_iterator = 0;
       std::vector<double> height_instances;
       std::vector<double> row_position;
       std::vector<double> col_position;
-      for (int kernel_col = 0; kernel_col < kernel_size_; ++kernel_col) {
-        for (int kernel_row = 0; kernel_row < kernel_size_; ++kernel_row) {
+      for (int kernel_col = 0; kernel_col < parameters_.kernel_size; ++kernel_col) {
+        for (int kernel_row = 0; kernel_row < parameters_.kernel_size; ++kernel_row) {
           if (!isfinite(window_data(kernel_row, kernel_col))) {
             continue;
           }
           height_instances.push_back(window_data(kernel_row, kernel_col));
-          row_position.push_back(kernel_row - static_cast<int>(kernel_size_ / 2));
-          col_position.push_back(kernel_col - static_cast<int>(kernel_size_ / 2));
+          row_position.push_back(kernel_row - static_cast<int>(parameters_.kernel_size / 2));
+          col_position.push_back(kernel_col - static_cast<int>(parameters_.kernel_size / 2));
         }
       }
       constexpr int kMinNumberOfDataPoints = 9;
@@ -90,13 +71,6 @@ namespace sliding_window_plane_extractor{
       const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver(covarianceMatrix);
       eigenvalues = solver.eigenvalues().real();
       eigenvectors = solver.eigenvectors().real();
-      //Eigen::BDCSVD<Eigen::MatrixXd> svd = data_points.bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV);
-//      if(svd.rank() < 3){
-//        LOG(WARNING) << "Rank loss, cell will be ignored!";
-//        continue;
-//      }
-//      Eigen::Matrix3d V = svd.matrixV();
-//      Eigen::Vector3d n = (V.col(0)).cross(V.col(1));
       int smallestId(0);
       double smallestValue(std::numeric_limits<double>::max());
       for (int j = 0; j < eigenvectors.cols(); j++) {
@@ -108,23 +82,74 @@ namespace sliding_window_plane_extractor{
       Vector3 eigenvector = eigenvectors.col(smallestId);
       const Eigen::Vector3d normalVectorPositiveAxis_(0,0,1);
       if (eigenvector.dot(normalVectorPositiveAxis_) < 0.0) eigenvector = -eigenvector;
-      Eigen::Vector3d n = eigenvector;
+      Eigen::Vector3d n = eigenvector.normalized();
       Index index = *window_iterator;
       double mean_error = ((data_points * n).cwiseAbs()).sum() / height_instances.size();
       Eigen::Vector3d upwards(0,0,1);
       constexpr double kInclinationThreshold = 0.35;
-      if (mean_error < plane_error_threshold_ && abs(n.transpose()*upwards) > kInclinationThreshold) {
-        binary_map((*window_iterator).x(), (*window_iterator).y()) = true;
+      if (mean_error < parameters_.plane_patch_error_threshold && abs(n.transpose()*upwards) > kInclinationThreshold) {
+        binary_image_patch_.at<bool>((*window_iterator).x(), (*window_iterator).y()) = true;
+        normal_x(index.x(), index.y()) = n.x();
+        normal_y(index.x(), index.y()) = n.y();
+        normal_z(index.x(), index.y()) = n.z();
       }
     }
-    cv::Mat binary_image(binary_map.rows(), binary_map.cols(), CV_8U, binary_map.data());
-    cv::eigen2cv(binary_map, binary_image);
-    number_of_extracted_planes_ = cv::connectedComponents(binary_image, labeled_image_, 8, CV_32SC1);
+    map_.add("normals_x", normal_x);
+    map_.add("normals_y", normal_y);
+    map_.add("normals_z", normal_z);
   }
 
-  void SlidingWindowPlaneExtractor::setParameters(const SlidingWindowParameters& parameters){
-    kernel_size_ = parameters.kernel_size;
-    plane_error_threshold_ = parameters.plane_error_threshold;
+  void SlidingWindowPlaneExtractor::runSurfaceNormalCurvatureDetection(){
+    VLOG(1) << "Starting surface normal edge detection!";
+    CHECK(map_.exists("normals_x"));
+    CHECK(map_.exists("normals_y"));
+    CHECK(map_.exists("normals_z"));
+    const int surface_normal_map_boundary_offset = parameters_.kernel_size / 2;
+    CHECK_GT(surface_normal_map_boundary_offset, 0);
+    const grid_map::Size map_rows_cols = map_.getSize();
+    for( int cols = surface_normal_map_boundary_offset; cols < map_rows_cols(1) - surface_normal_map_boundary_offset - 1; ++cols){
+      for (int rows = surface_normal_map_boundary_offset; rows < map_rows_cols(0) - surface_normal_map_boundary_offset - 1; ++rows){
+        const Eigen::Vector2f normal_vector_center(map_.at("normals_x", Index(rows, cols)), map_.at("normals_y", Index(rows, cols)),
+            map_.at("normals_z", Index(rows, cols)));
+        const Eigen::Vector2f normal_vector_next_row(map_.at("normals_x", Index(rows+1, cols)), map_.at("normals_y", Index(rows+1, cols)),
+            map_.at("normals_z", Index(rows+1, cols)));
+        const Eigen::Vector2f normal_vector_next_col(map_.at("normals_x", Index(rows, cols+1)), map_.at("normals_y", Index(rows, cols+1)),
+            map_.at("normals_z", Index(rows, cols+1)));
+        const float angle_in_col_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_col));
+        const float angle_in_row_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_row));
+        const double gradient_magnitude_normalized = sqrt((angle_in_col_direction_radians*angle_in_col_direction_radians) +
+            (angle_in_row_direction_radians * angle_in_row_direction_radians)) / (sqrt(2.0)*M_PI);
+        binary_image_angle_.at<bool>(rows, cols) = gradient_magnitude_normalized <= parameters_.surface_normal_angle_threshold;
+      }
+    }
+  }
+
+  // Label cells according to which cell they belong to using connected component labeling.
+  void SlidingWindowPlaneExtractor::runSegmentation() {
+    CHECK_EQ(binary_image_patch_.type(), CV_8U);
+    const grid_map::Size map_size = map_.getSize();
+    CHECK_EQ(binary_image_patch_.rows, map_size(0));
+    CHECK_EQ(binary_image_patch_.cols, map_size(1));
+    if (parameters_.include_curvature_detection){
+      CHECK_EQ(binary_image_patch_.type(), binary_image_angle_.type());
+      CHECK_EQ(binary_image_patch_.size, binary_image_angle_.size);
+      number_of_extracted_planes_ = cv::connectedComponents(binary_image_patch_ & binary_image_angle_, labeled_image_, 8, CV_32SC1);
+    } else {
+      number_of_extracted_planes_ = cv::connectedComponents(binary_image_patch_, labeled_image_, 8, CV_32SC1);
+    }
+  }
+
+  // Refine connected component using RANSAC. Input vector is modified by function!
+  const auto&  SlidingWindowPlaneExtractor::runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const {
+    CHECK(!points_with_normal.empty());
+    ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor(points_with_normal, ransac_parameters_);
+    ransac_plane_extractor.runDetection();
+    return ransac_plane_extractor.getDetectedPlanes();
+  }
+
+  void SlidingWindowPlaneExtractor::setParameters(const SlidingWindowPlaneExtractorParameters& parameters){
+    parameters_.kernel_size = parameters.kernel_size;
+    parameters_.plane_patch_error_threshold = parameters.plane_patch_error_threshold;
   }
 
   void SlidingWindowPlaneExtractor::slidingWindowPlaneVisualization(){
@@ -134,13 +159,18 @@ namespace sliding_window_plane_extractor{
     std::cout << "Added ransac plane layer!" << std::endl;
   }
 
+  void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage(){
+    if (number_of_extracted_planes_ < 1){
+      LOG(WARNING) << "No planes detected by Sliding Window Plane Extractor!";
+      return;
+    }
+    const int number_of_extracted_planes_without_refinement = number_of_extracted_planes_;
+    for (int label = 1; label <= number_of_extracted_planes_without_refinement; ++label) {
+      computePlaneParametersForLabel(label);
+    }
+  }
+
   void SlidingWindowPlaneExtractor::generatePlanes(){
-    std::ofstream polygonizer_file;
-    polygonizer_file.open("/home/andrej/Desktop/polygonizer_time.txt", std::ofstream::app);
-    std::ofstream decomposer_file;
-    decomposer_file.open("/home/andrej/Desktop/decomposer_time.txt", std::ofstream::app);
-    std::chrono::milliseconds time_stamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch());
     for (int label_it = 1; label_it <= number_of_extracted_planes_; ++label_it) {
       auto polygonizer_start = std::chrono::system_clock::now();
       convex_plane_extraction::Plane plane;
@@ -207,11 +237,16 @@ namespace sliding_window_plane_extractor{
     }
   }
 
-  void SlidingWindowPlaneExtractor::computePlaneFrameFromLabeledImage(const cv::Mat& binary_image,
-      convex_plane_extraction::Plane* plane){
-    CHECK_NOTNULL(plane);
+  void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label){
+    CHECK(map_.exists(elevation_layer_));
+    CHECK(map_.exists("normals_x"));
+    CHECK(map_.exists("normals_y"));
+    CHECK(map_.exists("normals_z"));
     Eigen::Vector3d normal_vector = Eigen::Vector3d::Zero();
     Eigen::Vector3d support_vector = Eigen::Vector3d::Zero();
+    std::vector<ransac_plane_extractor::PointWithNormal> points_with_normal;
+    cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
+    binary_image = labeled_image_ == label;
     int number_of_normal_instances = 0;
     int number_of_position_instances = 0;
     for (int row = 0; row < binary_image.rows; ++row){
@@ -229,15 +264,77 @@ namespace sliding_window_plane_extractor{
             support_vector += support_vector_temp;
             ++number_of_position_instances;
           }
+          ransac_plane_extractor::PointWithNormal point_with_normal = std::make_pair<ransac_plane_extractor::Point3D,
+          ransac_plane_extractor::Vector3D>(ransac_plane_extractor::Point3D(support_vector_temp.x(), support_vector_temp.y(), support_vector_temp.z()),
+              ransac_plane_extractor::Vector3D(normal_vector_temp.x(), normal_vector_temp.y(), normal_vector_temp.z()));
+          points_with_normal.push_back(point_with_normal);
         }
       }
     }
     if (number_of_normal_instances == 0 || number_of_position_instances == 0){
+      LOG(WARNING) << "Label empty, NO plane parameters are created!";
       return;
     }
     normal_vector = normal_vector / static_cast<double>(number_of_normal_instances);
     support_vector = support_vector / static_cast<double>(number_of_position_instances);
-    CHECK(plane->setNormalAndSupportVector(normal_vector, support_vector));
+    bool refinement_performed = false;
+    if (parameters_.include_ransac_refinement) {
+      // Compute error to fitted plane.
+      if (computeAverageErrorToPlane(normal_vector, support_vector, points_with_normal)
+          > parameters_.global_plane_fit_error_threshold){
+        const auto& planes = runRansacRefinement(points_with_normal);
+        CHECK(!planes.empty()) << "No planes detected by RANSAC in as planar classified region.";
+        int label_counter = 0;
+        for (const auto& plane : planes){
+          const std::vector<std::size_t>& plane_point_indices = (*plane.get()).indices_of_assigned_points();
+          CHECK(!plane_point_indices.empty());
+          Eigen::Vector3d support_vector;
+          Eigen::Vector3d normal_vector;
+          for (const auto index : plane_point_indices) {
+            const auto &point = points_with_normal.at(index).first;
+            const auto &normal = points_with_normal.at(index).second;
+            support_vector += Eigen::Vector3d(point.x(), point.y(), point.z());
+            normal_vector += Eigen::Vector3d(normal.x(), normal.y(), normal.z());
+            Eigen::Array2i map_indices;
+            map_.getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
+            if (label_counter == 0){
+              labeled_image_.at<int>(map_indices(0), map_indices(1)) = label;
+            } else {
+              labeled_image_.at<int>(map_indices(0), map_indices(1)) = number_of_extracted_planes_ + label_counter;
+            }
+          }
+          support_vector /= static_cast<double>(plane_point_indices.size());
+          normal_vector /= static_cast<double>(plane_point_indices.size());
+          const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
+          if (label_counter == 0) {
+            plane_parameters_.emplace(label, temp_plane_parameters);
+          } else {
+            plane_parameters_.emplace(number_of_extracted_planes_ + label_counter, temp_plane_parameters);
+          }
+          ++label_counter;
+        }
+        CHECK_EQ(label_counter + 1, planes.size());
+        number_of_extracted_planes_ += label_counter;
+        refinement_performed = true;
+      }
+    }
+    if (refinement_performed){
+      const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
+      plane_parameters_.emplace(label, temp_plane_parameters);
+    }
+  }
+
+  double SlidingWindowPlaneExtractor::computeAverageErrorToPlane(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector,
+      const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const {
+    CHECK(!points_with_normal.empty());
+    double average_error = 0.0;
+    for (const auto& point_with_normal : points_with_normal){
+      Eigen::Vector3d p_S_P(point_with_normal.first.x() - support_vector.x(), point_with_normal.first.y() - support_vector.y(),
+          point_with_normal.first.z() - support_vector.z());
+      average_error += abs(normal_vector.dot(p_S_P));
+    }
+    average_error /= static_cast<double>(points_with_normal.size());
+    return average_error;
   }
 
   void SlidingWindowPlaneExtractor::visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array){

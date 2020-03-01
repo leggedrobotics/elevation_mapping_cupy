@@ -33,8 +33,8 @@ namespace convex_plane_extraction{
   typedef Traits::Vector_2                                      CgalVector2d;
   typedef Traits::Polygon_2                                     CgalPolygon2d;
   typedef Traits::Segment_2                                     CgalSegment2d;
-  typedef std::list<CgalPolygon2d>                              CgalPolygon2dListContainer;
-  typedef CgalPolygon2dListContainer::const_iterator            CgalPolygon2dListConstIterator;
+  typedef std::vector<CgalPolygon2d>                            CgalPolygon2dContainer;
+  typedef CgalPolygon2dContainer::const_iterator                CgalPolygon2dConstIterator;
   typedef CGAL::Polygon_set_2<K, std::vector<CgalPoint2d>>      CgalPolygon2dSetContainer;
   typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
   typedef CgalPolygon2d::Vertex_iterator                        CgalPolygon2dVertexIterator;
@@ -42,6 +42,11 @@ namespace convex_plane_extraction{
   typedef std::vector<Eigen::Vector3d>                          Polygon3d;
   typedef std::vector<Polygon3d>                                Polygon3dVectorContainer;
   typedef K::Intersect_2                                        Intersect_2;
+
+  struct PolygonWithHoles{
+    CgalPolygon2d outer_contour;
+    CgalPolygon2dContainer holes;
+  };
 
 
   template <typename Iter>
@@ -76,7 +81,7 @@ namespace convex_plane_extraction{
                                                   typename std::iterator_traits<Iter>::iterator_category());
   };
 
-  void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dListContainer* output_polyong_list);
+  void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dContainer* output_polyong_list);
 
   bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment, bool print_flag);
 

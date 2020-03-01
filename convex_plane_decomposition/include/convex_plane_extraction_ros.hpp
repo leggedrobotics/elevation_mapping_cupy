@@ -71,7 +71,7 @@ class ConvexPlaneExtractionROS
   ros::Publisher hole_contours_publsiher_;
 
   //! Ransac plane extractor parameters.
-  ransac_plane_extractor::RansacParameters ransac_parameters_;
+  ransac_plane_extractor::RansacPlaneExtractorParameters ransac_parameters_;
 
   PlaneExtractorType plane_extractor_selector_;
 

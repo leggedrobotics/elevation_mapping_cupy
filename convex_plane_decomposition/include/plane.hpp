@@ -8,13 +8,23 @@
 
 namespace convex_plane_extraction {
 
+  struct PlaneParameters{
+
+    PlaneParameters(Eigen::Vector3d normal_vector, Eigen::Vector3d support_vector)
+    : support_vector(support_vector),
+      normal_vector(normal_vector){};
+
+    Eigen::Vector3d support_vector;
+    Eigen::Vector3d normal_vector;
+  };
+
   class Plane {
 
    public:
 
     Plane();
 
-    Plane(CgalPolygon2d& outer_polygon, CgalPolygon2dListContainer& hole_polygon_list);
+    Plane(CgalPolygon2d& outer_polygon, CgalPolygon2dContainer& holes);
 
     virtual ~Plane();
 
@@ -32,9 +42,9 @@ namespace convex_plane_extraction {
 
     CgalPolygon2dVertexConstIterator outerPolygonVertexEnd() const;
 
-    CgalPolygon2dListConstIterator holePolygonBegin() const;
+    CgalPolygon2dContainerConstIterator holePolygonBegin() const;
 
-    CgalPolygon2dListConstIterator holePolygonEnd() const;
+    CgalPolygon2dContainerConstIterator holePolygonEnd() const;
 
     bool isValid() const;
 
@@ -50,7 +60,7 @@ namespace convex_plane_extraction {
 
     void resolveHoles();
 
-    const CgalPolygon2dListContainer& getConvexPolygons() const;
+    const CgalPolygon2dContainer& getConvexPolygons() const;
 
    private:
 
@@ -61,8 +71,8 @@ namespace convex_plane_extraction {
     bool initialized_;
 
     CgalPolygon2d outer_polygon_;
-    CgalPolygon2dListContainer hole_polygon_list_;
-    CgalPolygon2dListContainer convex_polygon_list_;
+    CgalPolygon2dContainer hole_polygon_list_;
+    CgalPolygon2dContainer convex_polygon_list_;
 
     Vector3d normal_vector_;
     Vector3d support_vector_;

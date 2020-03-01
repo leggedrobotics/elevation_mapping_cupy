@@ -2,7 +2,7 @@
 
 namespace convex_plane_extraction {
 
-  void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dListContainer* output_polygon_list){
+  void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dContainer* output_polygon_list){
     CHECK_GE(polygon.size(), 3);
     CHECK(polygon.is_simple());
     LOG(INFO) << "Started convex decomposition...";
@@ -454,6 +454,18 @@ namespace convex_plane_extraction {
     std::cout << "Polygon has " << polygon.size() << " vertices." << std::endl;
     for (const CgalPoint2d& vertex : polygon){
       std::cout << vertex.x() << " , " << vertex.y() << " ; " << std::endl;
+    }
+  }
+
+  void slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::multimap<double, std::pair<int, int>>* concavity_positions){
+    CHECK_NOTNULL(concavity_positions);
+    for (auto vertex_it = hole.vertices_begin(); vertex_it != hole.vertices_end(); ++vertex_it){
+      std::multimap<double, int> outer_polygon_vertices;
+      getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, *vertex_it, &outer_polygon_vertices);
+      for (const auto& outer_distance_vertex_pair : outer_polygon_vertices) {
+        concavity_positions->insert(std::pair<double, std::pair<int, int>>(outer_distance_vertex_pair.first,
+                                                                           std::pair<int, int>(std::distance(hole.vertices_begin(), vertex_it),outer_distance_vertex_pair.second)));
+      }
     }
   }
 

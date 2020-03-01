@@ -5,9 +5,9 @@ namespace convex_plane_extraction{
   Plane::Plane()
     : initialized_(false){}
 
-  Plane::Plane(CgalPolygon2d& outer_polygon, CgalPolygon2dListContainer& hole_polygon_list)
+  Plane::Plane(CgalPolygon2d& outer_polygon, CgalPolygon2dContainer& holes)
     : outer_polygon_(outer_polygon),
-      hole_polygon_list_(hole_polygon_list),
+      hole_polygon_list_(holes),
       initialized_(false){};
 
   Plane::~Plane() = default;
@@ -160,12 +160,12 @@ namespace convex_plane_extraction{
     return outer_polygon_.vertices_end();
   }
 
-  CgalPolygon2dListConstIterator Plane::holePolygonBegin() const{
+  CgalPolygon2dConstIterator Plane::holePolygonBegin() const{
     CHECK(isValid());
     return hole_polygon_list_.begin();
   }
 
-  CgalPolygon2dListConstIterator Plane::holePolygonEnd() const{
+  CgalPolygon2dConstIterator Plane::holePolygonEnd() const{
     CHECK(isValid());
     return hole_polygon_list_.end();
   }
@@ -412,19 +412,7 @@ namespace convex_plane_extraction{
     }
   }
 
-  void Plane::slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::multimap<double, std::pair<int, int>>* concavity_positions){
-    CHECK_NOTNULL(concavity_positions);
-    for (auto vertex_it = hole.vertices_begin(); vertex_it != hole.vertices_end(); ++vertex_it){
-      std::multimap<double, int> outer_polygon_vertices;
-      getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, *vertex_it, &outer_polygon_vertices);
-      for (const auto& outer_distance_vertex_pair : outer_polygon_vertices) {
-        concavity_positions->insert(std::pair<double, std::pair<int, int>>(outer_distance_vertex_pair.first,
-            std::pair<int, int>(std::distance(hole.vertices_begin(), vertex_it),outer_distance_vertex_pair.second)));
-      }
-    }
-  }
-
-  const CgalPolygon2dListContainer& Plane::getConvexPolygons() const {
+  const CgalPolygon2dContainer& Plane::getConvexPolygons() const {
     return convex_polygon_list_;
   }
 

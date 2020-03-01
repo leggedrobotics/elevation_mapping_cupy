@@ -25,7 +25,7 @@ using namespace grid_map;
     return map_;
   }
 
-  void PlaneExtractor::setRansacParameters(const ransac_plane_extractor::RansacParameters& parameters){
+  void PlaneExtractor::setRansacParameters(const ransac_plane_extractor::RansacPlaneExtractorParameters& parameters){
     ransac_plane_extractor_.setParameters(parameters);
     ROS_INFO("RANSAC parameters set!");
   }

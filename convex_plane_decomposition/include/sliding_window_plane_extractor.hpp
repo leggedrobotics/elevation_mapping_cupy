@@ -16,28 +16,33 @@
 
 #include "plane.hpp"
 #include "polygon.hpp"
+#include "ransac_plane_extractor.hpp"
 #include "ros_visualizations.hpp"
 
 
 namespace sliding_window_plane_extractor {
-  struct SlidingWindowParameters{
-    int kernel_size;
-    double plane_error_threshold;
+
+  struct SlidingWindowPlaneExtractorParameters{
+    int kernel_size = 3;
+    double plane_patch_error_threshold = 0.004;
+    double surface_normal_angle_threshold;
+    bool include_curvature_detection;
+    bool include_ransac_refinement;
+    double global_plane_fit_error_threshold = 0.01;
   };
+
   class SlidingWindowPlaneExtractor{
    public:
 
     SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height,
-        const std::string& normal_layer_prefix, SlidingWindowParameters& parameters);
+        const std::string& normal_layer_prefix, const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters(),
+        const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters = ransac_plane_extractor::RansacPlaneExtractorParameters());
 
-    SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& normal_layer_prefix,
-        const std::string& layer_height);
-
-    virtual ~SlidingWindowPlaneExtractor();
-
-    void setParameters(const SlidingWindowParameters& parameters);
+    void setParameters(const SlidingWindowPlaneExtractorParameters& parameters);
 
     void runDetection();
+
+    void runSurfaceNormalCurvatureDetection();
 
     void slidingWindowPlaneVisualization();
 
@@ -46,6 +51,16 @@ namespace sliding_window_plane_extractor {
     void computeMapTransformation();
 
     void computePlaneFrameFromLabeledImage(const cv::Mat& binary_image, convex_plane_extraction::Plane* plane);
+
+    void extractPlaneParametersFromLabeledImage();
+
+    void computePlaneParametersForLabel(int label);
+
+    double computeAverageErrorToPlane(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector,
+                                      const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
+    const auto& runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
+
+    void runSegmentation()
 
     void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
 
@@ -60,15 +75,13 @@ namespace sliding_window_plane_extractor {
     std::string normal_layer_prefix_;
     double resolution_;
 
-    Eigen::Matrix2d transformation_xy_to_world_frame_;
-    Eigen::Vector2d map_offset_;
-
-    int kernel_size_;
-    double plane_error_threshold_;
+    SlidingWindowPlaneExtractorParameters parameters_;
+    ransac_plane_extractor::RansacPlaneExtractorParameters ransac_parameters_;
+    cv::Mat binary_image_patch_;
+    cv::Mat binary_image_angle_;
     cv::Mat labeled_image_;
     int number_of_extracted_planes_;
-
-    convex_plane_extraction::PlaneListContainer planes_;
+    std::map<int, convex_plane_extraction::PlaneParameters> plane_parameters_;
 
   };
 }
