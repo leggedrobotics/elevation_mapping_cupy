@@ -104,20 +104,24 @@ namespace convex_plane_extraction{
 
   void detectDentLocations(std::map<double, int>* dent_locations, const CgalPolygon2d& polygon);
 
+  void connectSecondPolygonToFirst(CgalPolygon2d& left_polygon, CgalPolygon2d& right_polygon);
+
+  std::pair<int, int> getIndicesOfClosestVertexPair(CgalPolygon2d& left_polygon, CgalPolygon2d& right_polygon);
+
   struct Intersection{
     void setEdgeSourceLocation(const int location){
-      this->edge_source_location_ = location;
+      edge_source_location_ = location;
     }
     void setEdgeTargetLocation(const int location){
-      this->edge_target_location_ = location;
+      edge_target_location_ = location;
     }
     void setIntersectionPoint(const CgalPoint2d& intersection_point){
-      this->intersection_point_ = intersection_point;
+      intersection_point_ = intersection_point;
     }
     void setAllMembers(const int source_location, const int target_location, const CgalPoint2d& intersection_point){
-      this->edge_source_location_ = source_location;
-      this->edge_target_location_ = target_location;
-      this->intersection_point_ = intersection_point;
+      edge_source_location_ = source_location;
+      edge_target_location_ = target_location;
+      intersection_point_ = intersection_point;
     }
 
     int edge_source_location_;
