@@ -25,50 +25,63 @@ namespace sliding_window_plane_extractor {
   struct SlidingWindowPlaneExtractorParameters{
     int kernel_size = 3;
     double plane_patch_error_threshold = 0.004;
-    double surface_normal_angle_threshold;
-    bool include_curvature_detection;
-    bool include_ransac_refinement;
+    double surface_normal_angle_threshold_degrees = 1.0;
+    bool include_curvature_detection = false;
+    bool include_ransac_refinement = false;
     double global_plane_fit_error_threshold = 0.01;
+
+    ransac_plane_extractor::RansacPlaneExtractorParameters ransac_parameters = ransac_plane_extractor::RansacPlaneExtractorParameters();
   };
 
   class SlidingWindowPlaneExtractor{
    public:
 
     SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height,
-        const std::string& normal_layer_prefix, const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters(),
-        const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters = ransac_plane_extractor::RansacPlaneExtractorParameters());
+        const std::string& normal_layer_prefix, const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters());
 
     void setParameters(const SlidingWindowPlaneExtractorParameters& parameters);
 
-    void runDetection();
+    void runExtraction();
 
-    void runSurfaceNormalCurvatureDetection();
+    const cv::Mat& getLabeledImage() const{
+      return labeled_image_;
+    }
 
-    void slidingWindowPlaneVisualization();
+    const auto& getLabelPlaneParameterMap() const{
+      return label_plane_parameters_map_;
+    }
 
-    void generatePlanes();
+    const int getNumberOfExtractedPlanes() const{
+      return number_of_extracted_planes_;
+    }
 
-    void computeMapTransformation();
+//    void slidingWindowPlaneVisualization();
 
-    void computePlaneFrameFromLabeledImage(const cv::Mat& binary_image, convex_plane_extraction::Plane* plane);
+//    void computePlaneFrameFromLabeledImage(const cv::Mat& binary_image, convex_plane_extraction::Plane* plane);
 
-    void extractPlaneParametersFromLabeledImage();
+//    void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
+//
+//    void visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const;
+//
+//    void exportConvexPolygons(const std::string& path) const;
 
-    void computePlaneParametersForLabel(int label);
+   private:
 
     double computeAverageErrorToPlane(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector,
                                       const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
+
+    void computePlaneParametersForLabel(int label);
+
+    void extractPlaneParametersFromLabeledImage();
+
     const auto& runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
 
-    void runSegmentation()
+    void runSegmentation();
 
-    void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
+    void runSlidingWindowDetector();
 
-    void visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const;
+    void runSurfaceNormalCurvatureDetection();
 
-    void exportConvexPolygons(const std::string& path) const;
-
-   private:
 
     grid_map::GridMap& map_;
     std::string elevation_layer_;
@@ -81,7 +94,7 @@ namespace sliding_window_plane_extractor {
     cv::Mat binary_image_angle_;
     cv::Mat labeled_image_;
     int number_of_extracted_planes_;
-    std::map<int, convex_plane_extraction::PlaneParameters> plane_parameters_;
+    std::map<int, convex_plane_extraction::PlaneParameters> label_plane_parameters_map_;
 
   };
 }

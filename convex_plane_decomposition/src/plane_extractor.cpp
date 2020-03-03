@@ -47,7 +47,7 @@ using namespace grid_map;
 
   void PlaneExtractor::runSlidingWindowPlaneExtractor(){
     ROS_INFO("Starting sliding window plane extraction...");
-    sliding_window_plane_extractor_.runDetection();
+    sliding_window_plane_extractor_.runSlidingWindowDetector();
     ROS_INFO("... done.");
   }
 

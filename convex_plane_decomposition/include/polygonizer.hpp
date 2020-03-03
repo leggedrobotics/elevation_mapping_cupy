@@ -3,6 +3,10 @@
 
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+#include <CGAL/Boolean_set_operations_2.h>
+#include <CGAL/connect_holes.h>
+#include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <glog/logging.h>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/imgproc.hpp>
@@ -18,17 +22,26 @@ struct PolygonizerParameters{
   bool activate_long_edge_upsampling = false;
   bool activate_contour_approximation = false;
   double hole_area_threshold_squared_meters = 2e-3;
+  double contour_approximation_deviation_threshold = 0.06;
 };
 
 class Polygonizer {
  public:
 
-  Polygonizer(const PolygonizerParameters parameters = PolygonizerParameters())
+  explicit Polygonizer(const PolygonizerParameters parameters = PolygonizerParameters())
   :parameters_(parameters){};
 
   PolygonWithHoles extractPolygonsFromBinaryImage(const cv::Mat& binary_image) const;
 
-  CgalPolygon2d resolveHoles(PolygonWithHoles& polygon_with_holes) const;
+  void removeAreasNotContainedInOuterContourFromHoles(const CgalPolygon2d& outer_polygon, std::vector<CgalPolygon2d>& holes) const;
+
+  CgalPolygon2d resolveHolesWithVerticalConnection(PolygonWithHoles& polygon_with_holes) const;
+
+  void approximatePolygon(CgalPolygon2d& polygon) const;
+
+  CgalPolygon2d runPolygonizationOnBinaryImage(const cv::Mat& binary_image) const;
+
+  bool addHoleToOuterContourAtVertexIndex(int segment_target_vertex_index, const CgalPolygon2d& hole, CgalPolygon2d& outer_contour) const;
 
  private:
 

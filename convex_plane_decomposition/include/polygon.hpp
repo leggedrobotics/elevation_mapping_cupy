@@ -31,7 +31,8 @@ namespace convex_plane_extraction{
   typedef CGAL::Partition_traits_2<K>                           Traits;
   typedef Traits::Point_2                                       CgalPoint2d;
   typedef Traits::Vector_2                                      CgalVector2d;
-  typedef Traits::Polygon_2                                     CgalPolygon2d;
+  typedef CGAL::Polygon_2<K>                                    CgalPolygon2d;
+  typedef CGAL::Polygon_with_holes_2<K>                         CgalPolygonWithHoles2d;
   typedef Traits::Segment_2                                     CgalSegment2d;
   typedef std::vector<CgalPolygon2d>                            CgalPolygon2dContainer;
   typedef CgalPolygon2dContainer::const_iterator                CgalPolygon2dConstIterator;
@@ -96,17 +97,25 @@ namespace convex_plane_extraction{
 
   CgalPolygon2dVertexIterator next(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
 
+  CgalPolygon2dVertexIterator previous(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
+
   void approximateContour(CgalPolygon2d* polygon);
 
   void upSampleLongEdges(CgalPolygon2d* polygon);
 
   double getEdgeLength(const CgalPolygon2dVertexIterator& source, const CgalPolygon2d& polygon);
 
-  void detectDentLocations(std::map<double, int>* dent_locations, const CgalPolygon2d& polygon);
+  std::multimap<double, int> detectDentLocations(const CgalPolygon2d& polygon);
 
   void connectSecondPolygonToFirst(CgalPolygon2d& left_polygon, CgalPolygon2d& right_polygon);
 
-  std::pair<int, int> getIndicesOfClosestVertexPair(CgalPolygon2d& left_polygon, CgalPolygon2d& right_polygon);
+  std::pair<int, int> getIndicesOfClosestVertexPair(CgalPolygon2d& first_polygon, CgalPolygon2d& second_polygon);
+
+  std::multimap<double, std::pair<int, int>> getClosestVertexPairsOrdered(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon);
+
+  CgalPoint2d getPolygonVertexAtIndex(const CgalPolygon2d& polygon, int index);
+
+  bool doPointAndPolygonIntersect(const CgalPolygon2d& polygon, const CgalPoint2d& point, int& segment_source_vertex_index);
 
   struct Intersection{
     void setEdgeSourceLocation(const int location){

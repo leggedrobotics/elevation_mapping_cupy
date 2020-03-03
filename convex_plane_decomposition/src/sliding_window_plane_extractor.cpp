@@ -14,16 +14,14 @@ namespace sliding_window_plane_extractor{
         elevation_layer_(layer_height),
         normal_layer_prefix_(normal_layer_prefix),
         parameters_(parameters),
-        ransac_parameters_(ransac_parameters){
+        ransac_parameters_(parameters.ransac_parameters){
     number_of_extracted_planes_ = -1;
     const grid_map::Size map_size = map.getSize();
     binary_image_patch_ = cv::Mat(map_size(0), map_size(1), CV_8U, false);
     binary_image_angle_ = cv::Mat(map_size(0), map_size(1), CV_8U, false);
-    computeMapTransformation();
   }
 
-  void SlidingWindowPlaneExtractor::runDetection(){
-    VLOG(1) << "Starting detection!";
+  void SlidingWindowPlaneExtractor::runSlidingWindowDetector(){
     const grid_map::Size map_size = map_.getSize();
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> normal_x(map_size(0), map_size(1));
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> normal_y(map_size(0), map_size(1));
@@ -100,7 +98,6 @@ namespace sliding_window_plane_extractor{
   }
 
   void SlidingWindowPlaneExtractor::runSurfaceNormalCurvatureDetection(){
-    VLOG(1) << "Starting surface normal edge detection!";
     CHECK(map_.exists("normals_x"));
     CHECK(map_.exists("normals_y"));
     CHECK(map_.exists("normals_z"));
@@ -119,7 +116,7 @@ namespace sliding_window_plane_extractor{
         const float angle_in_row_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_row));
         const double gradient_magnitude_normalized = sqrt((angle_in_col_direction_radians*angle_in_col_direction_radians) +
             (angle_in_row_direction_radians * angle_in_row_direction_radians)) / (sqrt(2.0)*M_PI);
-        binary_image_angle_.at<bool>(rows, cols) = gradient_magnitude_normalized <= parameters_.surface_normal_angle_threshold;
+        binary_image_angle_.at<bool>(rows, cols) = gradient_magnitude_normalized <= parameters_.surface_normal_angle_threshold_degrees;
       }
     }
   }
@@ -152,13 +149,14 @@ namespace sliding_window_plane_extractor{
     parameters_.plane_patch_error_threshold = parameters.plane_patch_error_threshold;
   }
 
+  /*
   void SlidingWindowPlaneExtractor::slidingWindowPlaneVisualization(){
     Eigen::MatrixXf new_layer = Eigen::MatrixXf::Zero(map_.getSize().x(), map_.getSize().y());
     cv::cv2eigen(labeled_image_, new_layer);
     map_.add("sliding_window_planes", new_layer);
     std::cout << "Added ransac plane layer!" << std::endl;
   }
-
+*/
   void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage(){
     if (number_of_extracted_planes_ < 1){
       LOG(WARNING) << "No planes detected by Sliding Window Plane Extractor!";
@@ -167,73 +165,6 @@ namespace sliding_window_plane_extractor{
     const int number_of_extracted_planes_without_refinement = number_of_extracted_planes_;
     for (int label = 1; label <= number_of_extracted_planes_without_refinement; ++label) {
       computePlaneParametersForLabel(label);
-    }
-  }
-
-  void SlidingWindowPlaneExtractor::generatePlanes(){
-    for (int label_it = 1; label_it <= number_of_extracted_planes_; ++label_it) {
-      auto polygonizer_start = std::chrono::system_clock::now();
-      convex_plane_extraction::Plane plane;
-      std::vector<std::vector<cv::Point>> contours;
-      std::vector<cv::Vec4i> hierarchy;
-      cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
-      binary_image = labeled_image_ == label_it;
-      constexpr int kUpSamplingFactor = 3;
-      cv::Mat binary_image_upsampled;
-      cv::resize(binary_image, binary_image_upsampled, cv::Size(kUpSamplingFactor*binary_image.size().height, kUpSamplingFactor*binary_image.size().width));
-      findContours(binary_image_upsampled, contours, hierarchy,
-                   CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-      std::list<std::vector<cv::Point>> approx_contours;
-      int hierachy_it = 0;
-      for (auto& contour : contours) {
-        ++hierachy_it;
-        std::vector<cv::Point> approx_contour;
-        if (contour.size() <= 10){
-          approx_contour = contour;
-        } else {
-          cv::approxPolyDP(contour, approx_contour, 9, true);
-        }
-        if (approx_contour.size() <= 2) {
-          LOG_IF(WARNING, hierarchy[hierachy_it-1][3] < 0 && contour.size() > 4) << "Removing parental polygon since too few vertices!";
-          continue;
-        }
-        convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end(), resolution_ / kUpSamplingFactor);
-
-        if(!polygon.is_simple()) {
-          convex_plane_extraction::Vector2i index;
-          index << (*polygon.begin()).x(), (*polygon.begin()).y();
-          LOG(WARNING) << "Polygon starting at " << index << " is not simple, will be ignored!";
-          continue;
-        }
-        constexpr int kParentFlagIndex = 3;
-        if (hierarchy[hierachy_it-1][kParentFlagIndex] < 0) {
-          //convex_plane_extraction::upSampleLongEdges(&polygon);
-//          convex_plane_extraction::approximateContour(&polygon);
-          CHECK(plane.addOuterPolygon(polygon));
-        } else {
-          CHECK(plane.addHolePolygon(polygon));
-        }
-      }
-      if(plane.hasOuterContour()) {
-        //LOG(WARNING) << "Dropping plane, no outer contour detected!";
-        computePlaneFrameFromLabeledImage(binary_image, &plane);
-        auto polygonizer_end = std::chrono::system_clock::now();
-        auto polygonizer_duration = std::chrono::duration_cast<std::chrono::microseconds>(polygonizer_end - polygonizer_start);
-        polygonizer_file << time_stamp.count() << ", " << polygonizer_duration.count() << "\n";
-        if(plane.isValid()) {
-          LOG(INFO) << "Starting resolving holes...";
-          plane.resolveHoles();
-          LOG(INFO) << "done.";
-          auto decomposer_start = std::chrono::system_clock::now();
-          CHECK(plane.decomposePlaneInConvexPolygons());
-          auto decomposer_end = std::chrono::system_clock::now();
-          auto decomposer_duration = std::chrono::duration_cast<std::chrono::microseconds>(decomposer_end - decomposer_start);
-          decomposer_file << time_stamp.count() << ", " << decomposer_duration.count() << "\n";
-          planes_.push_back(plane);
-        } else {
-          LOG(WARNING) << "Dropping plane, normal vector could not be inferred!";
-        }
-      }
     }
   }
 
@@ -288,8 +219,8 @@ namespace sliding_window_plane_extractor{
         for (const auto& plane : planes){
           const std::vector<std::size_t>& plane_point_indices = (*plane.get()).indices_of_assigned_points();
           CHECK(!plane_point_indices.empty());
-          Eigen::Vector3d support_vector;
-          Eigen::Vector3d normal_vector;
+          support_vector = Eigen::Vector3d::Zero();
+          normal_vector = Eigen::Vector3d::Zero();
           for (const auto index : plane_point_indices) {
             const auto &point = points_with_normal.at(index).first;
             const auto &normal = points_with_normal.at(index).second;
@@ -307,9 +238,9 @@ namespace sliding_window_plane_extractor{
           normal_vector /= static_cast<double>(plane_point_indices.size());
           const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
           if (label_counter == 0) {
-            plane_parameters_.emplace(label, temp_plane_parameters);
+            label_plane_parameters_map_.emplace(label, temp_plane_parameters);
           } else {
-            plane_parameters_.emplace(number_of_extracted_planes_ + label_counter, temp_plane_parameters);
+            label_plane_parameters_map_.emplace(number_of_extracted_planes_ + label_counter, temp_plane_parameters);
           }
           ++label_counter;
         }
@@ -320,7 +251,7 @@ namespace sliding_window_plane_extractor{
     }
     if (refinement_performed){
       const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
-      plane_parameters_.emplace(label, temp_plane_parameters);
+      label_plane_parameters_map_.emplace(label, temp_plane_parameters);
     }
   }
 
@@ -337,6 +268,24 @@ namespace sliding_window_plane_extractor{
     return average_error;
   }
 
+  void SlidingWindowPlaneExtractor::runExtraction(){
+    VLOG(1) << "Started sliding window plane detector ...";
+    runSlidingWindowDetector();
+    VLOG(1) << "done.";
+    if (parameters_.include_curvature_detection){
+      VLOG(1) << "Starting surface normal curvature detection ...";
+      runSurfaceNormalCurvatureDetection();
+      VLOG(1) << "done.";
+    }
+    VLOG(1) << "Starting segmentation ...";
+    runSegmentation();
+    VLOG(1) << "done.";
+    VLOG(1) << "Extracting plane parameters from labeled image ...";
+    extractPlaneParametersFromLabeledImage();
+    VLOG(1) << "done.";
+  }
+
+  /*
   void SlidingWindowPlaneExtractor::visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array){
     CHECK_NOTNULL(ros_polygon_array);
     if (planes_.empty()){
@@ -370,30 +319,6 @@ namespace sliding_window_plane_extractor{
       }
     }
   }
-
-  void SlidingWindowPlaneExtractor::exportConvexPolygons(const std::string& path) const {
-    std::ofstream output_file;
-    output_file.open(path + "convex_polygons.txt", std::ofstream::app);
-    std::chrono::milliseconds time_stamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch());
-    for (const auto& plane : planes_){
-      for (const auto& polygon : plane.getConvexPolygons()){
-        output_file << time_stamp.count() << ", ";
-        for (const auto& vertex : polygon){
-          output_file << vertex.x() << ", ";
-        }
-        for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
-          output_file << vertex_it->y();
-          if (vertex_it != std::prev(polygon.vertices_end())){
-            output_file << ", ";
-          } else {
-            output_file << "\n";
-          }
-        }
-      }
-    }
-    output_file.close();
-    LOG(INFO) << "Exported polygons!";
-  }
+*/
 }
 

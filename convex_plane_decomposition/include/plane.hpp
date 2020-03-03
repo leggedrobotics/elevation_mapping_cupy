@@ -22,29 +22,34 @@ namespace convex_plane_extraction {
 
    public:
 
-    Plane();
+    Plane(const CgalPolygon2d& plane_contour, const PlaneParameters parameters)
+      : plane_contour_(plane_contour),
+        normal_vector_(parameters.normal_vector),
+        support_vector_(parameters.support_vector){}
 
-    Plane(CgalPolygon2d& outer_polygon, CgalPolygon2dContainer& holes);
+    bool setPlaneContour(const CgalPolygon2d& plane_contour){
+      plane_contour_ = plane_contour;
+    }
 
-    virtual ~Plane();
+    const Eigen::Vector3d& getPlaneNormalVector() const{
+      return normal_vector_;
+    }
 
-    bool addOuterPolygon(const CgalPolygon2d& outer_polygon);
-
-    bool addHolePolygon(const CgalPolygon2d& hole_polygon);
+    Eigen::Vector3d& getPlaneNormalVectorMutable(){
+      return normal_vector_;
+    }
 
     bool setNormalAndSupportVector(const Eigen::Vector3d& normal_vector,const Eigen::Vector3d& support_vector);
 
-    bool decomposePlaneInConvexPolygons();
-
     bool hasOuterContour() const;
 
-    CgalPolygon2dVertexConstIterator outerPolygonVertexBegin() const;
+    CgalPolygon2d& getOuterPolygonMutable(){
+      return plane_contour_;
+    }
 
-    CgalPolygon2dVertexConstIterator outerPolygonVertexEnd() const;
-
-    CgalPolygon2dContainerConstIterator holePolygonBegin() const;
-
-    CgalPolygon2dContainerConstIterator holePolygonEnd() const;
+    const CgalPolygon2d& getOuterPolygon() const{
+      return plane_contour_;
+    }
 
     bool isValid() const;
 
@@ -58,9 +63,21 @@ namespace convex_plane_extraction {
 
     void computePoint3dWorldFrame(const Vector2d& input_point, Vector3d* output_point) const;
 
-    void resolveHoles();
+    CgalPolygon2dContainer& getConvexPolygonsMutable(){
+      return convex_polygons_;
+    }
 
-    const CgalPolygon2dContainer& getConvexPolygons() const;
+    const CgalPolygon2dContainer& getConvexPolygons() const{
+      return convex_polygons_;
+    }
+
+    void addConvexPolygon(const CgalPolygon2d& convex_polygon){
+      convex_polygons_.push_back(convex_polygon);
+    }
+
+    void setConvexPolygons(CgalPolygon2dContainer& convex_polygons){
+      convex_polygons_ = convex_polygons;
+    }
 
    private:
 
@@ -68,17 +85,12 @@ namespace convex_plane_extraction {
 
     void slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::multimap<double, std::pair<int, int>>* concavity_positions);
 
-    bool initialized_;
-
-    CgalPolygon2d outer_polygon_;
-    CgalPolygon2dContainer hole_polygon_list_;
-    CgalPolygon2dContainer convex_polygon_list_;
+    CgalPolygon2d plane_contour_;
+    CgalPolygon2dContainer convex_polygons_;
 
     Vector3d normal_vector_;
     Vector3d support_vector_;
   };
-
-  typedef std::list<Plane> PlaneListContainer;
 
 }
 #endif //CONVEX_PLANE_EXTRACTION_SRC_PLANE_HPP_

@@ -2,24 +2,6 @@
 
 namespace convex_plane_extraction {
 
-  void performConvexDecomposition(const CgalPolygon2d& polygon, CgalPolygon2dContainer* output_polygon_list){
-    CHECK_GE(polygon.size(), 3);
-    CHECK(polygon.is_simple());
-    LOG(INFO) << "Started convex decomposition...";
-    size_t old_list_size = output_polygon_list->size();
-    CGAL::optimal_convex_partition_2(polygon.vertices_begin(),
-                                     polygon.vertices_end(),
-                                     std::back_inserter(*output_polygon_list));
-
-    assert(CGAL::partition_is_valid_2(polygon.vertices_begin(),
-                                      polygon.vertices_end(),
-                                      polygon_list.begin(),
-                                      polygon_list.end()));
-//    *output_polygon_list = decomposeInnerApproximation(polygon);
-    CHECK_GT(output_polygon_list->size(), old_list_size);
-    LOG(INFO) << "done.";
-  }
-
   bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment, bool print_flag){
     for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
       auto next_vertex_it = std::next(vertex_it);
@@ -199,29 +181,6 @@ namespace convex_plane_extraction {
     CgalPoint2d destination_point = *(next(source, polygon));
     return abs(sqrt((destination_point.x() - source_point.x()) * (destination_point.x() - source_point.x())
         + (destination_point.y() - source_point.y()) * (destination_point.y() - source_point.y())));
-  }
-
-  // A dent is a vertex, which lies in a counter-clockwise oriented polygon on the left side of its neighbors.
-  // Dents cause non-convexity.
-  void detectDentLocations(std::map<double, int>* dent_locations, const CgalPolygon2d& polygon){
-    CHECK_NOTNULL(dent_locations);
-    CHECK(dent_locations->empty());
-    CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
-    for (auto source_it = polygon.vertices_begin(); source_it != polygon.vertices_end(); ++source_it){
-      auto dent_it = next(source_it, polygon);
-      auto destination_it = next(dent_it, polygon);
-      Vector2d source_point = Vector2d(source_it->x(), source_it->y());
-      Vector2d destination_point = Vector2d(destination_it->x(), destination_it->y());
-      Vector2d direction_vector = destination_point - source_point;
-      Vector2d test_point = Vector2d(dent_it->x(), dent_it->y());
-      const double kAngleThresholdRad = 0.001; // 0.05 deg in rad.
-      if(isPointOnLeftSide(source_point, direction_vector, test_point)){
-        double angle = abs(computeAngleBetweenVectors(source_point - test_point, destination_point - test_point));
-        // Ignore very shallow dents. Approximate convex decomposition.
-        if ( angle > kAngleThresholdRad)
-          dent_locations->insert(std::make_pair(angle, std::distance(polygon.vertices_begin(), dent_it)));
-      }
-    }
   }
 
   std::list<CgalPolygon2d> decomposeInnerApproximation(const CgalPolygon2d& polygon){
@@ -468,5 +427,58 @@ namespace convex_plane_extraction {
       }
     }
   }
+
+  std::pair<int, int> getIndicesOfClosestVertexPair(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+    CHECK_GT(first_polygon.size(), 0);
+    CHECK_GT(second_polygon.size(), 0);
+    std::multimap<double, std::pair<int, int>> buffer = getClosestVertexPairsOrdered(first_polygon, second_polygon);
+    CHECK(!buffer.empty());
+    return buffer.begin()->second;
+  }
+
+  std::multimap<double, std::pair<int, int>> getClosestVertexPairsOrdered(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+    CHECK_GT(first_polygon.size(), 0);
+    CHECK_GT(second_polygon.size(), 0);
+    std::multimap<double, std::pair<int, int>> buffer;
+    for (auto vertex_it = first_polygon.vertices_begin(); vertex_it != first_polygon.vertices_end(); ++vertex_it){
+      int first_vertex_index = std::distance(first_polygon.vertices_begin(), vertex_it);
+      double distance = std::numeric_limits<double>::max();
+      int second_vertex_index = 0;
+      for (auto second_vertex_it = second_polygon.vertices_begin(); second_vertex_it != second_polygon.vertices_begin(); ++second_vertex_it){
+        const double temp_distance = sqrt(static_cast<CgalVector2d>(*vertex_it - *second_vertex_it).squared_length());
+        if (temp_distance < distance){
+          distance = temp_distance;
+          second_vertex_index = std::distance(second_polygon.vertices_begin(), second_vertex_it);
+        }
+      }
+      buffer.insert(std::make_pair(distance, std::make_pair(first_vertex_index, second_vertex_index)));
+    }
+    return buffer;
+  }
+
+  CgalPoint2d getPolygonVertexAtIndex(const CgalPolygon2d& polygon, int index){
+    CHECK_GT(index, 0);
+    CHECK_LT(index, polygon.size());
+    auto vertex_it = polygon.vertices_begin();
+    std::advance(vertex_it, index);
+    return *vertex_it;
+  }
+
+  bool doPointAndPolygonIntersect(const CgalPolygon2d& polygon, const CgalPoint2d& point, int& segment_target_vertex_index){
+    for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it) {
+      auto next_vertex_it = std::next(vertex_it);
+      if (next_vertex_it == polygon.vertices_end()) {
+        next_vertex_it = polygon.vertices_begin();
+      }
+      CgalSegment2d test_segment(*vertex_it, *next_vertex_it);
+      if (test_segment.has_on(point)){
+        segment_target_vertex_index = std::distance(polygon.vertices_begin(), next_vertex_it);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  CgalPolygon2d
 
 }

@@ -1,7 +1,3 @@
-//
-// Created by andrej on 3/1/20.
-//
-
 #include "plane_factory.hpp"
 
 using namespace convex_plane_extraction;
@@ -17,81 +13,26 @@ void PlaneFactory::computeMapTransformation(){
   transformation_xy_to_world_frame_.col(1) = (upper_right_cell_position - map_offset_).normalized();
 }
 
-void createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
-          const std::map<int, convex_plane_extraction::PlaneParameters>& parameters){
+void PlaneFactory::createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
+          const std::map<int, convex_plane_extraction::PlaneParameters>& plane_parameters){
   CHECK_GT(number_of_labels, 0);
-  CHECK_EQ(number_of_labels, parameters.size());
+  CHECK_EQ(number_of_labels, plane_parameters.size());
+  Polygonizer polygonizer(parameters_.polygonizer_parameters);
   for (int label = 1; label < number_of_labels; ++label){
     cv::Mat binary_image(labeled_image.size(), CV_8UC1);
     binary_image = labeled_image == label;
-    extractPolygonsFromBinaryImage(binary_image)
+    const CgalPolygon2d plane_contour = polygonizer.runPolygonizationOnBinaryImage(binary_image);
+    const auto plane_parameter_it = plane_parameters.find(label);
+    CHECK_NE(plane_parameter_it, plane_parameters.end()) << "Label not contained in plane parameter container!";
+    if (isPlaneInclinationBelowThreshold(plane_parameter_it->second.normal_vector)){
+      planes_.emplace_back(plane_contour, plane_parameter_it->second);
+    } else {
+      LOG(WARNING) << "Dropping plane due to exceeded inclination threshold!";
+    }
   }
 }
 
-
-
-
-for (int label_it = 1; label_it <= number_of_extracted_planes_; ++label_it) {
-auto polygonizer_start = std::chrono::system_clock::now();
-convex_plane_extraction::Plane plane;
-std::vector<std::vector<cv::Point>> contours;
-std::vector<cv::Vec4i> hierarchy;
-cv::Mat binary_image(labeled_image_.size(), CV_8UC1);
-binary_image = labeled_image_ == label_it;
-constexpr int kUpSamplingFactor = 3;
-cv::Mat binary_image_upsampled;
-cv::resize(binary_image, binary_image_upsampled, cv::Size(kUpSamplingFactor*binary_image.size().height, kUpSamplingFactor*binary_image.size().width));
-findContours(binary_image_upsampled, contours, hierarchy,
-    CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-std::list<std::vector<cv::Point>> approx_contours;
-int hierachy_it = 0;
-for (auto& contour : contours) {
-++hierachy_it;
-std::vector<cv::Point> approx_contour;
-if (contour.size() <= 10){
-approx_contour = contour;
-} else {
-cv::approxPolyDP(contour, approx_contour, 9, true);
-}
-if (approx_contour.size() <= 2) {
-LOG_IF(WARNING, hierarchy[hierachy_it-1][3] < 0 && contour.size() > 4) << "Removing parental polygon since too few vertices!";
-continue;
-}
-convex_plane_extraction::CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(approx_contour.begin(), approx_contour.end(), resolution_ / kUpSamplingFactor);
-
-if(!polygon.is_simple()) {
-convex_plane_extraction::Vector2i index;
-index << (*polygon.begin()).x(), (*polygon.begin()).y();
-LOG(WARNING) << "Polygon starting at " << index << " is not simple, will be ignored!";
-continue;
-}
-constexpr int kParentFlagIndex = 3;
-if (hierarchy[hierachy_it-1][kParentFlagIndex] < 0) {
-//convex_plane_extraction::upSampleLongEdges(&polygon);
-//          convex_plane_extraction::approximateContour(&polygon);
-CHECK(plane.addOuterPolygon(polygon));
-} else {
-CHECK(plane.addHolePolygon(polygon));
-}
-}
-if(plane.hasOuterContour()) {
-//LOG(WARNING) << "Dropping plane, no outer contour detected!";
-computePlaneFrameFromLabeledImage(binary_image, &plane);
-auto polygonizer_end = std::chrono::system_clock::now();
-auto polygonizer_duration = std::chrono::duration_cast<std::chrono::microseconds>(polygonizer_end - polygonizer_start);
-polygonizer_file << time_stamp.count() << ", " << polygonizer_duration.count() << "\n";
-if(plane.isValid()) {
-LOG(INFO) << "Starting resolving holes...";
-plane.resolveHoles();
-LOG(INFO) << "done.";
-auto decomposer_start = std::chrono::system_clock::now();
-CHECK(plane.decomposePlaneInConvexPolygons());
-auto decomposer_end = std::chrono::system_clock::now();
-auto decomposer_duration = std::chrono::duration_cast<std::chrono::microseconds>(decomposer_end - decomposer_start);
-decomposer_file << time_stamp.count() << ", " << decomposer_duration.count() << "\n";
-planes_.push_back(plane);
-} else {
-LOG(WARNING) << "Dropping plane, normal vector could not be inferred!";
-}
-}
+bool PlaneFactory::isPlaneInclinationBelowThreshold(const Eigen::Vector3d& plane_normal_vector) const {
+  const Eigen::Vector3d z_axis(0,0,1);
+  return std::atan2(1.0, z_axis.dot(plane_normal_vector)) < (parameters_.plane_inclination_threshold_degrees / 180.0 * M_PI);
 }
