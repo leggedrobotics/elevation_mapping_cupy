@@ -3,16 +3,14 @@
 #include <string>
 
 #include <glog/logging.h>
-#include <ros/ros.h>
-
 #include <image_transport/image_transport.h>
+#include <ros/ros.h>
 
 #include <grid_map_ros/grid_map_ros.hpp>
 
-#include "export_utils.hpp"
 #include "grid_map_preprocessing.hpp"
-#include "plane_extractor.hpp"
-#include "ransac_plane_extractor.hpp"
+#include "pipeline_ros.hpp"
+
 
 namespace convex_plane_extraction {
 
@@ -68,14 +66,8 @@ class ConvexPlaneExtractionROS
 
   ros::Publisher outer_contours_publisher_;
 
-  ros::Publisher hole_contours_publsiher_;
-
-  //! Ransac plane extractor parameters.
-  ransac_plane_extractor::RansacPlaneExtractorParameters ransac_parameters_;
-
-  PlaneExtractorType plane_extractor_selector_;
-
-  sliding_window_plane_extractor::SlidingWindowParameters sliding_window_parameters_;
+  //! Convex Plane Extraction Pipeline.
+  PipelineROS pipeline_ros_;
 
 };
 

@@ -1,0 +1,32 @@
+input_map_topic: '/elevation_mapping/elevation_map'
+
+
+
+plane_factory:
+  plane_inclination_threshold_degrees : 70
+
+polygonizer:
+  upsampling_factor : 3
+  activate_long_edge_upsampling : false
+  activate_contour_approximation : false
+  hole_area_threshold_squared_meters : 2e-3
+
+convex_decomposer:
+  decomposer_type : 'optimal_decompostion'
+
+sliding_window_plane_extractor:
+  kernel_size : 3
+  plane_patch_error_threshold : 0.004
+  surface_normal_angle_threshold_degrees : 5.0
+  include_curvature_detection : false
+  include_ransac_refinement : false
+  global_plane_fit_error_threshold : 0.02
+
+ransac_plane_refinement:
+  probability : 0.01
+  min_points : 200
+  epsilon : 0.004
+  cluster_epsilon : 0.0282842712475
+  # Set maximum normal deviation. 0.98 < dot(surface_normal, point_normal);
+  normal_threshold : 0.98
+

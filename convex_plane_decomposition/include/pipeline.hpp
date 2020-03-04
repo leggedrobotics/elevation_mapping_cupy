@@ -11,7 +11,6 @@ struct PipelineParameters{
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters sliding_window_plane_extractor_parameters =
       sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters();
   PlaneFactoryParameters plane_factory_parameters_ = PlaneFactoryParameters();
-  ConvexDecomposerParameters convex_decomposer_parameters = ConvexDecomposerParameters();
 };
 
 struct GridMapParameters{
@@ -25,18 +24,21 @@ struct GridMapParameters{
 class Pipeline {
  public:
 
-  explicit Pipeline(const PipelineParameters& parameters)
-    : parameters_(parameters){};
+  Pipeline(const PipelineParameters& pipeline_parameters, const GridMapParameters& grid_map_parameters);
 
-  void runPipeline();
+  Polygon3dVectorContainer getConvexPolygons() const;
 
+  Polygon3dVectorContainer getPlaneContours() const;
 
  private:
 
-  void exportConvexPolygons(const std::string& export_path) const;
+//  void exportConvexPolygons(const std::string& export_path) const;
 
   PipelineParameters pipeline_parameters_;
   GridMapParameters grid_map_parameters_;
+
+  sliding_window_plane_extractor::SlidingWindowPlaneExtractor sliding_window_plane_extractor_;
+  PlaneFactory plane_factory_;
 
 };
 } // namespace_convex_plane_extraction

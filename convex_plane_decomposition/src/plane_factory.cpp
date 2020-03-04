@@ -36,3 +36,68 @@ bool PlaneFactory::isPlaneInclinationBelowThreshold(const Eigen::Vector3d& plane
   const Eigen::Vector3d z_axis(0,0,1);
   return std::atan2(1.0, z_axis.dot(plane_normal_vector)) < (parameters_.plane_inclination_threshold_degrees / 180.0 * M_PI);
 }
+
+void PlaneFactory::decomposePlanesInConvexPolygons(){
+  ConvexDecomposer convex_decomposer(parameters_.convex_decomposer_parameters);
+  for(Plane& plane : planes_){
+    CgalPolygon2dContainer& convex_polygons = plane.getConvexPolygonsMutable();
+    convex_polygons = convex_decomposer.performConvexDecomposition(plane.getOuterPolygon());
+  }
+}
+
+Polygon3dVectorContainer PlaneFactory::getConvexPolygonsInWorldFrame() const{
+  Polygon3dVectorContainer polygon_buffer;
+  for(const Plane& plane : planes_){
+    Polygon3dVectorContainer temp_polygon_buffer = convertPlanePolygonsToWorldFrame(plane.getConvexPolygons(), plane.getPlaneParameters());
+    std::move(temp_polygon_buffer.begin(), temp_polygon_buffer.end(), std::back_inserter(polygon_buffer));
+  }
+  return polygon_buffer;
+}
+
+Polygon3dVectorContainer PlaneFactory::getPlaneContoursInWorldFrame() const{
+  Polygon3dVectorContainer polygon_buffer;
+  for(const Plane& plane : planes_){
+    Polygon3dVectorContainer temp_polygon_buffer = convertPlanePolygonToWorldFrame(plane.getOuterPolygon(), plane.getPlaneParameters());
+    std::move(temp_polygon_buffer.begin(), temp_polygon_buffer.end(), std::back_inserter(polygon_buffer));
+  }
+  return polygon_buffer;
+}
+
+Polygon3dVectorContainer PlaneFactory::convertPlanePolygonToWorldFrame(const CgalPolygon2d& polygon, const PlaneParameters& plane_parameters) const{
+  Polygon3dVectorContainer output_polygons;
+  CHECK(!polygon.is_empty());
+  Polygon3d polygon_temp;
+  for (const auto& point : polygon){
+    polygon_temp.push_back(convertPlanePointToWorldFrame(point, plane_parameters));
+  }
+  output_polygons.push_back(polygon_temp);
+  return output_polygons;
+}
+
+Polygon3dVectorContainer PlaneFactory::convertPlanePolygonsToWorldFrame(const CgalPolygon2dContainer& polygons, const PlaneParameters& plane_parameters) const{
+  CHECK(!polygons.empty()) << "Input polygon container empty!";
+  Polygon3dVectorContainer output_polygons;
+  for (const auto& polygon : polygons){
+    CHECK(!polygon.is_empty());
+    Polygon3d polygon_temp;
+    for (const auto& point : polygon){
+      polygon_temp.push_back(convertPlanePointToWorldFrame(point, plane_parameters));
+    }
+    output_polygons.push_back(polygon_temp);
+  }
+  return output_polygons;
+}
+
+Eigen::Vector3d PlaneFactory::convertPlanePointToWorldFrame(const CgalPoint2d& point, const PlaneParameters& plane_parameters) const{
+  Eigen::Vector2d temp_point(point.x(), point.y());
+  temp_point = transformation_xy_to_world_frame_ * temp_point;
+  temp_point = temp_point + map_offset_;
+  LOG_IF(FATAL, !std::isfinite(temp_point.x())) << "Not finite x value!";
+  LOG_IF(FATAL, !std::isfinite(temp_point.y())) << "Not finite y value!";
+  const double z = (-(temp_point.x() - plane_parameters.support_vector.x())*plane_parameters.normal_vector.x() -
+      (temp_point.y() - plane_parameters.support_vector.y())* plane_parameters.normal_vector.y()) /
+          plane_parameters.normal_vector(2) + plane_parameters.support_vector(2);
+  LOG_IF(FATAL, !std::isfinite(z)) << "Not finite z value!";
+  return Vector3d(temp_point.x(), temp_point.y(), z);
+}
+

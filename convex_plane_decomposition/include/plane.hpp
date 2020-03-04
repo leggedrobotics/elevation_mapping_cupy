@@ -27,6 +27,10 @@ namespace convex_plane_extraction {
         normal_vector_(parameters.normal_vector),
         support_vector_(parameters.support_vector){}
 
+    PlaneParameters getPlaneParameters() const {
+      return PlaneParameters(normal_vector_, support_vector_);
+    }
+
     bool setPlaneContour(const CgalPolygon2d& plane_contour){
       plane_contour_ = plane_contour;
     }
@@ -50,8 +54,6 @@ namespace convex_plane_extraction {
     const CgalPolygon2d& getOuterPolygon() const{
       return plane_contour_;
     }
-
-    bool isValid() const;
 
     bool convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
 

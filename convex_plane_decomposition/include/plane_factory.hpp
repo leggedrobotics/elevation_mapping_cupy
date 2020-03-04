@@ -4,6 +4,7 @@
 #include <math.h>
 #include <vector>
 
+#include "convex_decomposer.hpp"
 #include "plane.hpp"
 #include "polygonizer.hpp"
 
@@ -11,6 +12,7 @@ namespace convex_plane_extraction {
 
 struct PlaneFactoryParameters{
   PolygonizerParameters polygonizer_parameters = PolygonizerParameters();
+  ConvexDecomposerParameters convex_decomposer_parameters = ConvexDecomposerParameters();
   double plane_inclination_threshold_degrees = 70;
 };
 
@@ -26,11 +28,26 @@ class PlaneFactory {
   void createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
       const std::map<int, convex_plane_extraction::PlaneParameters>& plane_parameters);
 
+  void decomposePlanesInConvexPolygons();
+
+  Polygon3dVectorContainer getConvexPolygonsInWorldFrame() const;
+
+  Polygon3dVectorContainer getPlaneContoursInWorldFrame() const;
+
  private:
 
   void computeMapTransformation();
 
   bool isPlaneInclinationBelowThreshold(const Eigen::Vector3d& plane_normal_vector) const;
+
+  Eigen::Vector3d convertPlanePointToWorldFrame(const CgalPoint2d& point,
+      const PlaneParameters& plane_parameters) const;
+
+  Polygon3dVectorContainer convertPlanePolygonsToWorldFrame(const CgalPolygon2dContainer& polygons,
+      const PlaneParameters& plane_parameters) const;
+
+  Polygon3dVectorContainer convertPlanePolygonToWorldFrame(const CgalPolygon2d& polygon,
+      const PlaneParameters& plane_parameters) const;
 
   // Grid map related members.
   grid_map::GridMap& map_;

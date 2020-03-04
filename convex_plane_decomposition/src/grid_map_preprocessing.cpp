@@ -1,7 +1,6 @@
-//
-// Created by andrej on 12/7/19.
-//
+
 #include "grid_map_preprocessing.hpp"
+
 namespace convex_plane_extraction{
 
   void applyMedianFilter(Eigen::MatrixXf& elevation_map, int kernel_size) {

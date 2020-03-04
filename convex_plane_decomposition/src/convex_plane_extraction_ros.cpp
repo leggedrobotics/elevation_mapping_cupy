@@ -13,8 +13,7 @@ using namespace grid_map;
 namespace convex_plane_extraction {
 
 ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, bool& success)
-    : nodeHandle_(nodeHandle)
-{
+    : nodeHandle_(nodeHandle) {
   if (!readParameters()) {
     success = false;
     return;
@@ -24,13 +23,10 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, 
   grid_map_publisher_ = nodeHandle_.advertise<grid_map_msgs::GridMap>("convex_plane_extraction", 1, true);
   convex_polygon_publisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("convex_polygons", 1);
   outer_contours_publisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("outer_contours", 1);
-  hole_contours_publsiher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("hole_contours", 1);
   success = true;
 }
 
-ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS()
-{
-}
+ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS(){}
 
 bool ConvexPlaneExtractionROS::readParameters()
 {
