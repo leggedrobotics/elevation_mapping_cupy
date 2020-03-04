@@ -119,30 +119,31 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
             if (is_valid(x, y, z, t[0], t[1], t[2])) {
-                // if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
                 int idx = get_idx(x, y, center_x, center_y);
-                if (!is_inside(idx)) {
-                    return;
-                }
-                U map_h = map[get_map_idx(idx, 0)];
-                U map_v = map[get_map_idx(idx, 1)];
-                U num_points = newmap[get_map_idx(idx, 4)];
-                if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
-                    atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-                }
-                else {
-                    if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) { continue; }
-                    T new_h = (map_h * v + z * map_v) / (map_v + v);
-                    T new_v = (map_v * v) / (map_v + v);
-                    atomicAdd(&newmap[get_map_idx(idx, 0)], new_h);
-                    atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
-                    atomicAdd(&newmap[get_map_idx(idx, 2)], 1.0);
-                    map[get_map_idx(idx, 2)] = 1;
-                    // visibility cleanup
+                if (is_inside(idx)) {
+                    U map_h = map[get_map_idx(idx, 0)];
+                    U map_v = map[get_map_idx(idx, 1)];
+                    U num_points = newmap[get_map_idx(idx, 4)];
+                    if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
+                        atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
+                    }
+                    else {
+                        if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) { 
+                          // continue;
+                        }
+                        else {
+                            T new_h = (map_h * v + z * map_v) / (map_v + v);
+                            T new_v = (map_v * v) / (map_v + v);
+                            atomicAdd(&newmap[get_map_idx(idx, 0)], new_h);
+                            atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
+                            atomicAdd(&newmap[get_map_idx(idx, 2)], 1.0);
+                            map[get_map_idx(idx, 2)] = 1;
+                        }
+                        // visibility cleanup
+                    }
                 }
             }
             if (${enable_visibility_cleanup}) {
-                // if (rz > ${max_ray_length}) {continue;}
                 float16 ray_x, ray_y, ray_z;
                 float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
                 ray_length = min(ray_length, (float16)${max_ray_length});
@@ -162,11 +163,11 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     if (nmap_valid < 0.5) {continue;}
 
                     // If point is close, skip.
-                    float16 d = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz));
-                    if (d < 0.1 ) {continue;}
+                    float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
+                    if (d < 0.01 ) {continue;}
 
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
-                    if (nmap_h > nz + nmap_v * 2) {
+                    if (nmap_h > nz + nmap_v * 0.01) {
                         // map[get_map_idx(nidx, 1)] = 100;
                         // map[get_map_idx(nidx, 2)] = 0;
                         // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
@@ -179,7 +180,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                         if (fabs(product) < ${cleanup_cos_thresh}) {continue;}
 
                         // Finally, this cell is penetrated by the ray.
-                        atomicAdd(&map[get_map_idx(nidx, 2)], -${cleanup_step});
+                        atomicAdd(&map[get_map_idx(nidx, 2)], -${cleanup_step}/(ray_length / ${max_ray_length}));
                         atomicAdd(&map[get_map_idx(nidx, 1)], ${outlier_variance});
                     }
                 }
@@ -187,7 +188,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
                             outlier_variance=outlier_variance,
                             wall_num_thresh=wall_num_thresh,
-                            ray_step=resolution / 2.0,
+                            ray_step=resolution / 5.0,
                             max_ray_length=max_ray_length,
                             cleanup_step=cleanup_step,
                             cleanup_cos_thresh=cleanup_cos_thresh,
