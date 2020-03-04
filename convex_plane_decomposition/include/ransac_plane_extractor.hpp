@@ -21,7 +21,6 @@
 #include "Eigen/Dense"
 #include <glog/logging.h>
 
-#include "grid_map_ros/grid_map_ros.hpp"
 
 namespace ransac_plane_extractor {
 
@@ -62,7 +61,7 @@ namespace ransac_plane_extractor {
 
         void runDetection();
 
-      const auto& getDetectedPlanes() const{
+      auto getDetectedPlanes() const{
         return ransac_.shapes();
       };
 

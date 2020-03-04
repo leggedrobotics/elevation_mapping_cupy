@@ -3,16 +3,12 @@
 
 namespace sliding_window_plane_extractor{
 
-  using namespace grid_map;
-
-  SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution,
-      const std::string& layer_height, const std::string& normal_layer_prefix,
-      const SlidingWindowPlaneExtractorParameters& parameters,
+  SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(grid_map::GridMap& map, double resolution,
+      const std::string& layer_height, const SlidingWindowPlaneExtractorParameters& parameters,
       const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters)
       : map_(map),
         resolution_(resolution),
         elevation_layer_(layer_height),
-        normal_layer_prefix_(normal_layer_prefix),
         parameters_(parameters),
         ransac_parameters_(parameters.ransac_parameters){
     number_of_extracted_planes_ = -1;
@@ -28,7 +24,7 @@ namespace sliding_window_plane_extractor{
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> normal_z(map_size(0), map_size(1));
     CHECK(map_.getSize().x() >= parameters_.kernel_size);
     CHECK(map_.getSize().y() >= parameters_.kernel_size);
-    SlidingWindowIterator window_iterator(map_, elevation_layer_, SlidingWindowIterator::EdgeHandling::INSIDE,
+    grid_map::SlidingWindowIterator window_iterator(map_, elevation_layer_, grid_map::SlidingWindowIterator::EdgeHandling::INSIDE,
         parameters_.kernel_size);
     for (; !window_iterator.isPastEnd(); ++window_iterator) {
       Eigen::MatrixXf window_data = window_iterator.getData();
@@ -64,7 +60,7 @@ namespace sliding_window_plane_extractor{
       data_points.col(1) = Eigen::Map<Eigen::VectorXd>(&col_position.front(), col_position.size()) * resolution_;
       data_points.col(2) = Eigen::Map<Eigen::VectorXd>(&height_instances.front(), height_instances.size());
       const Eigen::Matrix3d covarianceMatrix(data_points.transpose() * data_points);
-      Vector3 eigenvalues = Vector3::Ones();
+      Eigen::Vector3d eigenvalues = Eigen::Vector3d::Ones();
       Eigen::Matrix3d eigenvectors = Eigen::Matrix3d::Identity();
       const Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver(covarianceMatrix);
       eigenvalues = solver.eigenvalues().real();
@@ -77,11 +73,11 @@ namespace sliding_window_plane_extractor{
           smallestValue = eigenvalues(j);
         }
       }
-      Vector3 eigenvector = eigenvectors.col(smallestId);
+      Eigen::Vector3d eigenvector = eigenvectors.col(smallestId);
       const Eigen::Vector3d normalVectorPositiveAxis_(0,0,1);
       if (eigenvector.dot(normalVectorPositiveAxis_) < 0.0) eigenvector = -eigenvector;
       Eigen::Vector3d n = eigenvector.normalized();
-      Index index = *window_iterator;
+      grid_map::Index index = *window_iterator;
       double mean_error = ((data_points * n).cwiseAbs()).sum() / height_instances.size();
       Eigen::Vector3d upwards(0,0,1);
       constexpr double kInclinationThreshold = 0.35;
@@ -106,12 +102,12 @@ namespace sliding_window_plane_extractor{
     const grid_map::Size map_rows_cols = map_.getSize();
     for( int cols = surface_normal_map_boundary_offset; cols < map_rows_cols(1) - surface_normal_map_boundary_offset - 1; ++cols){
       for (int rows = surface_normal_map_boundary_offset; rows < map_rows_cols(0) - surface_normal_map_boundary_offset - 1; ++rows){
-        const Eigen::Vector2f normal_vector_center(map_.at("normals_x", Index(rows, cols)), map_.at("normals_y", Index(rows, cols)),
-            map_.at("normals_z", Index(rows, cols)));
-        const Eigen::Vector2f normal_vector_next_row(map_.at("normals_x", Index(rows+1, cols)), map_.at("normals_y", Index(rows+1, cols)),
-            map_.at("normals_z", Index(rows+1, cols)));
-        const Eigen::Vector2f normal_vector_next_col(map_.at("normals_x", Index(rows, cols+1)), map_.at("normals_y", Index(rows, cols+1)),
-            map_.at("normals_z", Index(rows, cols+1)));
+        const Eigen::Vector3f normal_vector_center(map_.at("normals_x", grid_map::Index(rows, cols)), map_.at("normals_y", grid_map::Index(rows, cols)),
+            map_.at("normals_z", grid_map::Index(rows, cols)));
+        const Eigen::Vector3f normal_vector_next_row(map_.at("normals_x", grid_map::Index(rows+1, cols)), map_.at("normals_y", grid_map::Index(rows+1, cols)),
+            map_.at("normals_z", grid_map::Index(rows+1, cols)));
+        const Eigen::Vector3f normal_vector_next_col(map_.at("normals_x", grid_map::Index(rows, cols+1)), map_.at("normals_y", grid_map::Index(rows, cols+1)),
+            map_.at("normals_z", grid_map::Index(rows, cols+1)));
         const float angle_in_col_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_col));
         const float angle_in_row_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_row));
         const double gradient_magnitude_normalized = sqrt((angle_in_col_direction_radians*angle_in_col_direction_radians) +
@@ -137,7 +133,7 @@ namespace sliding_window_plane_extractor{
   }
 
   // Refine connected component using RANSAC. Input vector is modified by function!
-  const auto&  SlidingWindowPlaneExtractor::runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const {
+  auto  SlidingWindowPlaneExtractor::runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const {
     CHECK(!points_with_normal.empty());
     ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor(points_with_normal, ransac_parameters_);
     ransac_plane_extractor.runDetection();
@@ -149,14 +145,6 @@ namespace sliding_window_plane_extractor{
     parameters_.plane_patch_error_threshold = parameters.plane_patch_error_threshold;
   }
 
-  /*
-  void SlidingWindowPlaneExtractor::slidingWindowPlaneVisualization(){
-    Eigen::MatrixXf new_layer = Eigen::MatrixXf::Zero(map_.getSize().x(), map_.getSize().y());
-    cv::cv2eigen(labeled_image_, new_layer);
-    map_.add("sliding_window_planes", new_layer);
-    std::cout << "Added ransac plane layer!" << std::endl;
-  }
-*/
   void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage(){
     if (number_of_extracted_planes_ < 1){
       LOG(WARNING) << "No planes detected by Sliding Window Plane Extractor!";
@@ -187,7 +175,7 @@ namespace sliding_window_plane_extractor{
           index << row, col;
           Eigen::Vector3d normal_vector_temp;
           Eigen::Vector3d support_vector_temp;
-          if(map_.getVector(normal_layer_prefix_, index, normal_vector_temp)){
+          if(map_.getVector("normals", index, normal_vector_temp)){
             normal_vector += normal_vector_temp;
             ++number_of_normal_instances;
           }
@@ -213,7 +201,7 @@ namespace sliding_window_plane_extractor{
       // Compute error to fitted plane.
       if (computeAverageErrorToPlane(normal_vector, support_vector, points_with_normal)
           > parameters_.global_plane_fit_error_threshold){
-        const auto& planes = runRansacRefinement(points_with_normal);
+        const auto planes = runRansacRefinement(points_with_normal);
         CHECK(!planes.empty()) << "No planes detected by RANSAC in as planar classified region.";
         int label_counter = 0;
         for (const auto& plane : planes){
@@ -285,40 +273,5 @@ namespace sliding_window_plane_extractor{
     VLOG(1) << "done.";
   }
 
-  /*
-  void SlidingWindowPlaneExtractor::visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array){
-    CHECK_NOTNULL(ros_polygon_array);
-    if (planes_.empty()){
-      LOG(INFO) << "No convex polygons to visualize!";
-      return;
-    }
-    for (const auto& plane : planes_){
-      convex_plane_extraction::Polygon3dVectorContainer polygon_container;
-      if(!plane.convertConvexPolygonsToWorldFrame(&polygon_container, transformation_xy_to_world_frame_, map_offset_)){
-        continue;
-      }
-      convex_plane_extraction::addRosPolygons(polygon_container, ros_polygon_array);
-    }
-  }
-
-  void SlidingWindowPlaneExtractor::visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const {
-    CHECK_NOTNULL(outer_polygons);
-    CHECK_NOTNULL(hole_poylgons);
-    if (planes_.empty()){
-      LOG(INFO) << "No convex polygons to visualize!";
-      return;
-    }
-    for (const auto& plane : planes_){
-      convex_plane_extraction::Polygon3dVectorContainer outer_contour;
-      if(plane.convertOuterPolygonToWorldFrame(&outer_contour, transformation_xy_to_world_frame_, map_offset_)){
-        convex_plane_extraction::addRosPolygons(outer_contour, outer_polygons);
-      }
-      convex_plane_extraction::Polygon3dVectorContainer hole_contours;
-      if (plane.convertHolePolygonsToWorldFrame(&hole_contours, transformation_xy_to_world_frame_, map_offset_)){
-        convex_plane_extraction::addRosPolygons(hole_contours, hole_poylgons);
-      }
-    }
-  }
-*/
 }
 

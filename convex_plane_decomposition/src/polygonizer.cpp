@@ -250,8 +250,7 @@ void Polygonizer::removeAreasNotContainedInOuterContourFromHoles(const CgalPolyg
   auto hole_it = holes.begin();
   while(hole_it != holes.end()) {
     std::vector<CgalPolygonWithHoles2d> buffer;
-    std::vector<CgalPolygonWithHoles2d>::const_iterator buffer_it;
-    CGAL::intersection(outer_polygon, *hole_it, std::back_inserter(buffer_it));
+    CGAL::intersection(outer_polygon, *hole_it, std::back_inserter(buffer));
     if (buffer.empty()){
       hole_it = holes.erase(hole_it);
     } else {

@@ -55,15 +55,6 @@ namespace convex_plane_extraction {
       return plane_contour_;
     }
 
-    bool convertConvexPolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
-
-    bool convertOuterPolygonToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
-
-    bool convertHolePolygonsToWorldFrame(Polygon3dVectorContainer* output_container, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
-
-    void convertPoint2dToWorldFrame(const CgalPoint2d& point, Vector2d* output_point, const Eigen::Matrix2d& transformation, const Eigen::Vector2d& map_position) const;
-
-    void computePoint3dWorldFrame(const Vector2d& input_point, Vector3d* output_point) const;
 
     CgalPolygon2dContainer& getConvexPolygonsMutable(){
       return convex_polygons_;
@@ -82,10 +73,6 @@ namespace convex_plane_extraction {
     }
 
    private:
-
-    void extractSlConcavityPointsOfHole(const CgalPolygon2d& hole, std::vector<int>* concavity_positions);
-
-    void slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::multimap<double, std::pair<int, int>>* concavity_positions);
 
     CgalPolygon2d plane_contour_;
     CgalPolygon2dContainer convex_polygons_;

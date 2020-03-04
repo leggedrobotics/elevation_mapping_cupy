@@ -1,5 +1,5 @@
-#ifndef CONVEX_PLANE_EXTRACTION_INCLUDE_ROS_VISUALIZATIONS_HPP_
-#define CONVEX_PLANE_EXTRACTION_INCLUDE_ROS_VISUALIZATIONS_HPP_
+#ifndef CONVEX_PLANE_EXTRACTION_ROS_INCLUDE_ROS_VISUALIZATIONS_HPP_
+#define CONVEX_PLANE_EXTRACTION_ROS_INCLUDE_ROS_VISUALIZATIONS_HPP_
 #include <vector>
 
 #include "Eigen/Core"
@@ -13,7 +13,7 @@
 
 namespace convex_plane_extraction{
 
-  void addRosPolygons(const Polygon3dVectorContainer& input_polygons, jsk_recognition_msgs::PolygonArray* polygon_array);
+  jsk_recognition_msgs::PolygonArray convertToRosPolygons(const Polygon3dVectorContainer &input_polygons);
 
 }
 

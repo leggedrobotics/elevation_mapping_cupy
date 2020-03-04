@@ -2,10 +2,10 @@
 
 namespace convex_plane_extraction {
 
-  void addRosPolygons(const Polygon3dVectorContainer &input_polygons, jsk_recognition_msgs::PolygonArray *polygon_array) {
-
-    polygon_array->header.stamp = ros::Time::now();
-    polygon_array->header.frame_id = "odom";
+  jsk_recognition_msgs::PolygonArray convertToRosPolygons(const Polygon3dVectorContainer &input_polygons) {
+    jsk_recognition_msgs::PolygonArray polygon_buffer;
+    polygon_buffer.header.stamp = ros::Time::now();
+    polygon_buffer.header.frame_id = "odom";
     for (const auto &polygon : input_polygons) {
       if (polygon.empty()) {
         continue;
@@ -20,8 +20,9 @@ namespace convex_plane_extraction {
         point_ros.z = point(2);
         polygon_stamped.polygon.points.push_back(point_ros);
       }
-      polygon_array->polygons.push_back(polygon_stamped);
+      polygon_buffer.polygons.push_back(polygon_stamped);
     }
+    return polygon_buffer;
   }
 }
 

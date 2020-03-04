@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1...3.15)
-project(convex_plane_extraction)
+project(convex_plane_extraction_ros)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
@@ -8,31 +8,26 @@ set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  grid_map_core
-  grid_map_ros
-  grid_map_cv
-  grid_map_filters
-  grid_map_loader
-  grid_map_msgs
-  grid_map_octomap
-  grid_map_rviz_plugin
-  grid_map_visualization
-  geometry_msgs
-  sensor_msgs
-  cv_bridge
-)
+        roscpp
+        grid_map_core
+        grid_map_ros
+        grid_map_cv
+        grid_map_filters
+        grid_map_loader
+        grid_map_msgs
+        grid_map_octomap
+        grid_map_rviz_plugin
+        grid_map_visualization
+        geometry_msgs
+        sensor_msgs
+        cv_bridge
+        convex_plane_extraction
+        )
 
 ## System dependencies are found with CMake's conventions
 find_package(CGAL QUIET)
 
 add_definitions(-DCGAL_HAS_NO_THREADS)
-
-find_package(OpenCV REQUIRED
-  COMPONENTS
-  opencv_highgui
-  CONFIG
-)
 
 find_package(glog 0.4.0 REQUIRED)
 
@@ -122,23 +117,10 @@ find_package(glog 0.4.0 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES convex_plane_extraction
-  CATKIN_DEPENDS
-	roscpp
-	grid_map_core
-	grid_map_ros
-	grid_map_cv
-	grid_map_filters
-	grid_map_loader
-	grid_map_msgs
-	grid_map_octomap
-	grid_map_rviz_plugin
-	grid_map_visualization
-	geometry_msgs
-	sensor_msgs
-	cv_bridge
-#  DEPENDS system_lib
+        INCLUDE_DIRS include
+        #  LIBRARIES convex_plane_extraction
+        CATKIN_DEPENDS
+        #  DEPENDS system_lib
 )
 
 ###########
@@ -148,9 +130,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
+        include
+        ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -166,21 +147,12 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_library(${PROJECT_NAME}
-	src/ransac_plane_extractor.cpp
-	src/sliding_window_plane_extractor.cpp
-	src/plane.cpp
-	src/polygon.cpp
-	src/geometry_utils.cpp
-	src/export_utils.cpp
-	src/plane_factory.cpp
-	src/polygonizer.cpp
-	src/convex_decomposer.cpp
-	src/pipeline.cpp)
-
-add_dependencies(${PROJECT_NAME}
-		${catkin_EXPORTED_TARGETS}
-		)
+add_executable(${PROJECT_NAME}
+        src/convex_plane_extraction_node.cpp
+        src/convex_plane_extraction_ros.cpp
+        src/grid_map_preprocessing.cpp
+        src/pipeline_ros.cpp
+        src/ros_visualizations.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -194,11 +166,11 @@ add_dependencies(${PROJECT_NAME}
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-	${catkin_LIBRARIES} 
-	${CGAL_LIBRARIES} 
-	${CGAL_3RD_PARTY_LIBRARIES}
-	glog
-)
+        ${catkin_LIBRARIES}
+        ${CGAL_LIBRARIES}
+        ${CGAL_3RD_PARTY_LIBRARIES}
+        glog
+        )
 
 #############
 ## Install ##
@@ -220,10 +192,10 @@ target_link_libraries(${PROJECT_NAME}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 install(
-  TARGETS ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark libraries for installation

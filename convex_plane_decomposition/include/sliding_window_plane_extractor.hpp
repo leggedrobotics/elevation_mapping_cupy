@@ -17,7 +17,6 @@
 #include "plane.hpp"
 #include "polygon.hpp"
 #include "ransac_plane_extractor.hpp"
-#include "ros_visualizations.hpp"
 
 
 namespace sliding_window_plane_extractor {
@@ -36,8 +35,8 @@ namespace sliding_window_plane_extractor {
   class SlidingWindowPlaneExtractor{
    public:
 
-    SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height,
-        const std::string& normal_layer_prefix, const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters());
+    SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height, const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters(),
+        const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters = ransac_plane_extractor::RansacPlaneExtractorParameters());
 
     void setParameters(const SlidingWindowPlaneExtractorParameters& parameters);
 
@@ -55,14 +54,6 @@ namespace sliding_window_plane_extractor {
       return number_of_extracted_planes_;
     }
 
-//    void slidingWindowPlaneVisualization();
-
-//    void computePlaneFrameFromLabeledImage(const cv::Mat& binary_image, convex_plane_extraction::Plane* plane);
-
-//    void visualizeConvexDecomposition(jsk_recognition_msgs::PolygonArray* ros_polygon_array);
-//
-//    void visualizePlaneContours(jsk_recognition_msgs::PolygonArray* outer_polygons, jsk_recognition_msgs::PolygonArray* hole_poylgons) const;
-//
 //    void exportConvexPolygons(const std::string& path) const;
 
    private:
@@ -74,7 +65,7 @@ namespace sliding_window_plane_extractor {
 
     void extractPlaneParametersFromLabeledImage();
 
-    const auto& runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
+    auto runRansacRefinement(std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
 
     void runSegmentation();
 
@@ -85,7 +76,6 @@ namespace sliding_window_plane_extractor {
 
     grid_map::GridMap& map_;
     std::string elevation_layer_;
-    std::string normal_layer_prefix_;
     double resolution_;
 
     SlidingWindowPlaneExtractorParameters parameters_;

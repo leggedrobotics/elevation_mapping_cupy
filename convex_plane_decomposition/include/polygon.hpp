@@ -29,8 +29,8 @@ namespace convex_plane_extraction{
 
   typedef CGAL::Exact_predicates_inexact_constructions_kernel   K;
   typedef CGAL::Partition_traits_2<K>                           Traits;
-  typedef Traits::Point_2                                       CgalPoint2d;
-  typedef Traits::Vector_2                                      CgalVector2d;
+  typedef CGAL::Point_2<K>                                      CgalPoint2d;
+  typedef CGAL::Vector_2<K>                                     CgalVector2d;
   typedef CGAL::Polygon_2<K>                                    CgalPolygon2d;
   typedef CGAL::Polygon_with_holes_2<K>                         CgalPolygonWithHoles2d;
   typedef Traits::Segment_2                                     CgalSegment2d;

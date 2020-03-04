@@ -7,9 +7,9 @@ Pipeline::Pipeline(const PipelineParameters& pipeline_parameters, const GridMapP
     : pipeline_parameters_(pipeline_parameters),
       grid_map_parameters_(grid_map_parameters),
       sliding_window_plane_extractor_(sliding_window_plane_extractor::SlidingWindowPlaneExtractor(grid_map_parameters_.map,
-          grid_map_parameters_.resolution, grid_map_parameters_.layer_height, grid_map_parameters_.normal_layer_prefix,
-          pipeline_parameters_.sliding_window_plane_extractor_parameters)),
-      plane_factory_(PlaneFactory(grid_map_parameters_.map, pipeline_parameters_.plane_factory_parameters_)){
+          grid_map_parameters_.resolution, grid_map_parameters_.layer_height,
+          pipeline_parameters_.sliding_window_plane_extractor_parameters, pipeline_parameters_.sliding_window_plane_extractor_parameters.ransac_parameters)),
+      plane_factory_(PlaneFactory(grid_map_parameters_.map, pipeline_parameters_.plane_factory_parameters)){
   sliding_window_plane_extractor_.runExtraction();
   plane_factory_.createPlanesFromLabeledImageAndPlaneParameters(sliding_window_plane_extractor_.getLabeledImage(),
       sliding_window_plane_extractor_.getNumberOfExtractedPlanes(), sliding_window_plane_extractor_.getLabelPlaneParameterMap());

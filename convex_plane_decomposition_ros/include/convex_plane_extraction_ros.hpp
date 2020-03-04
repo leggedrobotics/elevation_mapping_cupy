@@ -1,3 +1,6 @@
+#ifndef CONVEX_PLANE_EXTRACTION_ROS_INCLUDE_CONVEX_PLANE_EXTRACTION_ROS_HPP_
+#define CONVEX_PLANE_EXTRACTION_ROS_INCLUDE_CONVEX_PLANE_EXTRACTION_ROS_HPP_
+
 #pragma once
 
 #include <string>
@@ -66,9 +69,7 @@ class ConvexPlaneExtractionROS
 
   ros::Publisher outer_contours_publisher_;
 
-  //! Convex Plane Extraction Pipeline.
-  PipelineROS pipeline_ros_;
-
 };
 
 } /* namespace */
+#endif

@@ -28,13 +28,25 @@ CgalPolygon2dContainer ConvexDecomposer::performConvexDecomposition(const CgalPo
 }
 
 CgalPolygon2dContainer ConvexDecomposer::performOptimalConvexDecomposition(const CgalPolygon2d& polygon) const{
-  CgalPolygon2dContainer output_polygons;
-  size_t old_container_size = output_polygons.size();
+  std::vector<Traits::Polygon_2> polygon_buffer;
+  size_t old_container_size = polygon_buffer.size();
+  Traits::Polygon_2 input_polygon;
+  for (const auto& vertex : polygon.container()){
+    input_polygon.insert(input_polygon.vertices_end(),Traits::Point_2(vertex.x(), vertex.y()));
+  }
   CGAL::optimal_convex_partition_2(polygon.vertices_begin(), polygon.vertices_end(),
-      std::back_inserter(output_polygons));
-  assert(CGAL::partition_is_valid_2(polygon.vertices_begin(), polygon.vertices_end(), output_polygons.begin(),
-      output_polygons.end()));
-  CHECK_GT(output_polygons.size(), old_container_size);
+      std::back_inserter(polygon_buffer));
+//  assert(CGAL::partition_is_valid_2(polygon.vertices_begin(), polygon.vertices_end(), output_polygons.begin(),
+//      output_polygons.end()));
+  CHECK_GT(polygon_buffer.size(), old_container_size);
+  CgalPolygon2dContainer output_polygons;
+  for (const auto& buffer_polygon : polygon_buffer){
+    CgalPolygon2d temp_polygon;
+    for (const auto& vertex : buffer_polygon.container()){
+      temp_polygon.insert(temp_polygon.vertices_end(), CgalPoint2d(vertex.x(), vertex.y()));
+    }
+    output_polygons.push_back(temp_polygon);
+  }
   return output_polygons;
 }
 

@@ -1,5 +1,5 @@
-input_map_topic: '/elevation_mapping/elevation_map'
-
+input_map_topic : '/elevation_mapping/elevation_map'
+height_layer : 'elevation'
 
 
 plane_factory:
@@ -10,9 +10,11 @@ polygonizer:
   activate_long_edge_upsampling : false
   activate_contour_approximation : false
   hole_area_threshold_squared_meters : 2e-3
+  contour_approximation_deviation_threshold : 0.04
 
 convex_decomposer:
   decomposer_type : 'optimal_decompostion'
+  dent_angle_threshold_rad : 0.001
 
 sliding_window_plane_extractor:
   kernel_size : 3
