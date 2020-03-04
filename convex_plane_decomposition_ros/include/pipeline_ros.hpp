@@ -12,16 +12,9 @@
 
 namespace convex_plane_extraction {
 
+GridMapParameters loadGridMapParameters(ros::NodeHandle& nodeHandle, grid_map::GridMap& map);
+
 PipelineParameters loadPipelineParameters(ros::NodeHandle& nodeHandle,  grid_map::GridMap& map);
-
-GridMapParameters loadGridMapParameters(ros::NodeHandle& nodeHandle, grid_map::GridMap& map){
-  // Grid map parameters.
-  std::string height_layer;
-  CHECK(nodeHandle.getParam("height_layer", height_layer));
-  GridMapParameters grid_map_parameters(map,height_layer);
-
-  return grid_map_parameters;
-}
 
 class PipelineROS {
  public:
