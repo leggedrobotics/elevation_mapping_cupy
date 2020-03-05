@@ -16,9 +16,12 @@ void PlaneFactory::computeMapTransformation(){
 void PlaneFactory::createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
           const std::map<int, convex_plane_extraction::PlaneParameters>& plane_parameters){
   CHECK_GT(number_of_labels, 0);
-  CHECK_EQ(number_of_labels, plane_parameters.size());
+  //CHECK_EQ(number_of_labels, plane_parameters.size());
   Polygonizer polygonizer(parameters_.polygonizer_parameters);
   for (int label = 1; label < number_of_labels; ++label){
+    if (plane_parameters.find(label) == plane_parameters.end()){
+      continue;
+    }
     cv::Mat binary_image(labeled_image.size(), CV_8UC1);
     binary_image = labeled_image == label;
     const CgalPolygon2d plane_contour = polygonizer.runPolygonizationOnBinaryImage(binary_image);

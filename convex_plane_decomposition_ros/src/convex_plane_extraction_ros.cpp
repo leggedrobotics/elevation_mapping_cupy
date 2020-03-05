@@ -39,18 +39,16 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   GridMap messageMap;
   GridMapRosConverter::fromMessage(message, messageMap);
   bool success;
-  GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(4, 4), success);
-  Position3 position;
-  inputMap.getPosition3("elevation", Index(0,0), position);
-  VLOG(1) << inputMap.getPosition();
+  GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(6, 6), success);
   CHECK(success);
   ROS_INFO("...done.");
-
+  VLOG(1) << "Applying median filtering to map.";
   applyMedianFilter(inputMap.get("elevation"), 5);
 
   // Run pipeline.
+  VLOG(1) << "Running pipeline ...";
   PipelineROS pipeline_ros(nodeHandle_, inputMap);
-
+  VLOG(1) << "done.";
   // Visualize in Rviz.
   jsk_recognition_msgs::PolygonArray outer_plane_contours = pipeline_ros.getOuterPlaneContours();
   jsk_recognition_msgs::PolygonArray convex_polygons = pipeline_ros.getConvexPolygons();

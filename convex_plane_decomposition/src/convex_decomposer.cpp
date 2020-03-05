@@ -6,10 +6,13 @@ ConvexDecomposer::ConvexDecomposer(const convex_plane_extraction::ConvexDecompos
   :parameters_(parameters){}
 
 CgalPolygon2dContainer ConvexDecomposer::performConvexDecomposition(const CgalPolygon2d& polygon) const {
-  CHECK_GE(polygon.size(), 3);
-  CHECK(polygon.is_simple());
   VLOG(1) << "Started convex decomposition...";
   CgalPolygon2dContainer convex_polygons;
+  if (polygon.size() == 2) {
+    convex_polygons.push_back(polygon);
+    return convex_polygons;
+  }
+  CHECK(polygon.is_simple());
   if(polygon.is_convex()){
     LOG(INFO) << "Polygon already convex, no decompostion performed.";
     convex_polygons.push_back(polygon);

@@ -21,7 +21,7 @@ struct GridMapParameters{
 
   grid_map::GridMap& map;
   double resolution;
-  const std::string& layer_height;
+  std::string layer_height;
 };
 
 

@@ -32,7 +32,7 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
     CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(
         approx_contour.begin(),
         approx_contour.end(),
-        parameters_.resolution / parameters_.upsampling_factor);
+        parameters_.resolution / static_cast<double>(parameters_.upsampling_factor));
 
     if (!polygon.is_simple()) {
       convex_plane_extraction::Vector2i index;
@@ -46,7 +46,7 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
         upSampleLongEdges(&polygon);
       }
       if (parameters_.activate_contour_approximation) {
-        approximateContour(&polygon);
+        //approximateContour(&polygon);
       }
       plane_polygons.outer_contour = polygon;
     } else {
@@ -301,12 +301,16 @@ CgalPolygon2d Polygonizer::resolveHolesWithVerticalConnection(PolygonWithHoles& 
 }
 
 void Polygonizer::approximatePolygon(CgalPolygon2d& polygon) const{
-  std::vector<cv::Point> contour;
+  std::vector<cv::Point2f> contour;
   for (const auto& vertex : polygon.container()){
-    contour.emplace_back(vertex.x(), vertex.y());
+    contour.emplace_back(vertex.y(), vertex.x());
   }
-  std::vector<cv::Point> approx_contour;
+  std::vector<cv::Point2f> approx_contour;
   cv::approxPolyDP(contour, approx_contour, parameters_.contour_approximation_deviation_threshold, true);
+  polygon.clear();
+  for (const auto& point : approx_contour){
+    polygon.push_back(CgalPoint2d(point.y, point.x));
+  }
 }
 
 CgalPolygon2d Polygonizer::runPolygonizationOnBinaryImage(const cv::Mat& binary_image) const{

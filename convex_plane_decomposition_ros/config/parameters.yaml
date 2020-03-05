@@ -1,4 +1,4 @@
-input_map_topic : '/elevation_mapping/elevation_map'
+input_topic : '/elevation_mapping/elevation_map_raw'
 height_layer : 'elevation'
 
 
@@ -8,8 +8,8 @@ plane_factory:
 polygonizer:
   upsampling_factor : 3
   activate_long_edge_upsampling : false
-  activate_contour_approximation : false
-  hole_area_threshold_squared_meters : 2e-3
+  activate_contour_approximation : true
+  hole_area_threshold_squared_meters : 0.002
   contour_approximation_deviation_threshold : 0.04
 
 convex_decomposer:

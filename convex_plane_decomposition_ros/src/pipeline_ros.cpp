@@ -4,12 +4,14 @@ namespace convex_plane_extraction {
 
 PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map::GridMap &map) {
 
+  const std::string kPackagePrefix = "/convex_plane_extraction_ros";
+
   // Grid map parameters.
   GridMapParameters grid_map_parameters = loadGridMapParameters(nodeHandle, map);
 
   // Sliding Window Plane Extractor parameters.
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters sliding_window_plane_extractor_parameters;
-  const std::string kSlidingWindowParametersPrefix = "/sliding_window_plane_extractor/";
+  const std::string kSlidingWindowParametersPrefix = kPackagePrefix + "/sliding_window_plane_extractor/";
   if (!nodeHandle.getParam(kSlidingWindowParametersPrefix + "kernel_size",
                            sliding_window_plane_extractor_parameters.kernel_size)) {
     ROS_ERROR("Could not read parameter `kernel_size`. Setting parameter to default value.");
@@ -33,7 +35,7 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
   if (sliding_window_plane_extractor_parameters.include_ransac_refinement) {
     // RASNAC refinement related parameters.
     ransac_plane_extractor::RansacPlaneExtractorParameters ransac_plane_extractor_parameters;
-    const std::string kRansacRefinementParameterPrefix = "/ransac_plane_refinement/";
+    const std::string kRansacRefinementParameterPrefix = kPackagePrefix + "/ransac_plane_refinement/";
     if (!nodeHandle.getParam(kRansacRefinementParameterPrefix + "probability",
                              ransac_plane_extractor_parameters.probability)) {
       LOG(WARNING) << "Could not read parameter" << kRansacRefinementParameterPrefix
@@ -61,8 +63,8 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
   // Polygonizer parameters.
   PolygonizerParameters polygonizer_parameters;
   polygonizer_parameters.resolution = grid_map_parameters.resolution;
-  const std::string kPolygonizerParametersPrefix = "/polygonizer/";
-  if (!nodeHandle.getParam(kPolygonizerParametersPrefix + "upsampling_factor", polygonizer_parameters.resolution)) {
+  const std::string kPolygonizerParametersPrefix = kPackagePrefix + "/polygonizer/";
+  if (!nodeHandle.getParam(kPolygonizerParametersPrefix + "upsampling_factor", polygonizer_parameters.upsampling_factor)) {
     ROS_ERROR("Could not read parameter `normal_threshold`. Setting parameter to default value.");
   }
   if (!nodeHandle.getParam(kPolygonizerParametersPrefix + "activate_long_edge_upsampling",
@@ -87,7 +89,7 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
 
   // Convex decomposer parameters.
   ConvexDecomposerParameters convex_decomposer_parameters;
-  const std::string kConvexDecomposerParametersPrefix = "/convex_decomposer/";
+  const std::string kConvexDecomposerParametersPrefix = kPackagePrefix + "/convex_decomposer/";
   std::string decomposer_type;
   if (!nodeHandle.getParam(kConvexDecomposerParametersPrefix + "decomposer_type", decomposer_type)) {
     ROS_ERROR("Could not read parameter `decomposer_type`. Setting parameter to default value.");
@@ -104,7 +106,7 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
 
   // Plane Factory parameters.
   PlaneFactoryParameters plane_factory_parameters;
-  const std::string kPlaneFactoryParametersPrefix = "/plane_factory/";
+  const std::string kPlaneFactoryParametersPrefix = kPackagePrefix + "/plane_factory/";
   if (!nodeHandle.getParam(kPlaneFactoryParametersPrefix + "plane_inclination_threshold_degrees",
                            plane_factory_parameters.plane_inclination_threshold_degrees)) {
     ROS_ERROR("Could not read parameter `plane_inclination_threshold_degrees`. Setting parameter to default value.");
@@ -116,7 +118,6 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
   PipelineParameters pipeline_parameters;
   pipeline_parameters.sliding_window_plane_extractor_parameters = sliding_window_plane_extractor_parameters;
   pipeline_parameters.plane_factory_parameters = plane_factory_parameters;
-
   return pipeline_parameters;
 }
 
@@ -124,6 +125,7 @@ GridMapParameters loadGridMapParameters(ros::NodeHandle &nodeHandle, grid_map::G
   // Grid map parameters.
   std::string height_layer;
   CHECK(nodeHandle.getParam("height_layer", height_layer));
+  VLOG(1) << "Height layer is: " << height_layer;
   GridMapParameters grid_map_parameters(map, height_layer);
 
   return grid_map_parameters;
@@ -136,6 +138,7 @@ jsk_recognition_msgs::PolygonArray PipelineROS::getConvexPolygons() const {
 
 jsk_recognition_msgs::PolygonArray PipelineROS::getOuterPlaneContours() const {
   const Polygon3dVectorContainer plane_contour_buffer = pipeline_.getPlaneContours();
+  VLOG(1) << "Exported polygons: " << plane_contour_buffer.size();
   return convertToRosPolygons(plane_contour_buffer);
 }
 

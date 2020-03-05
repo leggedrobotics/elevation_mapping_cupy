@@ -11,10 +11,14 @@ namespace sliding_window_plane_extractor{
         elevation_layer_(layer_height),
         parameters_(parameters),
         ransac_parameters_(parameters.ransac_parameters){
+    VLOG(1) << "Constructing SWE...";
+    VLOG(1) << "Set elevation layer is: " << elevation_layer_;
+    CHECK(map_.exists(elevation_layer_));
     number_of_extracted_planes_ = -1;
     const grid_map::Size map_size = map.getSize();
     binary_image_patch_ = cv::Mat(map_size(0), map_size(1), CV_8U, false);
     binary_image_angle_ = cv::Mat(map_size(0), map_size(1), CV_8U, false);
+    VLOG(1) << "done.";
   }
 
   void SlidingWindowPlaneExtractor::runSlidingWindowDetector(){
@@ -175,18 +179,25 @@ namespace sliding_window_plane_extractor{
           index << row, col;
           Eigen::Vector3d normal_vector_temp;
           Eigen::Vector3d support_vector_temp;
-          if(map_.getVector("normals", index, normal_vector_temp)){
+          if(map_.getVector("normals_", index, normal_vector_temp)) {
             normal_vector += normal_vector_temp;
             ++number_of_normal_instances;
+            if (map_.getPosition3(elevation_layer_, index, support_vector_temp)) {
+              support_vector += support_vector_temp;
+              ++number_of_position_instances;
+
+              ransac_plane_extractor::PointWithNormal
+                  point_with_normal = std::make_pair<ransac_plane_extractor::Point3D,
+                                                     ransac_plane_extractor::Vector3D>(
+                  ransac_plane_extractor::Point3D(support_vector_temp.x(),
+                                                  support_vector_temp.y(),
+                                                  support_vector_temp.z()),
+                  ransac_plane_extractor::Vector3D(normal_vector_temp.x(),
+                                                   normal_vector_temp.y(),
+                                                   normal_vector_temp.z()));
+              points_with_normal.push_back(point_with_normal);
+            }
           }
-          if (map_.getPosition3(elevation_layer_, index, support_vector_temp)) {
-            support_vector += support_vector_temp;
-            ++number_of_position_instances;
-          }
-          ransac_plane_extractor::PointWithNormal point_with_normal = std::make_pair<ransac_plane_extractor::Point3D,
-          ransac_plane_extractor::Vector3D>(ransac_plane_extractor::Point3D(support_vector_temp.x(), support_vector_temp.y(), support_vector_temp.z()),
-              ransac_plane_extractor::Vector3D(normal_vector_temp.x(), normal_vector_temp.y(), normal_vector_temp.z()));
-          points_with_normal.push_back(point_with_normal);
         }
       }
     }
@@ -237,10 +248,11 @@ namespace sliding_window_plane_extractor{
         refinement_performed = true;
       }
     }
-    if (refinement_performed){
+    if (!refinement_performed){
       const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
       label_plane_parameters_map_.emplace(label, temp_plane_parameters);
     }
+    VLOG(1) << "Added plane!";
   }
 
   double SlidingWindowPlaneExtractor::computeAverageErrorToPlane(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector,
