@@ -1,5 +1,5 @@
 resolution: 0.04                                # resolution in m.
-map_length: 6                                  # map's size in m.
+map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.001                         # if point is outlier, add this value to the cell.
@@ -43,13 +43,10 @@ pointcloud_topics: ['/realsense_d435_front/depth/color/points',
                     '/realsense_d435_rear/depth/color/points',
                     '/realsense_d435_left/depth/color/points',
                     '/realsense_d435_right/depth/color/points'
-                    # '/point_cloud_filter/realsense_d435_left/point_cloud_filtered',
-                    # '/point_cloud_filter/realsense_d435_right/point_cloud_filtered',
-                    # '/point_cloud_filter/rslidar/point_cloud',
                     # '/velodyne/point_cloud'
                     ]
 pose_topic: '/state_estimator/pose_in_odom'
-recordable_map_layers: ['elevation', 'color']
+recordable_map_layers: ['elevation']
 map_frame: 'odom'
 corrected_map_frame: 'corrected_odom'
 
