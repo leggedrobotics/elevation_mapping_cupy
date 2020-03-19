@@ -40,8 +40,8 @@ sudo dpkg -i libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64.deb
 - [numpy](https://www.numpy.org/)
 - [scipy](https://www.scipy.org/)
 - [cupy](https://cupy.chainer.org/)
-- [chainer](https://chainer.org/)
-- [shapely](https://github.com/Toblerity/Shapely)
+- [chainer == 6.7.0](https://chainer.org/)
+- [shapely == 1.6.4](https://github.com/Toblerity/Shapely)
 
 ```bash
 pip install numpy scipy cupy chainer shapely

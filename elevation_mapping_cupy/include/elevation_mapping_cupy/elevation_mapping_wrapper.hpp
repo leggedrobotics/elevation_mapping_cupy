@@ -38,9 +38,10 @@ class ElevationMappingWrapper {
     void update_variance();
     void get_grid_map(grid_map::GridMap& gridMap);
     void get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result, std::vector<Eigen::Vector2d> &untraversable_polygon);
-
+    double get_additive_mean_error();
     void initializeWithPoints(std::vector<Eigen::Vector3d> &points, std::string method);
     void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
+    void addNormalColorLayer(grid_map::GridMap& map);
   private:
     void setParameters(ros::NodeHandle& nh);
     py::object map_;
@@ -48,6 +49,8 @@ class ElevationMappingWrapper {
     double resolution_;
     double map_length_;
     int map_n_;
+    bool enable_normal_;
+    bool enable_normal_color_;
 };
 
 }

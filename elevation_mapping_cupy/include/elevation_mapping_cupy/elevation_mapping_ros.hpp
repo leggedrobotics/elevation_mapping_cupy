@@ -9,6 +9,9 @@
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
 #include <tf/transform_listener.h>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <tf/transform_broadcaster.h>
 // Grid Map
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <grid_map_msgs/GridMap.h>
@@ -49,14 +52,20 @@ class ElevationMappingNode {
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
     void updateVariance(const ros::TimerEvent&);
+    void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
+    void publishMapToOdom(double error);
+
+    visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
     ros::Subscriber poseSub_;
     ros::Publisher alivePub_;
     ros::Publisher mapPub_;
+    ros::Publisher filteredMapPub_;
     ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
+    ros::Publisher normalPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
     ros::ServiceServer clearMapWithInitializerService_;
@@ -68,6 +77,7 @@ class ElevationMappingNode {
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
+    std::string correctedMapFrameId_;
     grid_map::GridMap gridMap_;
     std::vector<std::string> recordable_map_layers_;
     std::vector<std::string> initialize_frame_id_;
@@ -83,7 +93,10 @@ class ElevationMappingNode {
     double orientationError_;
     double positionAlpha_;
     double orientationAlpha_;
+    double recordableFps_;
     bool enablePointCloudPublishing_;
+    bool enableNormalArrowPublishing_;
+    bool enableDriftCorrectedTFPublishing_;
     double initializeTfGridSize_;
 };
 

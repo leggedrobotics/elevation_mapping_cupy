@@ -34,6 +34,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
+  nh.param<std::string>("corrected_map_frame", correctedMapFrameId_, "corrected_map");
   nh.param<std::string>("initialize_method", initializeMethod_, "cubic");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
@@ -41,15 +42,19 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("update_variance_fps", updateVarianceFps, 1.0);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
+  nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
+  nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
+  filteredMapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_filtered", 1);
   recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
+  normalPub_ = nh_.advertise<visualization_msgs::MarkerArray>("normal", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -98,14 +103,29 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
              transformationSensorToMap.translation(),
              positionError_,
              orientationError_);
+  
+  if (enableDriftCorrectedTFPublishing_) {
+    publishMapToOdom(map_.get_additive_mean_error());
+  }
+
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   map_.get_grid_map(gridMap_);
   gridMap_.setTimestamp(ros::Time::now().toNSec());
   grid_map_msgs::GridMap msg;
   grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
-  scopedLockForGridMap.unlock();
   mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
+
+  grid_map_msgs::GridMap filteredMsg;
+  grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
+
+  if (enableNormalArrowPublishing_) {
+    publishNormalAsArrow(gridMap_);
+  }
+
+  scopedLockForGridMap.unlock();
+  filteredMsg.basic_layers = {"min_filtered"};
+  filteredMapPub_.publish(filteredMsg);
 
   if (enablePointCloudPublishing_) {
     publishAsPointCloud();
@@ -355,6 +375,75 @@ bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request
   }
   response.success = true;
   return true;
+}
+
+void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) {
+  auto start = ros::Time::now();
+
+  auto& normalX = map["normal_x"];
+  auto& normalY = map["normal_y"];
+  auto& normalZ = map["normal_z"];
+  double scale = 0.1;
+  
+  visualization_msgs::MarkerArray markerArray;
+  // For each cell in map.
+  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
+    const int i = iterator.getLinearIndex();
+    if (!map.isValid(*iterator, "elevation")) {
+      continue;}
+    grid_map::Position3 p;
+    map.getPosition3("elevation", *iterator, p);
+    Eigen::Vector3d start = (Eigen::Vector3d)p;
+    Eigen::Vector3d normal(normalX(i), normalY(i), normalZ(i));
+    Eigen::Vector3d end = start + normal * scale;
+    if (normal.norm() < 0.1) {
+      continue;}
+    markerArray.markers.push_back(vectorToArrowMarker(start, end, i));
+  }
+  normalPub_.publish(markerArray);
+  ROS_INFO_THROTTLE(1.0, "publish as normal in %f sec.", (ros::Time::now() - start).toSec());
+  return;
+}
+
+visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) {
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = mapFrameId_;
+  marker.header.stamp = ros::Time::now();
+  marker.ns = "normal";
+  marker.id = id;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.points.resize(2);
+  marker.points[0].x = start.x();
+  marker.points[0].y = start.y();
+  marker.points[0].z = start.z();
+  marker.points[1].x = end.x();
+  marker.points[1].y = end.y();
+  marker.points[1].z = end.z();
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.01;
+  marker.scale.y = 0.01;
+  marker.scale.z = 0.01;
+  marker.color.a = 1.0; // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+
+  return marker;
+}
+
+void ElevationMappingNode::publishMapToOdom(double error)
+{
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(0.0, 0.0, error) );
+  tf::Quaternion q;
+  q.setRPY(0, 0, 0);
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), mapFrameId_, correctedMapFrameId_));
 }
 
 }

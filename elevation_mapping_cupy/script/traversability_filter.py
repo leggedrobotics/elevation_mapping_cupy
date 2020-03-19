@@ -40,3 +40,16 @@ class TraversabilityFilter(chainer.Chain):
         out = F.concat((out1, out2, out3), axis=1)
         out = self.conv_out(F.absolute(out))
         return F.exp(-out).array
+
+
+if __name__ == '__main__':
+    import cupy as cp
+    from parameter import Parameter
+    elevation = cp.random.randn(202, 202)
+    print('elevation ', elevation.shape)
+    param = Parameter()
+    f = TraversabilityFilter(param.w1,
+                             param.w2,
+                             param.w3,
+                             param.w_out)
+    f(elevation)

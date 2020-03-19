@@ -24,12 +24,16 @@ class Parameter(object):
 
         self.max_ray_length = 2.0
         self.cleanup_step = 0.01
+        self.cleanup_cos_thresh = 0.5
         self.min_valid_distance = 0.3
         self.max_height_range = 1.0
 
         self.safe_thresh = 0.5
         self.safe_min_thresh = 0.5
         self.max_unsafe_n = 20
+
+        self.min_filter_size = 5
+        self.min_filter_iteration = 3
 
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
@@ -138,3 +142,12 @@ class Parameter(object):
 
     def set_max_unsafe_n(self, max_unsafe_n):
         self.max_unsafe_n = max_unsafe_n
+
+    def set_min_filter_size(self, x):
+        self.min_filter_size = x
+
+    def set_min_filter_iteration(self, x):
+        self.min_filter_iteration = x
+
+    def set_cleanup_cos_thresh(self, x):
+        self.cleanup_cos_thresh = x

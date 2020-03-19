@@ -84,6 +84,13 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
             return norm;
         }
 
+        __device__ float inner_product(float16 x1, float16 y1, float16 z1,
+                                       float16 x2, float16 y2, float16 z2) {
+
+            float product = (x1 * x2 + y1 * y2 + z1 * z2);
+            return product;
+       }
+
         ''').substitute(resolution=resolution, width=width, height=height,
                         sensor_noise_factor=sensor_noise_factor,
                         min_valid_distance=min_valid_distance,
@@ -93,11 +100,12 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
 
 def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       mahalanobis_thresh, outlier_variance, wall_num_thresh,
-                      max_ray_length, cleanup_step, min_valid_distance, max_height_range,
+                      max_ray_length, cleanup_step, min_valid_distance,
+                      max_height_range, cleanup_cos_thresh,
                       enable_edge_shaped=True, enable_visibility_cleanup=True):
 
     add_points_kernel = cp.ElementwiseKernel(
-            in_params='raw U p, U center_x, U center_y, raw U R, raw U t',
+            in_params='raw U p, U center_x, U center_y, raw U R, raw U t, raw U norm_map',
             out_params='raw U map, raw T newmap',
             preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
             operation=\
@@ -110,56 +118,80 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
-            if (!is_valid(x, y, z, t[0], t[1], t[2])) {return;}
-            // if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
-            int idx = get_idx(x, y, center_x, center_y);
-            if (!is_inside(idx)) {
-                return;
-            }
-            U map_h = map[get_map_idx(idx, 0)];
-            U map_v = map[get_map_idx(idx, 1)];
-            U num_points = newmap[get_map_idx(idx, 4)];
-            if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
-                atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-            }
-            else {
-                if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) { continue; }
-                T new_h = (map_h * v + z * map_v) / (map_v + v);
-                T new_v = (map_v * v) / (map_v + v);
-                atomicAdd(&newmap[get_map_idx(idx, 0)], new_h);
-                atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
-                atomicAdd(&newmap[get_map_idx(idx, 2)], 1.0);
-                map[get_map_idx(idx, 2)] = 1;
-                // visibility cleanup
+            if (is_valid(x, y, z, t[0], t[1], t[2])) {
+                int idx = get_idx(x, y, center_x, center_y);
+                if (is_inside(idx)) {
+                    U map_h = map[get_map_idx(idx, 0)];
+                    U map_v = map[get_map_idx(idx, 1)];
+                    U num_points = newmap[get_map_idx(idx, 4)];
+                    if (abs(map_h - z) > (map_v * ${mahalanobis_thresh})) {
+                        atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
+                    }
+                    else {
+                        if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) { 
+                          // continue;
+                        }
+                        else {
+                            T new_h = (map_h * v + z * map_v) / (map_v + v);
+                            T new_v = (map_v * v) / (map_v + v);
+                            atomicAdd(&newmap[get_map_idx(idx, 0)], new_h);
+                            atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
+                            atomicAdd(&newmap[get_map_idx(idx, 2)], 1.0);
+                            map[get_map_idx(idx, 2)] = 1;
+                        }
+                        // visibility cleanup
+                    }
+                }
             }
             if (${enable_visibility_cleanup}) {
-                // if (rz > ${max_ray_length}) {continue;}
                 float16 ray_x, ray_y, ray_z;
                 float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
                 ray_length = min(ray_length, (float16)${max_ray_length});
                 for (float16 s=${ray_step}; s < ray_length; s+=${ray_step}) {
+                    // iterate through ray
                     U nx = t[0] + ray_x * s;
                     U ny = t[1] + ray_y * s;
                     U nz = t[2] + ray_z * s;
                     int nidx = get_idx(nx, ny, center_x, center_y);
+                    if (!is_inside(nidx)) {continue;}
+
                     U nmap_h = map[get_map_idx(nidx, 0)];
                     U nmap_v = map[get_map_idx(nidx, 1)];
-                    // float16 d = sqrt((x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz));
+                    U nmap_valid = map[get_map_idx(nidx, 2)];
+
+                    // If invalid, skip
+                    if (nmap_valid < 0.5) {continue;}
+
+                    // If point is close, skip.
+                    float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
+                    if (d < 0.01 ) {continue;}
+
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
-                    if (nmap_h > nz + nmap_v * 3) {
+                    if (nmap_h > nz + nmap_v * 0.01) {
                         // map[get_map_idx(nidx, 1)] = 100;
                         // map[get_map_idx(nidx, 2)] = 0;
                         // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-                        atomicAdd(&map[get_map_idx(idx, 2)], -${cleanup_step});
+
+                        // If ray and norm is vertical, skip
+                        U norm_x = norm_map[get_map_idx(nidx, 0)];
+                        U norm_y = norm_map[get_map_idx(nidx, 1)];
+                        U norm_z = norm_map[get_map_idx(nidx, 2)];
+                        float product = inner_product(ray_x, ray_y, ray_z, norm_x, norm_y, norm_z);
+                        if (fabs(product) < ${cleanup_cos_thresh}) {continue;}
+
+                        // Finally, this cell is penetrated by the ray.
+                        atomicAdd(&map[get_map_idx(nidx, 2)], -${cleanup_step}/(ray_length / ${max_ray_length}));
+                        atomicAdd(&map[get_map_idx(nidx, 1)], ${outlier_variance});
                     }
                 }
             }
             ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
                             outlier_variance=outlier_variance,
                             wall_num_thresh=wall_num_thresh,
-                            ray_step=resolution / 2.0,
+                            ray_step=resolution / 5.0,
                             max_ray_length=max_ray_length,
                             cleanup_step=cleanup_step,
+                            cleanup_cos_thresh=cleanup_cos_thresh,
                             enable_edge_shaped=int(enable_edge_shaped),
                             enable_visibility_cleanup=int(enable_visibility_cleanup)),
             name='add_points_kernel')
@@ -269,7 +301,6 @@ def dilation_filter_kernel(width, height, dilation_size):
                 const int relative_idx = idx + ${width} * dy + dx;
                 return layer * layer_n + relative_idx;
             }
-
             __device__ bool is_inside(int idx) {
                 int idx_x = idx / ${width};
                 int idx_y = idx % ${width};
@@ -309,6 +340,117 @@ def dilation_filter_kernel(width, height, dilation_size):
             ''').substitute(dilation_size=dilation_size),
             name='dilation_filter_kernel')
     return dilation_filter_kernel
+
+
+def min_filter_kernel(width, height, dilation_size):
+    min_filter_kernel = cp.ElementwiseKernel(
+            in_params='raw U map, raw U mask',
+            out_params='raw U newmap, raw U newmask',
+            preamble=\
+            string.Template('''
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+
+            __device__ int get_relative_map_idx(int idx, int dx, int dy, int layer_n) {
+                const int layer = ${width} * ${height};
+                const int relative_idx = idx + ${width} * dy + dx;
+                return layer * layer_n + relative_idx;
+            }
+            __device__ bool is_inside(int idx) {
+                int idx_x = idx / ${width};
+                int idx_y = idx % ${width};
+                if (idx_x <= 0 || idx_x >= ${width} - 1) {
+                    return false;
+                }
+                if (idx_y <= 0 || idx_y >= ${height} - 1) {
+                    return false;
+                }
+                return true;
+            }
+            ''').substitute(width=width, height=height),
+            operation=\
+            string.Template('''
+            U h = map[get_map_idx(i, 0)];
+            U valid = mask[get_map_idx(i, 0)];
+            newmap[get_map_idx(i, 0)] = h;
+            newmask[get_map_idx(i, 0)] = valid;
+            if (valid < 0.8) {
+                U min_value = 1000000.0;
+                for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
+                    for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
+                        int idx = get_relative_map_idx(i, dx, dy, 0);
+                        if (!is_inside(idx)) {continue;}
+                        U valid = mask[idx];
+                        U value = map[idx];
+                        if(valid > 0.5 && value < min_value) {
+                            min_value = value;
+                        }
+                    }
+                }
+                if (min_value < 1000000 - 1) {
+                    newmap[get_map_idx(i, 0)] = min_value;
+                    newmask[get_map_idx(i, 0)] = 0.6;
+                }
+            }
+            ''').substitute(dilation_size=dilation_size),
+            name='min_filter_kernel')
+    return min_filter_kernel
+
+
+def normal_filter_kernel(width, height, resolution):
+    normal_filter_kernel = cp.ElementwiseKernel(
+            in_params='raw U map, raw U mask',
+            out_params='raw U newmap',
+            preamble=\
+            string.Template('''
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+
+            __device__ int get_relative_map_idx(int idx, int dx, int dy, int layer_n) {
+                const int layer = ${width} * ${height};
+                const int relative_idx = idx + ${width} * dy + dx;
+                return layer * layer_n + relative_idx;
+            }
+            __device__ bool is_inside(int idx) {
+                int idx_x = idx / ${width};
+                int idx_y = idx % ${width};
+                if (idx_x <= 0 || idx_x >= ${width} - 1) {
+                    return false;
+                }
+                if (idx_y <= 0 || idx_y >= ${height} - 1) {
+                    return false;
+                }
+                return true;
+            }
+            __device__ float resolution() {
+                return ${resolution};
+            }
+            ''').substitute(width=width, height=height, resolution=resolution),
+            operation=\
+            string.Template('''
+            U h = map[get_map_idx(i, 0)];
+            U valid = mask[get_map_idx(i, 0)];
+            if (valid > 0.5) {
+                int idx_x = get_relative_map_idx(i, 1, 0, 0);
+                int idx_y = get_relative_map_idx(i, 0, 1, 0);
+                if (!is_inside(idx_x) || !is_inside(idx_y)) { return; }
+                float dzdx = (map[idx_x] - h);
+                float dzdy = (map[idx_y] - h);
+                float nx = -dzdy / resolution();
+                float ny = -dzdx / resolution();
+                float nz = 1;
+                float norm = sqrt((nx * nx) + (ny * ny) + 1);
+                newmap[get_map_idx(i, 0)] = nx / norm;
+                newmap[get_map_idx(i, 1)] = ny / norm;
+                newmap[get_map_idx(i, 2)] = nz / norm;
+            }
+            ''').substitute(),
+            name='normal_filter_kernel')
+    return normal_filter_kernel
 
 
 def polygon_mask_kernel(width, height, resolution):
