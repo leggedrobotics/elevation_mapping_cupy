@@ -13,6 +13,7 @@ class Parameter(object):
         self.outlier_variance = 0.01
         self.drift_compensation_variance_inlier = 0.1
         self.time_variance = 0.01
+        self.time_interval = 0.1
 
         self.max_variance = 1.0
         self.dilation_size = 2
@@ -151,3 +152,6 @@ class Parameter(object):
 
     def set_cleanup_cos_thresh(self, x):
         self.cleanup_cos_thresh = x
+
+    def set_time_interval(self, x):
+        self.time_interval = x

@@ -26,7 +26,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
   std::vector<std::string>pointcloud_topics;
-  double recordableFps, updateVarianceFps;
+  double recordableFps, updateVarianceFps, timeInterval;
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
@@ -40,6 +40,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
   nh.param<double>("recordable_fps", recordableFps, 3.0);
   nh.param<double>("update_variance_fps", updateVarianceFps, 1.0);
+  nh.param<double>("time_interval", timeInterval, 0.1);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
@@ -72,6 +73,11 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     double duration = 1.0 / (updateVarianceFps + 0.00001);
     updateVarianceTimer_ = nh_.createTimer(ros::Duration(duration),
                                            &ElevationMappingNode::updateVariance, this, false, true);
+  }
+  if (timeInterval > 0) {
+    double duration = timeInterval;
+    updateTimeTimer_ = nh_.createTimer(ros::Duration(duration),
+                                       &ElevationMappingNode::updateTime, this, false, true);
   }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
@@ -325,6 +331,10 @@ void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
 
 void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
   map_.update_variance();
+}
+
+void ElevationMappingNode::updateTime(const ros::TimerEvent&) {
+  map_.update_time();
 }
 
 bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,

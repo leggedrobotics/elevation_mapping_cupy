@@ -66,9 +66,10 @@ class ElevationMap(object):
         self.max_unsafe_n = param.max_unsafe_n
         self.min_filter_size = param.min_filter_size
         self.min_filter_iteration = param.min_filter_iteration
+        self.time_interval = param.time_interval
 
-        # layers: elevation, variance, is_valid, traversability
-        self.elevation_map = xp.zeros((4, self.cell_n, self.cell_n))
+        # layers: elevation, variance, is_valid, traversability, time
+        self.elevation_map = xp.zeros((5, self.cell_n, self.cell_n))
         self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
         self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
         # Initial variance
@@ -210,6 +211,9 @@ class ElevationMap(object):
     def update_variance(self):
         self.elevation_map[1] += self.time_variance * self.elevation_map[2]
 
+    def update_time(self):
+        self.elevation_map[4] += self.time_interval
+
     def input(self, raw_points, R, t, position_noise, orientation_noise):
         raw_points = xp.asarray(raw_points)
         raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
@@ -247,13 +251,15 @@ class ElevationMap(object):
         traversability = xp.where(self.elevation_map[2] > 0.5,
                                   self.elevation_map[3].copy(), xp.nan)
         min_filtered = self.get_min_filtered()
+        time_layer = self.elevation_map[4].copy()
         self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         elevation = elevation[1:-1, 1:-1]
         variance = variance[1:-1, 1:-1]
         traversability = self.traversability_data[1:-1, 1:-1]
         min_filtered = min_filtered[1:-1, 1:-1]
+        time_layer = time_layer[1:-1, 1:-1]
 
-        maps = xp.stack([elevation, variance, traversability, min_filtered], axis=0)
+        maps = xp.stack([elevation, variance, traversability, min_filtered, time_layer], axis=0)
         # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
@@ -271,7 +277,7 @@ class ElevationMap(object):
         maps = xp.asnumpy(maps)
         return maps
 
-    def get_maps_ref(self, elevation_data, variance_data, traversability_data, min_filtered_data,
+    def get_maps_ref(self, elevation_data, variance_data, traversability_data, min_filtered_data, time_data,
                      normal_x_data, normal_y_data, normal_z_data, normal=False):
         maps = self.get_maps()
         # somehow elevation_data copy in non_blocking mode does not work.
@@ -281,6 +287,7 @@ class ElevationMap(object):
         variance_data[...] = xp.asnumpy(maps[1], stream=stream)
         traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
         min_filtered_data[...] = xp.asnumpy(maps[3], stream=stream)
+        time_data[...] = xp.asnumpy(maps[4], stream=stream)
         if normal:
             normal_maps = self.get_normal_maps()
             normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=stream)
