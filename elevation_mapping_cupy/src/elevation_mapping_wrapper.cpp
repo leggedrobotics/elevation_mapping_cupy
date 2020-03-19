@@ -224,7 +224,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   // gridMap.add("elevation", maps[0].cast<float>());
   // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered", "time_layer"};
+  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered", "time_since_update"};
   if (enable_normal_) {
     layerNames.push_back("normal_x");
     layerNames.push_back("normal_y");
