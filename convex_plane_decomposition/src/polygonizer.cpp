@@ -11,11 +11,12 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
              binary_image_upsampled,
              cv::Size(parameters_.upsampling_factor * binary_image.size().height,
                       parameters_.upsampling_factor * binary_image.size().width));
+
   findContours(binary_image_upsampled, contours, hierarchy,
                CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
   std::vector<std::vector<cv::Point>> approx_contours;
   int hierachy_it = 0;
-  for (auto &contour : contours) {
+  for (auto& contour : contours) {
     ++hierachy_it;
     std::vector<cv::Point> approx_contour;
     if (contour.size() <= 10) {
@@ -33,20 +34,16 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
         approx_contour.begin(),
         approx_contour.end(),
         parameters_.resolution / static_cast<double>(parameters_.upsampling_factor));
-
-    if (!polygon.is_simple()) {
-      convex_plane_extraction::Vector2i index;
-      index << (*polygon.begin()).x(), (*polygon.begin()).y();
-      LOG(WARNING) << "Polygon starting at " << index << " is not simple, will be ignored!";
-      continue;
-    }
+    CHECK(polygon.is_simple()) << "Contour extraction from binary image caused intersection!";
     constexpr int kParentFlagIndex = 3;
     if (hierarchy[hierachy_it - 1][kParentFlagIndex] < 0) {
       if (parameters_.activate_long_edge_upsampling) {
         upSampleLongEdges(&polygon);
       }
       if (parameters_.activate_contour_approximation) {
-        //approximateContour(&polygon);
+        approximateContour(&polygon, parameters_.max_number_of_iterations, parameters_.contour_approximation_relative_area_threshold,
+            parameters_.contour_approximation_absolute_area_threshold_squared_meters);
+        VLOG(1) << "Contour approximated!";
       }
       plane_polygons.outer_contour = polygon;
     } else {
@@ -54,6 +51,57 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
     }
   }
   return plane_polygons;
+}
+
+PolygonWithHoles Polygonizer::extractContoursFromBinaryImage(cv::Mat& binary_image) const{
+  PolygonWithHoles plane_polygons;
+  std::vector<std::vector<cv::Point>> contours;
+  std::vector<cv::Vec4i> hierarchy;
+  findContours(binary_image, contours, hierarchy,
+               CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+  std::vector<std::vector<cv::Point>> approx_contours;
+  int hierachy_it = 0;
+  for (auto& contour : contours) {
+    ++hierachy_it;
+    CHECK_GE(contour.size(), 2);
+    CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(
+        contour.begin(), contour.end(), 1);
+    constexpr int kParentFlagIndex = 3;
+    if (hierarchy[hierachy_it - 1][kParentFlagIndex] < 0) {
+      plane_polygons.outer_contour = polygon;
+    } else {
+      plane_polygons.holes.push_back(polygon);
+    }
+  }
+  return plane_polygons;
+}
+
+void Polygonizer::resolveHolesInBinaryImage(cv::Mat& binary_image, const PolygonWithHoles& contour_with_holes) const{
+  for(const auto& hole : contour_with_holes.holes){
+    if (hole.area() > 36){
+      continue;
+    }
+    std::pair<int, int> slConcavityVertices =  getVertexPositionsWithHighestHoleSlConcavityMeasure(hole);
+    const CgalPoint2d first_sl_point = hole.container().at(slConcavityVertices.first);
+    const CgalPoint2d second_sl_point = hole.container().at(slConcavityVertices.second);
+    std::pair<int, CgalPoint2d> first_connection_candidate =
+        getClosestPointAndSegmentOnPolygonToPoint(first_sl_point, contour_with_holes.outer_contour);
+    std::pair<int, CgalPoint2d> second_connection_candidate =
+        getClosestPointAndSegmentOnPolygonToPoint(second_sl_point, contour_with_holes.outer_contour);
+    if ((first_connection_candidate.second - first_sl_point).squared_length() <
+        (second_connection_candidate.second - second_sl_point).squared_length()){
+      cv::Point first_point(first_connection_candidate.second.y(), first_connection_candidate.second.x());
+      cv::Point second_point(first_sl_point.y(), first_sl_point.x());
+      cv::line(binary_image, first_point, second_point, CV_RGB(0,0,0),2);
+    } else{
+      cv::Point first_point(second_connection_candidate.second.y(), second_connection_candidate.second.x());
+      cv::Point second_point(second_sl_point.y(), second_sl_point.x());
+      cv::line(binary_image, first_point, second_point, CV_RGB(0,0,0), 2);
+    }
+  }
+//  cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE); // Create a window for display.
+//  cv::imshow( "Display window", binary_image);
+//  cv::waitKey(0);
 }
 
 //CgalPolygon2d Polygonizer::resolveHoles(PolygonWithHoles& polygon_with_holes) const{
@@ -300,6 +348,7 @@ CgalPolygon2d Polygonizer::resolveHolesWithVerticalConnection(PolygonWithHoles& 
   return **offset_polygons.begin();
 }
 
+/*
 void Polygonizer::approximatePolygon(CgalPolygon2d& polygon) const{
   std::vector<cv::Point2f> contour;
   for (const auto& vertex : polygon.container()){
@@ -312,10 +361,49 @@ void Polygonizer::approximatePolygon(CgalPolygon2d& polygon) const{
     polygon.push_back(CgalPoint2d(point.y, point.x));
   }
 }
-
+*/
 CgalPolygon2d Polygonizer::runPolygonizationOnBinaryImage(const cv::Mat& binary_image) const{
   PolygonWithHoles polygon_with_holes = extractPolygonsFromBinaryImage(binary_image);
-  CgalPolygon2d polygon = resolveHolesWithVerticalConnection(polygon_with_holes);
-  approximatePolygon(polygon);
-  return polygon;
+  //CgalPolygon2d polygon = resolveHolesWithVerticalConnection(polygon_with_holes);
+  //approximatePolygon(polygon_with_holes.outer_contour);
+  return polygon_with_holes.outer_contour;
+}
+
+CgalPolygon2d Polygonizer::resolveHolesUsingSlConnection(const PolygonWithHoles& polygon_with_holes) const{
+  CgalPolygon2dContainer holes = polygon_with_holes.holes;
+  // Get hole part which is entirely contained in outer contour.
+  // In the contour simplification stage intersections may have been introduced.
+  removeAreasNotContainedInOuterContourFromHoles(polygon_with_holes.outer_contour, holes);
+  if (holes.empty()) {
+    return polygon_with_holes.outer_contour;
+  }
+  auto hole_it = holes.begin();
+  while(hole_it!= holes.end()) {
+    if (hole_it->size() < 3) {
+      hole_it = holes.erase(hole_it);
+    } else if (abs(hole_it->area()) < parameters_.hole_area_threshold_squared_meters) {
+      hole_it = holes.erase(hole_it);
+    } else {
+      ++hole_it;
+    }
+  }
+  std::vector<CgalPolygonWithHoles2d> difference_polygons;
+  difference_polygons.emplace_back(polygon_with_holes.outer_contour);
+  for (const auto& hole : holes) {
+    std::vector<CgalPolygonWithHoles2d> temp_polygon_buffer;
+    for (const auto& polygon : difference_polygons) {
+      CGAL::difference(polygon, hole, std::back_inserter(temp_polygon_buffer));
+    }
+    difference_polygons.clear();
+    std::move(temp_polygon_buffer.begin(), temp_polygon_buffer.end(), std::back_inserter(difference_polygons));
+  }
+  CgalPolygon2d outer_contour = difference_polygons.rbegin()->outer_boundary();
+  holes.clear();
+  std::move(difference_polygons.rbegin()->holes_begin(), difference_polygons.rbegin()->holes_end(), std::back_inserter(holes));
+  for (const auto& hole : holes){
+    if (CGAL::do_intersect(hole, outer_contour)){
+      // At this point intersections may only occur in single points. Overlapping edges are not possible.
+
+    }
+  }
 }

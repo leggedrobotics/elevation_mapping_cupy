@@ -27,6 +27,10 @@ void PlaneFactory::createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat&
     const CgalPolygon2d plane_contour = polygonizer.runPolygonizationOnBinaryImage(binary_image);
     const auto plane_parameter_it = plane_parameters.find(label);
     CHECK(plane_parameter_it != plane_parameters.end()) << "Label not contained in plane parameter container!";
+    if (plane_contour.is_empty()){
+      LOG(WARNING) << "Dropping plane, polygon negligible!";
+      continue;
+    }
     if (isPlaneInclinationBelowThreshold(plane_parameter_it->second.normal_vector)){
       planes_.emplace_back(plane_contour, plane_parameter_it->second);
     } else {

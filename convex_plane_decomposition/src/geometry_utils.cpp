@@ -17,7 +17,7 @@ namespace convex_plane_extraction {
         + scalarCrossProduct(lineSupportVector, secondPointOnLine);
   }
 
-  bool isPointOnRightSide(const Vector2d& line_support_vector, const Vector2d& line_direction_vector, const Vector2d& point){
+  bool isPointOnRightSideOfLine(const Vector2d& line_support_vector, const Vector2d& line_direction_vector, const Vector2d& point){
     Vector2d normal_vector(line_direction_vector.y(), (-1.0)*line_direction_vector.x());
     normal_vector.normalize();
     Vector2d point_vector = point - line_support_vector;
@@ -133,8 +133,28 @@ namespace convex_plane_extraction {
     return true;
   }
 
-  double distanceBetweenPoints(Vector2d first, Vector2d second){
+  double distanceBetweenPoints(const Vector2d& first, const Vector2d& second){
     return (second - first).norm();
+  }
+
+  double getDistanceOfPointToLineSegment(const Vector2d& point, const Vector2d& source, const Vector2d& target){
+    return getDistanceAndClosestPointOnLineSegment(point, source, target).first;
+  }
+
+  std::pair<double, Vector2d> getDistanceAndClosestPointOnLineSegment(const Vector2d& point, const Vector2d& source, const Vector2d& target){
+    const double segment_squared_length = (target - source).squaredNorm();
+    if (segment_squared_length == 0.0){
+      return std::make_pair(distanceBetweenPoints(point, source), source);
+    }
+    const double t = (point - source).dot(target - source) / segment_squared_length;
+    if (t > 1.0){
+      return std::make_pair((target - point).norm(), target);
+    } else if (t < 0.0){
+      return std::make_pair((source - point).norm(), source);
+    } else {
+      const Vector2d point_temp = abs(t)*(target - source);
+      return std::make_pair((point_temp - point).norm(), point_temp);
+    }
   }
 
 }

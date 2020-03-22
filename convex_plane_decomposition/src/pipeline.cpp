@@ -15,7 +15,7 @@ Pipeline::Pipeline(const PipelineParameters& pipeline_parameters, const GridMapP
   VLOG(1) << "done";
   plane_factory_.createPlanesFromLabeledImageAndPlaneParameters(sliding_window_plane_extractor_.getLabeledImage(),
       sliding_window_plane_extractor_.getNumberOfExtractedPlanes(), sliding_window_plane_extractor_.getLabelPlaneParameterMap());
-  plane_factory_.decomposePlanesInConvexPolygons();
+  //plane_factory_.decomposePlanesInConvexPolygons();
 }
 
 Polygon3dVectorContainer Pipeline::getConvexPolygons() const{
