@@ -195,7 +195,8 @@ add_dependencies(${PROJECT_NAME}
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES} 
-	${CGAL_LIBRARIES} 
+	${CGAL_LIBRARIES}
+	${OpenCV_LIBRARIES}
 	${CGAL_3RD_PARTY_LIBRARIES}
 	glog
 )

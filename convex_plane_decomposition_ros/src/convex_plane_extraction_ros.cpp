@@ -51,14 +51,14 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   VLOG(1) << "done.";
   // Visualize in Rviz.
   jsk_recognition_msgs::PolygonArray outer_plane_contours = pipeline_ros.getOuterPlaneContours();
-  jsk_recognition_msgs::PolygonArray convex_polygons = pipeline_ros.getConvexPolygons();
+  //jsk_recognition_msgs::PolygonArray convex_polygons = pipeline_ros.getConvexPolygons();
   pipeline_ros.augmentGridMapWithSegmentation(inputMap);
 
   grid_map_msgs::GridMap outputMessage;
   GridMapRosConverter::toMessage(inputMap, outputMessage);
   grid_map_publisher_.publish(outputMessage);
 
-  convex_polygon_publisher_.publish(convex_polygons);
+  //convex_polygon_publisher_.publish(convex_polygons);
   outer_contours_publisher_.publish(outer_plane_contours);
 
 }

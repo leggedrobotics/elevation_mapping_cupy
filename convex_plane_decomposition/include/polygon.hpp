@@ -5,6 +5,7 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <cmath>
 #include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -97,9 +98,11 @@ namespace convex_plane_extraction{
 
   CgalPolygon2dVertexIterator next(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
 
+  bool next(const CgalPolygon2dVertexIterator& iterator, CgalPolygon2dVertexIterator& output_iterator, const CgalPolygon2d& polygon);
+
   CgalPolygon2dVertexIterator previous(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
 
-  void approximateContour(CgalPolygon2d* polygon);
+void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, double relative_area_threshold, double absolute_area_threshold);
 
   void upSampleLongEdges(CgalPolygon2d* polygon);
 
@@ -150,5 +153,13 @@ namespace convex_plane_extraction{
   std::list<CgalPolygon2d> decomposeInnerApproximation(const CgalPolygon2d& polygon);
 
   void printPolygon(const CgalPolygon2d& polygon);
+
+  std::pair<int, int> getVertexPositionsWithHighestHoleSlConcavityMeasure(const CgalPolygon2d& polygon);
+
+  std::pair<int, CgalPoint2d> getClosestPointAndSegmentOnPolygonToPoint(const CgalPoint2d& point, const CgalPolygon2d& polygon);
+
+  std::vector<std::pair<int, int>> getCommonVertexPairIndices(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon);
+
+  std::vector<int> getVertexIndicesOfFirstPolygonContainedInSecondPolygonContour(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon);
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

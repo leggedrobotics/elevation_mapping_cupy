@@ -9,6 +9,8 @@
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <glog/logging.h>
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include "plane.hpp"
@@ -22,7 +24,9 @@ struct PolygonizerParameters{
   bool activate_long_edge_upsampling = false;
   bool activate_contour_approximation = false;
   double hole_area_threshold_squared_meters = 2e-3;
-  double contour_approximation_deviation_threshold = 0.06;
+  double contour_approximation_relative_area_threshold = 0.01;
+  double contour_approximation_absolute_area_threshold_squared_meters = 0.04;
+  int max_number_of_iterations = 5;
 };
 
 class Polygonizer {
@@ -42,6 +46,12 @@ class Polygonizer {
   CgalPolygon2d runPolygonizationOnBinaryImage(const cv::Mat& binary_image) const;
 
   bool addHoleToOuterContourAtVertexIndex(int segment_target_vertex_index, const CgalPolygon2d& hole, CgalPolygon2d& outer_contour) const;
+
+  CgalPolygon2d resolveHolesUsingSlConnection(const PolygonWithHoles& polygon_with_holes) const;
+
+  void resolveHolesInBinaryImage(cv::Mat& binary_image, const PolygonWithHoles& contour_with_holes) const;
+
+  PolygonWithHoles extractContoursFromBinaryImage(cv::Mat& binary_image) const;
 
  private:
 

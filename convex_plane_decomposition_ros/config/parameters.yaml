@@ -9,8 +9,9 @@ polygonizer:
   upsampling_factor : 3
   activate_long_edge_upsampling : false
   activate_contour_approximation : true
-  hole_area_threshold_squared_meters : 0.002
-  contour_approximation_deviation_threshold : 0.04
+  contour_approximation_relative_area_threshold : 0.02
+  contour_approximation_absolute_area_threshold_squared_meters : 0.04
+  max_number_of_iterations : 15
 
 convex_decomposer:
   decomposer_type : 'optimal_decompostion'

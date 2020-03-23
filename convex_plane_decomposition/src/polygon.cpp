@@ -13,29 +13,18 @@ namespace convex_plane_extraction {
           result = intersection(test_segment, segment);
       if (result) {
         if (const CgalSegment2d *s = boost::get<CgalSegment2d>(&*result)) {
-          std::cout << *s << std::endl;
+          if (print_flag) {
+            VLOG(1) << "Intersection over segment: " << *s;
+          }
           return true;
         } else {
           const CgalPoint2d *p = boost::get<CgalPoint2d>(&*result);
           if (print_flag) {
-            std::cout << *p << ";" << std::endl;
+            VLOG(1) << "Intersection in in point: " << *p;
           }
           return true;
         }
       }
-//      Vector2d test_segment_source(vertex_it->x(), vertex_it->y());
-//      Vector2d test_segment_target(next_vertex_it->x(), next_vertex_it->y());
-//      Vector2d segment_source(segment.source().x(), segment.source().y());
-//      Vector2d segment_target(segment.target().x(), segment.target().y());
-//      Vector2d intersection_point;
-//      if (intersectLineSegmentWithLineSegment(test_segment_source, test_segment_target,
-//      segment_source, segment_target, &intersection_point)){
-//        std::cout << intersection_point.x() << ", " << intersection_point.y() << ";" << std::endl;
-//        return true;
-//      }
-//      if (do_intersect(test_segment, segment)){
-//        return true;
-//      }
     }
     return false;
   }
@@ -76,7 +65,7 @@ namespace convex_plane_extraction {
     *normal_vector = normal;
   }
 
-  void approximateContour(CgalPolygon2d* polygon){
+  void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, double relative_area_threshold, double absolute_area_threshold){
     CHECK_NOTNULL(polygon);
     if (polygon->size() < 4){
       return;
@@ -87,50 +76,73 @@ namespace convex_plane_extraction {
     auto second_vertex_it = std::next(first_vertex_it);
     auto third_vertex_it = std::next(second_vertex_it);
     double area = polygon->area();
-    do {
+    int number_of_iterations = 0;
+    while (number_of_iterations < max_number_of_iterations ){
       old_size = polygon->size();
-      for (int vertex_position = 0; vertex_position < old_size; ++vertex_position){
-        if (polygon->size() < 4){
-          break;
-        }
-        Vector2d first_point(first_vertex_it->x(), first_vertex_it->y());
-        Vector2d second_point(second_vertex_it->x(), second_vertex_it->y());
-        Vector2d third_point(third_vertex_it->x(), third_vertex_it->y());
-        if (isPointOnRightSide(first_point, third_point - first_point, second_point)) {
-          LOG(INFO) << "Point on right side!";
-          double a = (third_point - first_point).norm();
-          double b = (second_point - third_point).norm();
-          double c = (first_point - second_point).norm();
-          constexpr double areaThresholdFactor = 0.025;
-          if (computeTriangleArea(a, b, c) < areaThresholdFactor * area) {
-            LOG(INFO) << "Area sufficiently small!";
-            CgalPolygon2d new_polygon(*polygon);
-            int vertex_position_offset = std::distance(polygon->vertices_begin(), second_vertex_it);
-            CgalPolygon2dVertexIterator tmp_iterator = new_polygon.vertices_begin();
-            std::advance(tmp_iterator, vertex_position_offset);
-            LOG(INFO) << "Before erase call!";
-            new_polygon.erase(tmp_iterator);
-            LOG(INFO) << "After ease call!";
-            if (new_polygon.is_simple()) {
-              first_vertex_it = third_vertex_it;
-              polygon->erase(second_vertex_it);
-              second_vertex_it = next(first_vertex_it, *polygon);
-              third_vertex_it = next(second_vertex_it, *polygon);
-              LOG(INFO) << "Removed one vertex!";
-              continue;
+      if (polygon->size() < 4){
+        break;
+      }
+      Vector2d first_point(first_vertex_it->x(), first_vertex_it->y());
+      Vector2d second_point(second_vertex_it->x(), second_vertex_it->y());
+      Vector2d third_point(third_vertex_it->x(), third_vertex_it->y());
+      LOG(WARNING) << "Got here!";
+      if (isPointOnRightSideOfLine(first_point, third_point - first_point, second_point)) {
+        VLOG(1) << "Point on right side!";
+        double a = (third_point - first_point).norm();
+        double b = (second_point - third_point).norm();
+        double c = (first_point - second_point).norm();
+        const double triangle_area = computeTriangleArea(a, b, c);
+        CHECK(isfinite(triangle_area)) << "Area: " << triangle_area << ", a: " << a << ", b: " << b << ", c: " << c;
+        CHECK_GE(triangle_area, 0.0);
+        if ((triangle_area < relative_area_threshold * area) && (triangle_area < absolute_area_threshold)) {
+          VLOG(1) << "Area sufficiently small!";
+          CgalPolygon2d new_polygon(*polygon);
+          int vertex_position_offset = std::distance(polygon->vertices_begin(), second_vertex_it);
+          CgalPolygon2dVertexIterator tmp_iterator = new_polygon.vertices_begin();
+          std::advance(tmp_iterator, vertex_position_offset);
+          VLOG(1) << "Before erase call!";
+          new_polygon.erase(tmp_iterator);
+          VLOG(1) << "After ease call!";
+          if (new_polygon.is_simple() && (new_polygon.orientation() == CGAL::COUNTERCLOCKWISE) && abs(new_polygon.area() - area) < 0.1 * area && abs(new_polygon.area() - area) < 0.5) {
+            CHECK_LE(triangle_area, area);
+            first_vertex_it = polygon->erase(second_vertex_it);
+            if (first_vertex_it == polygon->vertices_end()){
+              first_vertex_it = polygon->vertices_begin();
             }
+            second_vertex_it = next(first_vertex_it, *polygon);
+            third_vertex_it = next(second_vertex_it, *polygon);
+            if ((std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), second_vertex_it)) ||
+                (std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), third_vertex_it)) ||
+                (std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it))){
+              ++number_of_iterations;
+            }
+            VLOG(1) << "Removed one vertex!";
+            continue;
           }
         }
-        first_vertex_it = second_vertex_it;
-        second_vertex_it = third_vertex_it;
-        third_vertex_it = next(second_vertex_it, *polygon);
       }
-    } while (polygon->size() < old_size);
+      first_vertex_it = second_vertex_it;
+      second_vertex_it = third_vertex_it;
+      third_vertex_it = next(second_vertex_it, *polygon);
+      LOG(WARNING) << "Got to bottom! Number of iterations: " << std::distance(polygon->begin(), first_vertex_it) << " " <<
+        std::distance(polygon->begin(), second_vertex_it) << " " << std::distance(polygon->begin(), third_vertex_it);
+      if ((std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), second_vertex_it) ||
+          std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), third_vertex_it) ||
+          std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it) )){
+        ++number_of_iterations;
+      }
+    }
   }
 
   double computeTriangleArea(double side_length_a, double side_length_b, double side_length_c){
-    double s = (side_length_a + side_length_b + side_length_c) / 2.0;
-    return sqrt(s * (s-side_length_a) * (s - side_length_b) * (s - side_length_c));
+    const double s = (side_length_a + side_length_b + side_length_c) / 2.0;
+    CHECK_GT(s, 0.0);
+    double sqrt_argument = s * (s-side_length_a) * (s - side_length_b) * (s - side_length_c);
+    if (abs(sqrt_argument) < 1e-6){
+      sqrt_argument = 0.0;
+    }
+    CHECK_GE(sqrt_argument, 0.0);
+    return sqrt(sqrt_argument);
   }
 
   CgalPolygon2dVertexIterator next(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon){
@@ -138,6 +150,18 @@ namespace convex_plane_extraction {
       return polygon.vertices_begin();
     } else {
       return std::next(iterator);
+    }
+  }
+
+  // Retrieves the following vertex in polygon, including wrap around, when last polygon reached.
+  // In this case the output flag is set to true.
+  bool next(const CgalPolygon2dVertexIterator& iterator, CgalPolygon2dVertexIterator& output_iterator, const CgalPolygon2d& polygon){
+    if (std::next(iterator) == polygon.vertices_end()){
+      output_iterator = polygon.vertices_begin();
+      return true;
+    } else {
+      output_iterator = std::next(iterator);
+      return false;
     }
   }
 
@@ -351,6 +375,67 @@ namespace convex_plane_extraction {
       }
     }
     return false;
+  }
+
+  std::pair<int, int> getVertexPositionsWithHighestHoleSlConcavityMeasure(const CgalPolygon2d& polygon){
+    CHECK(polygon.size() > 2);
+    std::multimap<double,std::pair<int, int>> slConcavityScoreMap;
+    const int number_of_vertices = polygon.size();
+    for (int first_vertex_counter = 0; first_vertex_counter < number_of_vertices - 1; ++first_vertex_counter){
+      const auto& vertex_container = polygon.container();
+      const CgalPoint2d& first_vertex = vertex_container.at(first_vertex_counter);
+      for (int second_vertex_counter = first_vertex_counter + 1; second_vertex_counter < number_of_vertices; ++second_vertex_counter){
+        const CgalPoint2d& second_vertex = vertex_container.at(second_vertex_counter);
+        const double vertex_squared_distance = (first_vertex - second_vertex).squared_length();
+        slConcavityScoreMap.insert(std::make_pair(vertex_squared_distance, std::make_pair(first_vertex_counter, second_vertex_counter)));
+      }
+    }
+    return slConcavityScoreMap.begin()->second;
+  }
+
+  // Attention, if point overlaps with existing vertex.
+  std::pair<int, CgalPoint2d> getClosestPointAndSegmentOnPolygonToPoint(const CgalPoint2d& point, const CgalPolygon2d& polygon){
+    CHECK_GT(polygon.size(), 2);
+    std::multimap<double, std::pair<int, Vector2d>> distance_to_segment_closest_point_map;
+    int edge_counter = 0;
+    for(auto edge_it = polygon.edges_begin(); edge_it != polygon.edges_end(); ++edge_it){
+      if (edge_it->has_on(point)){
+        distance_to_segment_closest_point_map.insert(std::make_pair(0.0, std::make_pair(edge_counter, Vector2d(point.x(), point.y()))));
+        ++edge_counter;
+        continue;
+      }
+      const Vector2d source(edge_it->source().x(), edge_it->source().y());
+      const Vector2d target(edge_it->target().x(), edge_it->target().y());
+      const Vector2d test_point(point.x(), point.y());
+      std::pair<double, Vector2d> distance_closest_point = getDistanceAndClosestPointOnLineSegment(test_point, source, target);
+      distance_to_segment_closest_point_map.insert(std::make_pair(distance_closest_point.first, std::make_pair(edge_counter, distance_closest_point.second)));
+      ++edge_counter;
+    }
+    const int closest_edge_index = distance_to_segment_closest_point_map.begin()->second.first;
+    const CgalPoint2d closest_point(distance_to_segment_closest_point_map.begin()->second.second.x(), distance_to_segment_closest_point_map.begin()->second.second.y());
+    return std::make_pair(closest_edge_index, closest_point);
+  }
+
+  std::vector<std::pair<int, int>> getCommonVertexPairIndices(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+    std::vector<std::pair<int, int>> return_buffer;
+    for(int first_polygon_vertex_index = 0; first_polygon_vertex_index < first_polygon.container().size(); ++first_polygon_vertex_index){
+      for(int second_polygon_vertex_index = 0; second_polygon_vertex_index < second_polygon.container().size(); ++second_polygon_vertex_index){
+        if (first_polygon.container().at(first_polygon_vertex_index) == second_polygon.container().at(second_polygon_vertex_index)){
+          return_buffer.push_back(std::make_pair(first_polygon_vertex_index, second_polygon_vertex_index));
+        }
+      }
+    }
+    return return_buffer;
+  }
+
+  std::vector<int> getVertexIndicesOfFirstPolygonContainedInSecondPolygonContour(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+    std::vector<int> return_buffer;
+    for (int vertex_index = 0; vertex_index < first_polygon.container().size(); ++vertex_index){
+      if (second_polygon.has_on_boundary(first_polygon.container().at(vertex_index))){
+        return_buffer.push_back(vertex_index);
+      }
+    }
+    return return_buffer;
   }
 
 }
