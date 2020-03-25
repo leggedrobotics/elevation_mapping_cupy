@@ -46,20 +46,17 @@ namespace sliding_window_plane_extractor {
       return labeled_image_;
     }
 
-    const auto& getLabelPlaneParameterMap() const{
-      return label_plane_parameters_map_;
-    }
+    const auto& getLabelPlaneParameterMap() const{ return label_plane_parameters_map_; }
 
-    const int getNumberOfExtractedPlanes() const{
-      return number_of_extracted_planes_;
-    }
+    const int getNumberOfExtractedPlanes() const { return number_of_extracted_planes_; }
 
-//    void exportConvexPolygons(const std::string& path) const;
+    //    void exportConvexPolygons(const std::string& path) const;
 
    private:
-
     double computeAverageErrorToPlane(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector,
                                       const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
+
+    void computeMapTransformation();
 
     void computePlaneParametersForLabel(int label);
 
@@ -73,10 +70,11 @@ namespace sliding_window_plane_extractor {
 
     void runSurfaceNormalCurvatureDetection();
 
-
     grid_map::GridMap& map_;
     std::string elevation_layer_;
     double resolution_;
+    Eigen::Matrix2d transformation_xy_to_world_frame_;
+    Eigen::Vector2d map_offset_;
 
     SlidingWindowPlaneExtractorParameters parameters_;
     ransac_plane_extractor::RansacPlaneExtractorParameters ransac_parameters_;
@@ -85,7 +83,6 @@ namespace sliding_window_plane_extractor {
     cv::Mat labeled_image_;
     int number_of_extracted_planes_;
     std::map<int, convex_plane_extraction::PlaneParameters> label_plane_parameters_map_;
-
   };
 }
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_SLIDING_WINDOW_PLANE_EXTRACTOR_HPP_

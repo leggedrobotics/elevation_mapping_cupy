@@ -26,7 +26,6 @@ Polygon3dVectorContainer Pipeline::getPlaneContours() const{
   return plane_factory_.getPlaneContoursInWorldFrame();
 }
 
-
 //void Pipeline::exportConvexPolygons(const std::string& export_path) const {
 //  std::ofstream output_file;
 //  output_file.open(export_path + "convex_polygons.txt", std::ofstream::app);

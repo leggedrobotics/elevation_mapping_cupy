@@ -11,6 +11,7 @@ namespace sliding_window_plane_extractor{
         elevation_layer_(layer_height),
         parameters_(parameters),
         ransac_parameters_(parameters.ransac_parameters){
+    computeMapTransformation();
     VLOG(1) << "Constructing SWE...";
     VLOG(1) << "Set elevation layer is: " << elevation_layer_;
     CHECK(map_.exists(elevation_layer_));
@@ -78,15 +79,18 @@ namespace sliding_window_plane_extractor{
         }
       }
       Eigen::Vector3d eigenvector = eigenvectors.col(smallestId);
-      const Eigen::Vector3d normalVectorPositiveAxis_(0,0,1);
-      if (eigenvector.dot(normalVectorPositiveAxis_) < 0.0) eigenvector = -eigenvector;
+      const Eigen::Vector3d normalVectorPositiveAxis(0, 0, 1);
+      if (eigenvector.dot(normalVectorPositiveAxis) < 0.0) {
+        eigenvector = -eigenvector;
+      }
       Eigen::Vector3d n = eigenvector.normalized();
       grid_map::Index index = *window_iterator;
       double mean_error = ((data_points * n).cwiseAbs()).sum() / height_instances.size();
-      Eigen::Vector3d upwards(0,0,1);
+      Eigen::Vector3d upwards(0, 0, 1);
       constexpr double kInclinationThreshold = 0.35;
-      if (mean_error < parameters_.plane_patch_error_threshold && abs(n.transpose()*upwards) > kInclinationThreshold) {
+      if (mean_error < parameters_.plane_patch_error_threshold && abs(n.transpose() * upwards) > kInclinationThreshold) {
         binary_image_patch_.at<bool>((*window_iterator).x(), (*window_iterator).y()) = true;
+        n.head(2) = transformation_xy_to_world_frame_ * n.head(2);
         normal_x(index.x(), index.y()) = n.x();
         normal_y(index.x(), index.y()) = n.y();
         normal_z(index.x(), index.y()) = n.z();
@@ -285,5 +289,15 @@ namespace sliding_window_plane_extractor{
     VLOG(1) << "done.";
   }
 
-}
+  void SlidingWindowPlaneExtractor::computeMapTransformation() {
+    Eigen::Vector2i map_size = map_.getSize();
+    CHECK(map_.getPosition(Eigen::Vector2i::Zero(), map_offset_));
+    Eigen::Vector2d lower_left_cell_position;
+    CHECK(map_.getPosition(Eigen::Vector2i(map_size.x() - 1, 0), lower_left_cell_position));
+    Eigen::Vector2d upper_right_cell_position;
+    CHECK(map_.getPosition(Eigen::Vector2i(0, map_size.y() - 1), upper_right_cell_position));
+    transformation_xy_to_world_frame_.col(0) = (lower_left_cell_position - map_offset_).normalized();
+    transformation_xy_to_world_frame_.col(1) = (upper_right_cell_position - map_offset_).normalized();
+  }
 
+  }  // namespace sliding_window_plane_extractor
