@@ -20,6 +20,10 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
                            sliding_window_plane_extractor_parameters.plane_patch_error_threshold)) {
     ROS_ERROR("Could not read parameter `plane_patch_error_threshold`. Setting parameter to default value.");
   }
+  if (!nodeHandle.getParam(kSlidingWindowParametersPrefix + "surface_normal_angle_threshold_degrees",
+                           sliding_window_plane_extractor_parameters.surface_normal_angle_threshold_degrees)) {
+    ROS_ERROR("Could not read parameter `plane_patch_error_threshold`. Setting parameter to default value.");
+  }
   if (!nodeHandle.getParam(kSlidingWindowParametersPrefix + "include_curvature_detection",
                            sliding_window_plane_extractor_parameters.include_curvature_detection)) {
     ROS_ERROR("Could not read parameter `include_curvature_detection`. Setting parameter to default value.");

@@ -109,18 +109,25 @@ namespace sliding_window_plane_extractor{
     CHECK_GT(surface_normal_map_boundary_offset, 0);
     const grid_map::Size map_rows_cols = map_.getSize();
     for( int cols = surface_normal_map_boundary_offset; cols < map_rows_cols(1) - surface_normal_map_boundary_offset - 1; ++cols){
-      for (int rows = surface_normal_map_boundary_offset; rows < map_rows_cols(0) - surface_normal_map_boundary_offset - 1; ++rows){
-        const Eigen::Vector3f normal_vector_center(map_.at("normals_x", grid_map::Index(rows, cols)), map_.at("normals_y", grid_map::Index(rows, cols)),
-            map_.at("normals_z", grid_map::Index(rows, cols)));
-        const Eigen::Vector3f normal_vector_next_row(map_.at("normals_x", grid_map::Index(rows+1, cols)), map_.at("normals_y", grid_map::Index(rows+1, cols)),
-            map_.at("normals_z", grid_map::Index(rows+1, cols)));
-        const Eigen::Vector3f normal_vector_next_col(map_.at("normals_x", grid_map::Index(rows, cols+1)), map_.at("normals_y", grid_map::Index(rows, cols+1)),
-            map_.at("normals_z", grid_map::Index(rows, cols+1)));
-        const float angle_in_col_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_col));
-        const float angle_in_row_direction_radians = std::atan2(1.0, normal_vector_center.dot(normal_vector_next_row));
-        const double gradient_magnitude_normalized = sqrt((angle_in_col_direction_radians*angle_in_col_direction_radians) +
-            (angle_in_row_direction_radians * angle_in_row_direction_radians)) / (sqrt(2.0)*M_PI);
-        binary_image_angle_.at<bool>(rows, cols) = gradient_magnitude_normalized <= parameters_.surface_normal_angle_threshold_degrees;
+      for (int rows = surface_normal_map_boundary_offset; rows < map_rows_cols(0) - surface_normal_map_boundary_offset - 1; ++rows) {
+        const Eigen::Vector3f normal_vector_center(map_.at("normals_x", grid_map::Index(rows, cols)),
+                                                   map_.at("normals_y", grid_map::Index(rows, cols)),
+                                                   map_.at("normals_z", grid_map::Index(rows, cols)));
+        const Eigen::Vector3f normal_vector_next_row(map_.at("normals_x", grid_map::Index(rows + 1, cols)),
+                                                     map_.at("normals_y", grid_map::Index(rows + 1, cols)),
+                                                     map_.at("normals_z", grid_map::Index(rows + 1, cols)));
+        const Eigen::Vector3f normal_vector_next_col(map_.at("normals_x", grid_map::Index(rows, cols + 1)),
+                                                     map_.at("normals_y", grid_map::Index(rows, cols + 1)),
+                                                     map_.at("normals_z", grid_map::Index(rows, cols + 1)));
+        const double angle_in_col_direction_deg =
+            std::atan2(normal_vector_center.cross(normal_vector_next_col).norm(), normal_vector_center.dot(normal_vector_next_col)) / M_PI *
+            180.0;
+        const double angle_in_row_direction_deg =
+            std::atan2(normal_vector_center.cross(normal_vector_next_row).norm(), normal_vector_center.dot(normal_vector_next_row)) / M_PI *
+            180.0;
+        binary_image_angle_.at<bool>(rows, cols) = isfinite(angle_in_col_direction_deg) && isfinite(angle_in_row_direction_deg) &&
+                                                   abs(angle_in_col_direction_deg) <= parameters_.surface_normal_angle_threshold_degrees &&
+                                                   abs(angle_in_row_direction_deg) <= parameters_.surface_normal_angle_threshold_degrees;
       }
     }
   }

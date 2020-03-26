@@ -77,17 +77,17 @@ namespace convex_plane_extraction {
     auto third_vertex_it = std::next(second_vertex_it);
     double area = polygon->area();
     int number_of_iterations = 0;
-    while (number_of_iterations < max_number_of_iterations ){
+    while (number_of_iterations < max_number_of_iterations ) {
       old_size = polygon->size();
-      if (polygon->size() < 4){
+      if (polygon->size() < 4) {
         break;
       }
       Vector2d first_point(first_vertex_it->x(), first_vertex_it->y());
       Vector2d second_point(second_vertex_it->x(), second_vertex_it->y());
       Vector2d third_point(third_vertex_it->x(), third_vertex_it->y());
-      LOG(WARNING) << "Got here!";
+      VLOG(2) << "Got here!";
       if (isPointOnRightSideOfLine(first_point, third_point - first_point, second_point)) {
-        VLOG(1) << "Point on right side!";
+        VLOG(2) << "Point on right side!";
         double a = (third_point - first_point).norm();
         double b = (second_point - third_point).norm();
         double c = (first_point - second_point).norm();
@@ -95,28 +95,29 @@ namespace convex_plane_extraction {
         CHECK(isfinite(triangle_area)) << "Area: " << triangle_area << ", a: " << a << ", b: " << b << ", c: " << c;
         CHECK_GE(triangle_area, 0.0);
         if ((triangle_area < relative_area_threshold * area) && (triangle_area < absolute_area_threshold)) {
-          VLOG(1) << "Area sufficiently small!";
+          VLOG(2) << "Area sufficiently small!";
           CgalPolygon2d new_polygon(*polygon);
           int vertex_position_offset = std::distance(polygon->vertices_begin(), second_vertex_it);
           CgalPolygon2dVertexIterator tmp_iterator = new_polygon.vertices_begin();
           std::advance(tmp_iterator, vertex_position_offset);
-          VLOG(1) << "Before erase call!";
+          VLOG(2) << "Before erase call!";
           new_polygon.erase(tmp_iterator);
-          VLOG(1) << "After ease call!";
-          if (new_polygon.is_simple() && (new_polygon.orientation() == CGAL::COUNTERCLOCKWISE) && abs(new_polygon.area() - area) < 0.1 * area && abs(new_polygon.area() - area) < 0.5) {
+          VLOG(2) << "After ease call!";
+          if (new_polygon.is_simple() && (new_polygon.orientation() == CGAL::COUNTERCLOCKWISE) &&
+              abs(new_polygon.area() - area) < 0.1 * area && abs(new_polygon.area() - area) < 0.5) {
             CHECK_LE(triangle_area, area);
             first_vertex_it = polygon->erase(second_vertex_it);
-            if (first_vertex_it == polygon->vertices_end()){
+            if (first_vertex_it == polygon->vertices_end()) {
               first_vertex_it = polygon->vertices_begin();
             }
             second_vertex_it = next(first_vertex_it, *polygon);
             third_vertex_it = next(second_vertex_it, *polygon);
             if ((std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), second_vertex_it)) ||
                 (std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), third_vertex_it)) ||
-                (std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it))){
+                (std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it))) {
               ++number_of_iterations;
             }
-            VLOG(1) << "Removed one vertex!";
+            VLOG(2) << "Removed one vertex!";
             continue;
           }
         }
@@ -124,11 +125,11 @@ namespace convex_plane_extraction {
       first_vertex_it = second_vertex_it;
       second_vertex_it = third_vertex_it;
       third_vertex_it = next(second_vertex_it, *polygon);
-      LOG(WARNING) << "Got to bottom! Number of iterations: " << std::distance(polygon->begin(), first_vertex_it) << " " <<
-        std::distance(polygon->begin(), second_vertex_it) << " " << std::distance(polygon->begin(), third_vertex_it);
+      VLOG(2) << "Got to bottom! Number of iterations: " << std::distance(polygon->begin(), first_vertex_it) << " "
+              << std::distance(polygon->begin(), second_vertex_it) << " " << std::distance(polygon->begin(), third_vertex_it);
       if ((std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), second_vertex_it) ||
-          std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), third_vertex_it) ||
-          std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it) )){
+           std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), third_vertex_it) ||
+           std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it))) {
         ++number_of_iterations;
       }
     }

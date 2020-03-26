@@ -20,8 +20,8 @@ convex_decomposer:
 sliding_window_plane_extractor:
   kernel_size : 3
   plane_patch_error_threshold : 0.004
-  surface_normal_angle_threshold_degrees : 5.0
-  include_curvature_detection : false
+  surface_normal_angle_threshold_degrees : 10.0
+  include_curvature_detection : true
   include_ransac_refinement : false
   global_plane_fit_error_threshold : 0.02
 
