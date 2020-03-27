@@ -254,7 +254,7 @@ namespace sliding_window_plane_extractor{
           }
           ++label_counter;
         }
-        CHECK_EQ(label_counter + 1, planes.size());
+        CHECK_EQ(label_counter, planes.size());
         number_of_extracted_planes_ += label_counter;
         refinement_performed = true;
       }

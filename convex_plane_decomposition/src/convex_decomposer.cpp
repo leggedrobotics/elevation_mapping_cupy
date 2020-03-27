@@ -53,11 +53,17 @@ CgalPolygon2dContainer ConvexDecomposer::performOptimalConvexDecomposition(const
   return output_polygons;
 }
 
-CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const CgalPolygon2d& polygon) const{
+CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const CgalPolygon2d& polygon) const {
   CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
+  VLOG(1) << "Polygon under decomposition: ";
+  printPolygon(polygon);
   CgalPolygon2dContainer convex_polygons;
+  if (polygon.size() == 3) {
+    convex_polygons.push_back(polygon);
+    return convex_polygons;
+  }
   const std::multimap<double, int> dent_locations = detectDentLocations(polygon);
-  if (dent_locations.empty()){
+  if (dent_locations.empty()) {
     // No dents detected, polygon must be convex.
     // CGAL convexity check might still fail, since very shallow dents are ignored.
     convex_polygons.push_back(polygon);
@@ -85,13 +91,15 @@ CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const C
   polygon_counterclockwise_2.push_back(*first_vertex_to_erase_it);
   first_vertex_to_erase_it = next(first_vertex_to_erase_it, polygon_counterclockwise_1);
   auto last_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
+  VLOG(1) << "Add dent to second polygon succeeded.";
   // Intersection somewhere must be at or after source vertex of intersection edge.
   std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
   // Take next vertex due to exclusive upper limit logic.
   last_vertex_to_erase_it = next(last_vertex_to_erase_it, polygon_counterclockwise_1);
   // Copy vertices that will be deleted to second polygon.
-  copyVertices(polygon_counterclockwise_1,first_vertex_to_erase_it,last_vertex_to_erase_it,
-               &polygon_counterclockwise_2, polygon_counterclockwise_2.vertices_end());
+  copyVertices(polygon_counterclockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_2,
+               polygon_counterclockwise_2.vertices_end());
+  VLOG(1) << "Copy vertices that will be deleted succeeded.";
   // Get last point that was erased.
   CgalPoint2d point_before_intersection = *(previous(last_vertex_to_erase_it, polygon_counterclockwise_2));
   // To avoid numerical issues and duplicate vertices, intersection point is only inserted if sufficiently
@@ -101,7 +109,8 @@ CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const C
     polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
   }
   VLOG(1) << "Started splitting vertices...";
-  CgalPolygon2dVertexIterator element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
+  CgalPolygon2dVertexIterator element_behind_deleted_it =
+      erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
   // Add intersection vertex to first polygon if existing vertex too far away.
   if ((intersection_counterclockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
     polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
@@ -171,8 +180,8 @@ CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const C
       recursion_2 = performInnerConvexApproximation(polygon_clockwise_2);
     }
   }
-  std::move(recursion_1.begin(),recursion_1.end(), std::back_inserter(convex_polygons));
-  std::move(recursion_1.begin(), recursion_2.end(), std::back_inserter(convex_polygons));
+  std::move(recursion_1.begin(), recursion_1.end(), std::back_inserter(convex_polygons));
+  std::move(recursion_2.begin(), recursion_2.end(), std::back_inserter(convex_polygons));
   VLOG(1) << "Reached bottom!";
   return convex_polygons;
 }

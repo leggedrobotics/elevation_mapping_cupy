@@ -9,14 +9,15 @@
 #include <vector>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/intersections.h>
-#include <CGAL/partition_2.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polygon_set_2.h>
-#include <CGAL/squared_distance_2.h>
+#include <CGAL/Ray_2.h>
 #include <CGAL/Surface_sweep_2_algorithms.h>
 #include <CGAL/Vector_2.h>
+#include <CGAL/intersections.h>
+#include <CGAL/partition_2.h>
+#include <CGAL/squared_distance_2.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -35,24 +36,31 @@ namespace convex_plane_extraction{
   typedef CGAL::Polygon_2<K>                                    CgalPolygon2d;
   typedef CGAL::Polygon_with_holes_2<K>                         CgalPolygonWithHoles2d;
   typedef Traits::Segment_2                                     CgalSegment2d;
-  typedef std::vector<CgalPolygon2d>                            CgalPolygon2dContainer;
-  typedef CgalPolygon2dContainer::const_iterator                CgalPolygon2dConstIterator;
+  typedef std::vector<CgalPolygon2d> CgalPolygon2dContainer;
+  typedef Traits::Ray_2 CgalRay2d;
+  typedef CgalPolygon2dContainer::const_iterator CgalPolygon2dConstIterator;
   typedef CGAL::Polygon_set_2<K, std::vector<CgalPoint2d>>      CgalPolygon2dSetContainer;
   typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
-  typedef CgalPolygon2d::Vertex_iterator                        CgalPolygon2dVertexIterator;
+  typedef CgalPolygon2d::Vertex_iterator CgalPolygon2dVertexIterator;
 
-  typedef std::vector<Eigen::Vector3d>                          Polygon3d;
-  typedef std::vector<Polygon3d>                                Polygon3dVectorContainer;
-  typedef K::Intersect_2                                        Intersect_2;
+  typedef std::vector<Eigen::Vector3d> Polygon3d;
+  typedef std::vector<Polygon3d> Polygon3dVectorContainer;
+  typedef K::Intersect_2 Intersect_2;
 
-  struct PolygonWithHoles{
+  struct PolygonWithHoles {
     CgalPolygon2d outer_contour;
     CgalPolygon2dContainer holes;
   };
 
+  enum class SegmentIntersectionLocation { kSource, kTarget, kInterior };
+
+  struct RaySegmentIntersection {
+    SegmentInterSectionLocation intersection_location;
+    CgalPoint2d intersection_point;
+  };
 
   template <typename Iter>
-  bool isContourSimple_impl(Iter begin, Iter end, std::bidirectional_iterator_tag){
+  bool isContourSimple_impl(Iter begin, Iter end, std::bidirectional_iterator_tag) {
     CgalPolygon2d polygon;
     for (auto it = begin; it < end; ++it) {
       polygon.push_back(Point((*it).x, (*it).y));
@@ -160,6 +168,9 @@ void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, do
 
   std::vector<std::pair<int, int>> getCommonVertexPairIndices(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon);
 
-  std::vector<int> getVertexIndicesOfFirstPolygonContainedInSecondPolygonContour(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon);
-}
+  std::vector<int> getVertexIndicesOfFirstPolygonContainedInSecondPolygonContour(const CgalPolygon2d& first_polygon,
+                                                                                 const CgalPolygon2d& second_polygon);
+
+  bool doRayAndSegmentIntersect(const CgalRay2d& ray, const CgalSegment2d& segment, RaySegmentIntersection* intersection);
+  }     // namespace convex_plane_extraction
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

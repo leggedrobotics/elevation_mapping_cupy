@@ -244,21 +244,22 @@ namespace convex_plane_extraction {
       Vector2d segment_target = Vector2d(segment_target_it->x(), segment_target_it->y());
       Vector2d intersection_point;
       if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
-          &intersection_point)){
+          &intersection_point)) {
         LOG(INFO) << "Intersection point:" << intersection_point;
         LOG(INFO) << segment_source;
-        if ((ray_target - intersection_point).norm() < 0.001){
-          LOG(INFO) << segment_source;
-          vertex_it = next(vertex_it, polygon);
-          continue;
-        }
+        //        if ((ray_target - intersection_point).norm() < 0.001){
+        //          LOG(INFO) << ray_target;
+        //          vertex_it = next(vertex_it, polygon);
+        //          continue;
+        //        }
         double current_distance = distanceBetweenPoints(ray_target, intersection_point);
         // Take first intersection on ray.
-        if (current_distance < min_distance){
+        if (current_distance < min_distance) {
           one_intersection_at_least = true;
           min_distance = current_distance;
           intersection_tmp.setAllMembers(std::distance(polygon.vertices_begin(), vertex_it),
-          std::distance(polygon.vertices_begin(), segment_target_it), CgalPoint2d(intersection_point.x(), intersection_point.y()));
+                                         std::distance(polygon.vertices_begin(), segment_target_it),
+                                         CgalPoint2d(intersection_point.x(), intersection_point.y()));
         }
       }
       vertex_it = next(vertex_it, polygon);
@@ -429,14 +430,44 @@ namespace convex_plane_extraction {
     return return_buffer;
   }
 
-  std::vector<int> getVertexIndicesOfFirstPolygonContainedInSecondPolygonContour(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+  std::vector<int> getVertexIndicesOfFirstPolygonContainedInSecondPolygonContour(const CgalPolygon2d& first_polygon,
+                                                                                 const CgalPolygon2d& second_polygon) {
     std::vector<int> return_buffer;
-    for (int vertex_index = 0; vertex_index < first_polygon.container().size(); ++vertex_index){
-      if (second_polygon.has_on_boundary(first_polygon.container().at(vertex_index))){
+    for (int vertex_index = 0; vertex_index < first_polygon.container().size(); ++vertex_index) {
+      if (second_polygon.has_on_boundary(first_polygon.container().at(vertex_index))) {
         return_buffer.push_back(vertex_index);
       }
     }
     return return_buffer;
   }
 
-}
+  bool doRayAndSegmentIntersect(const CgalRay2d& ray, const CgalSegment2d& segment, RaySegmentIntersection* intersection) {
+    CGAL::cpp11::result_of<Intersect_2(CgalRay2d, CgalSegment2d)>::type result = CGAL::intersection(ray, segment);
+    if (result) {
+      if (const CgalSegment2d* s = boost::get<CgalSegment2d>(&*result)) {
+        if ((ray.source() - segment.source()).squared_length() < (ray.source() - segment.target()).squared_length()) {
+          intersection->intersection_location = SegmentIntersectionLocation::kSource;
+          intersection->intersection_point = segment.source();
+        } else {
+          intersection->intersection_location = SegmentIntersectionLocation::kTarget;
+          intersection->intersection_point = segment.target();
+        }
+      } else {
+        const CgalPoint2d* intersection_point = boost::get<CgalPoint2d>(&*result);
+        if (*intersection_point == segment.source()) {
+          intersection->intersection_location = SegmentIntersectionLocation::kSource;
+          intersection->intersection_point = segment.source();
+        } else if (*intersection_point == segment.target()) {
+          intersection->intersection_location = SegmentIntersectionLocation::kTarget;
+          intersection->intersection_point = segment.target();
+        } else {
+          intersection->intersection_location = SegmentIntersectionLocation::kInterior;
+          intersection->intersection_point = *intersection_point;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  }  // namespace convex_plane_extraction
