@@ -76,77 +76,124 @@ CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const C
   Intersection intersection_counterclockwise;
   intersection_clockwise_flag = intersectPolygonWithRay(dent_location, CGAL::COUNTERCLOCKWISE,
                                                         polygon, &intersection_counterclockwise);
-  intersection_counterclockwise_flag = intersectPolygonWithRay(dent_location, CGAL::CLOCKWISE,
-                                                               polygon, &intersection_clockwise);
-  if (!intersection_clockwise_flag || !intersection_counterclockwise_flag ){
+  intersection_counterclockwise_flag = intersectPolygonWithRay(dent_location, CGAL::CLOCKWISE, polygon, &intersection_clockwise);
+  if (!intersection_clockwise_flag || !intersection_counterclockwise_flag) {
     LOG(FATAL) << "At least one intersection of dent ray with polygon failed!";
   }
+
   // Generate resulting polygons from cut.
   // Resulting cut from counter clockwise ray intersection.
   CgalPolygon2d polygon_counterclockwise_1 = polygon;
   CgalPolygon2d polygon_counterclockwise_2;
+
+  SegmentIntersectionType intersection_type = intersection_counterclockwise.intersection_type_;
+
   auto first_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
   std::advance(first_vertex_to_erase_it, dent_location);
   // Add dent to second polygon.
   polygon_counterclockwise_2.push_back(*first_vertex_to_erase_it);
+  // First vertex to erase is the vertex following the dent.
   first_vertex_to_erase_it = next(first_vertex_to_erase_it, polygon_counterclockwise_1);
+  // Last vertex to erase is the source vertex of the intersecting polygon edge.
   auto last_vertex_to_erase_it = polygon_counterclockwise_1.vertices_begin();
-  VLOG(1) << "Add dent to second polygon succeeded.";
-  // Intersection somewhere must be at or after source vertex of intersection edge.
   std::advance(last_vertex_to_erase_it, intersection_counterclockwise.edge_source_location_);
   // Take next vertex due to exclusive upper limit logic.
   last_vertex_to_erase_it = next(last_vertex_to_erase_it, polygon_counterclockwise_1);
   // Copy vertices that will be deleted to second polygon.
   copyVertices(polygon_counterclockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_2,
                polygon_counterclockwise_2.vertices_end());
-  VLOG(1) << "Copy vertices that will be deleted succeeded.";
-  // Get last point that was erased.
-  CgalPoint2d point_before_intersection = *(previous(last_vertex_to_erase_it, polygon_counterclockwise_2));
-  // To avoid numerical issues and duplicate vertices, intersection point is only inserted if sufficiently
-  // far away from exisiting vertex.
-  constexpr double kSquaredLengthThreshold = 1e-6;
-  if ((intersection_counterclockwise.intersection_point_ - point_before_intersection).squared_length() > kSquaredLengthThreshold) {
-    polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
+
+  CgalPolygon2dVertexIterator element_behind_deleted_it;
+
+  switch (intersection_type) {
+    case SegmentIntersectionType::kInterior:
+      polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
+      element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
+      polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
+      break;
+    case SegmentIntersectionType::kSource:
+      element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
+      // Add source vertex again to polygon, since it coincides with intersection point.
+      polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
+      break;
+    case SegmentIntersectionType::kTarget:
+      // The intersection point coincides with the target of the intersecting polygon edge, and has to be added here.
+      polygon_counterclockwise_2.push_back(intersection_counterclockwise.intersection_point_);
+      element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
+      break;
   }
-  VLOG(1) << "Started splitting vertices...";
-  CgalPolygon2dVertexIterator element_behind_deleted_it =
-      erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_counterclockwise_1);
-  // Add intersection vertex to first polygon if existing vertex too far away.
-  if ((intersection_counterclockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
-    polygon_counterclockwise_1.insert(element_behind_deleted_it, intersection_counterclockwise.intersection_point_);
-  }
+
+  VLOG(1) << "Finished counter-clockwise cut.";
+
   // Resulting cut from clockwise ray intersection.
   CgalPolygon2d polygon_clockwise_1 = polygon;
   CgalPolygon2d polygon_clockwise_2;
 
+  intersection_type = intersection_clockwise.intersection_type_;
+
+  // First vertex, which is pruned off is the target of the intersecting polygon edge.
   first_vertex_to_erase_it = polygon_clockwise_1.vertices_begin();
   std::advance(first_vertex_to_erase_it, intersection_clockwise.edge_target_location_);
-  if ((*first_vertex_to_erase_it - intersection_clockwise.intersection_point_).squared_length() > kSquaredLengthThreshold) {
-    polygon_clockwise_2.push_back(intersection_clockwise.intersection_point_);
-  }
+  // Last vertex, which is pruned off is the vertex before the dent. (Past-the-end-logic!)
   last_vertex_to_erase_it = polygon_clockwise_1.vertices_begin();
   std::advance(last_vertex_to_erase_it, dent_location);
-  copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
-               polygon_clockwise_2.vertices_end());
-  polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
-  element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
-  VLOG(1) << "done.";
-  if ((intersection_clockwise.intersection_point_ - *element_behind_deleted_it).squared_length() > kSquaredLengthThreshold) {
-    polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
+
+  switch (intersection_type) {
+    case SegmentIntersectionType::kInterior:
+      // First vertex to be added to new polygon is the intersection point.
+      polygon_clockwise_2.push_back(intersection_clockwise.intersection_point_);
+      // Added vertices to be deleted to new polygon (Past-the-end-logic!)
+      copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
+                   polygon_clockwise_2.vertices_end());
+      // Add dent vertex as well.
+      polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
+      // Perform erase operation.
+      element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
+      // Add intersection point to polygon.
+      polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
+      break;
+    case SegmentIntersectionType::kSource:
+      // First vertex to be added to new polygon is source of intersecting polygon edge.
+      polygon_clockwise_2.push_back(intersection_clockwise.intersection_point_);  // Intersection point is equivalent here with source.
+      // Added vertices to be deleted to new polygon (Past-the-end-logic!)
+      copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
+                   polygon_clockwise_2.vertices_end());
+      // Add dent vertex as well.
+      polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
+      // Perform erase operation.
+      element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
+      break;
+    case SegmentIntersectionType::kTarget:
+      // Added vertices to be deleted to new polygon (Past-the-end-logic!)
+      copyVertices(polygon_clockwise_1, first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_2,
+                   polygon_clockwise_2.vertices_end());
+      // Add dent vertex as well.
+      polygon_clockwise_2.push_back(*last_vertex_to_erase_it);
+      // Perform erase operation.
+      element_behind_deleted_it = erase(first_vertex_to_erase_it, last_vertex_to_erase_it, &polygon_clockwise_1);
+      // Add intersection point to polygon, which is in this case the target vertex of the intersecting polygon edge.
+      polygon_clockwise_1.insert(element_behind_deleted_it, intersection_clockwise.intersection_point_);
+      break;
   }
+
+  VLOG(1) << "Finished clockwise cut.";
   printPolygon(polygon_counterclockwise_1);
   printPolygon(polygon_counterclockwise_2);
   printPolygon(polygon_clockwise_1);
   printPolygon(polygon_clockwise_2);
+  CHECK(polygon_counterclockwise_1.is_simple());
+  CHECK(polygon_counterclockwise_2.is_simple());
+  CHECK(polygon_clockwise_1.is_simple());
+  CHECK(polygon_clockwise_2.is_simple());
   VLOG(1) << "Started cut area computation...";
   // Take the cut with smallest min. area of resulting polygons.
-  double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(),
-                    polygon_clockwise_1.area(), polygon_clockwise_2.area()};
+  double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(), polygon_clockwise_1.area(),
+                    polygon_clockwise_2.area()};
   VLOG(1) << "done.";
-  double* min_area_strategy = std::min_element(area, area+4);
+  double* min_area_strategy = std::min_element(area, area + 4);
   CgalPolygon2dContainer recursion_1;
   CgalPolygon2dContainer recursion_2;
-  if ((min_area_strategy - area) < 2){
+  if ((min_area_strategy - area) < 2) {
     // In this case the counter clockwise intersection leads to less loss in area.
     // Perform recursion with this split.
     if(polygon_counterclockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){

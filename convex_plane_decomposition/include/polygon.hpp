@@ -29,15 +29,17 @@
 
 namespace convex_plane_extraction{
 
-  typedef CGAL::Exact_predicates_inexact_constructions_kernel   K;
-  typedef CGAL::Partition_traits_2<K>                           Traits;
-  typedef CGAL::Point_2<K>                                      CgalPoint2d;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Exact_predicates_exact_constructions_kernel EKernel;
+typedef CGAL::Partition_traits_2<K> Traits;
+typedef CGAL::Point_2<K>                                      CgalPoint2d;
   typedef CGAL::Vector_2<K>                                     CgalVector2d;
   typedef CGAL::Polygon_2<K>                                    CgalPolygon2d;
   typedef CGAL::Polygon_with_holes_2<K>                         CgalPolygonWithHoles2d;
   typedef Traits::Segment_2                                     CgalSegment2d;
   typedef std::vector<CgalPolygon2d> CgalPolygon2dContainer;
   typedef Traits::Ray_2 CgalRay2d;
+  typedef Traits::Circle_2 CgalCircle2d;
   typedef CgalPolygon2dContainer::const_iterator CgalPolygon2dConstIterator;
   typedef CGAL::Polygon_set_2<K, std::vector<CgalPoint2d>>      CgalPolygon2dSetContainer;
   typedef CgalPolygon2d::Vertex_const_iterator                  CgalPolygon2dVertexConstIterator;
@@ -52,10 +54,10 @@ namespace convex_plane_extraction{
     CgalPolygon2dContainer holes;
   };
 
-  enum class SegmentIntersectionLocation { kSource, kTarget, kInterior };
+  enum class SegmentIntersectionType : int { kSource, kTarget, kInterior };
 
   struct RaySegmentIntersection {
-    SegmentInterSectionLocation intersection_location;
+    SegmentIntersectionType intersection_location;
     CgalPoint2d intersection_point;
   };
 
@@ -135,17 +137,18 @@ void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, do
     void setEdgeTargetLocation(const int location){
       edge_target_location_ = location;
     }
-    void setIntersectionPoint(const CgalPoint2d& intersection_point){
-      intersection_point_ = intersection_point;
-    }
-    void setAllMembers(const int source_location, const int target_location, const CgalPoint2d& intersection_point){
+    void setIntersectionPoint(const CgalPoint2d& intersection_point) { intersection_point_ = intersection_point; }
+    void setAllMembers(const int source_location, const int target_location, const CgalPoint2d& intersection_point,
+                       const SegmentIntersectionType& intersection_type) {
       edge_source_location_ = source_location;
       edge_target_location_ = target_location;
+      intersection_type_ = intersection_type;
       intersection_point_ = intersection_point;
     }
 
     int edge_source_location_;
     int edge_target_location_;
+    SegmentIntersectionType intersection_type_;
     CgalPoint2d intersection_point_;
   };
 
@@ -172,5 +175,6 @@ void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, do
                                                                                  const CgalPolygon2d& second_polygon);
 
   bool doRayAndSegmentIntersect(const CgalRay2d& ray, const CgalSegment2d& segment, RaySegmentIntersection* intersection);
+
   }     // namespace convex_plane_extraction
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

@@ -210,8 +210,8 @@ namespace convex_plane_extraction {
 
   // Counter-clockwise orientation: ray source vertex is previous vertex in counter-clockwise polygon orientation.
   bool intersectPolygonWithRay(int ray_target_location, CGAL::Orientation orientation, const CgalPolygon2d& polygon,
-                               Intersection* intersection){
-    CHECK_NOTNULL(intersection);
+                               Intersection* output_intersection) {
+    CHECK_NOTNULL(output_intersection);
     CHECK(orientation == CGAL::COUNTERCLOCKWISE || orientation == CGAL::CLOCKWISE);
     CHECK(polygon.orientation() == CGAL::COUNTERCLOCKWISE);
     Intersection intersection_tmp;
@@ -221,55 +221,56 @@ namespace convex_plane_extraction {
     auto vertex_it = polygon.vertices_begin();
     std::advance(vertex_it, ray_target_location);
     auto ray_source_it = vertex_it;
-    CgalPolygon2dVertexIterator ray_target_it = vertex_it;
+    auto ray_target_it = vertex_it;
     if (orientation == CGAL::COUNTERCLOCKWISE) {
       ray_source_it = previous(vertex_it, polygon);
     } else {
       vertex_it = next(vertex_it, polygon);
       ray_source_it = vertex_it;
     }
-    Vector2d ray_source = Vector2d(ray_source_it->x(), ray_source_it->y());
-    LOG(INFO) << "Source ray:" << ray_source;
-    Vector2d ray_target = Vector2d(ray_target_it->x(), ray_target_it->y());
-    Vector2d ray_direction = ray_target - ray_source;
     vertex_it = next(vertex_it, polygon);
-    // Do not intersect with adjacent edges since the intersect already in common vertex.
+    const CgalPoint2d ray_source = *ray_source_it;
+    VLOG(1) << "Source ray:" << ray_source;
+    const CgalPoint2d ray_target = *ray_target_it;
+    const CgalRay2d ray(*ray_target_it, *ray_target_it - *ray_source_it);
+    VLOG(1) << "Ray target: " << ray.source();
+    VLOG(1) << "Ray direction: " << ray.direction();
+    CHECK(!ray.is_degenerate());
+    // Do not intersect with adjacent edges since they intersect already in common vertex.
     auto condition_it = ray_source_it;
-    if (orientation == CGAL::CLOCKWISE){
+    if (orientation == CGAL::CLOCKWISE) {
       condition_it = ray_target_it;
     }
-    while(next(vertex_it, polygon) != condition_it){
-      Vector2d segment_source = Vector2d(vertex_it->x(), vertex_it->y());
-      auto segment_target_it = next(vertex_it, polygon);
-      Vector2d segment_target = Vector2d(segment_target_it->x(), segment_target_it->y());
-      Vector2d intersection_point;
-      if (intersectRayWithLineSegment(ray_source, ray_direction, segment_source, segment_target,
-          &intersection_point)) {
-        LOG(INFO) << "Intersection point:" << intersection_point;
-        LOG(INFO) << segment_source;
-        //        if ((ray_target - intersection_point).norm() < 0.001){
-        //          LOG(INFO) << ray_target;
-        //          vertex_it = next(vertex_it, polygon);
-        //          continue;
-        //        }
-        double current_distance = distanceBetweenPoints(ray_target, intersection_point);
+    int number_of_polygon_edges_visited = 0;
+    while (next(vertex_it, polygon) != condition_it) {
+      ++number_of_polygon_edges_visited;
+      const CgalPoint2d segment_source = *vertex_it;
+      const auto segment_target_it = next(vertex_it, polygon);
+      const CgalPoint2d segment_target = *segment_target_it;
+      VLOG(1) << "Segment under test: Source: " << segment_source << " Target: " << segment_target;
+      const CgalSegment2d segment(*vertex_it, *segment_target_it);
+      RaySegmentIntersection intersection;
+      if (doRayAndSegmentIntersect(ray, segment, &intersection)) {
+        VLOG(1) << "Intersection type: " << static_cast<int>(intersection.intersection_location);
+        VLOG(1) << "Intersection point:" << intersection.intersection_point;
+        VLOG(1) << segment_source;
+        const double current_distance = sqrt((ray_target - intersection.intersection_point).squared_length());
         // Take first intersection on ray.
         if (current_distance < min_distance) {
           one_intersection_at_least = true;
           min_distance = current_distance;
           intersection_tmp.setAllMembers(std::distance(polygon.vertices_begin(), vertex_it),
-                                         std::distance(polygon.vertices_begin(), segment_target_it),
-                                         CgalPoint2d(intersection_point.x(), intersection_point.y()));
+                                         std::distance(polygon.vertices_begin(), segment_target_it), intersection.intersection_point,
+                                         intersection.intersection_location);
         }
       }
       vertex_it = next(vertex_it, polygon);
     }
-
-    if (!one_intersection_at_least){
+    CHECK_EQ(number_of_polygon_edges_visited, polygon.size() - 3);
+    if (!one_intersection_at_least) {
       return false;
     }
-    intersection->setAllMembers(intersection_tmp.edge_source_location_, intersection_tmp.edge_target_location_,
-        intersection_tmp.intersection_point_);
+    *output_intersection = intersection_tmp;
     return true;
   }
 
@@ -442,30 +443,94 @@ namespace convex_plane_extraction {
   }
 
   bool doRayAndSegmentIntersect(const CgalRay2d& ray, const CgalSegment2d& segment, RaySegmentIntersection* intersection) {
-    CGAL::cpp11::result_of<Intersect_2(CgalRay2d, CgalSegment2d)>::type result = CGAL::intersection(ray, segment);
+    constexpr double kSquaredToleranceMeters = 1e-8;
+    CGAL::Cartesian_converter<K, EKernel> to_exact;
+    CGAL::Cartesian_converter<EKernel, K> to_inexact;
+    CGAL::cpp11::result_of<EKernel::Intersect_2(EKernel::Ray_2, EKernel::Segment_2)>::type result =
+        CGAL::intersection(to_exact(ray), to_exact(segment));
+
     if (result) {
-      if (const CgalSegment2d* s = boost::get<CgalSegment2d>(&*result)) {
+      if (const EKernel::Segment_2* ek_segment = boost::get<EKernel::Segment_2>(&*result)) {
+        VLOG(1) << "Segment intersection.";
+        VLOG(1) << "Segment source: " << segment.source();
+        VLOG(1) << "Segment target: " << segment.target();
+        VLOG(1) << "Ray point: " << ray.source();
+        VLOG(1) << "Ray direction: " << ray.direction();
         if ((ray.source() - segment.source()).squared_length() < (ray.source() - segment.target()).squared_length()) {
-          intersection->intersection_location = SegmentIntersectionLocation::kSource;
+          intersection->intersection_location = SegmentIntersectionType::kSource;
           intersection->intersection_point = segment.source();
         } else {
-          intersection->intersection_location = SegmentIntersectionLocation::kTarget;
+          intersection->intersection_location = SegmentIntersectionType::kTarget;
           intersection->intersection_point = segment.target();
         }
       } else {
-        const CgalPoint2d* intersection_point = boost::get<CgalPoint2d>(&*result);
-        if (*intersection_point == segment.source()) {
-          intersection->intersection_location = SegmentIntersectionLocation::kSource;
+        VLOG(1) << "Point intersection.";
+        VLOG(1) << "Segment source: " << segment.source();
+        VLOG(1) << "Segment target: " << segment.target();
+        VLOG(1) << "Ray point: " << ray.source();
+        VLOG(1) << "Ray direction: " << ray.direction();
+        const EKernel::Point_2* ek_point = boost::get<EKernel::Point_2>(&*result);
+        const CgalPoint2d intersection_point = to_inexact(*ek_point);
+        if ((intersection_point - segment.source()).squared_length() <= kSquaredToleranceMeters) {
+          intersection->intersection_location = SegmentIntersectionType::kSource;
           intersection->intersection_point = segment.source();
-        } else if (*intersection_point == segment.target()) {
-          intersection->intersection_location = SegmentIntersectionLocation::kTarget;
+        } else if ((intersection_point - segment.target()).squared_length() <= kSquaredToleranceMeters) {
+          intersection->intersection_location = SegmentIntersectionType::kTarget;
           intersection->intersection_point = segment.target();
         } else {
-          intersection->intersection_location = SegmentIntersectionLocation::kInterior;
-          intersection->intersection_point = *intersection_point;
+          intersection->intersection_location = SegmentIntersectionType::kInterior;
+          intersection->intersection_point = intersection_point;
         }
       }
       return true;
+    }
+    constexpr double kToleranceMeters = 1e-6;
+    const Vector2d ray_source = Vector2d(ray.source().x(), ray.source().y());
+    const Vector2d ray_direction = Vector2d(ray.direction().dx(), ray.direction().dy()).normalized();
+    const Vector2d segment_source = Vector2d(segment.source().x(), segment.source().y());
+    const Vector2d segment_target = Vector2d(segment.target().x(), segment.target().y());
+    const Vector2d p_ray_source__segment_source = segment_source - ray_source;
+    const Vector2d p_ray_source__segment_target = segment_target - ray_source;
+    const double segment_source_projection = p_ray_source__segment_source.dot(ray_direction);
+    const double segment_target_projection = p_ray_source__segment_target.dot(ray_direction);
+    const Vector2d segment_source_projection_point = ray_source + segment_source_projection * ray_direction;
+    const Vector2d segment_target_projection_point = ray_source + segment_target_projection * ray_direction;
+    if (segment_source_projection >= 0.0 && segment_target_projection >= 0.0) {
+      if ((segment_source_projection_point - segment_source).norm() < kToleranceMeters &&
+          (segment_target_projection_point - segment_target).norm() < kToleranceMeters) {
+        // Source and target lie on ray. Determine, which point is closer.
+        if ((segment_source_projection_point - ray_source).norm() <= (segment_target_projection_point - ray_source).norm()) {
+          intersection->intersection_location = SegmentIntersectionType::kSource;
+          intersection->intersection_point = segment.source();
+          return true;
+        } else {
+          intersection->intersection_location = SegmentIntersectionType::kTarget;
+          intersection->intersection_point = segment.target();
+          return true;
+        }
+      } else if ((segment_source_projection_point - segment_source).norm() < kToleranceMeters) {
+        // Only source lies on ray.
+        intersection->intersection_location = SegmentIntersectionType::kSource;
+        intersection->intersection_point = segment.source();
+        return true;
+      } else if ((segment_target_projection_point - segment_target).norm() < kToleranceMeters) {
+        // Only target lies on ray.
+        intersection->intersection_location = SegmentIntersectionType::kTarget;
+        intersection->intersection_point = segment.target();
+        return true;
+      }
+    } else if (segment_source_projection >= 0.0) {
+      if ((segment_source_projection_point - segment_source).norm() < kToleranceMeters) {
+        intersection->intersection_location = SegmentIntersectionType::kSource;
+        intersection->intersection_point = segment.source();
+        return true;
+      }
+    } else if (segment_target_projection >= 0.0) {
+      if ((segment_target_projection_point - segment_target).norm() < kToleranceMeters) {
+        intersection->intersection_location = SegmentIntersectionType::kTarget;
+        intersection->intersection_point = segment.target();
+        return true;
+      }
     }
     return false;
   }
