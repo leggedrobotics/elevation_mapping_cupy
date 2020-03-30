@@ -311,26 +311,23 @@ namespace convex_plane_extraction {
     }
   }
 
-  void printPolygon(const CgalPolygon2d& polygon){
+  void printPolygon(const CgalPolygon2d& polygon) {
     std::cout << "Polygon has " << polygon.size() << " vertices." << std::endl;
-    for (const CgalPoint2d& vertex : polygon){
+    for (const CgalPoint2d& vertex : polygon) {
       std::cout << vertex.x() << " , " << vertex.y() << " ; " << std::endl;
     }
   }
 
-//  void slConcavityHoleVertexSorting(const CgalPolygon2d& hole, std::multimap<double, std::pair<int, int>>* concavity_positions){
-//    CHECK_NOTNULL(concavity_positions);
-//    for (auto vertex_it = hole.vertices_begin(); vertex_it != hole.vertices_end(); ++vertex_it){
-//      std::multimap<double, int> outer_polygon_vertices;
-//      getVertexPositionsInAscendingDistanceToPoint(outer_polygon_, *vertex_it, &outer_polygon_vertices);
-//      for (const auto& outer_distance_vertex_pair : outer_polygon_vertices) {
-//        concavity_positions->insert(std::pair<double, std::pair<int, int>>(outer_distance_vertex_pair.first,
-//                                                                           std::pair<int, int>(std::distance(hole.vertices_begin(), vertex_it),outer_distance_vertex_pair.second)));
-//      }
-//    }
-//  }
+  std::string printPolygonToString(const CgalPolygon2d& polygon) {
+    std::string string;
+    string = "Polygon has " + std::to_string(polygon.size()) + " vertices. \n";
+    for (const CgalPoint2d& vertex : polygon) {
+      string += std::to_string(vertex.x()) + " , " + std::to_string(vertex.y()) + " ;\n";
+    }
+    return string;
+  }
 
-  std::pair<int, int> getIndicesOfClosestVertexPair(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+  std::pair<int, int> getIndicesOfClosestVertexPair(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon) {
     CHECK_GT(first_polygon.size(), 0);
     CHECK_GT(second_polygon.size(), 0);
     std::multimap<double, std::pair<int, int>> buffer = getClosestVertexPairsOrdered(first_polygon, second_polygon);
@@ -338,7 +335,8 @@ namespace convex_plane_extraction {
     return buffer.begin()->second;
   }
 
-  std::multimap<double, std::pair<int, int>> getClosestVertexPairsOrdered(const CgalPolygon2d& first_polygon, const CgalPolygon2d& second_polygon){
+  std::multimap<double, std::pair<int, int>> getClosestVertexPairsOrdered(const CgalPolygon2d& first_polygon,
+                                                                          const CgalPolygon2d& second_polygon) {
     CHECK_GT(first_polygon.size(), 0);
     CHECK_GT(second_polygon.size(), 0);
     std::multimap<double, std::pair<int, int>> buffer;

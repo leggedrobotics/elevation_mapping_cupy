@@ -16,7 +16,6 @@ void PlaneFactory::computeMapTransformation(){
 void PlaneFactory::createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
           const std::map<int, convex_plane_extraction::PlaneParameters>& plane_parameters){
   CHECK_GT(number_of_labels, 0);
-  //CHECK_EQ(number_of_labels, plane_parameters.size());
   Polygonizer polygonizer(parameters_.polygonizer_parameters);
   for (int label = 1; label < number_of_labels; ++label){
     if (plane_parameters.find(label) == plane_parameters.end()){
@@ -27,14 +26,14 @@ void PlaneFactory::createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat&
     const CgalPolygon2d plane_contour = polygonizer.runPolygonizationOnBinaryImage(binary_image);
     const auto plane_parameter_it = plane_parameters.find(label);
     CHECK(plane_parameter_it != plane_parameters.end()) << "Label not contained in plane parameter container!";
-    if (plane_contour.is_empty()){
-      LOG(WARNING) << "Dropping plane, polygon negligible!";
+    if (plane_contour.is_empty()) {
+      LOG(INFO) << "Dropping plane, polygon empty!";
       continue;
     }
     if (isPlaneInclinationBelowThreshold(plane_parameter_it->second.normal_vector)){
       planes_.emplace_back(plane_contour, plane_parameter_it->second);
     } else {
-      LOG(WARNING) << "Dropping plane due to exceeded inclination threshold!";
+      LOG(INFO) << "Dropping plane due to exceeded inclination threshold!";
     }
   }
 }
@@ -95,16 +94,16 @@ Polygon3dVectorContainer PlaneFactory::convertPlanePolygonsToWorldFrame(const Cg
   return output_polygons;
 }
 
-Eigen::Vector3d PlaneFactory::convertPlanePointToWorldFrame(const CgalPoint2d& point, const PlaneParameters& plane_parameters) const{
+Eigen::Vector3d PlaneFactory::convertPlanePointToWorldFrame(const CgalPoint2d& point, const PlaneParameters& plane_parameters) const {
   Eigen::Vector2d temp_point(point.x(), point.y());
   temp_point = transformation_xy_to_world_frame_ * temp_point;
   temp_point = temp_point + map_offset_;
-  LOG_IF(FATAL, !std::isfinite(temp_point.x())) << "Not finite x value!";
-  LOG_IF(FATAL, !std::isfinite(temp_point.y())) << "Not finite y value!";
-  const double z = (-(temp_point.x() - plane_parameters.support_vector.x())*plane_parameters.normal_vector.x() -
-      (temp_point.y() - plane_parameters.support_vector.y())* plane_parameters.normal_vector.y()) /
-          plane_parameters.normal_vector(2) + plane_parameters.support_vector(2);
-  LOG_IF(FATAL, !std::isfinite(z)) << "Not finite z value!";
-  return Vector3d(temp_point.x(), temp_point.y(), z);
+  CHECK(std::isfinite(temp_point.x())) << "Not finite x value!";
+  CHECK(std::isfinite(temp_point.y())) << "Not finite y value!";
+  const double z = (-(temp_point.x() - plane_parameters.support_vector.x()) * plane_parameters.normal_vector.x() -
+                    (temp_point.y() - plane_parameters.support_vector.y()) * plane_parameters.normal_vector.y()) /
+                       plane_parameters.normal_vector(2) +
+                   plane_parameters.support_vector(2);
+  CHECK(std::isfinite(z)) << "Not finite z value!";
+  return {temp_point.x(), temp_point.y(), z};
 }
-

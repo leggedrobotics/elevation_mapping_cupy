@@ -13,8 +13,8 @@ CgalPolygon2dContainer ConvexDecomposer::performConvexDecomposition(const CgalPo
     return convex_polygons;
   }
   CHECK(polygon.is_simple());
-  if(polygon.is_convex()){
-    LOG(INFO) << "Polygon already convex, no decompostion performed.";
+  if(polygon.is_convex()) {
+    VLOG(1) << "Polygon already convex, no decompostion performed.";
     convex_polygons.push_back(polygon);
     return convex_polygons;
   }
@@ -39,8 +39,6 @@ CgalPolygon2dContainer ConvexDecomposer::performOptimalConvexDecomposition(const
   }
   CGAL::optimal_convex_partition_2(polygon.vertices_begin(), polygon.vertices_end(),
       std::back_inserter(polygon_buffer));
-//  assert(CGAL::partition_is_valid_2(polygon.vertices_begin(), polygon.vertices_end(), output_polygons.begin(),
-//      output_polygons.end()));
   CHECK_GT(polygon_buffer.size(), old_container_size);
   CgalPolygon2dContainer output_polygons;
   for (const auto& buffer_polygon : polygon_buffer){
@@ -187,45 +185,29 @@ CgalPolygon2dContainer ConvexDecomposer::performInnerConvexApproximation(const C
   CHECK(polygon_clockwise_2.is_simple());
   VLOG(1) << "Started cut area computation...";
   // Take the cut with smallest min. area of resulting polygons.
-  double area[4] = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(), polygon_clockwise_1.area(),
-                    polygon_clockwise_2.area()};
+  std::array<double, 4> area = {polygon_counterclockwise_1.area(), polygon_counterclockwise_2.area(), polygon_clockwise_1.area(),
+                                polygon_clockwise_2.area()};
   VLOG(1) << "done.";
-  double* min_area_strategy = std::min_element(area, area + 4);
+  const auto min_area_strategy = std::min_element(area.begin(), area.end());
   CgalPolygon2dContainer recursion_1;
   CgalPolygon2dContainer recursion_2;
-  if ((min_area_strategy - area) < 2) {
+  if (std::distance(area.begin(), min_area_strategy) < 2) {
     // In this case the counter clockwise intersection leads to less loss in area.
     // Perform recursion with this split.
-    if(polygon_counterclockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){
-      LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
-      printPolygon(polygon_counterclockwise_1);
-      recursion_1 = std::vector<CgalPolygon2d>();
-    } else {
-      recursion_1 = performInnerConvexApproximation(polygon_counterclockwise_1);
-    }
-    if(polygon_counterclockwise_2.orientation() != CGAL::COUNTERCLOCKWISE){
-      LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
-      printPolygon(polygon_counterclockwise_2);
-      recursion_2 = std::vector<CgalPolygon2d>();
-    } else{
-      recursion_2 = performInnerConvexApproximation(polygon_counterclockwise_2);
-    }
+    CHECK_EQ(polygon_counterclockwise_1.orientation(), CGAL::COUNTERCLOCKWISE)
+        << "Polygon orientation wrong! Printing polygon ..." << printPolygonToString(polygon_counterclockwise_1);
+    recursion_1 = performInnerConvexApproximation(polygon_counterclockwise_1);
+    CHECK_EQ(polygon_counterclockwise_2.orientation(), CGAL::COUNTERCLOCKWISE)
+        << "Polygon orientation wrong! Printing polygon ..." << printPolygonToString(polygon_counterclockwise_2);
+    recursion_2 = performInnerConvexApproximation(polygon_counterclockwise_2);
   } else {
     // In this case the clockwise intersection leads to less loss in area.
-    if(polygon_clockwise_1.orientation() != CGAL::COUNTERCLOCKWISE){
-      LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
-      printPolygon(polygon_clockwise_1);
-      recursion_1 = std::vector<CgalPolygon2d>();
-    } else{
-      recursion_1 = performInnerConvexApproximation(polygon_clockwise_1);
-    }
-    if(polygon_clockwise_2.orientation() != CGAL::COUNTERCLOCKWISE){
-      LOG(WARNING) << "Polygon orientation wrong! Printing polygon ...";
-      printPolygon(polygon_clockwise_2);
-      recursion_2 = std::vector<CgalPolygon2d>();
-    } else{
-      recursion_2 = performInnerConvexApproximation(polygon_clockwise_2);
-    }
+    CHECK_EQ(polygon_clockwise_1.orientation(), CGAL::COUNTERCLOCKWISE)
+        << "Polygon orientation wrong! Printing polygon ..." << printPolygonToString(polygon_clockwise_1);
+    recursion_1 = performInnerConvexApproximation(polygon_clockwise_1);
+    CHECK_EQ(polygon_clockwise_2.orientation(), CGAL::COUNTERCLOCKWISE)
+        << "Polygon orientation wrong! Printing polygon ..." << printPolygonToString(polygon_clockwise_2);
+    recursion_2 = performInnerConvexApproximation(polygon_clockwise_2);
   }
   std::move(recursion_1.begin(), recursion_1.end(), std::back_inserter(convex_polygons));
   std::move(recursion_2.begin(), recursion_2.end(), std::back_inserter(convex_polygons));
@@ -249,12 +231,11 @@ std::multimap<double, int> ConvexDecomposer::detectDentLocations(const CgalPolyg
     if(isPointOnLeftSide(source_point, direction_vector, test_point)){
       double angle = abs(computeAngleBetweenVectors(source_point - test_point, destination_point - test_point));
       // Ignore very shallow dents. Approximate convex decomposition.
-      if ( angle > parameters_.dent_angle_threshold_rad)
+      if (angle > parameters_.dent_angle_threshold_rad) {
         dent_locations.insert(std::make_pair(angle, std::distance(polygon.vertices_begin(), dent_it)));
+      }
     }
   }
   VLOG(1) << "done.";
   return dent_locations;
 }
-
-//    *output_polygon_list = decomposeInnerApproximation(polygon);

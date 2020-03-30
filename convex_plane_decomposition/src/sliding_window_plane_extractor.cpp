@@ -1,4 +1,3 @@
-
 #include "sliding_window_plane_extractor.hpp"
 
 namespace sliding_window_plane_extractor{

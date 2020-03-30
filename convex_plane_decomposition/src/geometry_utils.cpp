@@ -36,72 +36,6 @@ namespace convex_plane_extraction {
     return acos(abs(scalar_product) / (first_vector.norm() * second_vector.norm()));
   }
 
-  //  bool intersectRayWithLineSegment(const Vector2d& ray_source, const Vector2d& ray_direction,
-  //      const Vector2d& segment_source, const Vector2d& segment_target, Vector2d* intersection_point){
-  //    CHECK_NOTNULL(intersection_point);
-  //    Vector2d segment_direction = segment_target - segment_source;
-  //    Matrix2d A;
-  //    A.col(0) = ray_direction;
-  //    A.col(1) = - segment_direction;
-  //    Vector2d b = segment_source - ray_source;
-  //    auto householder_qr = A.fullPivHouseholderQr();
-  //    if (householder_qr.rank() < 2) {
-  //      // Check whether segment and ray overlap.
-  //      const Vector2d p_ray_source_segment_source = segment_source - ray_source;
-  //      const Vector2d p_ray_source_segment_target = segment_target - ray_source;
-  //      if (p_ray_source_segment_source.norm() > p_ray_source_segment_target) {
-  //      }
-  //      Vector2d ray_parameter_solution =
-  //          Vector2d(p_ray_source_segment_source.x() / ray_direction.x(), p_ray_source_segment_source.y() / ray_direction.y());
-  //      constexpr double kSolutionDeviation = 0.0001;
-  //      if (abs(ray_parameter_solution.x() - ray_parameter_solution.y()) < kSolutionDeviation) {
-  //        double parameter_solution_tmp = ray_parameter_solution.mean();
-  //        if (parameter_solution_tmp < 0) {
-  //          return false;
-  //        }
-  //        CHECK_GT(parameter_solution_tmp, 0);
-  //        Vector2d p_ray_source_segment_target = segment_target - ray_source;
-  //        ray_parameter_solution =
-  //            Vector2d(p_ray_source_segment_target.x() / ray_direction.x(), p_ray_source_segment_target.y() / ray_direction.y());
-  //        // If ray is parallel (rank loss) and source point lies on ray, then target point has to as well.
-  //        CHECK_LT(abs(ray_parameter_solution.x() - ray_parameter_solution.y()), kSolutionDeviation);
-  //        if (ray_parameter_solution.mean() < 0) {
-  //          return false;
-  //        }
-  //        if (ray_parameter_solution.mean() < parameter_solution_tmp) {
-  //          *intersection_point = segment_target;
-  //        } else {
-  //          *intersection_point = segment_source;
-  //        }
-  //        return true;
-  //      }
-  //      return false;
-  //    }
-  //    Vector2d solution = householder_qr.solve(b);
-  //    Vector2d ray_solution = ray_source + solution(0) * segment_direction;
-  //    Vector2d segment_solution = segment_source + solution(1) * segment_direction;
-  //    constexpr double kSegmentBorderToleranceMeters = 0.001;
-  //    if (solution(0) <= 1) {
-  //      return false;
-  //    } else if (solution(1) < 0) {
-  //      if ((segment_solution - segment_source).norm() > kSegmentBorderToleranceMeters) {
-  //        return false;
-  //      } else {
-  //        *intersection_point = segment_source;
-  //        return true;
-  //      }
-  //    } else if (solution(1) > 1) {
-  //      if ((segment_solution - segment_target).norm() > kSegmentBorderToleranceMeters) {
-  //        return false;
-  //      } else {
-  //        *intersection_point = segment_target;
-  //      }
-  //    } else {
-  //      *intersection_point = segment_solution;
-  //      return true;
-  //    }
-  //  }
-
   bool intersectLineSegmentWithLineSegment(const Vector2d& segment_1_source, const Vector2d& segment_1_target,
                                            const Vector2d& segment_2_source, const Vector2d& segment_2_target,
                                            Vector2d* intersection_point) {
@@ -177,4 +111,3 @@ namespace convex_plane_extraction {
   }
 
 }
-

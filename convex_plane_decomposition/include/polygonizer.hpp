@@ -33,32 +33,26 @@ struct PolygonizerParameters{
 
 class Polygonizer {
  public:
+  explicit Polygonizer(const PolygonizerParameters parameters = PolygonizerParameters()) : parameters_(parameters){};
 
-  explicit Polygonizer(const PolygonizerParameters parameters = PolygonizerParameters())
-  :parameters_(parameters){};
+  bool addHoleToOuterContourAtVertexIndex(int segment_target_vertex_index, const CgalPolygon2d& hole, CgalPolygon2d& outer_contour) const;
+
+  PolygonWithHoles extractContoursFromBinaryImage(cv::Mat& binary_image) const;
 
   PolygonWithHoles extractPolygonsFromBinaryImage(const cv::Mat& binary_image) const;
 
   void removeAreasNotContainedInOuterContourFromHoles(const CgalPolygon2d& outer_polygon, std::vector<CgalPolygon2d>& holes) const;
 
-  CgalPolygon2d resolveHolesWithVerticalConnection(PolygonWithHoles& polygon_with_holes) const;
-
-  void approximatePolygon(CgalPolygon2d& polygon) const;
-
-  CgalPolygon2d runPolygonizationOnBinaryImage(const cv::Mat& binary_image) const;
-
-  bool addHoleToOuterContourAtVertexIndex(int segment_target_vertex_index, const CgalPolygon2d& hole, CgalPolygon2d& outer_contour) const;
+  void resolveHolesInBinaryImage(cv::Mat& binary_image, const PolygonWithHoles& contour_with_holes) const;
 
   CgalPolygon2d resolveHolesUsingSlConnection(const PolygonWithHoles& polygon_with_holes) const;
 
-  void resolveHolesInBinaryImage(cv::Mat& binary_image, const PolygonWithHoles& contour_with_holes) const;
+  CgalPolygon2d resolveHolesWithVerticalConnection(PolygonWithHoles& polygon_with_holes) const;
 
-  PolygonWithHoles extractContoursFromBinaryImage(cv::Mat& binary_image) const;
+  CgalPolygon2d runPolygonizationOnBinaryImage(const cv::Mat& binary_image) const;
 
  private:
-
   PolygonizerParameters parameters_;
-
 };
 
 

@@ -1,7 +1,3 @@
-//
-// Created by andrej on 11/21/19.
-//
-
 #ifndef CONVEX_PLANE_EXTRACTION_RANSACPLANEEXTRACTOR_HPP_
 #define CONVEX_PLANE_EXTRACTION_RANSACPLANEEXTRACTOR_HPP_
 
@@ -64,8 +60,6 @@ namespace ransac_plane_extractor {
       auto getDetectedPlanes() const{
         return ransac_.shapes();
       };
-
-//        void ransacPlaneVisualization();
 
     private:
 

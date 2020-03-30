@@ -8,6 +8,4 @@ namespace convex_plane_extraction{
     return true;
   }
 
-
-
 }

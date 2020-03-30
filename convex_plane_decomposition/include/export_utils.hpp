@@ -13,9 +13,8 @@
 
 namespace convex_plane_extraction {
 
-  bool exportPointsWithNormalsToCsv(grid_map::GridMap &map, const std::string &normals_layer_prefix,
-                                    const std::string &layer_height);
+bool exportPointsWithNormalsToCsv(grid_map::GridMap& map, const std::string& normals_layer_prefix, const std::string& layer_height,
+                                  const std::string& path);
 
 }
-
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_EXPORT_UTILS_HPP_

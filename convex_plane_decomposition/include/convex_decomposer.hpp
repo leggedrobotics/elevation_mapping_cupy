@@ -17,18 +17,16 @@ struct ConvexDecomposerParameters{
 
 class ConvexDecomposer {
  public:
-
   explicit ConvexDecomposer(const ConvexDecomposerParameters& parameters);
 
   CgalPolygon2dContainer performConvexDecomposition(const CgalPolygon2d& polygon) const;
 
  private:
-
-  CgalPolygon2dContainer performOptimalConvexDecomposition(const CgalPolygon2d& polygon) const;
+  std::multimap<double, int> detectDentLocations(const CgalPolygon2d& polygon) const;
 
   CgalPolygon2dContainer performInnerConvexApproximation(const CgalPolygon2d& polygon) const;
 
-  std::multimap<double, int> detectDentLocations(const CgalPolygon2d& polygon) const;
+  CgalPolygon2dContainer performOptimalConvexDecomposition(const CgalPolygon2d& polygon) const;
 
   ConvexDecomposerParameters parameters_;
 };

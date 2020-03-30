@@ -24,30 +24,23 @@ struct GridMapParameters{
   std::string layer_height;
 };
 
-
 class Pipeline {
  public:
-
   Pipeline(const PipelineParameters& pipeline_parameters, const GridMapParameters& grid_map_parameters);
-
-  const cv::Mat& getSegmentationImage() const{
-    return sliding_window_plane_extractor_.getLabeledImage();
-  };
 
   Polygon3dVectorContainer getConvexPolygons() const;
 
   Polygon3dVectorContainer getPlaneContours() const;
 
+  const cv::Mat& getSegmentationImage() const { return sliding_window_plane_extractor_.getLabeledImage(); };
+
  private:
-
-//  void exportConvexPolygons(const std::string& export_path) const;
-
-  PipelineParameters pipeline_parameters_;
+  // Parameters
   GridMapParameters grid_map_parameters_;
+  PipelineParameters pipeline_parameters_;
 
-  sliding_window_plane_extractor::SlidingWindowPlaneExtractor sliding_window_plane_extractor_;
   PlaneFactory plane_factory_;
-
+  sliding_window_plane_extractor::SlidingWindowPlaneExtractor sliding_window_plane_extractor_;
 };
 } // namespace_convex_plane_extraction
 #endif //CONVEX_PLANE_EXTRACTION__PIPELINE_HPP_

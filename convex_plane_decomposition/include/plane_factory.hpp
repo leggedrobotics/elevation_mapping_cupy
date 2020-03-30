@@ -1,7 +1,7 @@
 #ifndef CONVEX_PLANE_EXTRACTION_INCLUDE_PLANE_FACTORY_HPP_
 #define CONVEX_PLANE_EXTRACTION_INCLUDE_PLANE_FACTORY_HPP_
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 
 #include "convex_decomposer.hpp"
@@ -38,16 +38,14 @@ class PlaneFactory {
 
   void computeMapTransformation();
 
-  bool isPlaneInclinationBelowThreshold(const Eigen::Vector3d& plane_normal_vector) const;
-
-  Eigen::Vector3d convertPlanePointToWorldFrame(const CgalPoint2d& point,
-      const PlaneParameters& plane_parameters) const;
+  Eigen::Vector3d convertPlanePointToWorldFrame(const CgalPoint2d& point, const PlaneParameters& plane_parameters) const;
 
   Polygon3dVectorContainer convertPlanePolygonsToWorldFrame(const CgalPolygon2dContainer& polygons,
-      const PlaneParameters& plane_parameters) const;
+                                                            const PlaneParameters& plane_parameters) const;
 
-  Polygon3dVectorContainer convertPlanePolygonToWorldFrame(const CgalPolygon2d& polygon,
-      const PlaneParameters& plane_parameters) const;
+  Polygon3dVectorContainer convertPlanePolygonToWorldFrame(const CgalPolygon2d& polygon, const PlaneParameters& plane_parameters) const;
+
+  bool isPlaneInclinationBelowThreshold(const Eigen::Vector3d& plane_normal_vector) const;
 
   // Grid map related members.
   grid_map::GridMap& map_;
@@ -55,9 +53,7 @@ class PlaneFactory {
   Eigen::Vector2d map_offset_;
 
   // Parameters.
-
   PlaneFactoryParameters parameters_;
-
 
   std::vector<Plane> planes_;
 

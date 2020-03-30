@@ -34,23 +34,20 @@ namespace sliding_window_plane_extractor {
 
   class SlidingWindowPlaneExtractor{
    public:
-
-    SlidingWindowPlaneExtractor(grid_map::GridMap &map, double resolution, const std::string& layer_height, const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters(),
-        const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters = ransac_plane_extractor::RansacPlaneExtractorParameters());
-
-    void setParameters(const SlidingWindowPlaneExtractorParameters& parameters);
+    SlidingWindowPlaneExtractor(grid_map::GridMap& map, double resolution, const std::string& layer_height,
+                                const SlidingWindowPlaneExtractorParameters& parameters = SlidingWindowPlaneExtractorParameters(),
+                                const ransac_plane_extractor::RansacPlaneExtractorParameters& ransac_parameters =
+                                    ransac_plane_extractor::RansacPlaneExtractorParameters());
 
     void runExtraction();
 
-    const cv::Mat& getLabeledImage() const{
-      return labeled_image_;
-    }
+    const cv::Mat& getLabeledImage() const { return labeled_image_; }
 
-    const auto& getLabelPlaneParameterMap() const{ return label_plane_parameters_map_; }
+    const auto& getLabelPlaneParameterMap() const { return label_plane_parameters_map_; }
 
-    const int getNumberOfExtractedPlanes() const { return number_of_extracted_planes_; }
+    int getNumberOfExtractedPlanes() const { return number_of_extracted_planes_; }
 
-    //    void exportConvexPolygons(const std::string& path) const;
+    void setParameters(const SlidingWindowPlaneExtractorParameters& parameters);
 
    private:
     double computeAverageErrorToPlane(const Eigen::Vector3d& normal_vector, const Eigen::Vector3d& support_vector,
@@ -84,5 +81,5 @@ namespace sliding_window_plane_extractor {
     int number_of_extracted_planes_;
     std::map<int, convex_plane_extraction::PlaneParameters> label_plane_parameters_map_;
   };
-}
-#endif //CONVEX_PLANE_EXTRACTION_INCLUDE_SLIDING_WINDOW_PLANE_EXTRACTOR_HPP_
+  }     // namespace sliding_window_plane_extractor
+#endif  // CONVEX_PLANE_EXTRACTION_INCLUDE_SLIDING_WINDOW_PLANE_EXTRACTOR_HPP_
