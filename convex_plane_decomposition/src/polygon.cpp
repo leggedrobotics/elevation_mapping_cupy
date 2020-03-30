@@ -65,9 +65,11 @@ namespace convex_plane_extraction {
     *normal_vector = normal;
   }
 
-  void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, double relative_area_threshold, double absolute_area_threshold){
+  void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, double relative_local_area_threshold,
+                          double absolute_local_area_threshold, double relative_total_area_threshold,
+                          double absolute_total_area_threshold) {
     CHECK_NOTNULL(polygon);
-    if (polygon->size() < 4){
+    if (polygon->size() < 4) {
       return;
     }
     CHECK(polygon->orientation() == CGAL::COUNTERCLOCKWISE);
@@ -94,7 +96,7 @@ namespace convex_plane_extraction {
         const double triangle_area = computeTriangleArea(a, b, c);
         CHECK(isfinite(triangle_area)) << "Area: " << triangle_area << ", a: " << a << ", b: " << b << ", c: " << c;
         CHECK_GE(triangle_area, 0.0);
-        if ((triangle_area < relative_area_threshold * area) && (triangle_area < absolute_area_threshold)) {
+        if ((triangle_area < relative_local_area_threshold * area) && (triangle_area < absolute_local_area_threshold)) {
           VLOG(2) << "Area sufficiently small!";
           CgalPolygon2d new_polygon(*polygon);
           int vertex_position_offset = std::distance(polygon->vertices_begin(), second_vertex_it);
@@ -104,7 +106,8 @@ namespace convex_plane_extraction {
           new_polygon.erase(tmp_iterator);
           VLOG(2) << "After ease call!";
           if (new_polygon.is_simple() && (new_polygon.orientation() == CGAL::COUNTERCLOCKWISE) &&
-              abs(new_polygon.area() - area) < 0.1 * area && abs(new_polygon.area() - area) < 0.5) {
+              abs(new_polygon.area() - area) < relative_total_area_threshold * area &&
+              abs(new_polygon.area() - area) < absolute_total_area_threshold) {
             CHECK_LE(triangle_area, area);
             first_vertex_it = polygon->erase(second_vertex_it);
             if (first_vertex_it == polygon->vertices_end()) {
@@ -127,9 +130,7 @@ namespace convex_plane_extraction {
       third_vertex_it = next(second_vertex_it, *polygon);
       VLOG(2) << "Got to bottom! Number of iterations: " << std::distance(polygon->begin(), first_vertex_it) << " "
               << std::distance(polygon->begin(), second_vertex_it) << " " << std::distance(polygon->begin(), third_vertex_it);
-      if ((std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), second_vertex_it) ||
-           std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), third_vertex_it) ||
-           std::distance(polygon->begin(), second_vertex_it) >= std::distance(polygon->begin(), third_vertex_it))) {
+      if (std::distance(polygon->begin(), first_vertex_it) >= std::distance(polygon->begin(), second_vertex_it)) {
         ++number_of_iterations;
       }
     }

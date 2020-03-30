@@ -24,8 +24,10 @@ struct PolygonizerParameters{
   bool activate_long_edge_upsampling = false;
   bool activate_contour_approximation = false;
   double hole_area_threshold_squared_meters = 2e-3;
-  double contour_approximation_relative_area_threshold = 0.01;
-  double contour_approximation_absolute_area_threshold_squared_meters = 0.04;
+  double contour_approximation_relative_local_area_threshold = 0.01;
+  double contour_approximation_absolute_local_area_threshold_squared_meters = 0.04;
+  double contour_approximation_relative_total_area_threshold = 0.5;
+  double contour_approximation_absolute_total_area_threshold_squared_meters = 1.0;
   int max_number_of_iterations = 5;
 };
 

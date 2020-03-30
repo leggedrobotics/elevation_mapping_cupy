@@ -112,7 +112,8 @@ typedef CGAL::Point_2<K>                                      CgalPoint2d;
 
   CgalPolygon2dVertexIterator previous(const CgalPolygon2dVertexIterator& iterator, const CgalPolygon2d& polygon);
 
-void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, double relative_area_threshold, double absolute_area_threshold);
+  void approximateContour(CgalPolygon2d* polygon, int max_number_of_iterations, double relative_local_area_threshold,
+                          double absolute_local_area_threshold, double relative_total_area_threshold, double absolute_total_area_threshold);
 
   void upSampleLongEdges(CgalPolygon2d* polygon);
 

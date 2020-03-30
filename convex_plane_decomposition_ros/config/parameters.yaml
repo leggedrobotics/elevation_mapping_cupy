@@ -9,13 +9,15 @@ polygonizer:
   upsampling_factor : 3
   activate_long_edge_upsampling : false
   activate_contour_approximation : true
-  contour_approximation_relative_area_threshold : 0.1
-  contour_approximation_absolute_area_threshold_squared_meters : 0.04
-  max_number_of_iterations : 3
+  contour_approximation_relative_local_area_threshold : 0.1
+  contour_approximation_absolute_local_area_threshold_squared_meters : 0.05
+  contour_approximation_relative_total_area_threshold : 0.5
+  contour_approximation_absolute_total_area_threshold : 1.0
+  max_number_of_iterations : 5
 
 convex_decomposer:
-  decomposer_type : 'inner_convex_decomposition'  #'optimal_decompostion'
-  dent_angle_threshold_rad : 0.001
+  decomposer_type : 'inner_convex_decomposition'  # 'optimal_decompostion'
+  dent_angle_threshold_rad : 0.05
 
 sliding_window_plane_extractor:
   kernel_size : 3

@@ -16,23 +16,15 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
                CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
   std::vector<std::vector<cv::Point>> approx_contours;
   int hierachy_it = 0;
-  for (auto& contour : contours) {
+  for (const auto& contour : contours) {
     ++hierachy_it;
-    std::vector<cv::Point> approx_contour;
-    if (contour.size() <= 10) {
-      approx_contour = contour;
-    } else {
-      approx_contour = contour; // Do this at later stage so that no intersections with holes are generated.
-      //cv::approxPolyDP(contour, approx_contour, 9, true);
-    }
-    if (approx_contour.size() <= 2) {
+    if (contour.size() <= 2) {
       LOG_IF(WARNING, hierarchy[hierachy_it - 1][3] < 0 && contour.size() > 3)
           << "Removing parental polygon since too few vertices!";
       continue;
     }
     CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(
-        approx_contour.begin(),
-        approx_contour.end(),
+        contour.begin(), contour.end(),
         parameters_.resolution / static_cast<double>(parameters_.upsampling_factor));
     CHECK(polygon.is_simple()) << "Contour extraction from binary image caused intersection!";
     constexpr int kParentFlagIndex = 3;
@@ -41,8 +33,9 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
         upSampleLongEdges(&polygon);
       }
       if (parameters_.activate_contour_approximation) {
-        approximateContour(&polygon, parameters_.max_number_of_iterations, parameters_.contour_approximation_relative_area_threshold,
-            parameters_.contour_approximation_absolute_area_threshold_squared_meters);
+        approximateContour(&polygon, parameters_.max_number_of_iterations, parameters_.contour_approximation_relative_local_area_threshold,
+            parameters_.contour_approximation_absolute_local_area_threshold_squared_meters,
+            parameters_.contour_approximation_relative_total_area_threshold, parameters_.contour_approximation_absolute_total_area_threshold_squared_meters);
         VLOG(1) << "Contour approximated!";
       }
       plane_polygons.outer_contour = polygon;
