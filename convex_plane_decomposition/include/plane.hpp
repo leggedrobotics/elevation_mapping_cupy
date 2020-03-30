@@ -20,7 +20,7 @@ namespace convex_plane_extraction {
 
   class Plane {
    public:
-    Plane(const CgalPolygon2d& plane_contour, const PlaneParameters parameters)
+    Plane(const CgalPolygon2d& plane_contour, const PlaneParameters& parameters)
         : plane_contour_(plane_contour), normal_vector_(parameters.normal_vector), support_vector_(parameters.support_vector) {}
 
     void addConvexPolygon(const CgalPolygon2d& convex_polygon) { convex_polygons_.push_back(convex_polygon); }
