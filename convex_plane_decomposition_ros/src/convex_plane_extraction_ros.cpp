@@ -41,6 +41,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   bool success;
   GridMap inputMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(6, 6), success);
   CHECK(success);
+  inputMap.setFrameId("odom");
   ROS_INFO("...done.");
   VLOG(1) << "Applying median filtering to map.";
   applyMedianFilter(inputMap.get("elevation"), 5);

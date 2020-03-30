@@ -90,10 +90,9 @@ PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map:
       ROS_ERROR(
           "Could not read parameter `contour_approximation_absolute_area_threshold_squared_meters`. Setting parameter to default value.");
     }
-    if (!nodeHandle.getParam(kPolygonizerParametersPrefix + "contour_approximation_relative_total_local_area_threshold",
+    if (!nodeHandle.getParam(kPolygonizerParametersPrefix + "contour_approximation_relative_total_area_threshold",
                              polygonizer_parameters.contour_approximation_relative_total_area_threshold)) {
-      ROS_ERROR(
-          "Could not read parameter `contour_approximation_relative_area_threshold`. Setting parameter to default value.");
+      ROS_ERROR("Could not read parameter `contour_approximation_relative_area_threshold`. Setting parameter to default value.");
     }
     if (!nodeHandle.getParam(kPolygonizerParametersPrefix + "contour_approximation_absolute_total_area_threshold_squared_meters",
                              polygonizer_parameters.contour_approximation_absolute_total_area_threshold_squared_meters)) {
