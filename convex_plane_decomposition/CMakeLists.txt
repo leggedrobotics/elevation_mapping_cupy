@@ -34,7 +34,8 @@ find_package(OpenCV REQUIRED
   CONFIG
 )
 
-find_package(glog 0.4.0 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(glog libglog REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -138,7 +139,6 @@ catkin_package(
 	geometry_msgs
 	sensor_msgs
 	cv_bridge
-#  DEPENDS system_lib
 )
 
 ###########
@@ -197,8 +197,9 @@ target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES} 
 	${CGAL_LIBRARIES}
 	${OpenCV_LIBRARIES}
-	${CGAL_3RD_PARTY_LIBRARIES}
 	glog
+	gmp
+	mpfr
 )
 
 #############
