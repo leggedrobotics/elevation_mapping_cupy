@@ -63,6 +63,7 @@ roslaunch convex_plane_extraction_ros convex_plane_extraction_demo.launch
 ```
 
 ### Parameters
-You can select input map topics, pipeline parameters etc. in the respective yaml file in ```bash
+You can select input map topics, pipeline parameters etc. in the respective yaml file in 
+```bash
 convex_plane_decomposition_ros/config/
 ```
