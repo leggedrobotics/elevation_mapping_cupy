@@ -32,7 +32,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier;
-  float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh, max_variance,
+  float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh, max_variance, time_interval,
         orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
   int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
@@ -71,6 +71,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<float>("time_variance", time_variance, 0.01);
   param_.attr("set_time_variance")(time_variance);
+
+  nh.param<float>("time_interval", time_interval, 0.1);
+  param_.attr("set_time_interval")(time_interval);
 
   nh.param<float>("initial_variance", initial_variance, 10.0);
   param_.attr("set_initial_variance")(initial_variance);
@@ -172,6 +175,7 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
   RowMatrixXd variance(map_n_, map_n_);
   RowMatrixXd traversability(map_n_, map_n_);
   RowMatrixXd min_filtered(map_n_, map_n_);
+  RowMatrixXd time_layer(map_n_, map_n_);
   RowMatrixXd normal_x(map_n_, map_n_);
   RowMatrixXd normal_y(map_n_, map_n_);
   RowMatrixXd normal_z(map_n_, map_n_);
@@ -179,6 +183,7 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
                             static_cast<Eigen::Ref<RowMatrixXd>>(variance),
                             static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
                             static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered),
+                            static_cast<Eigen::Ref<RowMatrixXd>>(time_layer),
                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_z),
@@ -189,6 +194,7 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
   maps.push_back(variance);
   maps.push_back(traversability);
   maps.push_back(min_filtered);
+  maps.push_back(time_layer);
   if (enable_normal_) {
     // RowMatrixXd normal_x(map_n_, map_n_);
     // RowMatrixXd normal_y(map_n_, map_n_);
@@ -218,7 +224,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
   // gridMap.add("elevation", maps[0].cast<float>());
   // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered"};
+  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered", "time_since_update"};
   if (enable_normal_) {
     layerNames.push_back("normal_x");
     layerNames.push_back("normal_y");
@@ -322,6 +328,11 @@ void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map)
 
 void ElevationMappingWrapper::update_variance() {
   map_.attr("update_variance")();
+  return;
+}
+
+void ElevationMappingWrapper::update_time() {
+  map_.attr("update_time")();
   return;
 }
 

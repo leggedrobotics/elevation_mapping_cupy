@@ -137,7 +137,10 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                             atomicAdd(&newmap[get_map_idx(idx, 0)], new_h);
                             atomicAdd(&newmap[get_map_idx(idx, 1)], new_v);
                             atomicAdd(&newmap[get_map_idx(idx, 2)], 1.0);
+                            // is Valid
                             map[get_map_idx(idx, 2)] = 1;
+                            // Time layer
+                            map[get_map_idx(idx, 4)] = 0.0;
                         }
                         // visibility cleanup
                     }

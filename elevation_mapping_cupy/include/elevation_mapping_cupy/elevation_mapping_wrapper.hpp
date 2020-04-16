@@ -36,6 +36,7 @@ class ElevationMappingWrapper {
     void clear();
     void get_maps(std::vector<Eigen::MatrixXd>& maps);
     void update_variance();
+    void update_time();
     void get_grid_map(grid_map::GridMap& gridMap);
     void get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result, std::vector<Eigen::Vector2d> &untraversable_polygon);
     double get_additive_mean_error();

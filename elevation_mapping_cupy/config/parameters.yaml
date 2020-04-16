@@ -19,6 +19,7 @@ min_valid_distance: 0.7                         # points with shorter distance w
 max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
 recordable_fps: 3.0                             # fps for publishing map (in slower rate to record).
 update_variance_fps: 5.0                        # fps for updating variance.
+time_interval: 0.1                              # Time layer is updated with this interval.
 
 max_ray_length: 10.0                             # maximum length for ray tracing.
 cleanup_step: 0.1                              # subtitute this value from validity layer at visibiltiy cleanup.
@@ -42,7 +43,8 @@ weight_file: 'config/weights.dat'
 pointcloud_topics: ['/realsense_d435_front/depth/color/points',
                     '/realsense_d435_rear/depth/color/points',
                     '/realsense_d435_left/depth/color/points',
-                    '/realsense_d435_right/depth/color/points'
+                    '/realsense_d435_right/depth/color/points',
+                    '/point_cloud_filter/rslidar/point_cloud'
                     # '/velodyne/point_cloud'
                     ]
 pose_topic: '/state_estimator/pose_in_odom'
