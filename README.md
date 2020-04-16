@@ -55,7 +55,7 @@ git clone https://github.com/ANYbotics/grid_map.git
 ## Usage
 ### Build
 ```bash
-catkin build convex_plane_extraction
+catkin build convex_plane_extraction_ros
 ```
 ### Run demo
 ```bash
