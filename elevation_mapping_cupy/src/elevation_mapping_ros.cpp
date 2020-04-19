@@ -122,16 +122,16 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
 
-  grid_map_msgs::GridMap filteredMsg;
-  grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
+  // grid_map_msgs::GridMap filteredMsg;
+  // grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
 
   if (enableNormalArrowPublishing_) {
     publishNormalAsArrow(gridMap_);
   }
 
-  scopedLockForGridMap.unlock();
-  filteredMsg.basic_layers = {"min_filtered"};
-  filteredMapPub_.publish(filteredMsg);
+  // scopedLockForGridMap.unlock();
+  // filteredMsg.basic_layers = {"min_filtered"};
+  // filteredMapPub_.publish(filteredMsg);
 
   if (enablePointCloudPublishing_) {
     publishAsPointCloud();
@@ -326,6 +326,11 @@ void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
   scopedLockForGridMap.unlock();
   msg.basic_layers = layers;
   recordablePub_.publish(msg);
+  grid_map_msgs::GridMap filteredMsg;
+  grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
+  filteredMsg.basic_layers = {"min_filtered"};
+  filteredMapPub_.publish(filteredMsg);
+
   return;
 }
 

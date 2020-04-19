@@ -161,16 +161,23 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     U nmap_h = map[get_map_idx(nidx, 0)];
                     U nmap_v = map[get_map_idx(nidx, 1)];
                     U nmap_valid = map[get_map_idx(nidx, 2)];
+                    // traversability
+                    U nmap_trav = map[get_map_idx(nidx, 3)];
+                    // Time layer
+                    U non_updated_t = map[get_map_idx(nidx, 4)];
 
                     // If invalid, skip
                     if (nmap_valid < 0.5) {continue;}
+                    // If updated recently, skip
+                    if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
 
                     // If point is close, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    if (d < 0.01 ) {continue;}
+                    if (d < 0.1 ) {continue;}
 
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
-                    if (nmap_h > nz + nmap_v * 0.01) {
+                    // if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.3) {
+                    if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.05) {
                         // map[get_map_idx(nidx, 1)] = 100;
                         // map[get_map_idx(nidx, 2)] = 0;
                         // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
@@ -181,6 +188,8 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                         U norm_z = norm_map[get_map_idx(nidx, 2)];
                         float product = inner_product(ray_x, ray_y, ray_z, norm_x, norm_y, norm_z);
                         if (fabs(product) < ${cleanup_cos_thresh}) {continue;}
+                        U num_points = newmap[get_map_idx(nidx, 3)];
+                        if (num_points > ${wall_num_thresh} && non_updated_t < 1.0) {continue;}
 
                         // Finally, this cell is penetrated by the ray.
                         atomicAdd(&map[get_map_idx(nidx, 2)], -${cleanup_step}/(ray_length / ${max_ray_length}));
