@@ -1,4 +1,4 @@
-#include "plane_factory.hpp"
+#include "convex_plane_decomposition/plane_factory.hpp"
 
 using namespace convex_plane_decomposition;
 

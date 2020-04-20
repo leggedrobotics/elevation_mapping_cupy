@@ -1,5 +1,8 @@
+#include "convex_plane_decomposition_ros/grid_map_preprocessing.hpp"
 
-#include "grid_map_preprocessing.hpp"
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc.hpp>
 
 namespace convex_plane_decomposition{
 

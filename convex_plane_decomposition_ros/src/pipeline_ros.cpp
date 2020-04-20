@@ -1,4 +1,4 @@
-#include "pipeline_ros.hpp"
+#include "convex_plane_decomposition_ros/pipeline_ros.hpp"
 
 namespace convex_plane_decomposition {
 

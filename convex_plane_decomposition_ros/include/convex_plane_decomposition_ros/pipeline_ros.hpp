@@ -7,7 +7,7 @@
 #include  <jsk_recognition_msgs/PolygonArray.h>
 #include  <ros/ros.h>
 
-#include "pipeline.hpp"
+#include "convex_plane_decomposition/pipeline.hpp"
 #include "ros_visualizations.hpp"
 
 namespace convex_plane_decomposition {

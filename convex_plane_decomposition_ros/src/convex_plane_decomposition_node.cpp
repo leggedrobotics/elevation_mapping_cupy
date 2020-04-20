@@ -1,4 +1,5 @@
-#include "convex_plane_decomposition_ros.hpp"
+#include "convex_plane_decomposition_ros/convex_plane_decomposition_ros.hpp"
+
 #include <ros/ros.h>
 
 #include <glog/logging.h>

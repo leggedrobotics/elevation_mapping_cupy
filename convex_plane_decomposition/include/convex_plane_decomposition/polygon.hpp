@@ -23,7 +23,8 @@
 #include <Eigen/Core>
 #include <glog/logging.h>
 
-#include "grid_map_core/GridMap.hpp"
+#include <grid_map_core/GridMap.hpp>
+
 #include "geometry_utils.hpp"
 #include "types.hpp"
 

@@ -1,4 +1,4 @@
-#include "ransac_plane_extractor.hpp"
+#include "convex_plane_decomposition/ransac_plane_extractor.hpp"
 
 using namespace ransac_plane_extractor;
 

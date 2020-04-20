@@ -1,4 +1,7 @@
-#include "sliding_window_plane_extractor.hpp"
+#include "convex_plane_decomposition/sliding_window_plane_extractor.hpp"
+
+#include <cv.hpp>
+#include <grid_map_core/grid_map_core.hpp>
 
 namespace sliding_window_plane_extractor{
 

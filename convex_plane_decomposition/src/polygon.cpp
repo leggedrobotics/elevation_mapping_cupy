@@ -1,4 +1,4 @@
-#include "polygon.hpp"
+#include "convex_plane_decomposition/polygon.hpp"
 
 namespace convex_plane_decomposition {
 

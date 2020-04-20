@@ -1,5 +1,8 @@
-#include "export_utils.hpp"
+#include "convex_plane_decomposition/export_utils.hpp"
 
+#include <fstream>
+
+#include <grid_map_core/iterators/GridMapIterator.hpp>
 
 namespace convex_plane_decomposition {
 

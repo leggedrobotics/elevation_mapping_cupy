@@ -1,4 +1,4 @@
-#include "pipeline.hpp"
+#include "convex_plane_decomposition/pipeline.hpp"
 
 using namespace convex_plane_decomposition;
 
