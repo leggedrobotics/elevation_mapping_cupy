@@ -23,6 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 # OpenCv
 find_package(OpenCV REQUIRED)
 
+# CGAL
+find_package(GMP QUIET)
+
 # glog
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(glog libglog REQUIRED)
@@ -56,6 +59,7 @@ target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	glog
+	gmp
 )
 
 #############
@@ -72,4 +76,3 @@ install(DIRECTORY config data launch rviz
 #############
 ## Testing ##
 #############
-
