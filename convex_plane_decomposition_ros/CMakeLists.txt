@@ -171,6 +171,7 @@ target_link_libraries(${PROJECT_NAME}
         ${CGAL_3RD_PARTY_LIBRARIES}
         ${OpenCV_LIBRARIES}
         glog
+        gmp
         )
 
 #############
