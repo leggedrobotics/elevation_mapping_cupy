@@ -245,7 +245,7 @@ namespace sliding_window_plane_extractor{
           }
           support_vector /= static_cast<double>(plane_point_indices.size());
           normal_vector /= static_cast<double>(plane_point_indices.size());
-          const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
+          const convex_plane_decomposition::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
           if (label_counter == 0) {
             label_plane_parameters_map_.emplace(label, temp_plane_parameters);
           } else {
@@ -259,7 +259,7 @@ namespace sliding_window_plane_extractor{
       }
     }
     if (!refinement_performed){
-      const convex_plane_extraction::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
+      const convex_plane_decomposition::PlaneParameters temp_plane_parameters(normal_vector, support_vector);
       label_plane_parameters_map_.emplace(label, temp_plane_parameters);
     }
     VLOG(1) << "Added plane!";

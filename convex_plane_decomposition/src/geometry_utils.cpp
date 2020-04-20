@@ -1,7 +1,7 @@
 #include <glog/logging.h>
 #include "geometry_utils.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
   double scalarCrossProduct(const Vector2d &leftVector, const Vector2d &rightVector) {
     return leftVector.y() * rightVector.x() - leftVector.x() * rightVector.y();

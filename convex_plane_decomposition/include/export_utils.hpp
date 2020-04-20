@@ -11,7 +11,7 @@
 #include "grid_map_ros/grid_map_ros.hpp"
 
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 bool exportPointsWithNormalsToCsv(grid_map::GridMap& map, const std::string& normals_layer_prefix, const std::string& layer_height,
                                   const std::string& path);

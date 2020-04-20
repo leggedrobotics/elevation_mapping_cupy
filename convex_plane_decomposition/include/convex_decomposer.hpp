@@ -3,7 +3,7 @@
 
 #include "polygon.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 enum class ConvexDecompositionType{
   kGreeneOptimalDecomposition = 1,
@@ -31,6 +31,6 @@ class ConvexDecomposer {
   ConvexDecomposerParameters parameters_;
 };
 
-} // namespace convex_plane_extraction
+} // namespace convex_plane_decomposition
 
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_CONVEX_DECOMPOSER_HPP_

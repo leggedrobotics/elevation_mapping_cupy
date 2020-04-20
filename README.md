@@ -1,4 +1,4 @@
-# loco_perception #
+# Convex Terrain Representation #
 
 ## Overview
 This is a C++ ROS package for extracting convex polygons from elevation maps created by elevation_mapping.  
@@ -55,15 +55,15 @@ git clone https://github.com/ANYbotics/grid_map.git
 ## Usage
 ### Build
 ```bash
-catkin build convex_plane_extraction_ros
+catkin build convex_plane_decomposition_ros
 ```
 ### Run demo
 ```bash
-roslaunch convex_plane_extraction_ros convex_plane_extraction_demo.launch
+roslaunch convex_plane_decomposition_ros convex_plane_decomposition_demo.launch
 ```
 
 ### Parameters
-You can select input map topics, pipeline parameters etc. in the respective yaml file in 
+You can select input map topics, pipeline parameters etc. in the respective yaml file in
 ```bash
 convex_plane_decomposition_ros/config/
 ```

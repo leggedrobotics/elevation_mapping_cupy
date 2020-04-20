@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1...3.15)
-project(convex_plane_extraction)
+project(convex_plane_decomposition)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
@@ -124,7 +124,7 @@ pkg_check_modules(glog libglog REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES convex_plane_extraction
+  LIBRARIES convex_plane_decomposition
   CATKIN_DEPENDS
 	roscpp
 	grid_map_core
@@ -155,7 +155,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/convex_plane_extraction.cpp
+#   src/${PROJECT_NAME}/convex_plane_decomposition.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -194,7 +194,7 @@ add_dependencies(${PROJECT_NAME}
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-	${catkin_LIBRARIES} 
+	${catkin_LIBRARIES}
 	${CGAL_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	glog
@@ -255,7 +255,7 @@ install(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_convex_plane_extraction.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_convex_plane_decomposition.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

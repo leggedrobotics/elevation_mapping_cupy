@@ -1,10 +1,10 @@
 #include <chrono>
 
-#include "convex_plane_extraction_ros.hpp"
+#include "convex_plane_decomposition_ros.hpp"
 
 using namespace grid_map;
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, bool& success)
     : nodeHandle_(nodeHandle) {
@@ -14,7 +14,7 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle, 
   }
 
   subscriber_ = nodeHandle_.subscribe(inputTopic_, 1, &ConvexPlaneExtractionROS::callback, this);
-  grid_map_publisher_ = nodeHandle_.advertise<grid_map_msgs::GridMap>("convex_plane_extraction", 1, true);
+  grid_map_publisher_ = nodeHandle_.advertise<grid_map_msgs::GridMap>("convex_plane_decomposition", 1, true);
   convex_polygon_publisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("convex_polygons", 1);
   outer_contours_publisher_ = nodeHandle_.advertise<jsk_recognition_msgs::PolygonArray>("outer_contours", 1);
   success = true;

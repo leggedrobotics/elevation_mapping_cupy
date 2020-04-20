@@ -79,7 +79,7 @@ namespace sliding_window_plane_extractor {
     cv::Mat binary_image_angle_;
     cv::Mat labeled_image_;
     int number_of_extracted_planes_;
-    std::map<int, convex_plane_extraction::PlaneParameters> label_plane_parameters_map_;
+    std::map<int, convex_plane_decomposition::PlaneParameters> label_plane_parameters_map_;
   };
   }     // namespace sliding_window_plane_extractor
 #endif  // CONVEX_PLANE_EXTRACTION_INCLUDE_SLIDING_WINDOW_PLANE_EXTRACTOR_HPP_

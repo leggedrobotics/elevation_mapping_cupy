@@ -1,8 +1,8 @@
 #include "convex_decomposer.hpp"
 
-using namespace convex_plane_extraction;
+using namespace convex_plane_decomposition;
 
-ConvexDecomposer::ConvexDecomposer(const convex_plane_extraction::ConvexDecomposerParameters &parameters)
+ConvexDecomposer::ConvexDecomposer(const convex_plane_decomposition::ConvexDecomposerParameters &parameters)
   :parameters_(parameters){}
 
 CgalPolygon2dContainer ConvexDecomposer::performConvexDecomposition(const CgalPolygon2d& polygon) const {

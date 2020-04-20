@@ -171,7 +171,7 @@ Visualization Manager:
       Color: 25; 255; 0
       Enabled: true
       Name: PolygonArray
-      Topic: /convex_plane_extraction_ros/convex_polygons
+      Topic: /convex_plane_decomposition_ros/convex_polygons
       Unreliable: false
       Value: true
       coloring: Auto
@@ -184,7 +184,7 @@ Visualization Manager:
       Color: 25; 255; 0
       Enabled: true
       Name: PolygonArray
-      Topic: /convex_plane_extraction_ros/outer_contours
+      Topic: /convex_plane_decomposition_ros/outer_contours
       Unreliable: false
       Value: true
       coloring: Auto
@@ -209,7 +209,7 @@ Visualization Manager:
       Min Intensity: 0
       Name: GridMap
       Show Grid Lines: true
-      Topic: /convex_plane_extraction_ros/convex_plane_extraction
+      Topic: /convex_plane_decomposition_ros/convex_plane_decomposition
       Unreliable: false
       Use Rainbow: true
       Value: true

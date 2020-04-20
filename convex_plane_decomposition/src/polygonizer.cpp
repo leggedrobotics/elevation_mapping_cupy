@@ -1,6 +1,6 @@
 #include "polygonizer.hpp"
 
-using namespace convex_plane_extraction;
+using namespace convex_plane_decomposition;
 
 PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& binary_image) const{
   PolygonWithHoles plane_polygons;
@@ -23,7 +23,7 @@ PolygonWithHoles Polygonizer::extractPolygonsFromBinaryImage(const cv::Mat& bina
           << "Removing parental polygon since too few vertices!";
       continue;
     }
-    CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(
+    CgalPolygon2d polygon = convex_plane_decomposition::createCgalPolygonFromOpenCvPoints(
         contour.begin(), contour.end(),
         parameters_.resolution / static_cast<double>(parameters_.upsampling_factor));
     CHECK(polygon.is_simple()) << "Contour extraction from binary image caused intersection!";
@@ -57,7 +57,7 @@ PolygonWithHoles Polygonizer::extractContoursFromBinaryImage(cv::Mat& binary_ima
   for (auto& contour : contours) {
     ++hierachy_it;
     CHECK_GE(contour.size(), 2);
-    CgalPolygon2d polygon = convex_plane_extraction::createCgalPolygonFromOpenCvPoints(
+    CgalPolygon2d polygon = convex_plane_decomposition::createCgalPolygonFromOpenCvPoints(
         contour.begin(), contour.end(), 1);
     constexpr int kParentFlagIndex = 3;
     if (hierarchy[hierachy_it - 1][kParentFlagIndex] < 0) {

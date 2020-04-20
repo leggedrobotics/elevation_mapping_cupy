@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>convex_plane_extraction_ros</name>
+    <name>convex_plane_decomposition_ros</name>
     <version>0.0.0</version>
-    <description>The convex_plane_extraction_ros package</description>
+    <description>The convex_plane_decomposition_ros package</description>
 
     <!-- One maintainer tag required, multiple allowed, one person per tag -->
     <!-- Example:  -->
@@ -30,7 +30,7 @@
     <depend>geometry_msgs</depend>
     <depend>sensor_msgs</depend>
     <depend>cv_bridge</depend>
-    <depend>convex_plane_extraction</depend>
+    <depend>convex_plane_decomposition</depend>
 
 
     <!-- The export tag contains other, unspecified, tags -->

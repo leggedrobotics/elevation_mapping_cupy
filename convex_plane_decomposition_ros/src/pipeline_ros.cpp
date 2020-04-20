@@ -1,10 +1,10 @@
 #include "pipeline_ros.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 PipelineParameters loadPipelineParameters(ros::NodeHandle &nodeHandle, grid_map::GridMap &map) {
 
-  const std::string kPackagePrefix = "/convex_plane_extraction_ros";
+  const std::string kPackagePrefix = "/convex_plane_decomposition_ros";
 
   // Grid map parameters.
   GridMapParameters grid_map_parameters = loadGridMapParameters(nodeHandle, map);

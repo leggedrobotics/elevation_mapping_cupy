@@ -1,6 +1,6 @@
 #include "pipeline.hpp"
 
-using namespace convex_plane_extraction;
+using namespace convex_plane_decomposition;
 
 Pipeline::Pipeline(const PipelineParameters& pipeline_parameters, const GridMapParameters& grid_map_parameters)
     : pipeline_parameters_(pipeline_parameters),

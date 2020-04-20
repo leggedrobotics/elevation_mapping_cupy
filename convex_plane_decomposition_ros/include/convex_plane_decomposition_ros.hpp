@@ -13,7 +13,7 @@
 #include "pipeline_ros.hpp"
 
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 /*!
  * Applies a chain of grid map filters to a topic and

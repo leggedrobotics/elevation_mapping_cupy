@@ -3,7 +3,7 @@
 
 #include "types.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 double scalarCrossProduct(const Vector2d& leftVector, const Vector2d& rightVector);
 
@@ -27,5 +27,5 @@ bool isPointOnLeftSide(const Vector2d& line_support_vector, const Vector2d& line
 
 bool isPointOnRightSideOfLine(const Vector2d& line_support_vector, const Vector2d& line_direction_vector, const Vector2d& point);
 
-}  // namespace convex_plane_extraction
+}  // namespace convex_plane_decomposition
 #endif  // CONVEX_PLANE_EXTRACTION_INCLUDE_GEOMETRY_UTILS_HPP_

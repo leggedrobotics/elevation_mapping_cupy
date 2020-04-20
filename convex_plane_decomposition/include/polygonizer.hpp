@@ -16,7 +16,7 @@
 #include "plane.hpp"
 #include "polygon.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 struct PolygonizerParameters{
   double resolution = 0.02;
@@ -56,6 +56,6 @@ class Polygonizer {
 };
 
 
-} // namespace convex_plane_extraction
+} // namespace convex_plane_decomposition
 
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGONIZER_HPP_

@@ -1,8 +1,0 @@
-<launch>
-
-  <!-- Launch the grid map filters demo node. -->
-  <node pkg="convex_plane_extraction_ros" type="convex_plane_extraction_ros" name="convex_plane_extraction_ros" output="screen">
-    <rosparam file="$(find convex_plane_extraction_ros)/config/parameters.yaml" command="load"/>
-  </node>
-  <node type="rviz" name="rviz" respawn="true" pkg="rviz" args="-d $(find convex_plane_extraction_ros)/rviz/config.rviz" />
-</launch>

@@ -1,6 +1,6 @@
 #include "plane_factory.hpp"
 
-using namespace convex_plane_extraction;
+using namespace convex_plane_decomposition;
 
 void PlaneFactory::computeMapTransformation(){
   Eigen::Vector2i map_size = map_.getSize();
@@ -14,7 +14,7 @@ void PlaneFactory::computeMapTransformation(){
 }
 
 void PlaneFactory::createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
-          const std::map<int, convex_plane_extraction::PlaneParameters>& plane_parameters){
+          const std::map<int, convex_plane_decomposition::PlaneParameters>& plane_parameters){
   CHECK_GT(number_of_labels, 0);
   Polygonizer polygonizer(parameters_.polygonizer_parameters);
   for (int label = 1; label < number_of_labels; ++label){

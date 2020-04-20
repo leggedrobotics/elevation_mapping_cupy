@@ -8,7 +8,7 @@
 #include "plane.hpp"
 #include "polygonizer.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 struct PlaneFactoryParameters{
   PolygonizerParameters polygonizer_parameters = PolygonizerParameters();
@@ -26,7 +26,7 @@ class PlaneFactory {
   };
 
   void createPlanesFromLabeledImageAndPlaneParameters(const cv::Mat& labeled_image, const int number_of_labels,
-      const std::map<int, convex_plane_extraction::PlaneParameters>& plane_parameters);
+      const std::map<int, convex_plane_decomposition::PlaneParameters>& plane_parameters);
 
   void decomposePlanesInConvexPolygons();
 
@@ -58,5 +58,5 @@ class PlaneFactory {
   std::vector<Plane> planes_;
 
 };
-} // namespace convex_plane_extraction
+} // namespace convex_plane_decomposition
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_PLANE_FACTORY_HPP_

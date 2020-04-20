@@ -11,7 +11,7 @@
 
 #include "plane.hpp"
 
-namespace convex_plane_extraction{
+namespace convex_plane_decomposition{
 
   jsk_recognition_msgs::PolygonArray convertToRosPolygons(const Polygon3dVectorContainer &input_polygons);
 

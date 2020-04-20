@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1...3.15)
-project(convex_plane_extraction_ros)
+project(convex_plane_decomposition_ros)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
         geometry_msgs
         sensor_msgs
         cv_bridge
-        convex_plane_extraction
+        convex_plane_decomposition
         )
 
 ## System dependencies are found with CMake's conventions
@@ -118,7 +118,7 @@ find_package(glog 0.4.0 REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
         INCLUDE_DIRS include
-        #  LIBRARIES convex_plane_extraction
+        #  LIBRARIES convex_plane_decomposition
         CATKIN_DEPENDS
         #  DEPENDS system_lib
 )
@@ -136,7 +136,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/convex_plane_extraction.cpp
+#   src/${PROJECT_NAME}/convex_plane_decomposition.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -148,8 +148,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}
-        src/convex_plane_extraction_node.cpp
-        src/convex_plane_extraction_ros.cpp
+        src/convex_plane_decomposition_node.cpp
+        src/convex_plane_decomposition_ros.cpp
         src/grid_map_preprocessing.cpp
         src/pipeline_ros.cpp
         src/ros_visualizations.cpp)
@@ -227,7 +227,7 @@ install(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_convex_plane_extraction.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_convex_plane_decomposition.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

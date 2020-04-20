@@ -9,7 +9,7 @@
 
 #include <grid_map_ros/grid_map_ros.hpp>
 
-namespace convex_plane_extraction{
+namespace convex_plane_decomposition{
   using namespace grid_map;
 
   void applyMedianFilter(Eigen::MatrixXf& elevation_map, int kernel_size);

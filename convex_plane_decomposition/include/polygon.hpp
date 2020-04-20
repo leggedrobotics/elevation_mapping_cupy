@@ -27,7 +27,7 @@
 #include "geometry_utils.hpp"
 #include "types.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 using K = CGAL::Exact_predicates_inexact_constructions_kernel;
 using EKernel = CGAL::Exact_predicates_exact_constructions_kernel;
@@ -172,5 +172,5 @@ std::string printPolygonToString(const CgalPolygon2d& polygon);
 
 void upSampleLongEdges(CgalPolygon2d* polygon);
 
-}  // namespace convex_plane_extraction
+}  // namespace convex_plane_decomposition
 #endif //CONVEX_PLANE_EXTRACTION_INCLUDE_POLYGON_HPP_

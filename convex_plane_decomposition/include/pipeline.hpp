@@ -5,7 +5,7 @@
 #include "plane_factory.hpp"
 #include "sliding_window_plane_extractor.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 struct PipelineParameters{
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters sliding_window_plane_extractor_parameters =
@@ -42,5 +42,5 @@ class Pipeline {
   PlaneFactory plane_factory_;
   sliding_window_plane_extractor::SlidingWindowPlaneExtractor sliding_window_plane_extractor_;
 };
-} // namespace_convex_plane_extraction
+} // namespace_convex_plane_decomposition
 #endif //CONVEX_PLANE_EXTRACTION__PIPELINE_HPP_

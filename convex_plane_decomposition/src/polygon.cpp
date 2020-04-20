@@ -1,6 +1,6 @@
 #include "polygon.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
   bool doPolygonAndSegmentIntersect(const CgalPolygon2d& polygon, const CgalSegment2d& segment, bool print_flag){
     for (auto vertex_it = polygon.vertices_begin(); vertex_it != polygon.vertices_end(); ++vertex_it){
@@ -534,4 +534,4 @@ namespace convex_plane_extraction {
     return false;
   }
 
-  }  // namespace convex_plane_extraction
+  }  // namespace convex_plane_decomposition

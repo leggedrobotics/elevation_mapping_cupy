@@ -12,7 +12,7 @@
 #include "opencv2/core/eigen.hpp"
 #include "opencv2/core/mat.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
   typedef Eigen::VectorXd VectorXd;
   typedef Eigen::MatrixXd MatrixXd;

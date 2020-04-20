@@ -1,7 +1,7 @@
 
 #include "grid_map_preprocessing.hpp"
 
-namespace convex_plane_extraction{
+namespace convex_plane_decomposition{
 
   void applyMedianFilter(Eigen::MatrixXf& elevation_map, int kernel_size) {
     cv::Mat elevation_image;

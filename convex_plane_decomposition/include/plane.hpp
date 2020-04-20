@@ -6,7 +6,7 @@
 #include "geometry_utils.hpp"
 #include "polygon.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
   struct PlaneParameters{
 
@@ -53,5 +53,5 @@ namespace convex_plane_extraction {
     Vector3d support_vector_;
   };
 
-  }     // namespace convex_plane_extraction
+  }     // namespace convex_plane_decomposition
 #endif  // CONVEX_PLANE_EXTRACTION_SRC_PLANE_HPP_

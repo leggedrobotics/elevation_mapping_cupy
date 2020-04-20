@@ -10,7 +10,7 @@
 #include "pipeline.hpp"
 #include "ros_visualizations.hpp"
 
-namespace convex_plane_extraction {
+namespace convex_plane_decomposition {
 
 GridMapParameters loadGridMapParameters(ros::NodeHandle& nodeHandle, grid_map::GridMap& map);
 
@@ -32,5 +32,5 @@ class PipelineROS {
   Pipeline pipeline_;
 };
 
-} // namespace convex_plane_extraction
+} // namespace convex_plane_decomposition
 #endif //CONVEX_PLANE_EXTRACTION_ROS__PIPELINE_ROS_HPP_
