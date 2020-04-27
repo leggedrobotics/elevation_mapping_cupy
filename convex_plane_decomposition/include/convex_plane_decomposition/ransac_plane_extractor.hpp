@@ -13,8 +13,8 @@
 #include "CGAL/Point_with_normal_3.h"
 #include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
 #include "CGAL/Shape_detection/Efficient_RANSAC.h"
-#include "Eigen/Core"
-#include "Eigen/Dense"
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <glog/logging.h>
 
 

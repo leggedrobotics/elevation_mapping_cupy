@@ -1,4 +1,4 @@
-#include "polygonizer.hpp"
+#include "convex_plane_decomposition/polygonizer.hpp"
 
 using namespace convex_plane_decomposition;
 

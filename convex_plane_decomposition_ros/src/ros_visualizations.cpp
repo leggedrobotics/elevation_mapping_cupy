@@ -1,4 +1,4 @@
-#include "ros_visualizations.hpp"
+#include "convex_plane_decomposition_ros/ros_visualizations.hpp"
 
 namespace convex_plane_decomposition {
 

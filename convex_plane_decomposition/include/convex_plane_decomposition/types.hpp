@@ -9,8 +9,8 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
-#include "opencv2/core/eigen.hpp"
-#include "opencv2/core/mat.hpp"
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/core/mat.hpp>
 
 namespace convex_plane_decomposition {
 

@@ -1,5 +1,6 @@
+#include "convex_plane_decomposition/geometry_utils.hpp"
+
 #include <glog/logging.h>
-#include "geometry_utils.hpp"
 
 namespace convex_plane_decomposition {
 

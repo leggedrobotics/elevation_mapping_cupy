@@ -1,4 +1,4 @@
-#include "convex_decomposer.hpp"
+#include "convex_plane_decomposition/convex_decomposer.hpp"
 
 using namespace convex_plane_decomposition;
 

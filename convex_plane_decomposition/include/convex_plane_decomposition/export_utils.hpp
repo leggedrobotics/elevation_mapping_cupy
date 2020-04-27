@@ -1,15 +1,12 @@
 #ifndef CONVEX_PLANE_EXTRACTION_INCLUDE_EXPORT_UTILS_HPP_
 #define CONVEX_PLANE_EXTRACTION_INCLUDE_EXPORT_UTILS_HPP_
 
-#include <iostream>
-#include <fstream>
-#include <iomanip>
+#include <string>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-#include "grid_map_ros/grid_map_ros.hpp"
-
+#include <grid_map_core/GridMap.hpp>
 
 namespace convex_plane_decomposition {
 

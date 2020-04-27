@@ -11,8 +11,8 @@
 #include <glog/logging.h>
 #include <opencv2/core/eigen.hpp>
 
-#include "grid_map_ros/grid_map_ros.hpp"
-#include "grid_map_core/GridMapMath.hpp"
+#include <grid_map_core/GridMap.hpp>
+#include <grid_map_core/GridMapMath.hpp>
 
 #include "plane.hpp"
 #include "polygon.hpp"
