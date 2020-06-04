@@ -67,6 +67,7 @@ class ElevationMap(object):
         self.min_filter_size = param.min_filter_size
         self.min_filter_iteration = param.min_filter_iteration
         self.time_interval = param.time_interval
+        self.max_drift = param.max_drift
 
         # layers: elevation, variance, is_valid, traversability, time
         self.elevation_map = xp.zeros((5, self.cell_n, self.cell_n))
@@ -184,7 +185,8 @@ class ElevationMap(object):
                      or orientation_noise > self.orientation_noise_thresh)):
             self.mean_error = error / error_cnt
             self.additive_mean_error += self.mean_error
-            self.elevation_map[0] += self.mean_error
+            if np.abs(self.mean_error) < self.max_drift:
+                self.elevation_map[0] += self.mean_error
         self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
                                self.elevation_map, self.new_map,
                                size=(points.shape[0]))
