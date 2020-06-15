@@ -8,7 +8,7 @@ time_variance: 0.1                             # add this value when update_vari
 max_variance: 100.0                             # maximum variance for each cell.
 initial_variance: 100.0                         # initial variance for each cell.
 traversability_inlier: 0.9                      # cells with higher traversability are used for drift compensation.
-dilation_size: 2                                # dilation filter size before traversability filter.
+dilation_size: 3                                # dilation filter size before traversability filter.
 wall_num_thresh: 20                            # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
 min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
 position_noise_thresh: 0.001                    # if the position change is bigger than this value, the drift compensation happens.
