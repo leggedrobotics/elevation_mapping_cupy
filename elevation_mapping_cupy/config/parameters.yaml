@@ -1,5 +1,5 @@
-resolution: 0.02                                # resolution in m.
-map_length: 4                                  # map's size in m.
+resolution: 0.04                                # resolution in m.
+map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.01                         # if point is outlier, add this value to the cell.
@@ -40,10 +40,10 @@ enable_normal_color: false
 
 weight_file: 'config/weights.dat'
 
-pointcloud_topics: ['/realsense_d435_front/depth/color/points',
-                    '/realsense_d435_rear/depth/color/points',
-                    '/realsense_d435_left/depth/color/points',
-                    '/realsense_d435_right/depth/color/points',
+pointcloud_topics: ['/depth_camera_front/depth/color/points',
+                    '/depth_camera_rear/depth/color/points',
+                    '/depth_camera_left/depth/color/points',
+                    '/depth_camera_right/depth/color/points',
                     '/point_cloud_filter/rslidar/point_cloud'
                     # '/velodyne/point_cloud'
                     ]
