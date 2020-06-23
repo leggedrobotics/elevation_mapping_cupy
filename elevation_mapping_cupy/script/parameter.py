@@ -36,6 +36,8 @@ class Parameter(object):
         self.min_filter_size = 5
         self.min_filter_iteration = 3
 
+        self.max_drift = 0.10
+
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
         self.enable_visibility_cleanup = True
@@ -149,6 +151,9 @@ class Parameter(object):
 
     def set_min_filter_iteration(self, x):
         self.min_filter_iteration = x
+
+    def set_max_drift(self, x):
+        self.max_drift = x
 
     def set_cleanup_cos_thresh(self, x):
         self.cleanup_cos_thresh = x
