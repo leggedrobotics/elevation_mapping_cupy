@@ -1,8 +1,9 @@
 <launch>
 
   <!-- Launch the grid map filters demo node. -->
-  <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros" name="convex_plane_decomposition_ros" output="screen">
+  <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_node" name="convex_plane_decomposition_ros"
+  output="screen" launch-prefix="">
     <rosparam file="$(find convex_plane_decomposition_ros)/config/parameters.yaml" command="load"/>
   </node>
-  <node type="rviz" name="rviz" respawn="true" pkg="rviz" args="-d $(find convex_plane_decomposition_ros)/rviz/config.rviz" />
+
 </launch>

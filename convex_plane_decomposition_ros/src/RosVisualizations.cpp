@@ -1,0 +1,70 @@
+#include "convex_plane_decomposition_ros/RosVisualizations.h"
+
+#include <geometry_msgs/Point32.h>
+#include <geometry_msgs/PolygonStamped.h>
+
+namespace convex_plane_decomposition {
+
+inline geometry_msgs::PolygonStamped to3d(const CgalPolygon2d& polygon, const TerrainPlane& planeParameters,
+                                          const std_msgs::Header& header) {
+  geometry_msgs::PolygonStamped polygon3d;
+  polygon3d.header = header;
+  for (const auto& point : polygon) {
+    geometry_msgs::Point32 point_ros;
+    const auto pointInWorld = positionInWorldFrameFromPositionInTerrain({point.x(), point.y(), 0.0}, planeParameters);
+    point_ros.x = pointInWorld.x();
+    point_ros.y = pointInWorld.y();
+    point_ros.z = pointInWorld.z();
+    polygon3d.polygon.points.push_back(point_ros);
+  }
+  return polygon3d;
+}
+
+inline std::vector<geometry_msgs::PolygonStamped> to3d(const CgalPolygonWithHoles2d& polygonWithHoles, const TerrainPlane& planeParameters,
+                                                       const std_msgs::Header& header) {
+  std::vector<geometry_msgs::PolygonStamped> polygons;
+
+  polygons.reserve(polygonWithHoles.number_of_holes() + 1);
+  polygons.emplace_back(to3d(polygonWithHoles.outer_boundary(), planeParameters, header));
+
+  for (const auto& hole : polygonWithHoles.holes()) {
+    polygons.emplace_back(to3d(hole, planeParameters, header));
+  }
+  return polygons;
+}
+
+jsk_recognition_msgs::PolygonArray convertBoundariesToRosPolygons(const std::vector<PlanarRegion>& planarRegions,
+                                                                  const std::string& frameId) {
+  jsk_recognition_msgs::PolygonArray polygon_buffer;
+  std_msgs::Header header;
+  header.stamp = ros::Time::now();
+  header.frame_id = frameId;
+
+  polygon_buffer.header = header;
+  polygon_buffer.polygons.reserve(planarRegions.size());  // lower bound
+  for (const auto& planarRegion : planarRegions) {
+    auto boundaries = to3d(planarRegion.boundaryWithInset.boundary, planarRegion.planeParameters, header);
+    std::move(boundaries.begin(), boundaries.end(), std::back_inserter(polygon_buffer.polygons));
+  }
+
+  return polygon_buffer;
+}
+
+jsk_recognition_msgs::PolygonArray convertInsetsToRosPolygons(const std::vector<PlanarRegion>& planarRegions, const std::string& frameId) {
+  jsk_recognition_msgs::PolygonArray polygon_buffer;
+  std_msgs::Header header;
+  header.stamp = ros::Time::now();
+  header.frame_id = frameId;
+
+  polygon_buffer.header = header;
+  polygon_buffer.polygons.reserve(planarRegions.size());  // lower bound
+  for (const auto& planarRegion : planarRegions) {
+    for (const auto& inset : planarRegion.boundaryWithInset.insets) {
+      auto insets = to3d(inset, planarRegion.planeParameters, header);
+      std::move(insets.begin(), insets.end(), std::back_inserter(polygon_buffer.polygons));
+    }
+  }
+  return polygon_buffer;
+}
+
+}  // namespace convex_plane_decomposition

@@ -4,6 +4,7 @@ project(convex_plane_decomposition)
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_core
+	ocs2_switched_model_interface
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -14,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(CGAL QUIET)
 find_package(GMP REQUIRED)
 find_package(MPFR REQUIRED)
+
+# Boost
+find_package(Boost COMPONENTS thread REQUIRED)
 
 # OpenCv
 find_package(OpenCV REQUIRED
@@ -37,7 +41,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
-	DEPENDS OpenCV CGAL GMP MPFR glog
+	DEPENDS OpenCV CGAL GMP MPFR glog Boost
 )
 
 ###########
@@ -48,19 +52,16 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+	${Boost_INCLUDE_DIR}
 )
 
 add_library(${PROJECT_NAME}
-	src/ransac_plane_extractor.cpp
-	src/sliding_window_plane_extractor.cpp
-	src/plane.cpp
-	src/polygon.cpp
-	src/geometry_utils.cpp
-	src/export_utils.cpp
-	src/plane_factory.cpp
-	src/polygonizer.cpp
-	src/convex_decomposer.cpp
-	src/pipeline.cpp
+	src/contour_extraction/ContourExtraction.cpp
+	src/ransac/RansacPlaneExtractor.cpp
+  src/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.cpp
+  src/GridMapPreprocessing.cpp
+	src/ConvexRegionGrowing.cpp
+	src/Draw.cpp
 )
 add_dependencies(${PROJECT_NAME}
 	${catkin_EXPORTED_TARGETS}
@@ -69,12 +70,13 @@ target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
 	${CGAL_LIBRARIES}
 	${OpenCV_LIBRARIES}
+	${Boost_LIBRARIES}
 	glog
 	gmp
 	mpfr
 )
 target_compile_options(${PROJECT_NAME}
-	PUBLIC -DCGAL_HAS_NO_THREADS
+	PUBLIC -DCGAL_HAS_THREADS
 )
 
 #############

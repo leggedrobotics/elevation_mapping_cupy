@@ -18,10 +18,17 @@ find_package(catkin REQUIRED COMPONENTS
 	cv_bridge
 	jsk_recognition_msgs
 	convex_plane_decomposition
+	convex_plane_decomposition_msgs
 )
 
 # OpenCv
 find_package(OpenCV REQUIRED)
+
+# Qt
+find_package(Qt5 COMPONENTS Xml Script OpenGL Svg)
+
+# CGAL
+find_package(CGAL COMPONENTS Core Qt5)
 
 # glog
 find_package(PkgConfig REQUIRED)
@@ -34,7 +41,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ###################################
 ## catkin specific configuration ##
 ###################################
-catkin_package()
+catkin_package(
+	INCLUDE_DIRS include
+	LIBRARIES ${PROJECT_NAME}
+	CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
+	DEPENDS
+)
 
 ###########
 ## Build ##
@@ -45,26 +57,87 @@ include_directories(
 	${catkin_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}
-	src/convex_plane_decomposition_node.cpp
-	src/convex_plane_decomposition_ros.cpp
-	src/grid_map_preprocessing.cpp
-	src/pipeline_ros.cpp
-	src/ros_visualizations.cpp
-)
+add_library(${PROJECT_NAME}
+	src/ConvexPlaneDecompositionRos.cpp
+	src/MessageConversion.cpp
+	src/ParameterLoading.cpp
+	src/RosVisualizations.cpp
+	)
+add_dependencies(${PROJECT_NAME}
+	${catkin_EXPORTED_TARGETS}
+	)
 target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	glog
+	)
+target_compile_options(${PROJECT_NAME}
+	PUBLIC -DCGAL_HAS_THREADS
+	)
+
+add_executable(${PROJECT_NAME}_node
+	src/ConvexPlaneDecompositionNode.cpp
 )
+target_link_libraries(${PROJECT_NAME}_node
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	glog
+	${PROJECT_NAME}
+)
+
+add_executable(${PROJECT_NAME}_test
+	test/test.cpp
+	)
+target_link_libraries(${PROJECT_NAME}_test
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	glog
+	Qt5::Xml Qt5::Script Qt5::OpenGL Qt5::Svg
+	CGAL::CGAL CGAL::CGAL_Core CGAL::CGAL_Qt5
+	)
+target_compile_options(${PROJECT_NAME}_test
+	PUBLIC -DCGAL_HAS_THREADS -DCGAL_USE_BASIC_VIEWER
+	)
+
+add_executable(${PROJECT_NAME}_shapegrowing
+	test/shapeGrowing.cpp
+	)
+target_link_libraries(${PROJECT_NAME}_shapegrowing
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	glog
+	Qt5::Xml Qt5::Script Qt5::OpenGL Qt5::Svg
+	CGAL::CGAL CGAL::CGAL_Core CGAL::CGAL_Qt5
+	)
+target_compile_options(${PROJECT_NAME}_shapegrowing
+	PUBLIC -DCGAL_HAS_THREADS -DCGAL_USE_BASIC_VIEWER
+	)
+
+add_executable(${PROJECT_NAME}_save_elevationmap
+	src/SaveElevationMapAsImageNode.cpp
+	)
+target_link_libraries(${PROJECT_NAME}_save_elevationmap
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	)
 
 #############
 ## Install ##
 #############
 
 install(TARGETS ${PROJECT_NAME}
+	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+	)
+install(DIRECTORY include/${PROJECT_NAME}/
+	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+	)
+
+install(TARGETS ${PROJECT_NAME}_node
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
 install(DIRECTORY config data launch rviz
 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

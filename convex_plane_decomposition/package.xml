@@ -10,5 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>grid_map_core</depend>
+  <depend>ocs2_switched_model_interface</depend>
+
 
 </package>

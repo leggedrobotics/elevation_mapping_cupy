@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_save_elevationmap" name="convex_plane_decomposition_ros_save_elevationmap"
+  output="screen" launch-prefix="">
+      <param name="frequency" value="0.1"/>
+      <param name="elevation_topic" value="/elevation_mapping/elevation_map_recordable"/>
+      <param name="height_layer" value="elevation"/>
+      <param name="imageName" value="$(find convex_plane_decomposition_ros)/data/elevationMap"/>
+    </node>
+
+</launch>
