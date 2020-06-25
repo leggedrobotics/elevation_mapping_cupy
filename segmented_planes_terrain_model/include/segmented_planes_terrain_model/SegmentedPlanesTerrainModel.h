@@ -9,7 +9,7 @@
 
 namespace switched_model {
 
-class SegmentedPlanesTerrainModel : switched_model::TerrainModel {
+class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
  public:
   SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain);
 

@@ -26,6 +26,7 @@ class SegmentedPlanesTerrainModelRos {
 
   ros::Subscriber terrainSubscriber_;
   std::mutex updateMutex_;
+  std::atomic_bool terrainUpdated_;
   std::unique_ptr<SegmentedPlanesTerrainModel> terrainPtr_;
 };
 

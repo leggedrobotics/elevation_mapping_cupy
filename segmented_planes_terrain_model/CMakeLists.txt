@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.1...3.15)
 project(segmented_planes_terrain_model)
 
 # Catkin dependencies
-find_package(catkin REQUIRED COMPONENTS
+set(CATKIN_PACKAGE_DEPENDENCIES
 	ocs2_switched_model_interface
 	ocs2_quadruped_interface
 	convex_plane_decomposition
 	convex_plane_decomposition_msgs
 	convex_plane_decomposition_ros
 	roscpp
+)
+
+find_package(catkin REQUIRED COMPONENTS
+	${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 # OpenCv
@@ -28,7 +32,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ###################################
 ## catkin specific configuration ##
 ###################################
-catkin_package()
+catkin_package(
+	INCLUDE_DIRS include
+	LIBRARIES ${PROJECT_NAME}
+	CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
+	DEPENDS OpenCV
+)
 
 ###########
 ## Build ##
@@ -42,6 +51,7 @@ include_directories(
 add_library(${PROJECT_NAME}
 	src/SegmentedPlanesTerrainModel.cpp
 	src/SegmentedPlanesTerrainModelRos.cpp
+	src/SegmentedPlanesTerrainVisualization.cpp
 	)
 add_dependencies(${PROJECT_NAME}
 	${catkin_EXPORTED_TARGETS}

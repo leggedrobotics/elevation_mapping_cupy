@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="datafile"             default="terrain.png" />
+  <arg name="datafile"             default="demo_map.png" />
   <arg name="max_height"           default="1.25" />
 
   <include file="$(find convex_plane_decomposition_ros)/launch/demo.launch">
