@@ -186,7 +186,7 @@ class ElevationMap(object):
             self.mean_error = error / error_cnt
             self.additive_mean_error += self.mean_error
             if np.abs(self.mean_error) < self.max_drift:
-                self.elevation_map[0] += self.mean_error
+                self.elevation_map[0] += self.mean_error * 0.1
         self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
                                self.elevation_map, self.new_map,
                                size=(points.shape[0]))
