@@ -18,6 +18,7 @@ class Parameter(object):
         self.max_variance = 1.0
         self.dilation_size = 2
         self.dilation_size_initialize = 10
+        self.drift_compensation_alpha = 1.0
 
         self.traversability_inlier = 0.1
         self.wall_num_thresh = 100
@@ -154,6 +155,9 @@ class Parameter(object):
 
     def set_max_drift(self, x):
         self.max_drift = x
+
+    def set_drift_compensation_alpha(self, x):
+        self.drift_compensation_alpha = x
 
     def set_cleanup_cos_thresh(self, x):
         self.cleanup_cos_thresh = x
