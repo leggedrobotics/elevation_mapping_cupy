@@ -15,16 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
 	${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
-# OpenCv
-find_package(OpenCV REQUIRED)
-
-# CGAL
-find_package(CGAL COMPONENTS Core)
-
-# glog
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(glog libglog REQUIRED)
-
 # Cpp standard version
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,7 +26,7 @@ catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
 	CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
-	DEPENDS OpenCV
+	DEPENDS
 )
 
 ###########
@@ -58,8 +48,6 @@ add_dependencies(${PROJECT_NAME}
 	)
 target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	glog
 	)
 target_compile_options(${PROJECT_NAME}
 	PUBLIC -DCGAL_HAS_THREADS
@@ -70,8 +58,6 @@ add_executable(${PROJECT_NAME}_demo_node
 )
 target_link_libraries(${PROJECT_NAME}_demo_node
 	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	glog
 	${PROJECT_NAME}
 )
 

@@ -28,12 +28,6 @@ find_package(catkin REQUIRED COMPONENTS
 # OpenCv
 find_package(OpenCV REQUIRED)
 
-# Qt
-find_package(Qt5 COMPONENTS Xml Script OpenGL Svg)
-
-# CGAL
-find_package(CGAL COMPONENTS Core Qt5)
-
 # glog
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(glog libglog REQUIRED)
@@ -75,9 +69,6 @@ target_link_libraries(${PROJECT_NAME}
 	${OpenCV_LIBRARIES}
 	glog
 	)
-target_compile_options(${PROJECT_NAME}
-	PUBLIC -DCGAL_HAS_THREADS
-	)
 
 add_executable(${PROJECT_NAME}_node
 	src/ConvexPlaneDecompositionNode.cpp
@@ -96,11 +87,6 @@ target_link_libraries(${PROJECT_NAME}_test
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	glog
-	Qt5::Xml Qt5::Script Qt5::OpenGL Qt5::Svg
-	CGAL::CGAL CGAL::CGAL_Core CGAL::CGAL_Qt5
-	)
-target_compile_options(${PROJECT_NAME}_test
-	PUBLIC -DCGAL_HAS_THREADS -DCGAL_USE_BASIC_VIEWER
 	)
 
 add_executable(${PROJECT_NAME}_shapegrowing
@@ -110,11 +96,6 @@ target_link_libraries(${PROJECT_NAME}_shapegrowing
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
 	glog
-	Qt5::Xml Qt5::Script Qt5::OpenGL Qt5::Svg
-	CGAL::CGAL CGAL::CGAL_Core CGAL::CGAL_Qt5
-	)
-target_compile_options(${PROJECT_NAME}_shapegrowing
-	PUBLIC -DCGAL_HAS_THREADS -DCGAL_USE_BASIC_VIEWER
 	)
 
 add_executable(${PROJECT_NAME}_save_elevationmap

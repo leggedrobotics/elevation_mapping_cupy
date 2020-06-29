@@ -36,11 +36,11 @@ Visualization Manager:
     - Alpha: 1
       Class: jsk_rviz_plugin/PolygonArray
       Color: 25; 255; 0
-      Enabled: false
+      Enabled: true
       Name: Boundaries
       Topic: /convex_plane_decomposition_ros/boundaries
       Unreliable: false
-      Value: false
+      Value: true
       coloring: Auto
       enable lighting: true
       normal length: 0.10000000149011612
@@ -106,7 +106,7 @@ Visualization Manager:
       Marker Topic: /segmented_planes_terrain_model_demo_node/convex_terrain
       Name: ConvexRegion
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -114,7 +114,7 @@ Visualization Manager:
       Marker Topic: /segmented_planes_terrain_model_demo_node/queryPosition
       Name: queryPosition
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -122,7 +122,7 @@ Visualization Manager:
       Marker Topic: /segmented_planes_terrain_model_demo_node/regionBoundary
       Name: SelectedRegion
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -153,7 +153,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.8380365371704102
+      Distance: 4.217182636260986
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -168,10 +168,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6397972702980042
+      Pitch: 0.6197972893714905
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.0349738597869873
+      Yaw: 3.8899669647216797
     Saved: ~
 Window Geometry:
   Displays:
@@ -190,4 +190,4 @@ Window Geometry:
     collapsed: true
   Width: 1853
   X: 67
-  Y: 253
+  Y: 27
