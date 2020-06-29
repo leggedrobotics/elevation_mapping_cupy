@@ -6,7 +6,7 @@
 
 #include <geometry_msgs/Pose.h>
 
-#include <convex_plane_decomposition_msgs/BoundingBox3d.h>
+#include <convex_plane_decomposition_msgs/BoundingBox2d.h>
 #include <convex_plane_decomposition_msgs/PlanarRegion.h>
 #include <convex_plane_decomposition_msgs/PlanarTerrain.h>
 #include <convex_plane_decomposition_msgs/Point2d.h>

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1...3.15)
 project(convex_plane_decomposition_ros)
 
 # Catkin dependencies
-find_package(catkin REQUIRED COMPONENTS
+set(CATKIN_PACKAGE_DEPENDENCIES
 	roscpp
 	grid_map_core
 	grid_map_ros
@@ -19,6 +19,10 @@ find_package(catkin REQUIRED COMPONENTS
 	jsk_recognition_msgs
 	convex_plane_decomposition
 	convex_plane_decomposition_msgs
+)
+
+find_package(catkin REQUIRED COMPONENTS
+	${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 # OpenCv
