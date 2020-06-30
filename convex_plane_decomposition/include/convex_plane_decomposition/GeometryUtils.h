@@ -2,8 +2,8 @@
 // Created by rgrandia on 09.06.20.
 //
 
-#include "PolygonTypes.h"
 #include "PlanarRegion.h"
+#include "PolygonTypes.h"
 
 #pragma once
 
@@ -117,22 +117,22 @@ inline CgalPoint2d projectToClosestPoint(const CgalPoint2d& point, const CgalPol
   return projectToClosestPoint(point, *closestEdge);
 }
 
-inline void transformInPlace(CgalPolygon2d& polygon, const std::function <void (CgalPoint2d&)>& f) {
+inline void transformInPlace(CgalPolygon2d& polygon, const std::function<void(CgalPoint2d&)>& f) {
   for (auto& point : polygon) {
     f(point);
   }
 }
 
-inline void transformInPlace(CgalPolygonWithHoles2d& polygonWithHoles, const std::function <void (CgalPoint2d&)>& f) {
+inline void transformInPlace(CgalPolygonWithHoles2d& polygonWithHoles, const std::function<void(CgalPoint2d&)>& f) {
   transformInPlace(polygonWithHoles.outer_boundary(), f);
-  for (auto& hole: polygonWithHoles.holes()) {
+  for (auto& hole : polygonWithHoles.holes()) {
     transformInPlace(hole, f);
   }
 }
 
-inline void transformInPlace(BoundaryWithInset& boundaryWithInset, const std::function <void (CgalPoint2d&)>& f) {
+inline void transformInPlace(BoundaryWithInset& boundaryWithInset, const std::function<void(CgalPoint2d&)>& f) {
   transformInPlace(boundaryWithInset.boundary, f);
-  for (auto& inset: boundaryWithInset.insets) {
+  for (auto& inset : boundaryWithInset.insets) {
     transformInPlace(inset, f);
   }
 }

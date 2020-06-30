@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <Eigen/Core>
-
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polygon_with_holes_2.h>

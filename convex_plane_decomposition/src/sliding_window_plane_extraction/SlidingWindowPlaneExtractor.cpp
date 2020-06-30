@@ -3,15 +3,12 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
-#include <numeric>
 
 #include <Eigen/Eigenvalues>
 
 #include <cv.hpp>
 
 #include <grid_map_core/grid_map_core.hpp>
-
-#include <glog/logging.h>
 
 #include "convex_plane_decomposition/Nan.h"
 
@@ -139,10 +136,6 @@ void SlidingWindowPlaneExtractor::runSegmentation() {
 }
 
 void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage() {
-  if (segmentedPlanesMap_.highestLabel < 1) {
-    LOG(WARNING) << "No planes detected by Sliding Window Plane Extractor!";
-    return;
-  }
   const int numberOfExtractedPlanesWithoutRefinement = segmentedPlanesMap_.highestLabel; // Make local copy. The highestLabel is incremented inside the loop
 
   // Skip label 0. This is the background, i.e. non-planar region.
@@ -211,7 +204,6 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label) {
 
       // Compute average plane parameters for refined segmentation
       const std::vector<std::size_t>& plane_point_indices = plane->indices_of_assigned_points();
-      CHECK(!plane_point_indices.empty());
       Eigen::Vector3d support_vector_refined_sum = Eigen::Vector3d::Zero();
       Eigen::Vector3d normal_vector_refined_sum = Eigen::Vector3d::Zero();
       for (const auto index : plane_point_indices) {
@@ -260,7 +252,6 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label) {
 
 bool SlidingWindowPlaneExtractor::isGloballyPlanar(const Eigen::Vector3d& normalVectorPlane, const Eigen::Vector3d& supportVectorPlane,
                                                    const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const {
-  CHECK(!points_with_normal.empty());
   for (const auto& point_with_normal : points_with_normal) {
     Eigen::Vector3d p_S_P(point_with_normal.first.x() - supportVectorPlane.x(), point_with_normal.first.y() - supportVectorPlane.y(),
                           point_with_normal.first.z() - supportVectorPlane.z());

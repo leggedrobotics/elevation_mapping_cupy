@@ -10,7 +10,7 @@
 
 namespace convex_plane_decomposition {
 
-// Forward declaration
+// Forward declarations
 class GridMapPreprocessing;
 namespace sliding_window_plane_extractor {
 class SlidingWindowPlaneExtractor;

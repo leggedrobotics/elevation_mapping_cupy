@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.15)
+cmake_minimum_required(VERSION 3.10)
 project(segmented_planes_terrain_model)
 
 # Catkin dependencies
@@ -9,6 +9,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 	convex_plane_decomposition_msgs
 	convex_plane_decomposition_ros
 	roscpp
+	visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS

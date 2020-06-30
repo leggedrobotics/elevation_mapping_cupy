@@ -4,6 +4,7 @@
   <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_node" name="convex_plane_decomposition_ros"
   output="screen" launch-prefix="">
     <rosparam file="$(find convex_plane_decomposition_ros)/config/parameters.yaml" command="load"/>
+    <param name="frequency" value="10.0"/>
   </node>
 
 </launch>

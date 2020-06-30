@@ -16,11 +16,13 @@
 const std::string originFrameId_ = "map";
 
 visualization_msgs::MarkerArray toMarker(const switched_model::ConvexTerrain& convexTerrain) {
-  visualization_msgs::MarkerArray markerArray = switched_model::getConvexTerrainMarkers(convexTerrain, switched_model::Color::orange, 0.02, 0.005, 0.1);
+  visualization_msgs::MarkerArray markerArray =
+      switched_model::getConvexTerrainMarkers(convexTerrain, switched_model::Color::orange, 0.02, 0.005, 0.1);
 
   // Add headers and Id
   const ros::Time timeStamp = ros::Time::now();
-  switched_model::assignHeader(markerArray.markers.begin(), markerArray.markers.end(), switched_model::getHeaderMsg(originFrameId_, timeStamp));
+  switched_model::assignHeader(markerArray.markers.begin(), markerArray.markers.end(),
+                               switched_model::getHeaderMsg(originFrameId_, timeStamp));
   switched_model::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
 
   return markerArray;
@@ -30,7 +32,7 @@ visualization_msgs::Marker toMarker(const switched_model::vector3_t& position) {
   auto marker = switched_model::getSphereMsg(position, switched_model::Color::green, 0.02);
 
   const ros::Time timeStamp = ros::Time::now();
-  marker.header =  switched_model::getHeaderMsg(originFrameId_, timeStamp);
+  marker.header = switched_model::getHeaderMsg(originFrameId_, timeStamp);
   return marker;
 }
 
@@ -56,20 +58,20 @@ int main(int argc, char** argv) {
 
     if (terrainModel) {
       const auto RandomFloat = [](float a, float b) {
-        float random = ((float) rand()) / (float) RAND_MAX;
+        float random = ((float)rand()) / (float)RAND_MAX;
         float diff = b - a;
         float r = random * diff;
         return a + r;
       };
 
-      switched_model::vector3_t positionInWorld{RandomFloat(-2.0, 2.0),  RandomFloat(-2.0, 2.0), RandomFloat(0.0, 1.0)};
+      switched_model::vector3_t positionInWorld{RandomFloat(-2.0, 2.0), RandomFloat(-2.0, 2.0), RandomFloat(0.0, 1.0)};
       positionPublisher_.publish(toMarker(positionInWorld));
       std::cout << "Query position: " << positionInWorld.transpose() << std::endl;
 
       auto t0 = std::chrono::high_resolution_clock::now();
       const auto convexTerrain = terrainModel->getConvexTerrainAtPositionInWorld(positionInWorld);
       auto t1 = std::chrono::high_resolution_clock::now();
-      std::cout << "Query took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t1 - t0 ).count() << " [ms]\n";
+      std::cout << "Query took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " [ms]\n";
 
       positionPublisher_.publish(toMarker(positionInWorld));
       convexTerrainPublisher_.publish(toMarker(convexTerrain));

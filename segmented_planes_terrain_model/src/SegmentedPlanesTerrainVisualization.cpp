@@ -6,7 +6,8 @@
 
 namespace switched_model {
 
-visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, Color color, double diameter, double linewidth, double normalLength) {
+visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, Color color, double diameter, double linewidth,
+                                                        double normalLength) {
   visualization_msgs::MarkerArray markerArray;
   markerArray.markers.reserve(3);
 
@@ -18,7 +19,7 @@ visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& con
   markerArray.markers.emplace_back(getArrowAtPointMsg(surfaceNormal, convexTerrain.plane.positionInWorld, color));
 
   // Polygon message
-  if (!convexTerrain.boundary.empty()){
+  if (!convexTerrain.boundary.empty()) {
     std::vector<geometry_msgs::Point> boundary;
     boundary.reserve(convexTerrain.boundary.size() + 1);
     for (const auto& point : convexTerrain.boundary) {
@@ -26,14 +27,13 @@ visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& con
       boundary.emplace_back(getPointMsg(pointInWorldFrame));
     }
     // Close the polygon
-    const auto& pointInWorldFrame = positionInWorldFrameFromPositionInTerrain({convexTerrain.boundary.front().x(), convexTerrain.boundary.front().y(), 0.0}, convexTerrain.plane);
+    const auto& pointInWorldFrame = positionInWorldFrameFromPositionInTerrain(
+        {convexTerrain.boundary.front().x(), convexTerrain.boundary.front().y(), 0.0}, convexTerrain.plane);
     boundary.emplace_back(getPointMsg(pointInWorldFrame));
 
     markerArray.markers.emplace_back(getLineMsg(std::move(boundary), color, linewidth));
   } else {
-
   }
-
 
   return markerArray;
 }

@@ -9,7 +9,8 @@
 namespace switched_model {
 
 SegmentedPlanesTerrainModelRos::SegmentedPlanesTerrainModelRos(ros::NodeHandle& nodehandle) : terrainUpdated_(false) {
-  terrainSubscriber_ = nodehandle.subscribe("/convex_plane_decomposition_ros/planar_terrain", 1, &SegmentedPlanesTerrainModelRos::callback, this);
+  terrainSubscriber_ =
+      nodehandle.subscribe("/convex_plane_decomposition_ros/planar_terrain", 1, &SegmentedPlanesTerrainModelRos::callback, this);
 }
 
 bool SegmentedPlanesTerrainModelRos::update(std::unique_ptr<SegmentedPlanesTerrainModel>& terrainPtr) {

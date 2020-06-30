@@ -5,7 +5,7 @@
 #pragma once
 
 #include <convex_plane_decomposition/PlanarRegion.h>
-#include "ocs2_switched_model_interface/terrain/TerrainModel.h"
+#include <ocs2_switched_model_interface/terrain/TerrainModel.h>
 
 namespace switched_model {
 
@@ -24,6 +24,6 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
 };
 
 std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decomposition::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld,  const convex_plane_decomposition::PlanarTerrain& planarTerrain);
+    const vector3_t& positionInWorld, const convex_plane_decomposition::PlanarTerrain& planarTerrain);
 
 }  // namespace switched_model

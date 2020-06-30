@@ -2,8 +2,6 @@
 
 #include <chrono>
 
-#include <glog/logging.h>
-
 #include <Eigen/Core>
 
 #include <opencv2/core/eigen.hpp>
@@ -13,13 +11,13 @@
 
 #include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
 #include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
+#include <convex_plane_decomposition/GridMapPreprocessing.h>
+#include <convex_plane_decomposition/Nan.h>
 
-#include "convex_plane_decomposition/GridMapPreprocessing.h"
-#include "convex_plane_decomposition/Nan.h"
-#include "convex_plane_decomposition_msgs/PlanarTerrain.h"
+#include <convex_plane_decomposition_msgs/PlanarTerrain.h>
+
 #include "convex_plane_decomposition_ros/ParameterLoading.h"
 #include "convex_plane_decomposition_ros/RosVisualizations.h"
-
 #include "convex_plane_decomposition_ros/MessageConversion.h"
 
 namespace convex_plane_decomposition {
@@ -84,16 +82,16 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     auto t0 = std::chrono::high_resolution_clock::now();
     preprocessing_  ->preprocess(elevationMap, elevationLayer_);
     auto t1 = std::chrono::high_resolution_clock::now();
-    VLOG(1) << "Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t1 - t0 ).count() << " [ms]\n";
+    ROS_INFO_STREAM("Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t1 - t0 ).count() << " [ms]");
 
     // Run pipeline.
     slidingWindowPlaneExtractor_->runExtraction(elevationMap, elevationLayer_);
     auto t2 = std::chrono::high_resolution_clock::now();
-    VLOG(1) << "Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count() << " [ms]\n";
+    ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count() << " [ms]");
 
     const auto planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
     auto t3 = std::chrono::high_resolution_clock::now();
-    VLOG(1) << "Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << " [ms]\n";
+    ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << " [ms]");
 
     // Publish terrain
     regionPublisher_.publish(toMessage(planarRegions));

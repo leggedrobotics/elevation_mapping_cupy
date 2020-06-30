@@ -7,10 +7,14 @@
 namespace convex_plane_decomposition {
 
 struct PreprocessingParameters {
-  int kernelSize = 5; // Kernel size of the median filter
-  int numberOfRepeats = 1; // Number of times the image is filtered
-  bool increasing = false; // If the kernel size should increase each filter step.
-  double inpaintRadius = 0.05; // [in m]
+  /// Kernel size of the median filter
+  int kernelSize = 5;
+  /// Number of times the image is filtered
+  int numberOfRepeats = 1;
+  /// If the kernel size should increase each filter step.
+  bool increasing = false;
+  /// [m] radius used for inpainting
+  double inpaintRadius = 0.05;
 };
 
 class GridMapPreprocessing {
@@ -27,4 +31,3 @@ class GridMapPreprocessing {
 };
 
 }  // namespace convex_plane_decomposition
-

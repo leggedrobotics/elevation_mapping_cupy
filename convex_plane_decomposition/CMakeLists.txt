@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.15)
+cmake_minimum_required(VERSION 3.10)
 project(convex_plane_decomposition)
 
 # Catkin dependencies
@@ -18,11 +18,7 @@ find_package(MPFR 2.2.1 QUIET)
 find_package(Boost 1.57 QUIET)
 
 # OpenCv
-find_package(OpenCV REQUIRED COMPONENTS opencv_highgui CONFIG)
-
-# glog
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(glog libglog REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Eigen
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -43,7 +39,7 @@ catkin_package(
   CATKIN_DEPENDS
 		${CATKIN_PACKAGE_DEPENDENCIES}
 	DEPENDS
-		OpenCV glog GMP MPFR Boost
+		OpenCV GMP MPFR Boost
 )
 
 ###########
@@ -70,7 +66,6 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
-	glog
 	gmp
 	mpfr
 )

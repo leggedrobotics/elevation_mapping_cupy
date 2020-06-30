@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.15)
+cmake_minimum_required(VERSION 3.10)
 project(convex_plane_decomposition_ros)
 
 # Catkin dependencies
@@ -7,15 +7,9 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_core
 	grid_map_ros
 	grid_map_cv
-	grid_map_filters
-	grid_map_loader
 	grid_map_msgs
-	grid_map_octomap
 	grid_map_rviz_plugin
-	grid_map_visualization
 	geometry_msgs
-	sensor_msgs
-	cv_bridge
 	jsk_recognition_msgs
 	convex_plane_decomposition
 	convex_plane_decomposition_msgs
@@ -28,9 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
 # OpenCv
 find_package(OpenCV REQUIRED)
 
-# glog
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(glog libglog REQUIRED)
+# Eigen
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Cpp standard version
 set(CMAKE_CXX_STANDARD 14)
@@ -40,10 +33,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-	INCLUDE_DIRS include
+	INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIRS}
 	LIBRARIES ${PROJECT_NAME}
 	CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
-	DEPENDS
+	DEPENDS OpenCV
 )
 
 ###########
@@ -52,6 +45,7 @@ catkin_package(
 
 include_directories(
 	include
+	${EIGEN3_INCLUDE_DIRS}
 	${catkin_INCLUDE_DIRS}
 )
 
@@ -67,7 +61,6 @@ add_dependencies(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
-	glog
 	)
 
 add_executable(${PROJECT_NAME}_node
@@ -76,27 +69,8 @@ add_executable(${PROJECT_NAME}_node
 target_link_libraries(${PROJECT_NAME}_node
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
-	glog
 	${PROJECT_NAME}
 )
-
-add_executable(${PROJECT_NAME}_test
-	test/test.cpp
-	)
-target_link_libraries(${PROJECT_NAME}_test
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	glog
-	)
-
-add_executable(${PROJECT_NAME}_shapegrowing
-	test/shapeGrowing.cpp
-	)
-target_link_libraries(${PROJECT_NAME}_shapegrowing
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	glog
-	)
 
 add_executable(${PROJECT_NAME}_save_elevationmap
 	src/SaveElevationMapAsImageNode.cpp
@@ -130,3 +104,18 @@ install(DIRECTORY config data launch rviz
 #############
 ## Testing ##
 #############
+add_executable(${PROJECT_NAME}_test
+	test/test.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+)
+
+add_executable(${PROJECT_NAME}_shapegrowing
+	test/shapeGrowing.cpp
+)
+target_link_libraries(${PROJECT_NAME}_shapegrowing
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+)

@@ -13,7 +13,6 @@
 namespace convex_plane_decomposition {
 namespace sliding_window_plane_extractor {
 
-
 class SlidingWindowPlaneExtractor {
  public:
   SlidingWindowPlaneExtractor(const SlidingWindowPlaneExtractorParameters& parameters,

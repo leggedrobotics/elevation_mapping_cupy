@@ -14,11 +14,14 @@
 namespace convex_plane_decomposition {
 
 cv::Vec3b randomColor();
+
 std::vector<cv::Point> toCv(const CgalPolygon2d& polygon);
+
 void drawContour(cv::Mat& img, const CgalPoint2d& point, double radius = 1, const cv::Vec3b* color = nullptr);
 void drawContour(cv::Mat& img, const CgalPolygon2d& polygon, const cv::Vec3b* color = nullptr);
 void drawContour(cv::Mat& img, const CgalPolygonWithHoles2d& polygonWithHoles2d, const cv::Vec3b* color = nullptr);
+
 CgalPolygon2d scaleShape(const CgalPolygon2d& polygon, double scale);
 CgalPolygonWithHoles2d scaleShape(const CgalPolygonWithHoles2d& polygonWithHoles, double scale);
 
-}
+}  // namespace convex_plane_decomposition

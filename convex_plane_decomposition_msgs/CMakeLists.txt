@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.15)
+cmake_minimum_required(VERSION 3.10)
 project(convex_plane_decomposition_msgs)
 
 set(CATKIN_PACKAGE_DEPENDENCIES

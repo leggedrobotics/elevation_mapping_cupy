@@ -13,6 +13,7 @@
 
 namespace switched_model {
 
-visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, Color color, double diameter, double linewidth, double normalLength);
+visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, Color color, double diameter, double linewidth,
+                                                        double normalLength);
 
 }  // namespace switched_model

@@ -15,5 +15,6 @@
     <depend>convex_plane_decomposition_msgs</depend>
     <depend>convex_plane_decomposition_ros</depend>
     <depend>roscpp</depend>
+    <depend>visualization_msgs</depend>
 
 </package>
