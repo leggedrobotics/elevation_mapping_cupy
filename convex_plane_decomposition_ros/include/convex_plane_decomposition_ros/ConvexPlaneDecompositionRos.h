@@ -39,6 +39,7 @@ class ConvexPlaneExtractionROS {
   std::string elevationLayer_;
   double subMapWidth_;
   double subMapLength_;
+  bool publishToController_;
 
   // ROS communication
   ros::Subscriber elevationMapSubscriber_;

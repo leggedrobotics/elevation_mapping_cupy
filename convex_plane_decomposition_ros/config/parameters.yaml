@@ -1,9 +1,3 @@
-elevation_topic : '/elevation_mapping/elevation_map_raw'
-height_layer : 'elevation'
-submap:
-  width: 3.0
-  length: 3.0
-
 preprocessing:
   kernelSize: 3       # Kernel size of the median filter
   numberOfRepeats: 3  # Number of times to apply the same filter
@@ -29,4 +23,3 @@ ransac_plane_refinement:
 
 contour_extraction:
   offsetSize: 2    # Size of the kernel creating the boundary offset. In number of pixels.
-

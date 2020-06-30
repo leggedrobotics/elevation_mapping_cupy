@@ -1,0 +1,7 @@
+elevation_topic: '/image_to_gridmap_demo/grid_map'
+height_layer: 'elevation'
+submap:
+  width: 6.0
+  length: 6.0
+publish_to_controller: false
+frequency: 10.0

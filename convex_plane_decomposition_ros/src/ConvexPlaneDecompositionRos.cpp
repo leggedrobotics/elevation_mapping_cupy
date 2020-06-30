@@ -53,6 +53,10 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
     ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `submap/length`.");
     return false;
   }
+  if (!nodeHandle.getParam("publish_to_controller", publishToController_)) {
+    ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `publish_to_controller`.");
+    return false;
+  }
 
   const auto preprocessingParameters = loadPreprocessingParameters(nodeHandle, "preprocessing/");
   const auto contourExtractionParameters = loadContourExtractionParameters(nodeHandle, "contour_extraction/");
@@ -94,7 +98,9 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << " [ms]");
 
     // Publish terrain
-    regionPublisher_.publish(toMessage(planarRegions));
+    if (publishToController_) {
+      regionPublisher_.publish(toMessage(planarRegions));
+    }
 
     // Visualize in Rviz.
     reapplyNans(elevationMap.get(elevationLayer_));

@@ -1,10 +1,13 @@
 <launch>
 
+  <arg name="parameter_file"             default="parameters.yaml" />
+  <arg name="node_parameter_file"        default="node.yaml" />
+
   <!-- Launch the grid map filters demo node. -->
   <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_node" name="convex_plane_decomposition_ros"
   output="screen" launch-prefix="">
-    <rosparam file="$(find convex_plane_decomposition_ros)/config/parameters.yaml" command="load"/>
-    <param name="frequency" value="10.0"/>
+    <rosparam file="$(find convex_plane_decomposition_ros)/config/$(arg parameter_file)" command="load"/>
+    <rosparam file="$(find convex_plane_decomposition_ros)/config/$(arg node_parameter_file)" command="load"/>
   </node>
 
 </launch>

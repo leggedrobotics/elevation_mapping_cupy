@@ -19,12 +19,12 @@
      <param name="resolution" value="0.02" />
   </node>
 
-  <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_node" name="convex_plane_decomposition_ros"
-  output="screen" launch-prefix="">
-      <rosparam file="$(find convex_plane_decomposition_ros)/config/convex_plane_decomposition_demo_parameters.yaml" command="load"/>
-      <param name="frequency" value="10.0"/>
-    </node>
+  <!-- Launch the plane decomposition node. -->
+  <include file="$(find convex_plane_decomposition_ros)/launch/convex_plane_decomposition.launch">
+    <arg name="node_parameter_file"    value="demo_node.yaml"/>
+  </include>
 
-    <include file="$(find convex_plane_decomposition_ros)/launch/rviz.launch"/>
+  <!-- Launch rviz. -->
+  <include file="$(find convex_plane_decomposition_ros)/launch/rviz.launch"/>
 
 </launch>
