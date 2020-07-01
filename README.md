@@ -3,7 +3,7 @@
 
 ## Overview
 This is a ros package of elevation mapping on GPU.  
-Code are written in python and uses cupy for GPU calculation.
+Code are written in python and uses cupy for GPU calculation.  
 ![screenshot](doc/real.png)
 
 ## Installation
