@@ -3,8 +3,7 @@
 
 ## Overview
 This is a ros package of elevation mapping on GPU.  
-Code are written in python and numpy, cupy backend can be selected.
-
+Code are written in python and uses cupy for GPU calculation.
 ![screenshot](doc/real.png)
 
 ## Installation
@@ -104,18 +103,11 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 
 ### Published Topics
 
-* **`elevation_map`** ([grid_map_msg/GridMap])
+* **`elevation_map_raw`** ([grid_map_msg/GridMap])
 
     The entire elevation map.
+    
+    
+* **`elevation_map_recordable`** ([grid_map_msg/GridMap])
 
-### Processing Time
-The processing time of
-
-- pointcloud transform
-- elevation map update
-- traversability calculation
-
-is measured in P52 laptop which has `Intel� Core� i7-8850H CPU` and `Quadro P3200 `.  
-101760 = 424 x 240 is the realsense's number of points.
-
-![graph](doc/processing_time.png)
+    The entire elevation map with slower update rate for visualization and logging.
