@@ -1,17 +1,17 @@
-resolution: 0.04                                # resolution in m.
+resolution: 0.02                                # resolution in m.
 map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
-outlier_variance: 0.01                         # if point is outlier, add this value to the cell.
-drift_compensation_variance_inler: 0.05          # cells under this value is used for drift compensation.
+outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
+drift_compensation_variance_inler: 0.05         # cells under this value is used for drift compensation.
 max_drift: 0.1                                  # drift compensation happens only the drift is smaller than this value (for safety)
 drift_compensation_alpha: 0.1                   # drift compensation alpha for smoother update of drift compensation
-time_variance: 0.0001                             # add this value when update_variance is called.
+time_variance: 0.0001                           # add this value when update_variance is called.
 max_variance: 100.0                             # maximum variance for each cell.
 initial_variance: 100.0                         # initial variance for each cell.
 traversability_inlier: 0.9                      # cells with higher traversability are used for drift compensation.
 dilation_size: 3                                # dilation filter size before traversability filter.
-wall_num_thresh: 20                            # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+wall_num_thresh: 20                             # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
 min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
 position_noise_thresh: 0.001                    # if the position change is bigger than this value, the drift compensation happens.
 orientation_noise_thresh: 0.001                 # if the orientation change is bigger than this value, the drift compensation happens.
@@ -23,9 +23,9 @@ recordable_fps: 5.0                             # fps for publishing map (in slo
 update_variance_fps: 5.0                        # fps for updating variance.
 time_interval: 0.1                              # Time layer is updated with this interval.
 
-max_ray_length: 10.0                             # maximum length for ray tracing.
-cleanup_step: 0.1                              # subtitute this value from validity layer at visibiltiy cleanup.
-cleanup_cos_thresh: 0.1                              # subtitute this value from validity layer at visibiltiy cleanup.
+max_ray_length: 10.0                            # maximum length for ray tracing.
+cleanup_step: 0.1                               # subtitute this value from validity layer at visibiltiy cleanup.
+cleanup_cos_thresh: 0.1                         # subtitute this value from validity layer at visibiltiy cleanup.
 
 safe_thresh: 0.7                                # if traversability is smaller, it is counted as unsafe cell.
 safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
@@ -50,7 +50,6 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     ]
 pose_topic: '/state_estimator/pose_in_odom'
 recordable_map_layers: ['elevation']
-# map_frame: 'point_cloud_odom'
 map_frame: 'odom'
 corrected_map_frame: 'corrected_odom'
 
