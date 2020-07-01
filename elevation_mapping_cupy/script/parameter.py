@@ -18,6 +18,7 @@ class Parameter(object):
         self.max_variance = 1.0
         self.dilation_size = 2
         self.dilation_size_initialize = 10
+        self.drift_compensation_alpha = 1.0
 
         self.traversability_inlier = 0.1
         self.wall_num_thresh = 100
@@ -35,6 +36,8 @@ class Parameter(object):
 
         self.min_filter_size = 5
         self.min_filter_iteration = 3
+
+        self.max_drift = 0.10
 
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
@@ -149,6 +152,12 @@ class Parameter(object):
 
     def set_min_filter_iteration(self, x):
         self.min_filter_iteration = x
+
+    def set_max_drift(self, x):
+        self.max_drift = x
+
+    def set_drift_compensation_alpha(self, x):
+        self.drift_compensation_alpha = x
 
     def set_cleanup_cos_thresh(self, x):
         self.cleanup_cos_thresh = x
