@@ -39,7 +39,7 @@ sudo dpkg -i libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64.deb
 ### python dependencies
 - [numpy](https://www.numpy.org/)
 - [scipy](https://www.scipy.org/)
-- [cupy](https://cupy.chainer.org/)
+- [cupy == 6.7.0](https://cupy.chainer.org/)
 - [chainer == 6.7.0](https://chainer.org/)
 - [shapely == 1.6.4](https://github.com/Toblerity/Shapely)
 
@@ -89,7 +89,7 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 ```
 ### Subscribed Topics
 
-* **`/points`** ([sensor_msgs/PointCloud2])
+* topics specified in **`pointcloud_topics`** in **`parameters.yaml`** ([sensor_msgs/PointCloud2])
 
     The distance measurements.
 
