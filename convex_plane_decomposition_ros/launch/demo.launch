@@ -19,6 +19,9 @@
      <param name="resolution" value="0.02" />
   </node>
 
+  <!-- Static transform map to odom. x y z yaw pitch roll frame_id child_frame_id -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="map2odom_broadcaster" args="0 0 1.0 1.0 0 0 map odom" />
+
   <!-- Launch the plane decomposition node. -->
   <include file="$(find convex_plane_decomposition_ros)/launch/convex_plane_decomposition.launch">
     <arg name="node_parameter_file"    value="demo_node.yaml"/>

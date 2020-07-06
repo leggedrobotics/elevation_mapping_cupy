@@ -9,12 +9,12 @@ namespace convex_plane_decomposition {
 template <typename T>
 void loadParameter(const ros::NodeHandle& nodeHandle, const std::string& prefix, const std::string& param, T& value) {
   if (!nodeHandle.getParam(prefix + param, value)) {
-    ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] Could not read parameter `" << param << "`. Setting parameter to default value : " << std::to_string(value));
+    ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] Could not read parameter `"
+                     << param << "`. Setting parameter to default value : " << std::to_string(value));
   }
 }
 
-PreprocessingParameters loadPreprocessingParameters(const ros::NodeHandle& nodeHandle,
-                                                    const std::string& prefix) {
+PreprocessingParameters loadPreprocessingParameters(const ros::NodeHandle& nodeHandle, const std::string& prefix) {
   PreprocessingParameters preprocessingParameters;
   loadParameter(nodeHandle, prefix, "kernelSize", preprocessingParameters.kernelSize);
   loadParameter(nodeHandle, prefix, "numberOfRepeats", preprocessingParameters.numberOfRepeats);

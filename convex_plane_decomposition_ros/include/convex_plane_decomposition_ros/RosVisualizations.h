@@ -6,7 +6,8 @@
 
 namespace convex_plane_decomposition {
 
-jsk_recognition_msgs::PolygonArray convertBoundariesToRosPolygons(const std::vector<PlanarRegion>& planarRegions, const std::string& frameId);
+jsk_recognition_msgs::PolygonArray convertBoundariesToRosPolygons(const std::vector<PlanarRegion>& planarRegions,
+                                                                  const std::string& frameId);
 
 jsk_recognition_msgs::PolygonArray convertInsetsToRosPolygons(const std::vector<PlanarRegion>& planarRegions, const std::string& frameId);
 

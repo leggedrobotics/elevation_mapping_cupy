@@ -1,6 +1,6 @@
 image_to_gridmap_demo:
   image_topic: "/image_publisher/image"
   resolution: 0.02
-  map_frame_id: "odom"
+  map_frame_id: "map"	# This parameter is actually not used. The gridmap is always in map frame
   min_height: 0
   max_height: 1.0

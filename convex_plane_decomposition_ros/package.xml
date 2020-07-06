@@ -19,5 +19,6 @@
     <depend>jsk_recognition_msgs</depend>
     <depend>convex_plane_decomposition</depend>
     <depend>convex_plane_decomposition_msgs</depend>
+    <depend>tf2_ros</depend>
 
 </package>

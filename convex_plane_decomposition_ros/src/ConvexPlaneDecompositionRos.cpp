@@ -9,20 +9,20 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 
-#include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
-#include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
 #include <convex_plane_decomposition/GridMapPreprocessing.h>
 #include <convex_plane_decomposition/Nan.h>
+#include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
+#include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
 
 #include <convex_plane_decomposition_msgs/PlanarTerrain.h>
 
+#include "convex_plane_decomposition_ros/MessageConversion.h"
 #include "convex_plane_decomposition_ros/ParameterLoading.h"
 #include "convex_plane_decomposition_ros/RosVisualizations.h"
-#include "convex_plane_decomposition_ros/MessageConversion.h"
 
 namespace convex_plane_decomposition {
 
-ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle) {
+ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle) : tfBuffer_(), tfListener_(tfBuffer_) {
   bool parametersLoaded = loadParameters(nodeHandle);
 
   if (parametersLoaded) {
@@ -61,11 +61,13 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
   const auto preprocessingParameters = loadPreprocessingParameters(nodeHandle, "preprocessing/");
   const auto contourExtractionParameters = loadContourExtractionParameters(nodeHandle, "contour_extraction/");
   const auto ransacPlaneExtractorParameters = loadRansacPlaneExtractorParameters(nodeHandle, "ransac_plane_refinement/");
-  const auto slidingWindowPlaneExtractorParameters = loadSlidingWindowPlaneExtractorParameters(nodeHandle, "sliding_window_plane_extractor/");
+  const auto slidingWindowPlaneExtractorParameters =
+      loadSlidingWindowPlaneExtractorParameters(nodeHandle, "sliding_window_plane_extractor/");
 
   std::lock_guard<std::mutex> lock(mutex_);
   preprocessing_ = std::make_unique<GridMapPreprocessing>(preprocessingParameters);
-  slidingWindowPlaneExtractor_ = std::make_unique<sliding_window_plane_extractor::SlidingWindowPlaneExtractor>(slidingWindowPlaneExtractorParameters, ransacPlaneExtractorParameters);
+  slidingWindowPlaneExtractor_ = std::make_unique<sliding_window_plane_extractor::SlidingWindowPlaneExtractor>(
+      slidingWindowPlaneExtractorParameters, ransacPlaneExtractorParameters);
   contourExtraction_ = std::make_unique<contour_extraction::ContourExtraction>(contourExtractionParameters);
 
   return true;
@@ -82,20 +84,31 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapWidth_, subMapLength_), success);
   ROS_INFO("...done.");
 
+  // Transform map if necessary
+  if (targetFrameId_ != elevationMap.getFrameId()) {
+    std::string errorMsg;
+    if (tfBuffer_.canTransform(targetFrameId_, elevationMap.getFrameId(), ros::Time(0), &errorMsg)) {
+      elevationMap = elevationMap.getTransformedMap(getTransformToTargetFrame(elevationMap.getFrameId()), elevationLayer_, targetFrameId_);
+    } else {
+      ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] " << errorMsg);
+      return;
+    }
+  }
+
   if (success) {
     auto t0 = std::chrono::high_resolution_clock::now();
-    preprocessing_  ->preprocess(elevationMap, elevationLayer_);
+    preprocessing_->preprocess(elevationMap, elevationLayer_);
     auto t1 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t1 - t0 ).count() << " [ms]");
+    ROS_INFO_STREAM("Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " [ms]");
 
     // Run pipeline.
     slidingWindowPlaneExtractor_->runExtraction(elevationMap, elevationLayer_);
     auto t2 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count() << " [ms]");
+    ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " [ms]");
 
     const auto planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
     auto t3 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>( t3 - t2 ).count() << " [ms]");
+    ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
 
     // Publish terrain
     if (publishToController_) {
@@ -115,6 +128,29 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   } else {
     ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
   }
+}
+
+Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std::string& sourceFrame) {
+  geometry_msgs::TransformStamped transformStamped;
+  try {
+    transformStamped = tfBuffer_.lookupTransform(targetFrameId_, sourceFrame, ros::Time(0));
+  } catch (tf2::TransformException& ex) {
+    ROS_ERROR("[ConvexPlaneExtractionROS] %s", ex.what());
+    return Eigen::Isometry3d();
+  }
+
+  Eigen::Isometry3d transformation;
+
+  // Extract translation.
+  transformation.translation().x() = transformStamped.transform.translation.x;
+  transformation.translation().y() = transformStamped.transform.translation.y;
+  transformation.translation().z() = transformStamped.transform.translation.z;
+
+  // Extract rotation.
+  Eigen::Quaterniond rotationQuaternion(transformStamped.transform.rotation.w, transformStamped.transform.rotation.x,
+                                        transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
+  transformation.linear() = rotationQuaternion.toRotationMatrix();
+  return transformation;
 }
 
 }  // namespace convex_plane_decomposition

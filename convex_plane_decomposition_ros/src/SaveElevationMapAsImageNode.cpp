@@ -23,10 +23,10 @@ void callback(const grid_map_msgs::GridMap::ConstPtr& message) {
   const auto& data = messageMap[elevationLayer];
   float maxHeight = std::numeric_limits<float>::lowest();
   float minHeight = std::numeric_limits<float>::max();
-  for (int i=0; i<data.rows(); i++) {
-    for (int j=0; j<data.cols(); j++) {
-      const auto value = data(i,j);
-      if (!std::isnan(value)){
+  for (int i = 0; i < data.rows(); i++) {
+    for (int j = 0; j < data.cols(); j++) {
+      const auto value = data(i, j);
+      if (!std::isnan(value)) {
         maxHeight = std::max(maxHeight, value);
         minHeight = std::min(minHeight, value);
       }
@@ -37,7 +37,7 @@ void callback(const grid_map_msgs::GridMap::ConstPtr& message) {
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(messageMap, elevationLayer, CV_8UC1, minHeight, maxHeight, image);
 
   int range = 100 * (maxHeight - minHeight);
-  cv::imwrite( imageName + "_" + std::to_string(count++) + "_" + std::to_string(range)  + "cm.png", image);
+  cv::imwrite(imageName + "_" + std::to_string(count++) + "_" + std::to_string(range) + "cm.png", image);
 }
 
 int main(int argc, char** argv) {
@@ -64,8 +64,7 @@ int main(int argc, char** argv) {
   auto elevationMapSubscriber_ = nodeHandle.subscribe<grid_map_msgs::GridMap>(elevationMapTopic, 1, callback);
 
   ros::Rate rate(frequency);
-  while(ros::ok())
-  {
+  while (ros::ok()) {
     ros::spinOnce();
     rate.sleep();
   }
