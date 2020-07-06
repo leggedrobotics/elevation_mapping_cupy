@@ -13,5 +13,4 @@ struct ContourExtractionParameters {
 };
 
 }  // namespace contour_extraction
-}
-
+}  // namespace convex_plane_decomposition

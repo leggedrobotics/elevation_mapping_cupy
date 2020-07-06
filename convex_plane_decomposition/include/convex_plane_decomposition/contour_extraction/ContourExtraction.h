@@ -15,7 +15,6 @@
 namespace convex_plane_decomposition {
 namespace contour_extraction {
 
-
 /**
  * Extracts the contours in map resolution, but with the x and y axis flipped.
  * This way all contours are in counter clockwise direction.
@@ -45,5 +44,5 @@ CgalPoint2d worldFrameToTerrainFrame(const CgalPoint2d& worldFrameXY, const Terr
 
 CgalPoint2d pixelToWorldFrame(const CgalPoint2d& pixelspaceCgalPoint2d, double resolution, const Eigen::Vector2d& mapOffset);
 
-}
-}
+}  // namespace contour_extraction
+}  // namespace convex_plane_decomposition

@@ -10,10 +10,10 @@
 namespace convex_plane_decomposition {
 namespace contour_extraction {
 
-ContourExtraction::ContourExtraction(const ContourExtractionParameters& parameters) : parameters_(parameters),
-                                                                                      binaryImage_(cv::Size(0, 0), CV_8UC1) {
-  int erosionSize = parameters_.offsetSize;                // single sided length of the kernel
-  int erosionType = cv::MORPH_CROSS;  // cv::MORPH_ELLIPSE, cv::MORPH_RECT
+ContourExtraction::ContourExtraction(const ContourExtractionParameters& parameters)
+    : parameters_(parameters), binaryImage_(cv::Size(0, 0), CV_8UC1) {
+  int erosionSize = parameters_.offsetSize;  // single sided length of the kernel
+  int erosionType = cv::MORPH_CROSS;         // cv::MORPH_ELLIPSE, cv::MORPH_RECT
   erosionKernel_ = cv::getStructuringElement(erosionType, cv::Size(2 * erosionSize + 1, 2 * erosionSize + 1));
 }
 
@@ -49,7 +49,7 @@ std::vector<BoundaryWithInset> extractBoundaryAndInset(cv::Mat& binary_image, co
   std::vector<CgalPolygonWithHoles2d> boundaries = extractPolygonsFromBinaryImage(binary_image);
 
   // Erode
-  cv::erode( binary_image, binary_image, erosionKernel );
+  cv::erode(binary_image, binary_image, erosionKernel);
 
   // Get insets
   std::vector<CgalPolygonWithHoles2d> insets = extractPolygonsFromBinaryImage(binary_image);
@@ -64,7 +64,7 @@ std::vector<BoundaryWithInset> extractBoundaryAndInset(cv::Mat& binary_image, co
       }
     }
 
-    if (!assignedInsets.empty()){
+    if (!assignedInsets.empty()) {
       BoundaryWithInset boundaryWithInset;
       boundaryWithInset.boundary = boundary;
       boundaryWithInset.insets = assignedInsets;
@@ -104,7 +104,7 @@ std::vector<CgalPolygonWithHoles2d> extractPolygonsFromBinaryImage(const cv::Mat
 CgalPolygon2d cgalPolygonFromOpenCv(const std::vector<cv::Point>& openCvPolygon) {
   CgalPolygon2d polygon;
   polygon.container().reserve(openCvPolygon.size());
-  for (const auto& point: openCvPolygon) {
+  for (const auto& point : openCvPolygon) {
     polygon.container().emplace_back(point.x, point.y);
   }
   return polygon;
@@ -118,10 +118,8 @@ CgalPoint2d worldFrameToTerrainFrame(const CgalPoint2d& worldFrameXY, const Terr
 
 CgalPoint2d pixelToWorldFrame(const CgalPoint2d& pixelspaceCgalPoint2d, double resolution, const Eigen::Vector2d& mapOffset) {
   // Notice the transpose of x and y!
-  return {mapOffset.x() -resolution * pixelspaceCgalPoint2d.y(), mapOffset.y() -resolution * pixelspaceCgalPoint2d.x()};
+  return {mapOffset.x() - resolution * pixelspaceCgalPoint2d.y(), mapOffset.y() - resolution * pixelspaceCgalPoint2d.x()};
 }
-
-
 
 }  // namespace contour_extraction
 }  // namespace convex_plane_decomposition
