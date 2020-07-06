@@ -1,0 +1,7 @@
+elevation_topic: '/elevation_mapping/elevation_map_raw'
+height_layer: 'elevation'
+submap:
+  width: 6.0
+  length: 6.0
+publish_to_controller: false
+frequency: 10.0

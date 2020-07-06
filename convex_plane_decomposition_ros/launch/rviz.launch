@@ -1,0 +1,5 @@
+<launch>
+
+  <node type="rviz" name="rviz" respawn="true" pkg="rviz" args="-d $(find convex_plane_decomposition_ros)/rviz/config_demo.rviz" />
+
+</launch>

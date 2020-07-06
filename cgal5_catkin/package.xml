@@ -1,0 +1,10 @@
+<package>
+  <name>cgal5_catkin</name>
+  <version>5.0.2</version>
+  <description>Catkin wrapper for CGAL 5.</description>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>See package</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

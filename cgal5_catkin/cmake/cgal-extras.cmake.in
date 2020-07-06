@@ -1,0 +1,2 @@
+# Makes CGAL/find___.cmake available
+list(APPEND CMAKE_MODULE_PATH @CATKIN_DEVEL_PREFIX@/lib/cmake/CGAL)

@@ -3,8 +3,6 @@
 ## Overview
 This is a C++ ROS package for extracting convex polygons from elevation maps created by elevation_mapping.  
 
-![screenshot](convex_plane_decomposition_ros/data/entire_map_decomposed.png)
-
 ## Installation
 
 ### Dependencies
@@ -21,22 +19,14 @@ sudo apt-get install libopencv-dev
 sudo apt install libeigen3-dev
 ```
 
-#### GLOG
-```bash
-sudo apt-get install libgoogle-glog-dev
-```
-
 #### CGAL
-CGAL5 is required. You can download it from [here](https://github.com/CGAL/cgal/releases/tag/releases%2FCGAL-5.0.2)  
-and follow the instructions [here](https://doc.cgal.org/latest/Manual/installation.html#installation_idealworld).  
+CGAL5 is required. It will be automatically downloaded and installed into the catkin workspace by the cgal5_catkin package.
 Make sure you have the third-party libaries installed on you machine:
 ```bash
 sudo apt-get install libgmp-dev
-sudo apt-get install libgmp3-dev
 sudo apt-get install libmpfr-dev
 sudo apt-get install libboost-all-dev
 ```
-
 
 ### ROS package dependencies
 
@@ -47,7 +37,7 @@ sudo apt-get install ros-melodic-jsk-visualization
 ```
 
 #### Grid Map
-Grid map has to be located in you workspace. You can clone it using:
+Grid map is available through ANYmal-research, or you can add it to your workspace. You can clone it using:
 ```bash
 git clone https://github.com/ANYbotics/grid_map.git
 ```
@@ -67,3 +57,4 @@ You can select input map topics, pipeline parameters etc. in the respective yaml
 ```bash
 convex_plane_decomposition_ros/config/
 ```
+Some other parameters are set through the launch files.

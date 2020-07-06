@@ -1,0 +1,30 @@
+<launch>
+
+  <arg name="datafile"             default="demo_map.png" />
+  <arg name="max_height"             default="1.25" />
+
+  <rosparam command="load" file="$(find convex_plane_decomposition_ros)/config/image_loader_demo_parameters.yaml" />
+
+  <!-- Load the image. -->
+  <node pkg="grid_map_demos" type="image_publisher.py" name="image_publisher" output="screen">
+   <param name="image_path" value="$(find convex_plane_decomposition_ros)/data/$(arg datafile)" />
+   <param name="topic" value="/image" />
+  </node>
+
+  <!-- Launch the grid map image to grid map demo node. -->
+  <node pkg="grid_map_demos" type="image_to_gridmap_demo" name="image_to_gridmap_demo" output="screen" >
+     <param name="image_topic" value="/image" />
+     <param name="min_height" value="0.0" />
+     <param name="max_height" value="$(arg datafile)" />
+     <param name="resolution" value="0.02" />
+  </node>
+
+  <!-- Launch the plane decomposition node. -->
+  <include file="$(find convex_plane_decomposition_ros)/launch/convex_plane_decomposition.launch">
+    <arg name="node_parameter_file"    value="demo_node.yaml"/>
+  </include>
+
+  <!-- Launch rviz. -->
+  <include file="$(find convex_plane_decomposition_ros)/launch/rviz.launch"/>
+
+</launch>
