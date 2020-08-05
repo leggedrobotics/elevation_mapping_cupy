@@ -39,7 +39,7 @@ double distanceCostLowerbound(double distanceSquared) {
 SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain)
     : planarTerrain_(std::move(planarTerrain)) {}
 
-TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
+TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
   const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
