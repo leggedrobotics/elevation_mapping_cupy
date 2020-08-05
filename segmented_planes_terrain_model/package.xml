@@ -11,10 +11,14 @@
     <buildtool_depend>catkin</buildtool_depend>
     <depend>ocs2_switched_model_interface</depend>
     <depend>ocs2_quadruped_interface</depend>
+    <depend>grid_map_sdf</depend>
+    <depend>pcl_ros</depend>
     <depend>convex_plane_decomposition</depend>
     <depend>convex_plane_decomposition_msgs</depend>
     <depend>convex_plane_decomposition_ros</depend>
+    <depend>signed_distance_field</depend>
     <depend>roscpp</depend>
     <depend>visualization_msgs</depend>
+    <depend>sensor_msgs</depend>
 
 </package>

@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
       Splitter Ratio: 0.4083484709262848
-    Tree Height: 806
+    Tree Height: 540
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -76,7 +76,7 @@ Visualization Manager:
       Min Intensity: 0
       Name: GridMap
       Show Grid Lines: true
-      Topic: /image_to_gridmap_demo/grid_map
+      Topic: /elevation_mapping/elevation_map_recordable
       Unreliable: false
       Use Rainbow: true
       Value: true
@@ -125,11 +125,571 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: anymal_rviz_plugin/AnymalDisplay
+      Contact Polygon:
+        CoM Arrow Alpha: 0.6000000238418579
+        CoM Arrow Color: 0; 204; 204
+        CoM Arrow Thickness: 0.029999999329447746
+        CoM Polygon Projection Alpha: 0.6000000238418579
+        CoM Polygon Projection Color: 0; 102; 102
+        Polygon Line Color: 204; 204; 204
+        Polygon Line Thickness: 0.009999999776482582
+        Polygon Line alpha: 0.6000000238418579
+        Show CoM Column: true
+        Show CoM Projection: true
+        Value: false
+      Contacts:
+        Alpha: 0.30000001192092896
+        Color: 100; 100; 100
+        Color Mode: Contact/Plane
+        LF_FOOT:
+          Alpha: 0.30000001192092896
+          Color: 204; 41; 204
+          Color Mode: Contact/Plane
+          Normal Plane Size: 0.20000000298023224
+          Show Normal: true
+          Show Wrench: true
+          Value: false
+          Wrench Arrow Width: 0.009999999776482582
+          Wrench Scale: 0.003000000026077032
+        LH_FOOT:
+          Alpha: 0.30000001192092896
+          Color: 204; 41; 204
+          Color Mode: Contact/Plane
+          Normal Plane Size: 0.20000000298023224
+          Show Normal: true
+          Show Wrench: true
+          Value: false
+          Wrench Arrow Width: 0.009999999776482582
+          Wrench Scale: 0.003000000026077032
+        Normal Plane Size: 0.20000000298023224
+        RF_FOOT:
+          Alpha: 0.30000001192092896
+          Color: 204; 41; 204
+          Color Mode: Contact/Plane
+          Normal Plane Size: 0.20000000298023224
+          Show Normal: true
+          Show Wrench: true
+          Value: false
+          Wrench Arrow Width: 0.009999999776482582
+          Wrench Scale: 0.003000000026077032
+        RH_FOOT:
+          Alpha: 0.30000001192092896
+          Color: 204; 41; 204
+          Color Mode: Contact/Plane
+          Normal Plane Size: 0.20000000298023224
+          Show Normal: true
+          Show Wrench: true
+          Value: false
+          Wrench Arrow Width: 0.009999999776482582
+          Wrench Scale: 0.003000000026077032
+        Show Normal: true
+        Show Wrench: true
+        Value: false
+        Wrench Arrow Width: 0.009999999776482582
+        Wrench Scale: 0.003000000026077032
+      Enabled: true
+      Joint Torques:
+        Alpha: 1
+        Color: 240; 240; 240
+        Color Mode:
+          Threshold: 0.75
+          Value: Solid Color
+        LF_HAA:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        LF_HFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        LF_KFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        LH_HAA:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        LH_HFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        LH_KFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        RF_HAA:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        RF_HFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        RF_KFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        RH_HAA:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        RH_HFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        RH_KFE:
+          Offset: 0
+          Torque Maximum: 40
+          Value: false
+        Size: 0.10000000149011612
+        Value: false
+      Name: AnymalDisplay
+      Robot Description: anymal_description
+      Robot Display Options:
+        Alpha: 1
+        Collision Enabled: false
+        Color Mode:
+          Color: 204; 204; 204
+          Value: Mesh Texture
+        Links:
+          All Links Enabled: true
+          Expand Joint Details: false
+          Expand Link Details: false
+          Expand Tree: false
+          LF_FOOT:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LF_HAA:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LF_HFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LF_HIP:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          LF_KFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LF_SHANK:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          LF_THIGH:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          LF_hip_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LF_shank_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LF_thigh_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_FOOT:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_HAA:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_HFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_HIP:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          LH_KFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_SHANK:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          LH_THIGH:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          LH_hip_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_shank_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          LH_thigh_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          Link Tree Style: Links in Alphabetic Order
+          RF_FOOT:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RF_HAA:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RF_HFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RF_HIP:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          RF_KFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RF_SHANK:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          RF_THIGH:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          RF_hip_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RF_shank_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RF_thigh_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_FOOT:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_HAA:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_HFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_HIP:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          RH_KFE:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_SHANK:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          RH_THIGH:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          RH_hip_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_shank_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          RH_thigh_fixed:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          base:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          base_inertia:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          battery:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          blackfly_front_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          blackfly_front_camera_parent:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          blackfly_rear_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          blackfly_rear_camera_parent:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          docking_socket:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          face_front:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          face_rear:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          hatch:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          imu_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          realsense_d435_front_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_front_camera_parent:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_front_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_front_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_front_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_left_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_left_camera_parent:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_left_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_left_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_left_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_rear_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_rear_camera_parent:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_rear_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_rear_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_rear_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_right_camera:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_right_camera_parent:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_right_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_right_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          realsense_d435_right_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          shell:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          velodyne:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          velodyne_cage:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+        Visual Enabled: true
+      Robot Velocity:
+        Alpha: 0.6000000238418579
+        Angular Color: 0; 204; 0
+        Angular Scale: 0.5
+        Linear Color: 0; 0; 204
+        Linear Scale: 1
+        Offset: 0.4000000059604645
+        Show Angular: true
+        Show Linear: true
+        Value: false
+      Topic: /state_estimator/anymal_state
+      Traces:
+        Alpha: 0.5
+        Color: 255; 0; 0
+        LF_FOOT:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LF_HIP:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LF_SHANK:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LF_THIGH:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LH_FOOT:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LH_HIP:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LH_SHANK:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        LH_THIGH:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RF_FOOT:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RF_HIP:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RF_SHANK:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RF_THIGH:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RH_FOOT:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RH_HIP:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RH_SHANK:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        RH_THIGH:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+        Time Length: 10
+        Value: false
+        Width: 0.004999999888241291
+        base:
+          Alpha: 0.5
+          Color: 255; 0; 0
+          Value: false
+      Unreliable: false
+      Update Rate: 20
+      Value: true
+      World Frame Name: odom
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
     Default Light: true
-    Fixed Frame: map
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -153,33 +713,33 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.217182636260986
+      Distance: 2.9079933166503906
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.02726033888757229
-        Y: -0.07391251623630524
-        Z: 0.2781669795513153
+        X: 2.382049322128296
+        Y: -0.7195556163787842
+        Z: -0.01261717639863491
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6197972893714905
+      Pitch: 0.499797523021698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.8899669647216797
+      Yaw: 1.5949591398239136
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1025
+  Height: 759
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000022900000363fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed0000033300000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000363000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000040efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000280000040e000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073d0000003efc0100000002fb0000000800540069006d006501000000000000073d000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000050e0000036300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000022900000259fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed0000033300000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000259000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f0000040efc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000280000040e000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000056d0000003efc0100000002fb0000000800540069006d006501000000000000056d000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000033e0000025900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -188,6 +748,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1853
-  X: 67
-  Y: 27
+  Width: 1389
+  X: 2208
+  Y: 195
