@@ -1,4 +1,5 @@
-<package>
+<?xml version="1.0"?>
+<package format="2">
   <name>cgal5_catkin</name>
   <version>5.0.2</version>
   <description>Catkin wrapper for CGAL 5.</description>
