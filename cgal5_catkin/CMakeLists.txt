@@ -26,3 +26,8 @@ catkin_package(
   INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include
   CFG_EXTRAS cgal-extras.cmake
 )
+
+install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/include/CGAL/
+  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/CGAL/
+)
+
