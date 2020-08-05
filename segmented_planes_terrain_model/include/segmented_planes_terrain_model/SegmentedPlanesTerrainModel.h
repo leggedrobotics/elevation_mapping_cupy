@@ -13,7 +13,7 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
  public:
   SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain);
 
-  TerrainPlane getLocalTerrainAtPositionInWorld(const vector3_t& positionInWorld) const override;
+  TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const override;
 
   ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const override;
 
