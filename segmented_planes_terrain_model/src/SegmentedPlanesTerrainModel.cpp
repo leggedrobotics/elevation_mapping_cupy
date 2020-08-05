@@ -11,6 +11,31 @@
 
 namespace switched_model {
 
+// TODO (rgrandia) : deadzone a parameter
+const double zHeightDistanceDeadzone = 0.1;  // [m] This difference in z height is not counted
+
+double distanceCost(const vector3_t& query, const vector3_t& terrainPoint) {
+  const double dx = query.x() - terrainPoint.x();
+  const double dy = query.y() - terrainPoint.y();
+  const double dz = std::max(0.0, std::abs(query.z() - terrainPoint.z()) - zHeightDistanceDeadzone);
+  return dx * dx + dy * dy + dz * dz;
+}
+
+double distanceCostLowerbound(double distanceSquared) {
+  // cost = dx*dx + dy*dy + max(0.0, (|dz| - z0)).^2   with z0 >= 0
+  // Need a lower bound for this cost derived from square distance and shift
+  //
+  // dz*dz - z0*z0   < max(0.0, (|dz| - z0)).^2
+  // if |dz| > z0 ==>
+  //    dz*dz - 2*|dz|*z0 + z0*z0 = (|dz| - z0).^2
+  //    dz*dz - 2*z0*z0 + z0*z0   < (|dz| - z0).^2
+  //    dz*dz - z0*z0   < (|dz| - z0).^2
+  //
+  // if |dz| < z0 ==>
+  //    dz*dz - z0*z0  < 0.0  (true)
+  return distanceSquared - zHeightDistanceDeadzone * zHeightDistanceDeadzone;
+}
+
 SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain)
     : planarTerrain_(std::move(planarTerrain)) {}
 
@@ -123,7 +148,8 @@ std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decompos
   std::vector<std::pair<const convex_plane_decomposition::PlanarRegion*, double>> regionsAndBboxSquareDistances;
   regionsAndBboxSquareDistances.reserve(planarTerrain.size());
   for (const auto& planarRegion : planarTerrain) {
-    regionsAndBboxSquareDistances.emplace_back(&planarRegion, squaredDistanceToBoundingBox(positionInWorld, planarRegion));
+    double squareDistance = squaredDistanceToBoundingBox(positionInWorld, planarRegion);
+    regionsAndBboxSquareDistances.emplace_back(&planarRegion, distanceCostLowerbound(squareDistance));
   }
 
   // Sort regions close to far
@@ -140,8 +166,12 @@ std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decompos
     }
 
     const auto distanceSqrAndProjection = squaredDistanceToBoundary(positionInWorld, *regionAndBboxSquareDistance.first);
-    if (distanceSqrAndProjection.first < minDistSquared) {
-      minDistSquared = distanceSqrAndProjection.first;
+    const auto& projectionInWorldFrame =
+        positionInWorldFrameFromPositionInTerrain({distanceSqrAndProjection.second.x(), distanceSqrAndProjection.second.y(), 0.0},
+                                                  regionAndBboxSquareDistance.first->planeParameters);
+    const double distCost = distanceCost(positionInWorld, projectionInWorldFrame);
+    if (distCost < minDistSquared) {
+      minDistSquared = distCost;
       closestRegionAndProjection = {regionAndBboxSquareDistance.first, distanceSqrAndProjection.second};
     }
   }
