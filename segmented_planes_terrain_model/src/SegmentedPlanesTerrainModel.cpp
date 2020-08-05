@@ -11,6 +11,7 @@
 
 namespace switched_model {
 
+// TODO (rgrandia) : deadzone a parameter
 const double zHeightDistanceDeadzone = 0.1;  // [m] This difference in z height is not counted
 
 double distanceCost(const vector3_t& query, const vector3_t& terrainPoint) {
