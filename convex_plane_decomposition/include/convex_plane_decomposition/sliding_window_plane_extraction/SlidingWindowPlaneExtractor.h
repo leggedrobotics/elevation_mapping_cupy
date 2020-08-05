@@ -5,8 +5,8 @@
 #include <grid_map_core/GridMap.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "convex_plane_decomposition/ransac/RansacPlaneExtractor.hpp"
 #include "convex_plane_decomposition/SegmentedPlanesMap.h"
+#include "convex_plane_decomposition/ransac/RansacPlaneExtractor.hpp"
 
 #include "SlidingWindowPlaneExtractorParameters.h"
 
@@ -16,7 +16,7 @@ namespace sliding_window_plane_extractor {
 class SlidingWindowPlaneExtractor {
  public:
   SlidingWindowPlaneExtractor(const SlidingWindowPlaneExtractorParameters& parameters,
-      const ransac_plane_extractor::RansacPlaneExtractorParameters& ransacParameters);
+                              const ransac_plane_extractor::RansacPlaneExtractorParameters& ransacParameters);
 
   void runExtraction(const grid_map::GridMap& map, const std::string& layer_height);
 

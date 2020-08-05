@@ -40,7 +40,7 @@ void SlidingWindowPlaneExtractor::runExtraction(const grid_map::GridMap& map, co
   segmentedPlanesMap_.highestLabel = -1;
   segmentedPlanesMap_.labelPlaneParameters.clear();
   const auto& mapSize = map_->getSize();
-  binaryImagePatch_ = cv::Mat(mapSize(0), mapSize(1), CV_8U, 0.0); // Zero initialize to set untouched pixels to not planar;
+  binaryImagePatch_ = cv::Mat(mapSize(0), mapSize(1), CV_8U, 0.0);  // Zero initialize to set untouched pixels to not planar;
   // Need a buffer of at least the linear size of the image. But no need to shrink if the buffer is already bigger.
   const int linearMapSize = mapSize(0) * mapSize(1);
   if (surfaceNormals_.size() < linearMapSize) {
@@ -132,11 +132,12 @@ void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
 // Label cells according to which cell they belong to using connected component labeling.
 void SlidingWindowPlaneExtractor::runSegmentation() {
   int numberOfLabel = cv::connectedComponents(binaryImagePatch_, segmentedPlanesMap_.labeledImage, parameters_.connectivity, CV_32S);
-  segmentedPlanesMap_.highestLabel = numberOfLabel - 1; // Labels are [0, N-1]
+  segmentedPlanesMap_.highestLabel = numberOfLabel - 1;  // Labels are [0, N-1]
 }
 
 void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage() {
-  const int numberOfExtractedPlanesWithoutRefinement = segmentedPlanesMap_.highestLabel; // Make local copy. The highestLabel is incremented inside the loop
+  const int numberOfExtractedPlanesWithoutRefinement =
+      segmentedPlanesMap_.highestLabel;  // Make local copy. The highestLabel is incremented inside the loop
 
   // Skip label 0. This is the background, i.e. non-planar region.
   for (int label = 1; label <= numberOfExtractedPlanesWithoutRefinement; ++label) {
@@ -167,7 +168,8 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label) {
           normal_vector_sum += normal_vector_temp;
           ++number_of_normal_instances;
 
-          Eigen::Vector3d point3d{segmentedPlanesMap_.mapOrigin.x() - row * segmentedPlanesMap_.resolution, segmentedPlanesMap_.mapOrigin.y() - col * segmentedPlanesMap_.resolution, height};
+          Eigen::Vector3d point3d{segmentedPlanesMap_.mapOrigin.x() - row * segmentedPlanesMap_.resolution,
+                                  segmentedPlanesMap_.mapOrigin.y() - col * segmentedPlanesMap_.resolution, height};
           support_vector_sum += point3d;
           ++number_of_position_instances;
 
@@ -227,7 +229,8 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label) {
 
       if (angleBetweenVectorsInDegrees(normal_vector_refined_avg, Eigen::Vector3d::UnitZ()) <
           parameters_.plane_inclination_threshold_degrees) {
-        const TerrainPlane temp_plane_parameters(support_vector_refined_avg, switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normal_vector_refined_avg));
+        const TerrainPlane temp_plane_parameters(
+            support_vector_refined_avg, switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normal_vector_refined_avg));
         segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, temp_plane_parameters);
       }
     }
@@ -242,9 +245,9 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label) {
       segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = 0;
     }
   } else {
-    if (angleBetweenVectorsInDegrees(normal_vector_avg, Eigen::Vector3d::UnitZ()) <
-        parameters_.plane_inclination_threshold_degrees) {
-      const TerrainPlane temp_plane_parameters(support_vector_avg, switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normal_vector_avg));
+    if (angleBetweenVectorsInDegrees(normal_vector_avg, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
+      const TerrainPlane temp_plane_parameters(support_vector_avg,
+                                               switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normal_vector_avg));
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, temp_plane_parameters);
     }
   }

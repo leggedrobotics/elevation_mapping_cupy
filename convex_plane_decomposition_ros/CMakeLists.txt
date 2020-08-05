@@ -13,6 +13,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 	jsk_recognition_msgs
 	convex_plane_decomposition
 	convex_plane_decomposition_msgs
+	tf2_ros
 )
 
 find_package(catkin REQUIRED COMPONENTS

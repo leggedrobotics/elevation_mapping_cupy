@@ -1,10 +1,14 @@
 #pragma once
 
-#include <string>
 #include <memory>
 #include <mutex>
+#include <string>
 
+#include <geometry_msgs/TransformStamped.h>
 #include <ros/ros.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <Eigen/Geometry>
 
 #include <grid_map_msgs/GridMap.h>
 
@@ -15,7 +19,7 @@ class GridMapPreprocessing;
 namespace sliding_window_plane_extractor {
 class SlidingWindowPlaneExtractor;
 }
-namespace  contour_extraction {
+namespace contour_extraction {
 class ContourExtraction;
 }
 
@@ -34,9 +38,12 @@ class ConvexPlaneExtractionROS {
    */
   void callback(const grid_map_msgs::GridMap& message);
 
+  Eigen::Isometry3d getTransformToTargetFrame(const std::string& sourceFrame);
+
   // Parameters
   std::string elevationMapTopic_;
   std::string elevationLayer_;
+  std::string targetFrameId_ = "odom";
   double subMapWidth_;
   double subMapLength_;
   bool publishToController_;
@@ -47,6 +54,8 @@ class ConvexPlaneExtractionROS {
   ros::Publisher boundaryPublisher_;
   ros::Publisher insetPublisher_;
   ros::Publisher regionPublisher_;
+  tf2_ros::Buffer tfBuffer_;
+  tf2_ros::TransformListener tfListener_;
 
   // Pipeline
   std::mutex mutex_;

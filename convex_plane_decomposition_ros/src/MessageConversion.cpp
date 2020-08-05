@@ -61,7 +61,7 @@ convex_plane_decomposition_msgs::PlanarTerrain toMessage(const PlanarTerrain& pl
   return msg;
 }
 
-TerrainPlane fromMessage(const geometry_msgs::Pose& msg){
+TerrainPlane fromMessage(const geometry_msgs::Pose& msg) {
   TerrainPlane plane;
   plane.positionInWorld.x() = msg.position.x;
   plane.positionInWorld.y() = msg.position.y;
@@ -75,7 +75,7 @@ TerrainPlane fromMessage(const geometry_msgs::Pose& msg){
   return plane;
 }
 
-geometry_msgs::Pose toMessage(const TerrainPlane& plane){
+geometry_msgs::Pose toMessage(const TerrainPlane& plane) {
   geometry_msgs::Pose pose;
   pose.position.x = plane.positionInWorld.x();
   pose.position.y = plane.positionInWorld.y();

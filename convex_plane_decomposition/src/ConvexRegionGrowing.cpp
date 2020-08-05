@@ -30,7 +30,7 @@ int getClockWiseNeighbour(int i, int lastVertex) {
   return (i < lastVertex) ? i + 1 : 0;
 }
 
-void updateMean(CgalPoint2d & mean, const CgalPoint2d& oldValue, const CgalPoint2d& updatedValue, int N) {
+void updateMean(CgalPoint2d& mean, const CgalPoint2d& oldValue, const CgalPoint2d& updatedValue, int N) {
   // old_mean = 1/N * ( others + old_value); -> others = N*old_mean - old_value
   // new_mean = 1/N * ( others + new_value); -> new_mean = old_mean - 1/N * oldValue + 1/N * updatedValue
   mean += 1.0 / N * (updatedValue - oldValue);
@@ -107,7 +107,7 @@ CgalPolygon2d growConvexPolygonInsideShape_impl(const T& parentShape, CgalPoint2
 
   // Cached values per vertex
   std::vector<bool> blocked(numberOfVertices, false);
-  std::vector<CgalCircle2d> freeSpheres(numberOfVertices, CgalCircle2d(center, radius*radius));
+  std::vector<CgalCircle2d> freeSpheres(numberOfVertices, CgalCircle2d(center, radius * radius));
 
   int Nblocked = 0;
   while (Nblocked < numberOfVertices) {
@@ -127,7 +127,8 @@ CgalPolygon2d growConvexPolygonInsideShape_impl(const T& parentShape, CgalPoint2
   return growthShape;
 }
 
-CgalPolygon2d growConvexPolygonInsideShape(const CgalPolygon2d & parentShape, CgalPoint2d center, int numberOfVertices, double growthFactor) {
+CgalPolygon2d growConvexPolygonInsideShape(const CgalPolygon2d& parentShape, CgalPoint2d center, int numberOfVertices,
+                                           double growthFactor) {
   return growConvexPolygonInsideShape_impl(parentShape, center, numberOfVertices, growthFactor);
 }
 
