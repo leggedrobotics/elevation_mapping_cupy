@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
   using grid_map::Matrix;
 
   auto t2 = std::chrono::high_resolution_clock::now();
-  const int N = 30;
+  const int N = 300;
   for (int rep = 0; rep < N; rep++) {
     // =========================================================
     data_.clear();
@@ -223,35 +223,9 @@ int main(int argc, char** argv) {
     // Height range of the signed distance field is higher than the max height.
     maxHeight += heightClearance;
 
-    Matrix sdfElevationAbove = Matrix::Ones(map.rows(), map.cols()) * maxDistance_;
-    Matrix sdfLayer = Matrix::Zero(map.rows(), map.cols());
-
-    zIndexStartHeight_ = minHeight;
-
     // Calculate signed distance field from bottom.
-    Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> obstacleFreeField;
-    Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> obstacleField;
     for (float h = minHeight; h < maxHeight; h += resolution_) {
-      Matrix sdf2d = signed_distance_field::computeSignedDistanceAtHeight(map, h, resolution_);
-
-      for (size_t i = 0; i < sdfElevationAbove.size(); ++i) {
-        if (map(i) <= h) {
-          if (sdfElevationAbove(i) == maxDistance_) {
-            sdfElevationAbove(i) = h - map(i);
-          } else {
-            sdfElevationAbove(i) = sdfLayer(i) + resolution_;
-          }
-        }
-
-        if (sdf2d(i) == 0) {
-          sdfLayer(i) = h - map(i);
-        } else if (sdf2d(i) < 0) {
-          sdfLayer(i) = -std::min(fabs(sdf2d(i)), fabs(map(i) - h));
-        } else {
-          sdfLayer(i) = std::min(sdf2d(i), sdfElevationAbove(i));
-        }
-      }
-      data_.push_back(sdfLayer);
+      data_.emplace_back(signed_distance_field::signedDistanceAtHeight(map, h, resolution));
     }
 
     // =========================================================

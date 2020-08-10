@@ -4,14 +4,11 @@
 
 #include "signed_distance_field/SignedDistance2d.h"
 
+#include "signed_distance_field/PixelBorderDistance.h"
+
 namespace signed_distance_field {
 
 namespace internal {
-template <typename T>
-T square(T x) {
-  return x * x;
-}
-
 /**
  * 1D Euclidean Distance Transform based on: http://cs.brown.edu/people/pfelzens/dt/
  * Adapted to work on Eigen objects directly
@@ -33,14 +30,10 @@ void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDista
 
   // Compute bounds
   for (int q = 1; q < n; q++) {
-    auto factor1 = static_cast<float>(q - v[k]);
-    auto factor2 = static_cast<float>(q + v[k]);
-    float s = 0.5F * ((f[q] - f[v[k]]) / factor1 + factor2);
+    float s = equidistancePoint(q, f[q], v[k], f[v[k]]);
     while (s <= z[k]) {
       k--;
-      factor1 = static_cast<float>(q - v[k]);
-      factor2 = static_cast<float>(q + v[k]);
-      s = 0.5F * ((f[q] - f[v[k]]) / factor1 + factor2);
+      s = equidistancePoint(q, f[q], v[k], f[v[k]]);
     }
     k++;
     v[k] = q;
@@ -51,127 +44,119 @@ void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDista
   // Collect results
   k = 0;
   for (int q = 0; q < n; q++) {
-    while (z[k + 1] < static_cast<float>(q)) {
+    auto qFloat = static_cast<float>(q);
+    while (z[k + 1] < qFloat) {
       k++;
     }
-    d[q] = square(q - v[k]) + f[v[k]];
+    d[q] = squarePixelBorderDistance(qFloat, v[k], f[v[k]]);
   }
 
   // Write distance result back in place
   squareDistance1d = d;
 }
 
-void squaredDistanceTransform_2d_columnwiseInplace(grid_map::Matrix& squareDistance, const std::vector<bool>* skipLine = nullptr) {
+void squaredDistanceTransform_2d_columnwiseInplace(grid_map::Matrix& squareDistance) {
   const size_t n = squareDistance.rows();
   const size_t m = squareDistance.cols();
   Eigen::VectorXf workvector(2 * n + 1);
   std::vector<int> intWorkvector(n);
 
   for (size_t i = 0; i < m; i++) {
-    if (skipLine == nullptr || !(*skipLine)[i]) {
-      squaredDistanceTransform_1d_inplace(squareDistance.col(i), workvector.segment(0, n), workvector.segment(n, n + 1), intWorkvector);
-    }
+    squaredDistanceTransform_1d_inplace(squareDistance.col(i), workvector.segment(0, n), workvector.segment(n, n + 1), intWorkvector);
   }
 }
 
 // SquareDistance must be initialized with 0.0 for elements and INF for non-elements
-void computePixelDistance2d(grid_map::Matrix& squareDistance, const SparsityInfo& sparsityInfo) {
-  // Start with the dimension that maximizes the number of points being skips
-  if (sparsityInfo.numColsHomogeneous * squareDistance.rows() > sparsityInfo.numRowsHomogeneous * squareDistance.cols()) {
-    // Process columns
-    squaredDistanceTransform_2d_columnwiseInplace(squareDistance, &sparsityInfo.colsIsHomogenous);
+void computePixelDistance2d(grid_map::Matrix& squareDistance) {
+  // Process columns
+  squaredDistanceTransform_2d_columnwiseInplace(squareDistance);
 
-    // Process rows
-    squareDistance.transposeInPlace();
-    squaredDistanceTransform_2d_columnwiseInplace(squareDistance);
-    squareDistance.transposeInPlace();
-  } else {
-    // Process rows
-    squareDistance.transposeInPlace();
-    squaredDistanceTransform_2d_columnwiseInplace(squareDistance, &sparsityInfo.rowsIsHomogenous);
-    squareDistance.transposeInPlace();
-
-    // Process columns
-    squaredDistanceTransform_2d_columnwiseInplace(squareDistance);
-  }
+  // Process rows
+  squareDistance.transposeInPlace();
+  squaredDistanceTransform_2d_columnwiseInplace(squareDistance);
+  squareDistance.transposeInPlace();
 
   // Convert square distance to absolute distance
   squareDistance = squareDistance.cwiseSqrt();
 }
+
+// Initialize with square distance in height direction in pixel units if above the surface
+grid_map::Matrix initializeObstacleDistance(const grid_map::Matrix& elevationMap, float height, float resolution) {
+  return elevationMap.unaryExpr([=](float elevation) {
+    if (height > elevation) {
+      const auto diff = (height - elevation)  / resolution;
+      return diff * diff;
+    } else {
+      return 0.0F;
+    }
+  });
+}
+
+// Initialize with square distance in height direction in pixel units if below the surface
+grid_map::Matrix initializeObstacleFreeDistance(const grid_map::Matrix& elevationMap, float height, float resolution) {
+  return elevationMap.unaryExpr([=](float elevation) {
+    if (height < elevation) {
+      const auto diff = (height - elevation)  / resolution;
+      return diff * diff;
+    } else {
+      return 0.0F;
+    }
+  });
+}
+
+grid_map::Matrix pixelDistanceToFreeSpace(const grid_map::Matrix& elevationMap, float height, float resolution) {
+  grid_map::Matrix sdfObstacleFree = internal::initializeObstacleFreeDistance(elevationMap, height, resolution);
+  internal::computePixelDistance2d(sdfObstacleFree);
+  return sdfObstacleFree;
+}
+
+grid_map::Matrix pixelDistanceToObstacle(const grid_map::Matrix& elevationMap, float height, float resolution) {
+  grid_map::Matrix sdfObstacle = internal::initializeObstacleDistance(elevationMap, height, resolution);
+  internal::computePixelDistance2d(sdfObstacle);
+  return sdfObstacle;
+}
+
 }  // namespace internal
 
-grid_map::Matrix computeSignedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution) {
-  const auto sparsityInfo = signed_distance_field::collectSparsityInfo(elevationMap, height);
+grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution) {
+  auto obstacleCount = (elevationMap.array() > height).count();
+  bool allPixelsAreObstacles = obstacleCount == elevationMap.size();
+  bool allPixelsAreFreeSpace = obstacleCount == 0;
 
-  if (sparsityInfo.hasObstacles) {
-    if (sparsityInfo.hasFreeSpace) {
-      // Both obstacles and free space -> compute planar signed distance
+  if (allPixelsAreObstacles) {
+    return -resolution * internal::pixelDistanceToFreeSpace(elevationMap, height, resolution);
+  } else if (allPixelsAreFreeSpace) {
+    return resolution * internal::pixelDistanceToObstacle(elevationMap, height, resolution);
+  } else {  // This layer contains a mix of obstacles and free space
+    return resolution * (internal::pixelDistanceToObstacle(elevationMap, height, resolution) -
+                         internal::pixelDistanceToFreeSpace(elevationMap, height, resolution));
+  }
+}
+
+grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
+  auto obstacleCount = occupancyGrid.count();
+  bool hasObstacles = obstacleCount > 0;
+  if (hasObstacles){
+    bool hasFreeSpace = obstacleCount < occupancyGrid.size();
+    if (hasFreeSpace){
       // Compute pixel distance to obstacles
-      grid_map::Matrix sdfObstacle = elevationMap.unaryExpr([=](float val) { return (val >= height) ? 0.0F : INF; });
-      internal::computePixelDistance2d(sdfObstacle, sparsityInfo);
+      grid_map::Matrix sdfObstacle = occupancyGrid.unaryExpr([=](bool val) { return (val) ? 0.0F : INF; });
+      internal::computePixelDistance2d(sdfObstacle);
 
       // Compute pixel distance to obstacle free space
-      grid_map::Matrix sdfObstacleFree = elevationMap.unaryExpr([=](float val) { return (val < height) ? 0.0F : INF; });
-      internal::computePixelDistance2d(sdfObstacleFree, sparsityInfo);
+      grid_map::Matrix sdfObstacleFree = occupancyGrid.unaryExpr([=](bool val) { return (val) ? INF : 0.0F; });
+      internal::computePixelDistance2d(sdfObstacleFree);
 
       grid_map::Matrix sdf2d = resolution * (sdfObstacle - sdfObstacleFree);
       return sdf2d;
     } else {
-      // Only obstacles -> distance is zero everywhere
-      return grid_map::Matrix::Zero(elevationMap.rows(), elevationMap.cols());
+      // Only obstacles -> distance is minus infinity everywhere
+      return grid_map::Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), -INF);
     }
   } else {
     // No obstacles -> planar distance is infinite
-    return grid_map::Matrix::Constant(elevationMap.rows(), elevationMap.cols(), INF);
+    return grid_map::Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), INF);
   }
-}
-
-SparsityInfo collectSparsityInfo(const grid_map::Matrix& elevationMap, float height) {
-  const size_t n = elevationMap.rows();
-  const size_t m = elevationMap.cols();
-
-  SparsityInfo sparsityInfo;
-  // Assume false and set true if detected otherwise
-  sparsityInfo.hasObstacles = false;
-  sparsityInfo.hasFreeSpace = false;
-
-  // Assume true and set false if detected otherwise
-  sparsityInfo.rowsIsHomogenous.resize(elevationMap.rows(), true);
-  sparsityInfo.colsIsHomogenous.resize(elevationMap.cols(), true);
-
-  Eigen::Matrix<bool, 1, -1> firstColIsObstacle = elevationMap.col(0).array() >= height;
-
-  // Loop according to Eigen column major storage order.
-  for (size_t j = 0; j < m; ++j) {
-    bool firstRowIsObstacle = elevationMap(0, j) >= height;
-    bool thisColIsHomogeneous = true;
-    for (size_t i = 0; i < n; ++i) {
-      float currentValue = elevationMap(i, j);
-      if (currentValue >= height) {  // current location contains obstacle
-        sparsityInfo.hasObstacles = true;
-        if (!firstRowIsObstacle) {
-          thisColIsHomogeneous = false;
-        }
-        if (!firstColIsObstacle(i)) {
-          sparsityInfo.rowsIsHomogenous[i] = false;
-        }
-      } else {  // current location is free
-        sparsityInfo.hasFreeSpace = true;
-        if (firstRowIsObstacle) {
-          thisColIsHomogeneous = false;
-        }
-        if (firstColIsObstacle(i)) {
-          sparsityInfo.rowsIsHomogenous[i] = false;
-        }
-      }
-    }
-    sparsityInfo.colsIsHomogenous[j] = thisColIsHomogeneous;
-  }
-
-  sparsityInfo.numRowsHomogeneous = std::count(sparsityInfo.rowsIsHomogenous.begin(), sparsityInfo.rowsIsHomogenous.end(), true);
-  sparsityInfo.numColsHomogeneous = std::count(sparsityInfo.colsIsHomogenous.begin(), sparsityInfo.colsIsHomogenous.end(), true);
-
-  return sparsityInfo;
 }
 
 }  // namespace signed_distance_field

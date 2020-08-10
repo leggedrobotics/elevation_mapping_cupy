@@ -34,6 +34,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/PixelBorderDistance.cpp
 	src/SignedDistanceField.cpp
 	src/SignedDistance2d.cpp
 	)
@@ -63,7 +64,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 add_executable(${PROJECT_NAME}_test
+	test/testPixelBorderDistance.cpp
 	test/testSignedDistance2d.cpp
+	test/testSignedDistance3d.cpp
 	)
 target_link_libraries(${PROJECT_NAME}_test
 	${catkin_LIBRARIES}
