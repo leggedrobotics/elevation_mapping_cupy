@@ -4,6 +4,7 @@ project(signed_distance_field)
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_core
+	pcl_ros
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -64,6 +65,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 add_executable(${PROJECT_NAME}_test
+	test/testDerivatives.cpp
 	test/testPixelBorderDistance.cpp
 	test/testSignedDistance2d.cpp
 	test/testSignedDistance3d.cpp

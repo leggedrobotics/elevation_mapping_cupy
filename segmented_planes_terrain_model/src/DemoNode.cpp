@@ -13,6 +13,7 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_sdf/SignedDistanceField.hpp>
+#include <signed_distance_field//SignedDistanceField.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -96,21 +97,19 @@ int main(int argc, char** argv) {
       convexTerrainPublisher_.publish(toMarker(convexTerrain));
 
 
-      grid_map::SignedDistanceField signedDistanceField;
-      double heightClearance = 0.1;
-      double width = 0.5;
+
+      double heightClearance = 0.35;
+      double width = 1.5;
+      double length = 2.0;
       bool success;
-      grid_map::GridMap localMap = messageMap->getSubmap({convexTerrain.plane.positionInWorld.x(), convexTerrain.plane.positionInWorld.y()}, Eigen::Array2d(width, width), success);
+      grid_map::GridMap localMap = messageMap->getSubmap({convexTerrain.plane.positionInWorld.x(), convexTerrain.plane.positionInWorld.y()}, Eigen::Array2d(width, length), success);
       auto t2 = std::chrono::high_resolution_clock::now();
-      signedDistanceField.calculateSignedDistanceField(*messageMap, "elevation", heightClearance);
+      signed_distance_field::SignedDistanceField sdf(localMap, "elevation", convexTerrain.plane.positionInWorld.z() - heightClearance, convexTerrain.plane.positionInWorld.z() + heightClearance);
       auto t3 = std::chrono::high_resolution_clock::now();
       std::cout << "Sdf computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]\n";
 
-      pcl::PointCloud<pcl::PointXYZI> points;
-      signedDistanceField.convertToPointCloud(points);
-
       sensor_msgs::PointCloud2 pointCloud2Msg;
-      pcl::toROSMsg(points, pointCloud2Msg);
+      pcl::toROSMsg(sdf.asPointCloud(), pointCloud2Msg);
       pointCloud2Msg.header = switched_model::getHeaderMsg(originFrameId_, ros::Time::now());
 
       distanceFieldPublisher.publish(pointCloud2Msg);

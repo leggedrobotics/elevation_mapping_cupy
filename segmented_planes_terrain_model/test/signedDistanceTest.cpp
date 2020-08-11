@@ -9,6 +9,7 @@
 #include <grid_map_cv/grid_map_cv.hpp>
 
 #include <signed_distance_field/SignedDistance2d.h>
+#include <signed_distance_field/SignedDistanceField.h>
 #include <grid_map_sdf/SignedDistanceField.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -181,7 +182,7 @@ int main(int argc, char** argv) {
 
   grid_map::SignedDistanceField signedDistanceField;
 
-  double width = 1.0;
+  double width = 4.0;
   bool success;
   grid_map::GridMap localMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(width, width), success);
 
@@ -200,33 +201,36 @@ int main(int argc, char** argv) {
   const float lowestHeight_ = -1e5;
   using grid_map::Matrix;
 
+  // initialization
+  resolution_ = gridMap.getResolution();
+  position_ = gridMap.getPosition();
+  size_ = gridMap.getSize();
+  Matrix map = gridMap.get(layer);  // Copy!
+
+  float minHeight = map.minCoeffOfFinites();
+  if (!std::isfinite(minHeight)) minHeight = lowestHeight_;
+  float maxHeight = map.maxCoeffOfFinites();
+  if (!std::isfinite(maxHeight)) maxHeight = lowestHeight_;
+
+  const float valueForEmptyCells = lowestHeight_;  // maxHeight, minHeight (TODO Make this an option).
+  for (size_t i = 0; i < map.size(); ++i) {
+    if (std::isnan(map(i))) map(i) = valueForEmptyCells;
+  }
+
+  // Height range of the signed distance field is higher than the max height.
+  maxHeight += heightClearance;
+
   auto t2 = std::chrono::high_resolution_clock::now();
-  const int N = 300;
+  const int N = 50;
   for (int rep = 0; rep < N; rep++) {
-    // =========================================================
-    data_.clear();
-    resolution_ = gridMap.getResolution();
-    position_ = gridMap.getPosition();
-    size_ = gridMap.getSize();
-    Matrix map = gridMap.get(layer);  // Copy!
-
-    float minHeight = map.minCoeffOfFinites();
-    if (!std::isfinite(minHeight)) minHeight = lowestHeight_;
-    float maxHeight = map.maxCoeffOfFinites();
-    if (!std::isfinite(maxHeight)) maxHeight = lowestHeight_;
-
-    const float valueForEmptyCells = lowestHeight_;  // maxHeight, minHeight (TODO Make this an option).
-    for (size_t i = 0; i < map.size(); ++i) {
-      if (std::isnan(map(i))) map(i) = valueForEmptyCells;
-    }
-
-    // Height range of the signed distance field is higher than the max height.
-    maxHeight += heightClearance;
-
-    // Calculate signed distance field from bottom.
-    for (float h = minHeight; h < maxHeight; h += resolution_) {
-      data_.emplace_back(signed_distance_field::signedDistanceAtHeight(map, h, resolution));
-    }
+//    // =========================================================
+//    data_.clear();
+//
+//    // Calculate signed distance field from bottom.
+//    for (float h = minHeight; h < maxHeight; h += resolution_) {
+//      data_.emplace_back(signed_distance_field::signedDistanceAtHeight(map, h, resolution));
+//    }
+    auto sdf = signed_distance_field::SignedDistanceField(gridMap, layer, minHeight, maxHeight);
 
     // =========================================================
   }

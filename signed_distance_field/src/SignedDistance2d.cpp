@@ -9,64 +9,90 @@
 namespace signed_distance_field {
 
 namespace internal {
+struct DistanceLowerBound {
+  float v; // origin of bounding function
+  float f; // functional offset at the origin
+  float zprev; // lhs of interval where this bound holds
+  float z; // rhs of interval where this lower bound holds
+};
+
+inline void fillLowerBounds(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d, std::vector<DistanceLowerBound>& lowerBounds) {
+  const int n = squareDistance1d.size();
+
+  // Initialize
+  auto lowerBoundIt = lowerBounds.begin();
+  *lowerBoundIt = DistanceLowerBound{0.0F, squareDistance1d[0], -INF, INF};
+
+  // Compute bounds
+  float qFloat = 1.0F;
+  for (int q = 1; q < n; q++) {
+    // Storing these quantaties by value gives better performance (removed indirection?)
+    const float fq = squareDistance1d[q];
+    DistanceLowerBound lastBound = *lowerBoundIt;
+
+    float s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+
+    // Search backwards in bounds until s is within [zprev, z]
+    while (s <= lastBound.zprev) {
+      --lowerBoundIt;
+      lastBound = *lowerBoundIt;
+      s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+    }
+    lowerBoundIt->z = s;
+    ++lowerBoundIt;
+    *lowerBoundIt = DistanceLowerBound{qFloat, fq, s, INF};
+    qFloat += 1.0F;
+  }
+}
+
+inline void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds) {
+  const int n = squareDistance1d.size();
+  auto lowerBoundIt = lowerBounds.begin();
+
+  // Store active lower bound by value to remove indirection
+  auto lastz = lowerBoundIt->z;
+  auto lastv = lowerBoundIt->v;
+  auto lastf = lowerBoundIt->f;
+
+  float qFloat = 0.0F;
+  for (int q = 0; q < n; q++) {
+    // Find the new active lower bound if q no longer belongs to current interval
+    if (qFloat > lastz) {
+      do {
+        ++lowerBoundIt;
+        lastz = lowerBoundIt->z;
+      } while (lastz < qFloat);
+      lastv = lowerBoundIt->v;
+      lastf = lowerBoundIt->f;
+    }
+
+    squareDistance1d[q] = squarePixelBorderDistance(qFloat, lastv, lastf);
+    qFloat += 1.0F;
+  }
+}
+
 /**
  * 1D Euclidean Distance Transform based on: http://cs.brown.edu/people/pfelzens/dt/
  * Adapted to work on Eigen objects directly
  * Optimized computation of s
  */
-void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d, Eigen::Ref<Eigen::VectorXf> d,
-                                         Eigen::Ref<Eigen::VectorXf> z, std::vector<int>& v) {
-  const int n = squareDistance1d.size();
-  const auto& f = squareDistance1d;
-  assert(d.size() == n);
-  assert(z.size() == n + 1);
-  assert(v.size() == n);
+inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d, std::vector<DistanceLowerBound>& lowerBounds) {
+  assert(lowerBounds.size() ==  squareDistance1d.size());
 
-  // Initialize
-  int k = 0;
-  v[0] = 0;
-  z[0] = -INF;
-  z[1] = INF;
-
-  // Compute bounds
-  for (int q = 1; q < n; q++) {
-    float s = equidistancePoint(q, f[q], v[k], f[v[k]]);
-    while (s <= z[k]) {
-      k--;
-      s = equidistancePoint(q, f[q], v[k], f[v[k]]);
-    }
-    k++;
-    v[k] = q;
-    z[k] = s;
-    z[k + 1] = INF;
-  }
-
-  // Collect results
-  k = 0;
-  for (int q = 0; q < n; q++) {
-    auto qFloat = static_cast<float>(q);
-    while (z[k + 1] < qFloat) {
-      k++;
-    }
-    d[q] = squarePixelBorderDistance(qFloat, v[k], f[v[k]]);
-  }
-
-  // Write distance result back in place
-  squareDistance1d = d;
+  fillLowerBounds(squareDistance1d, lowerBounds);
+  extractDistances(squareDistance1d, lowerBounds);
 }
 
 void squaredDistanceTransform_2d_columnwiseInplace(grid_map::Matrix& squareDistance) {
   const size_t n = squareDistance.rows();
   const size_t m = squareDistance.cols();
-  Eigen::VectorXf workvector(2 * n + 1);
-  std::vector<int> intWorkvector(n);
+  std::vector<DistanceLowerBound> lowerBounds(n);
 
   for (size_t i = 0; i < m; i++) {
-    squaredDistanceTransform_1d_inplace(squareDistance.col(i), workvector.segment(0, n), workvector.segment(n, n + 1), intWorkvector);
+    squaredDistanceTransform_1d_inplace(squareDistance.col(i), lowerBounds);
   }
 }
 
-// SquareDistance must be initialized with 0.0 for elements and INF for non-elements
 void computePixelDistance2d(grid_map::Matrix& squareDistance) {
   // Process columns
   squaredDistanceTransform_2d_columnwiseInplace(squareDistance);
