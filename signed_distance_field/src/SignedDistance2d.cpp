@@ -10,47 +10,90 @@ namespace signed_distance_field {
 
 namespace internal {
 struct DistanceLowerBound {
-  float v; // origin of bounding function
-  float f; // functional offset at the origin
-  float zprev; // lhs of interval where this bound holds
-  float z; // rhs of interval where this lower bound holds
+  float v;      // origin of bounding function
+  float f;      // functional offset at the origin
+  float z_lhs;  // lhs of interval where this bound holds
+  float z_rhs;  // rhs of interval where this lower bound holds
 };
 
-inline void fillLowerBounds(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d, std::vector<DistanceLowerBound>& lowerBounds) {
+inline std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d,
+                                                                 std::vector<DistanceLowerBound>& lowerBounds) {
   const int n = squareDistance1d.size();
+  const auto nFloat = static_cast<float>(n);
+
+  // Find minimum
+  int qMin = 0;
+  float fMin = squareDistance1d[0];
+  if (fMin > 0.0F) {
+    for (int q = 1; q < n; ++q) {
+      const float fq = squareDistance1d[q];
+      if (fq < fMin) {
+        qMin = q;
+        fMin = fq;
+        if (fMin == 0.0F) {
+          break;
+        }
+      }
+    }
+  }
 
   // Initialize
-  auto lowerBoundIt = lowerBounds.begin();
-  *lowerBoundIt = DistanceLowerBound{0.0F, squareDistance1d[0], -INF, INF};
+  auto lowerBoundIt = lowerBounds.begin() + qMin;
+  *lowerBoundIt = DistanceLowerBound{static_cast<float>(qMin), fMin, -INF, INF};
 
-  // Compute bounds
-  float qFloat = 1.0F;
-  for (int q = 1; q < n; q++) {
+  // Compute bounds to the right of minimum
+  float qFloat = static_cast<float>(qMin) + 1.0F;
+  for (int q = qMin + 1; q < n; ++q) {
     // Storing these quantaties by value gives better performance (removed indirection?)
     const float fq = squareDistance1d[q];
     DistanceLowerBound lastBound = *lowerBoundIt;
 
     float s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
-
-    // Search backwards in bounds until s is within [zprev, z]
-    while (s <= lastBound.zprev) {
-      --lowerBoundIt;
-      lastBound = *lowerBoundIt;
-      s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+    if (s < nFloat) {  // Can ignore the lower bound derived from this point if it is only active outsize of [0, n]
+      // Search backwards in bounds until s is within [z_lhs, z_rhs]
+      while (s < lastBound.z_lhs) {
+        --lowerBoundIt;
+        lastBound = *lowerBoundIt;
+        s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+      }
+      lowerBoundIt->z_rhs = s;
+      ++lowerBoundIt;
+      *lowerBoundIt = DistanceLowerBound{qFloat, fq, s, INF};
     }
-    lowerBoundIt->z = s;
-    ++lowerBoundIt;
-    *lowerBoundIt = DistanceLowerBound{qFloat, fq, s, INF};
     qFloat += 1.0F;
   }
+
+  // Compute bounds to the left of minimum
+  lowerBoundIt = lowerBounds.begin() + qMin;
+  qFloat = static_cast<float>(qMin) - 1.0F;
+  for (int q = qMin - 1; q >= 0; --q) {
+    const float fq = squareDistance1d[q];
+    DistanceLowerBound lastBound = *lowerBoundIt;
+
+    float s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+    if (s > 0.0F) {  // Can ignore the lower bound derived from this point if it is only active outsize of [0, n]
+      // Search forwards in bounds until s is within [z_lhs, z_rhs]
+      while (s > lastBound.z_rhs) {
+        ++lowerBoundIt;
+        lastBound = *lowerBoundIt;
+        s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+      }
+      lowerBoundIt->z_lhs = s;
+      --lowerBoundIt;
+      *lowerBoundIt = DistanceLowerBound{qFloat, fq, -INF, s};
+    }
+    qFloat -= 1.0F;
+  }
+
+  return lowerBoundIt;
 }
 
-inline void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds) {
+inline void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
+                             std::vector<DistanceLowerBound>::iterator lowerBoundIt) {
   const int n = squareDistance1d.size();
-  auto lowerBoundIt = lowerBounds.begin();
 
   // Store active lower bound by value to remove indirection
-  auto lastz = lowerBoundIt->z;
+  auto lastz = lowerBoundIt->z_rhs;
   auto lastv = lowerBoundIt->v;
   auto lastf = lowerBoundIt->f;
 
@@ -60,7 +103,7 @@ inline void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const
     if (qFloat > lastz) {
       do {
         ++lowerBoundIt;
-        lastz = lowerBoundIt->z;
+        lastz = lowerBoundIt->z_rhs;
       } while (lastz < qFloat);
       lastv = lowerBoundIt->v;
       lastf = lowerBoundIt->f;
@@ -76,11 +119,15 @@ inline void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const
  * Adapted to work on Eigen objects directly
  * Optimized computation of s
  */
-inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d, std::vector<DistanceLowerBound>& lowerBounds) {
-  assert(lowerBounds.size() ==  squareDistance1d.size());
+inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d,
+                                                std::vector<DistanceLowerBound>& lowerBounds) {
+  assert(lowerBounds.size() == squareDistance1d.size());
 
-  fillLowerBounds(squareDistance1d, lowerBounds);
-  extractDistances(squareDistance1d, lowerBounds);
+  // If all distances are zero, then result remains all zeros
+  if ((squareDistance1d.array() > 0.0F).any()) {
+    auto startIt = fillLowerBounds(squareDistance1d, lowerBounds);
+    extractDistances(squareDistance1d, lowerBounds, startIt);
+  }
 }
 
 void squaredDistanceTransform_2d_columnwiseInplace(grid_map::Matrix& squareDistance) {
@@ -110,7 +157,7 @@ void computePixelDistance2d(grid_map::Matrix& squareDistance) {
 grid_map::Matrix initializeObstacleDistance(const grid_map::Matrix& elevationMap, float height, float resolution) {
   return elevationMap.unaryExpr([=](float elevation) {
     if (height > elevation) {
-      const auto diff = (height - elevation)  / resolution;
+      const auto diff = (height - elevation) / resolution;
       return diff * diff;
     } else {
       return 0.0F;
@@ -122,7 +169,7 @@ grid_map::Matrix initializeObstacleDistance(const grid_map::Matrix& elevationMap
 grid_map::Matrix initializeObstacleFreeDistance(const grid_map::Matrix& elevationMap, float height, float resolution) {
   return elevationMap.unaryExpr([=](float elevation) {
     if (height < elevation) {
-      const auto diff = (height - elevation)  / resolution;
+      const auto diff = (height - elevation) / resolution;
       return diff * diff;
     } else {
       return 0.0F;
@@ -162,9 +209,9 @@ grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, fl
 grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
   auto obstacleCount = occupancyGrid.count();
   bool hasObstacles = obstacleCount > 0;
-  if (hasObstacles){
+  if (hasObstacles) {
     bool hasFreeSpace = obstacleCount < occupancyGrid.size();
-    if (hasFreeSpace){
+    if (hasFreeSpace) {
       // Compute pixel distance to obstacles
       grid_map::Matrix sdfObstacle = occupancyGrid.unaryExpr([=](bool val) { return (val) ? 0.0F : INF; });
       internal::computePixelDistance2d(sdfObstacle);

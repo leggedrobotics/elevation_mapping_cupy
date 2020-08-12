@@ -26,7 +26,7 @@ inline float pixelBorderDistance(float i, float j) {
  * Returns square pixelBorderDistance, adding offset f.
  */
 inline float squarePixelBorderDistance(float i, float j, float f) {
-  assert(i == j || std::abs(i - j) >= 1.0F); // Check that q and p are proper pixel locations: either the same pixel or non-overlapping pixels
+  assert(i == j || std::abs(i - j) >= 1.0F); // Check that i and j are proper pixel locations: either the same pixel or non-overlapping pixels
   if (i == j) {
     return f;
   } else {
@@ -76,10 +76,10 @@ inline float equidistancePoint(float q, float fq, float p, float fp) {
   assert(q == p || std::abs(q-p) >= 1.0F); // Check that q and p are proper pixel locations: either the same pixel or non-overlapping pixels
   assert((q == p) ? fp == fq : true); // Check when q and p are equal, the offsets are also equal
 
-  float df = fp - fq;
-  if (df==0) { // quite common case when both pixels are of the same class (occupied / free)
+  if (fp == fq) { // quite common case when both pixels are of the same class (occupied / free)
     return 0.5F * (p + q);
   } else {
+    float df = fp - fq;
     float dr = p - q;
     return internal::intersectionOffsetFromOrigin(dr, df) + q;
   }
