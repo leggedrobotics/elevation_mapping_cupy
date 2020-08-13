@@ -21,7 +21,7 @@
 
 #include "segmented_planes_terrain_model/SegmentedPlanesTerrainVisualization.h"
 
-const std::string originFrameId_ = "odom";
+const std::string frameId_ = "odom";
 std::unique_ptr<grid_map::GridMap> messageMap;
 
 visualization_msgs::MarkerArray toMarker(const switched_model::ConvexTerrain& convexTerrain) {
@@ -31,7 +31,7 @@ visualization_msgs::MarkerArray toMarker(const switched_model::ConvexTerrain& co
   // Add headers and Id
   const ros::Time timeStamp = ros::Time::now();
   switched_model::assignHeader(markerArray.markers.begin(), markerArray.markers.end(),
-                               switched_model::getHeaderMsg(originFrameId_, timeStamp));
+                               switched_model::getHeaderMsg(frameId_, timeStamp));
   switched_model::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
 
   return markerArray;
@@ -41,7 +41,7 @@ visualization_msgs::Marker toMarker(const switched_model::vector3_t& position) {
   auto marker = switched_model::getSphereMsg(position, switched_model::Color::green, 0.02);
 
   const ros::Time timeStamp = ros::Time::now();
-  marker.header = switched_model::getHeaderMsg(originFrameId_, timeStamp);
+  marker.header = switched_model::getHeaderMsg(frameId_, timeStamp);
   return marker;
 }
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
 
       sensor_msgs::PointCloud2 pointCloud2Msg;
       pcl::toROSMsg(sdf.asPointCloud(), pointCloud2Msg);
-      pointCloud2Msg.header = switched_model::getHeaderMsg(originFrameId_, ros::Time::now());
+      pointCloud2Msg.header = switched_model::getHeaderMsg(frameId_, ros::Time::now());
 
       distanceFieldPublisher.publish(pointCloud2Msg);
     }
