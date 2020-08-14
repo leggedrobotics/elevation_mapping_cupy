@@ -8,11 +8,11 @@
 
 #include <Eigen/Dense>
 
-#include <grid_map_core/TypeDefs.hpp>
 #include <grid_map_core/GridMap.hpp>
+#include <grid_map_core/TypeDefs.hpp>
 
-#include <pcl/point_types.h>
 #include <pcl/conversions.h>
+#include <pcl/point_types.h>
 
 #include "Gridmap3dLookup.h"
 
@@ -30,11 +30,30 @@ class SignedDistanceField {
 
   std::pair<double, Eigen::Vector3d> distanceAndDerivativeAt(const Eigen::Vector3d& position) const;
 
-  pcl::PointCloud<pcl::PointXYZI> asPointCloud() const;
+  /**
+   * Return the signed distance field as a pointcloud. The signed distance is assigned to the point's intensity.
+   * @param decimation : specifies how many points are returned. 1: all points, 2: every second point, etc.
+   * @param condition : specifies the condition on the distance value to add it to the pointcloud (default = any distance is added)
+   */
+  pcl::PointCloud<pcl::PointXYZI> asPointCloud(
+      size_t decimation = 1, const std::function<bool(float)>& condition = [](float) { return true; }) const;
+
+  /**
+   * Return the signed distance field as a pointcloud where the distance is positive.
+   * @param decimation : specifies how many points are returned. 1: all points, 2: every second point, etc.
+   */
+  pcl::PointCloud<pcl::PointXYZI> freeSpacePointCloud(size_t decimation = 1) const;
+
+  /**
+   * Return the signed distance field as a pointcloud where the distance is negative.
+   * @param decimation : specifies how many points are returned. 1: all points, 2: every second point, etc.
+   */
+  pcl::PointCloud<pcl::PointXYZI> obstaclePointCloud(size_t decimation = 1) const;
 
  private:
   void computeSignedDistance(const grid_map::Matrix& elevation);
-  void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx, const grid_map::Matrix& dy, const grid_map::Matrix& dz);
+  void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx, const grid_map::Matrix& dy,
+                            const grid_map::Matrix& dz);
 
   using node_data_t = std::array<float, 4>;
   static double distance(const node_data_t& nodeData) noexcept { return nodeData[0]; }

@@ -92,24 +92,37 @@ void SignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDis
   }
 }
 
-pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::asPointCloud() const {
+pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::asPointCloud(size_t decimation, const std::function<bool(float)>& condition) const {
   pcl::PointCloud<pcl::PointXYZI> points;
   points.reserve(gridmap3DLookup_.linearSize());
-  for (size_t layerZ = 0; layerZ < gridmap3DLookup_.gridsize_.z; ++layerZ) {
-    for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; ++colY) {
-      for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; ++rowX) {
-        const auto index = gridmap3DLookup_.linearIndex({rowX, colY, layerZ});
-        const auto p = gridmap3DLookup_.nodePosition({rowX, colY, layerZ});
-        pcl::PointXYZI point;
-        point.x = p.x();
-        point.y = p.y();
-        point.z = p.z();
-        point.intensity = data_[index][0];
-        points.push_back(point);
+  for (size_t layerZ = 0; layerZ < gridmap3DLookup_.gridsize_.z; layerZ+=decimation) {
+    for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; colY+=decimation) {
+      for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; rowX+=decimation) {
+        const Gridmap3dLookup::size_t_3d index3d = {rowX, colY, layerZ};
+        const auto index = gridmap3DLookup_.linearIndex(index3d);
+        const auto signeddistance = distance(data_[index]);
+        if (condition(signeddistance)) {
+          const auto p = gridmap3DLookup_.nodePosition(index3d);
+          pcl::PointXYZI point;
+          point.x = p.x();
+          point.y = p.y();
+          point.z = p.z();
+          point.intensity = signeddistance;
+          points.push_back(point);
+        }
+
       }
     }
   }
   return points;
+}
+
+pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::freeSpacePointCloud(size_t decimation) const {
+  return asPointCloud(decimation, [](float signedDistance){return signedDistance >=0.0F; });
+}
+
+pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::obstaclePointCloud(size_t decimation) const {
+  return asPointCloud(decimation, [](float signedDistance){return signedDistance <=0.0F; });
 }
 
 }  // namespace signed_distance_field

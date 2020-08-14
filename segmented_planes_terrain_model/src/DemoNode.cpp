@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
       std::cout << "Sdf computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]\n";
 
       sensor_msgs::PointCloud2 pointCloud2Msg;
-      pcl::toROSMsg(sdf.asPointCloud(), pointCloud2Msg);
+      pcl::toROSMsg(sdf.obstaclePointCloud(4), pointCloud2Msg);
       pointCloud2Msg.header = switched_model::getHeaderMsg(frameId_, ros::Time::now());
 
       distanceFieldPublisher.publish(pointCloud2Msg);
