@@ -14,21 +14,23 @@
 #include <pcl/conversions.h>
 #include <pcl/point_types.h>
 
+#include <ocs2_switched_model_interface/terrain/SignedDistanceField.h>
+
 #include "Gridmap3dLookup.h"
 
 namespace signed_distance_field {
 
-class SignedDistanceField {
+class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  SignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer, double minHeight, double maxHeight);
+  GridmapSignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer, double minHeight, double maxHeight);
+  GridmapSignedDistanceField* clone() const override;
 
-  double atPosition(const Eigen::Vector3d& position) const;
-
-  Eigen::Vector3d derivativeAtPosition(const Eigen::Vector3d& position) const;
-
-  std::pair<double, Eigen::Vector3d> distanceAndDerivativeAt(const Eigen::Vector3d& position) const;
+  switched_model::scalar_t value(const switched_model::vector3_t& position) const override;
+  switched_model::vector3_t derivative(const switched_model::vector3_t& position) const override;
+  std::pair<switched_model::scalar_t, switched_model::vector3_t> valueAndDerivative(
+      const switched_model::vector3_t& position) const override;
 
   /**
    * Return the signed distance field as a pointcloud. The signed distance is assigned to the point's intensity.
@@ -51,6 +53,7 @@ class SignedDistanceField {
   pcl::PointCloud<pcl::PointXYZI> obstaclePointCloud(size_t decimation = 1) const;
 
  private:
+  GridmapSignedDistanceField(const GridmapSignedDistanceField& other);
   void computeSignedDistance(const grid_map::Matrix& elevation);
   void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx, const grid_map::Matrix& dy,
                             const grid_map::Matrix& dz);

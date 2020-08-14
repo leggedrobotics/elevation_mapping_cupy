@@ -2,15 +2,15 @@
 // Created by rgrandia on 10.07.20.
 //
 
-#include "signed_distance_field/SignedDistanceField.h"
+#include "signed_distance_field/GridmapSignedDistanceField.h"
 
 #include "signed_distance_field/DistanceDerivatives.h"
 #include "signed_distance_field/SignedDistance2d.h"
 
 namespace signed_distance_field {
 
-SignedDistanceField::SignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer, double minHeight,
-                                         double maxHeight) {
+GridmapSignedDistanceField::GridmapSignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer,
+                                                       double minHeight, double maxHeight) {
   assert(maxHeight >= minHeight);
   grid_map::Position mapOriginXY;
   gridMap.getPosition(Eigen::Vector2i(0, 0), mapOriginXY);
@@ -28,7 +28,14 @@ SignedDistanceField::SignedDistanceField(const grid_map::GridMap& gridMap, const
   computeSignedDistance(gridMap.get(elevationLayer));
 }
 
-double SignedDistanceField::atPosition(const Eigen::Vector3d& position) const {
+GridmapSignedDistanceField::GridmapSignedDistanceField(const GridmapSignedDistanceField& other)
+    : gridmap3DLookup_(other.gridmap3DLookup_), data_(other.data_) {}
+
+GridmapSignedDistanceField* GridmapSignedDistanceField::clone() const {
+  return new GridmapSignedDistanceField(*this);
+}
+
+switched_model::scalar_t GridmapSignedDistanceField::value(const switched_model::vector3_t& position) const {
   const auto nodeIndex = gridmap3DLookup_.nearestNode(position);
   const Eigen::Vector3d nodePosition = gridmap3DLookup_.nodePosition(nodeIndex);
   const node_data_t nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
@@ -36,13 +43,14 @@ double SignedDistanceField::atPosition(const Eigen::Vector3d& position) const {
   return distance(nodeData) + jacobian.dot(position - nodePosition);
 }
 
-Eigen::Vector3d SignedDistanceField::derivativeAtPosition(const Eigen::Vector3d& position) const {
+switched_model::vector3_t GridmapSignedDistanceField::derivative(const switched_model::vector3_t& position) const {
   const auto nodeIndex = gridmap3DLookup_.nearestNode(position);
   const node_data_t nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
   return derivative(nodeData);
 }
 
-std::pair<double, Eigen::Vector3d> SignedDistanceField::distanceAndDerivativeAt(const Eigen::Vector3d& position) const {
+std::pair<switched_model::scalar_t, switched_model::vector3_t> GridmapSignedDistanceField::valueAndDerivative(
+    const switched_model::vector3_t& position) const {
   const auto nodeIndex = gridmap3DLookup_.nearestNode(position);
   const Eigen::Vector3d nodePosition = gridmap3DLookup_.nodePosition(nodeIndex);
   const node_data_t nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
@@ -50,7 +58,7 @@ std::pair<double, Eigen::Vector3d> SignedDistanceField::distanceAndDerivativeAt(
   return {distance(nodeData) + jacobian.dot(position - nodePosition), jacobian};
 }
 
-void SignedDistanceField::computeSignedDistance(const grid_map::Matrix& elevation) {
+void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& elevation) {
   const auto gridOriginZ = static_cast<float>(gridmap3DLookup_.gridOrigin_.z());
   const auto resolution = static_cast<float>(gridmap3DLookup_.resolution_);
 
@@ -83,8 +91,8 @@ void SignedDistanceField::computeSignedDistance(const grid_map::Matrix& elevatio
   emplacebackLayerData(currentLayer, dx, dy, dz);
 }
 
-void SignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx,
-                                               const grid_map::Matrix& dy, const grid_map::Matrix& dz) {
+void GridmapSignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx,
+                                                      const grid_map::Matrix& dy, const grid_map::Matrix& dz) {
   for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; ++colY) {
     for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; ++rowX) {
       data_.emplace_back(node_data_t{signedDistance(rowX, colY), dx(rowX, colY), dy(rowX, colY), dz(rowX, colY)});
@@ -92,12 +100,13 @@ void SignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDis
   }
 }
 
-pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::asPointCloud(size_t decimation, const std::function<bool(float)>& condition) const {
+pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::asPointCloud(size_t decimation,
+                                                                         const std::function<bool(float)>& condition) const {
   pcl::PointCloud<pcl::PointXYZI> points;
   points.reserve(gridmap3DLookup_.linearSize());
-  for (size_t layerZ = 0; layerZ < gridmap3DLookup_.gridsize_.z; layerZ+=decimation) {
-    for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; colY+=decimation) {
-      for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; rowX+=decimation) {
+  for (size_t layerZ = 0; layerZ < gridmap3DLookup_.gridsize_.z; layerZ += decimation) {
+    for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; colY += decimation) {
+      for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; rowX += decimation) {
         const Gridmap3dLookup::size_t_3d index3d = {rowX, colY, layerZ};
         const auto index = gridmap3DLookup_.linearIndex(index3d);
         const auto signeddistance = distance(data_[index]);
@@ -110,19 +119,18 @@ pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::asPointCloud(size_t decimat
           point.intensity = signeddistance;
           points.push_back(point);
         }
-
       }
     }
   }
   return points;
 }
 
-pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::freeSpacePointCloud(size_t decimation) const {
-  return asPointCloud(decimation, [](float signedDistance){return signedDistance >=0.0F; });
+pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::freeSpacePointCloud(size_t decimation) const {
+  return asPointCloud(decimation, [](float signedDistance) { return signedDistance >= 0.0F; });
 }
 
-pcl::PointCloud<pcl::PointXYZI> SignedDistanceField::obstaclePointCloud(size_t decimation) const {
-  return asPointCloud(decimation, [](float signedDistance){return signedDistance <=0.0F; });
+pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::obstaclePointCloud(size_t decimation) const {
+  return asPointCloud(decimation, [](float signedDistance) { return signedDistance <= 0.0F; });
 }
 
 }  // namespace signed_distance_field

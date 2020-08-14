@@ -40,7 +40,7 @@ SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposit
     : planarTerrain_(std::move(planarTerrain)) {}
 
 TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
-  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_);
+  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
   const auto& seedpointInWorldFrame =
@@ -49,7 +49,7 @@ TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongG
 }
 
 ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
-  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_);
+  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
   const auto& seedpointInWorldFrame =
@@ -111,7 +111,7 @@ std::pair<double, convex_plane_decomposition::CgalPoint2d> squaredDistanceToBoun
   const convex_plane_decomposition::CgalPoint2d queryProjectedToPlane{positionInTerrainFrame.x(), positionInTerrainFrame.y()};
 
   // First search if the projected point is inside any of the insets.
-  const auto insetPtrContainingPoint = findInsetContainingThePoint(queryProjectedToPlane, planarRegion.boundaryWithInset.insets);
+  const auto* const insetPtrContainingPoint = findInsetContainingThePoint(queryProjectedToPlane, planarRegion.boundaryWithInset.insets);
 
   // Compute the projection
   convex_plane_decomposition::CgalPoint2d projectedPoint;
@@ -143,11 +143,11 @@ std::pair<double, convex_plane_decomposition::CgalPoint2d> squaredDistanceToBoun
 }
 
 std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decomposition::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const convex_plane_decomposition::PlanarTerrain& planarTerrain) {
+    const vector3_t& positionInWorld, const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions) {
   // Compute distance to bounding boxes
   std::vector<std::pair<const convex_plane_decomposition::PlanarRegion*, double>> regionsAndBboxSquareDistances;
-  regionsAndBboxSquareDistances.reserve(planarTerrain.size());
-  for (const auto& planarRegion : planarTerrain) {
+  regionsAndBboxSquareDistances.reserve(planarRegions.size());
+  for (const auto& planarRegion : planarRegions) {
     double squareDistance = squaredDistanceToBoundingBox(positionInWorld, planarRegion);
     regionsAndBboxSquareDistances.emplace_back(&planarRegion, distanceCostLowerbound(squareDistance));
   }

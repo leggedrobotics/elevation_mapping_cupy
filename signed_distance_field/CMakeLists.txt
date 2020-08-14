@@ -5,6 +5,7 @@ project(signed_distance_field)
 set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_core
 	pcl_ros
+	ocs2_switched_model_interface
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -36,7 +37,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
 	src/PixelBorderDistance.cpp
-	src/SignedDistanceField.cpp
+  src/GridmapSignedDistanceField.cpp
 	src/SignedDistance2d.cpp
 	)
 add_dependencies(${PROJECT_NAME}

@@ -15,6 +15,7 @@
 
     <depend>std_msgs</depend>
     <depend>geometry_msgs</depend>
+    <depend>grid_map_msgs</depend>
 
     <exec_depend>message_runtime</exec_depend>
 

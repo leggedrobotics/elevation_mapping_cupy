@@ -12,5 +12,6 @@
 
     <depend>grid_map_core</depend>
     <depend>pcl_ros</depend>
+    <depend>ocs2_switched_model_interface</depend>
 
 </package>

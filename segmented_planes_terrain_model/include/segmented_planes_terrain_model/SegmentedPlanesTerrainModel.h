@@ -17,13 +17,15 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
 
   ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const override;
 
-  const convex_plane_decomposition::PlanarTerrain& PlanarTerrain() const { return planarTerrain_; }
+  const SignedDistanceField* getSignedDistanceField() const override { return nullptr; }
+
+  const convex_plane_decomposition::PlanarTerrain& planarTerrain() const { return planarTerrain_; }
 
  private:
   convex_plane_decomposition::PlanarTerrain planarTerrain_;
 };
 
 std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decomposition::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const convex_plane_decomposition::PlanarTerrain& planarTerrain);
+    const vector3_t& positionInWorld, const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions);
 
 }  // namespace switched_model

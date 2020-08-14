@@ -10,12 +10,12 @@
 #include <visualization_msgs/MarkerArray.h>
 
 #include <grid_map_msgs/GridMap.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <signed_distance_field/GridmapSignedDistanceField.h>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_sdf/SignedDistanceField.hpp>
-#include <signed_distance_field//SignedDistanceField.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
 
 #include <ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h>
 
@@ -96,17 +96,20 @@ int main(int argc, char** argv) {
       positionPublisher_.publish(toMarker(positionInWorld));
       convexTerrainPublisher_.publish(toMarker(convexTerrain));
 
-
-
       double heightClearance = 0.35;
       double width = 1.5;
       double length = 2.0;
       bool success;
       grid_map::GridMap localMap = messageMap->getSubmap({convexTerrain.plane.positionInWorld.x(), convexTerrain.plane.positionInWorld.y()}, Eigen::Array2d(width, length), success);
       auto t2 = std::chrono::high_resolution_clock::now();
-      signed_distance_field::SignedDistanceField sdf(localMap, "elevation", convexTerrain.plane.positionInWorld.z() - heightClearance, convexTerrain.plane.positionInWorld.z() + heightClearance);
+      signed_distance_field::GridmapSignedDistanceField sdf(localMap, "elevation", convexTerrain.plane.positionInWorld.z() - heightClearance, convexTerrain.plane.positionInWorld.z() + heightClearance);
       auto t3 = std::chrono::high_resolution_clock::now();
       std::cout << "Sdf computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]\n";
+
+      auto t4 = std::chrono::high_resolution_clock::now();
+      auto sdfClone = std::unique_ptr<signed_distance_field::GridmapSignedDistanceField>(sdf.clone());
+      auto t5 = std::chrono::high_resolution_clock::now();
+      std::cout << "Sdf.clone() computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() << " [ms]\n";
 
       sensor_msgs::PointCloud2 pointCloud2Msg;
       pcl::toROSMsg(sdf.obstaclePointCloud(4), pointCloud2Msg);

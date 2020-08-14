@@ -4,6 +4,8 @@
 
 #include "convex_plane_decomposition_ros/MessageConversion.h"
 
+#include <grid_map_ros/GridMapRosConverter.hpp>
+
 namespace convex_plane_decomposition {
 
 CgalBbox2d fromMessage(const convex_plane_decomposition_msgs::BoundingBox2d& msg) {
@@ -45,19 +47,21 @@ convex_plane_decomposition_msgs::PlanarRegion toMessage(const PlanarRegion& plan
 
 PlanarTerrain fromMessage(const convex_plane_decomposition_msgs::PlanarTerrain& msg) {
   PlanarTerrain planarTerrain;
-  planarTerrain.reserve(msg.planarRegions.size());
+  planarTerrain.planarRegions.reserve(msg.planarRegions.size());
   for (const auto& planarRegion : msg.planarRegions) {
-    planarTerrain.emplace_back(fromMessage(planarRegion));
+    planarTerrain.planarRegions.emplace_back(fromMessage(planarRegion));
   }
+  grid_map::GridMapRosConverter::fromMessage(msg.gridmap, planarTerrain.gridMap);
   return planarTerrain;
 }
 
 convex_plane_decomposition_msgs::PlanarTerrain toMessage(const PlanarTerrain& planarTerrain) {
   convex_plane_decomposition_msgs::PlanarTerrain msg;
-  msg.planarRegions.reserve(planarTerrain.size());
-  for (const auto& planarRegion : planarTerrain) {
+  msg.planarRegions.reserve(planarTerrain.planarRegions.size());
+  for (const auto& planarRegion : planarTerrain.planarRegions) {
     msg.planarRegions.emplace_back(toMessage(planarRegion));
   }
+  grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, msg.gridmap);
   return msg;
 }
 

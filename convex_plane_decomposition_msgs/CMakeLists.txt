@@ -4,6 +4,7 @@ project(convex_plane_decomposition_msgs)
 set(CATKIN_PACKAGE_DEPENDENCIES
   std_msgs
   geometry_msgs
+  grid_map_msgs
 )
 
 find_package(catkin REQUIRED
@@ -30,5 +31,5 @@ generate_messages(
 catkin_package(
   CATKIN_DEPENDS
     ${CATKIN_PACKAGE_DEPENDENCIES}
-     message_runtime
+    message_runtime
 )

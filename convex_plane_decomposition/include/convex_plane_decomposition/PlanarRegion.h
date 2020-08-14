@@ -6,6 +6,8 @@
 
 #include <Eigen/Core>
 
+#include <grid_map_core/GridMap.hpp>
+
 #include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
 #include "PolygonTypes.h"
@@ -33,6 +35,9 @@ struct PlanarRegion {
   TerrainPlane planeParameters;
 };
 
-using PlanarTerrain = std::vector<PlanarRegion>;
+struct PlanarTerrain {
+  std::vector<PlanarRegion> planarRegions;
+  grid_map::GridMap gridMap;
+};
 
 }  // namespace convex_plane_decomposition

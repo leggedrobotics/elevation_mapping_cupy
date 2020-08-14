@@ -106,25 +106,29 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     auto t2 = std::chrono::high_resolution_clock::now();
     ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " [ms]");
 
-    const auto planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
+    PlanarTerrain planarTerrain;
+    planarTerrain.planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
     auto t3 = std::chrono::high_resolution_clock::now();
     ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
 
+    // Add grid map to the terrain
+    planarTerrain.gridMap = std::move(elevationMap);
+
     // Publish terrain
     if (publishToController_) {
-      regionPublisher_.publish(toMessage(planarRegions));
+      regionPublisher_.publish(toMessage(planarTerrain));
     }
 
     // Visualize in Rviz.
-    reapplyNans(elevationMap.get(elevationLayer_));
-    elevationMap.add("segmentation");
-    cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, elevationMap.get("segmentation"));
+    reapplyNans(planarTerrain.gridMap.get(elevationLayer_));
+    planarTerrain.gridMap.add("segmentation");
+    cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
     grid_map_msgs::GridMap outputMessage;
-    grid_map::GridMapRosConverter::toMessage(elevationMap, outputMessage);
+    grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
     filteredmapPublisher_.publish(outputMessage);
 
-    boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarRegions, elevationMap.getFrameId()));
-    insetPublisher_.publish(convertInsetsToRosPolygons(planarRegions, elevationMap.getFrameId()));
+    boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
+    insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
   } else {
     ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
   }
