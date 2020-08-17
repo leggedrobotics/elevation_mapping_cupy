@@ -8,6 +8,7 @@
 
 #include <convex_plane_decomposition/ConvexRegionGrowing.h>
 #include <convex_plane_decomposition/GeometryUtils.h>
+#include <signed_distance_field/GridmapSignedDistanceField.h>
 
 namespace switched_model {
 
@@ -37,7 +38,7 @@ double distanceCostLowerbound(double distanceSquared) {
 }
 
 SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain)
-    : planarTerrain_(std::move(planarTerrain)) {}
+    : planarTerrain_(std::move(planarTerrain)), signedDistanceField_(nullptr) {}
 
 TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
   const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
@@ -69,6 +70,20 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(con
     convexTerrain.boundary.emplace_back(point.x() - seedpoint.x(), point.y() - seedpoint.y());  // Shift points to new origin
   }
   return convexTerrain;
+}
+
+void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
+                                                              const Eigen::Vector3d& maxCoordinates) {
+  Eigen::Vector3d centerCoordinates = 0.5 * (minCoordinates + maxCoordinates);
+  Eigen::Vector3d lengths = maxCoordinates - minCoordinates;
+
+  bool success = true;
+  grid_map::GridMap subMap =
+      planarTerrain_.gridMap.getSubmap({centerCoordinates.x(), centerCoordinates.y()}, Eigen::Array2d(lengths.x(), lengths.y()), success);
+  if (success) {
+    signedDistanceField_ =
+        std::make_unique<signed_distance_field::GridmapSignedDistanceField>(subMap, "elevation", minCoordinates.z(), maxCoordinates.z());
+  }
 }
 
 double singleSidedSquaredDistance(double value, double min, double max) {
