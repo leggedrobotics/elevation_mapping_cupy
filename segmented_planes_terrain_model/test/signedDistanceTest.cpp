@@ -4,7 +4,7 @@
 
 #include <chrono>
 
-#include <segmented_planes_terrain_model/distance_transform/dt.h>
+
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_cv/grid_map_cv.hpp>
 
@@ -13,9 +13,6 @@
 #include <grid_map_sdf/SignedDistanceField.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
-
-using namespace distance_transform;
-
 
 grid_map::GridMap loadElevationMapFromFile(const std::string& filePath, double resolution, double scale) {
   // Read the file
