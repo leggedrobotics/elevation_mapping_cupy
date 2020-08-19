@@ -29,7 +29,7 @@ GridmapSignedDistanceField::GridmapSignedDistanceField(const grid_map::GridMap& 
 }
 
 GridmapSignedDistanceField::GridmapSignedDistanceField(const GridmapSignedDistanceField& other)
-    : gridmap3DLookup_(other.gridmap3DLookup_), data_(other.data_) {}
+    : switched_model::SignedDistanceField(), gridmap3DLookup_(other.gridmap3DLookup_), data_(other.data_) {}
 
 GridmapSignedDistanceField* GridmapSignedDistanceField::clone() const {
   return new GridmapSignedDistanceField(*this);

@@ -66,6 +66,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 add_executable(${PROJECT_NAME}_test
+	test/test3dLookup.cpp
 	test/testDerivatives.cpp
 	test/testPixelBorderDistance.cpp
 	test/testSignedDistance2d.cpp

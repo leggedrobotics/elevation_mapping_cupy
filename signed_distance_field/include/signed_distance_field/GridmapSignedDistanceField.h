@@ -25,6 +25,7 @@ class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   GridmapSignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer, double minHeight, double maxHeight);
+  ~GridmapSignedDistanceField() override = default;
   GridmapSignedDistanceField* clone() const override;
 
   switched_model::scalar_t value(const switched_model::vector3_t& position) const override;

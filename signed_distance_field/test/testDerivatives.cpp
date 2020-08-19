@@ -6,7 +6,6 @@
 
 #include "signed_distance_field/DistanceDerivatives.h"
 
-
 TEST(testDerivatives, columnwise) {
   Eigen::MatrixXf data(2, 3);
   data << 1.0, 2.0, 4.0,
