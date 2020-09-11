@@ -79,7 +79,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   // Convert message to map.
   ROS_INFO("Reading input map...");
   grid_map::GridMap messageMap;
-  grid_map::GridMapRosConverter::fromMessage(message, messageMap, {elevationLayer_}, false, false);
+  std::vector<std::string> layers{elevationLayer_};
+  grid_map::GridMapRosConverter::fromMessage(message, messageMap, layers, false, false);
   bool success;
   grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapWidth_, subMapLength_), success);
   ROS_INFO("...done.");
