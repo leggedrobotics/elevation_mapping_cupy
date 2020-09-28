@@ -3,5 +3,5 @@ height_layer: 'elevation'
 submap:
   width: 6.0
   length: 6.0
-publish_to_controller: false
+publish_to_controller: true
 frequency: 10.0

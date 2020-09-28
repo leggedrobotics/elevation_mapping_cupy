@@ -8,6 +8,7 @@
 
 #include <convex_plane_decomposition/ConvexRegionGrowing.h>
 #include <convex_plane_decomposition/GeometryUtils.h>
+#include <signed_distance_field/GridmapSignedDistanceField.h>
 
 namespace switched_model {
 
@@ -37,10 +38,10 @@ double distanceCostLowerbound(double distanceSquared) {
 }
 
 SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain)
-    : planarTerrain_(std::move(planarTerrain)) {}
+    : planarTerrain_(std::move(planarTerrain)), signedDistanceField_(nullptr) {}
 
 TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
-  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_);
+  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
   const auto& seedpointInWorldFrame =
@@ -49,7 +50,7 @@ TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongG
 }
 
 ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
-  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_);
+  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
   const auto& seedpointInWorldFrame =
@@ -69,6 +70,20 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(con
     convexTerrain.boundary.emplace_back(point.x() - seedpoint.x(), point.y() - seedpoint.y());  // Shift points to new origin
   }
   return convexTerrain;
+}
+
+void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
+                                                              const Eigen::Vector3d& maxCoordinates) {
+  Eigen::Vector3d centerCoordinates = 0.5 * (minCoordinates + maxCoordinates);
+  Eigen::Vector3d lengths = maxCoordinates - minCoordinates;
+
+  bool success = true;
+  grid_map::GridMap subMap =
+      planarTerrain_.gridMap.getSubmap({centerCoordinates.x(), centerCoordinates.y()}, Eigen::Array2d(lengths.x(), lengths.y()), success);
+  if (success) {
+    signedDistanceField_ =
+        std::make_unique<signed_distance_field::GridmapSignedDistanceField>(subMap, "elevation", minCoordinates.z(), maxCoordinates.z());
+  }
 }
 
 double singleSidedSquaredDistance(double value, double min, double max) {
@@ -111,7 +126,7 @@ std::pair<double, convex_plane_decomposition::CgalPoint2d> squaredDistanceToBoun
   const convex_plane_decomposition::CgalPoint2d queryProjectedToPlane{positionInTerrainFrame.x(), positionInTerrainFrame.y()};
 
   // First search if the projected point is inside any of the insets.
-  const auto insetPtrContainingPoint = findInsetContainingThePoint(queryProjectedToPlane, planarRegion.boundaryWithInset.insets);
+  const auto* const insetPtrContainingPoint = findInsetContainingThePoint(queryProjectedToPlane, planarRegion.boundaryWithInset.insets);
 
   // Compute the projection
   convex_plane_decomposition::CgalPoint2d projectedPoint;
@@ -143,11 +158,11 @@ std::pair<double, convex_plane_decomposition::CgalPoint2d> squaredDistanceToBoun
 }
 
 std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decomposition::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const convex_plane_decomposition::PlanarTerrain& planarTerrain) {
+    const vector3_t& positionInWorld, const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions) {
   // Compute distance to bounding boxes
   std::vector<std::pair<const convex_plane_decomposition::PlanarRegion*, double>> regionsAndBboxSquareDistances;
-  regionsAndBboxSquareDistances.reserve(planarTerrain.size());
-  for (const auto& planarRegion : planarTerrain) {
+  regionsAndBboxSquareDistances.reserve(planarRegions.size());
+  for (const auto& planarRegion : planarRegions) {
     double squareDistance = squaredDistanceToBoundingBox(positionInWorld, planarRegion);
     regionsAndBboxSquareDistances.emplace_back(&planarRegion, distanceCostLowerbound(squareDistance));
   }

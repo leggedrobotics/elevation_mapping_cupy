@@ -1,7 +1,7 @@
-elevation_topic: '/elevation_mapping/elevation_map_raw'
+elevation_topic: '/elevation_mapping/elevation_map_recordable'
 height_layer: 'elevation'
 submap:
-  width: 6.0
-  length: 6.0
+  width: 3.0
+  length: 3.0
 publish_to_controller: false
 frequency: 10.0
