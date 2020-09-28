@@ -17,7 +17,7 @@
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_sdf/SignedDistanceField.hpp>
 
-#include <ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h>
+#include <ocs2_switched_model_interface/visualization/VisualizationHelpers.h>
 
 #include "segmented_planes_terrain_model/SegmentedPlanesTerrainVisualization.h"
 

@@ -4,7 +4,6 @@ project(segmented_planes_terrain_model)
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
 	ocs2_switched_model_interface
-	ocs2_quadruped_interface
 	grid_map_sdf
 	pcl_ros
 	convex_plane_decomposition

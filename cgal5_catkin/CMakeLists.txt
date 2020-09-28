@@ -9,6 +9,10 @@ set(VERSION 5.0.2)
 
 file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
 
+# Cpp standard version
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CGAL_VERSION 5.0.2)
 ExternalProject_Add(cgal
   URL https://github.com/CGAL/cgal/archive/releases/CGAL-${CGAL_VERSION}.tar.gz

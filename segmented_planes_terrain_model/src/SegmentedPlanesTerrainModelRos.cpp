@@ -8,11 +8,12 @@
 #include <sensor_msgs/PointCloud2.h>
 
 #include <convex_plane_decomposition_ros/MessageConversion.h>
-#include <ocs2_quadruped_interface/QuadrupedVisualizationHelpers.h>
+#include <ocs2_switched_model_interface/visualization/VisualizationHelpers.h>
 
 namespace switched_model {
 
-SegmentedPlanesTerrainModelRos::SegmentedPlanesTerrainModelRos(ros::NodeHandle& nodehandle) : terrainUpdated_(false), minCoordinates_(Eigen::Vector3d::Zero()), maxCoordinates_(Eigen::Vector3d::Zero()) {
+SegmentedPlanesTerrainModelRos::SegmentedPlanesTerrainModelRos(ros::NodeHandle& nodehandle)
+    : terrainUpdated_(false), minCoordinates_(Eigen::Vector3d::Zero()), maxCoordinates_(Eigen::Vector3d::Zero()) {
   terrainSubscriber_ =
       nodehandle.subscribe("/convex_plane_decomposition_ros/planar_terrain", 1, &SegmentedPlanesTerrainModelRos::callback, this);
   distanceFieldPublisher_ = nodehandle.advertise<sensor_msgs::PointCloud2>("/convex_plane_decomposition_ros/signed_distance_field", 1);
@@ -31,10 +32,12 @@ bool SegmentedPlanesTerrainModelRos::update(std::unique_ptr<SegmentedPlanesTerra
   }
 }
 
-void SegmentedPlanesTerrainModelRos::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates, const Eigen::Vector3d& maxCoordinates) {
+void SegmentedPlanesTerrainModelRos::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
+                                                                 const Eigen::Vector3d& maxCoordinates) {
   std::lock_guard<std::mutex> lock(updateCoordinatesMutex_);
   minCoordinates_ = minCoordinates;
   maxCoordinates_ = maxCoordinates;
+  createSignedDistance_ = true;
 }
 
 void SegmentedPlanesTerrainModelRos::publish() {
@@ -53,21 +56,25 @@ void SegmentedPlanesTerrainModelRos::callback(const convex_plane_decomposition_m
   auto terrainPtr = std::make_unique<SegmentedPlanesTerrainModel>(convex_plane_decomposition::fromMessage(*msg));
 
   // Extract coordinates for signed distance field
+  bool createSignedDistance = false;
   Eigen::Vector3d minCoordinates;
   Eigen::Vector3d maxCoordinates;
   {
     std::lock_guard<std::mutex> lock(updateCoordinatesMutex_);
     minCoordinates = minCoordinates_;
     maxCoordinates = maxCoordinates_;
+    createSignedDistance = createSignedDistance_;
   }
 
-  // Build signed distance field
-  terrainPtr->createSignedDistanceBetween(minCoordinates_, maxCoordinates_);
+  if (createSignedDistance) {
+    // Build signed distance field
+    terrainPtr->createSignedDistanceBetween(minCoordinates_, maxCoordinates_);
 
-  // Create pointcloud
-  {
-    std::lock_guard<std::mutex> lock(pointCloudMutex_);
-    pointCloud_ = terrainPtr->getSignedDistanceField()->asPointCloud(1, [](float val) { return -0.05F <= val && val <= 0.0F; });
+    // Create pointcloud
+    {
+      std::lock_guard<std::mutex> lock(pointCloudMutex_);
+      pointCloud_ = terrainPtr->getSignedDistanceField()->asPointCloud(1, [](float val) { return -0.05F <= val && val <= 0.0F; });
+    }
   }
 
   // Move to storage under the lock

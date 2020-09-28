@@ -43,6 +43,7 @@ class SegmentedPlanesTerrainModelRos {
   std::mutex updateCoordinatesMutex_;
   Eigen::Vector3d minCoordinates_;
   Eigen::Vector3d maxCoordinates_;
+  bool createSignedDistance_ = false;
 
   std::mutex pointCloudMutex_;
   pcl::PointCloud<pcl::PointXYZI> pointCloud_;
