@@ -69,11 +69,12 @@ void SegmentedPlanesTerrainModelRos::callback(const convex_plane_decomposition_m
   if (createSignedDistance) {
     // Build signed distance field
     terrainPtr->createSignedDistanceBetween(minCoordinates_, maxCoordinates_);
+    const auto* sdfPtr = terrainPtr->getSignedDistanceField();
 
     // Create pointcloud
-    {
+    if (sdfPtr != nullptr) {
       std::lock_guard<std::mutex> lock(pointCloudMutex_);
-      pointCloud_ = terrainPtr->getSignedDistanceField()->asPointCloud(1, [](float val) { return -0.05F <= val && val <= 0.0F; });
+      pointCloud_ = sdfPtr->asPointCloud(1, [](float val) { return -0.05F <= val && val <= 0.0F; });
     }
   }
 
