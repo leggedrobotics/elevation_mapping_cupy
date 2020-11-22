@@ -1,5 +1,6 @@
 elevation_topic: '/elevation_mapping/elevation_map_raw'
 height_layer: 'elevation'
+target_frame_id: 'odom'
 submap:
   width: 3.0
   length: 3.0

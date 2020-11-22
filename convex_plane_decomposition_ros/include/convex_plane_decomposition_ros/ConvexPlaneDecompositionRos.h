@@ -43,7 +43,7 @@ class ConvexPlaneExtractionROS {
   // Parameters
   std::string elevationMapTopic_;
   std::string elevationLayer_;
-  std::string targetFrameId_ = "odom";
+  std::string targetFrameId_;
   double subMapWidth_;
   double subMapLength_;
   bool publishToController_;
