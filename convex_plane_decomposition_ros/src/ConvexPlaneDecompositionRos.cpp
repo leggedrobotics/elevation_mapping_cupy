@@ -42,7 +42,7 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
     return false;
   }
   if (!nodeHandle.getParam("target_frame_id", targetFrameId_)) {
-    ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `elevation_topic`.");
+    ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `target_frame_id`.");
     return false;
   }
   if (!nodeHandle.getParam("height_layer", elevationLayer_)) {
