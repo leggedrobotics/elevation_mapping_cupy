@@ -41,6 +41,10 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
     ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `elevation_topic`.");
     return false;
   }
+  if (!nodeHandle.getParam("target_frame_id", targetFrameId_)) {
+    ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `target_frame_id`.");
+    return false;
+  }
   if (!nodeHandle.getParam("height_layer", elevationLayer_)) {
     ROS_ERROR("[ConvexPlaneExtractionROS] Could not read parameter `height_layer`.");
     return false;
@@ -82,7 +86,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   std::vector<std::string> layers{elevationLayer_};
   grid_map::GridMapRosConverter::fromMessage(message, messageMap, layers, false, false);
   bool success;
-  grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapWidth_, subMapLength_), success);
+  grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapLength_, subMapWidth_), success);
   ROS_INFO("...done.");
 
   // Transform map if necessary
