@@ -26,7 +26,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
   std::vector<std::string>pointcloud_topics;
-  double recordableFps, updateVarianceFps, timeInterval;
+  double recordableFps, updateVarianceFps, timeInterval, updatePoseFps;
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
@@ -34,6 +34,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
   nh.param<std::string>("map_frame", mapFrameId_, "map");
+  nh.param<std::string>("base_frame", baseFrameId_, "base");
   nh.param<std::string>("corrected_map_frame", correctedMapFrameId_, "corrected_map");
   nh.param<std::string>("initialize_method", initializeMethod_, "cubic");
   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
@@ -41,11 +42,11 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("recordable_fps", recordableFps, 3.0);
   nh.param<double>("update_variance_fps", updateVarianceFps, 1.0);
   nh.param<double>("time_interval", timeInterval, 0.1);
+  nh.param<double>("update_pose_fps", updatePoseFps, 10.0);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
-  poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
@@ -78,6 +79,11 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     double duration = timeInterval;
     updateTimeTimer_ = nh_.createTimer(ros::Duration(duration),
                                        &ElevationMappingNode::updateTime, this, false, true);
+  }
+  if (updatePoseFps > 0) {
+    double duration = 1.0 / (updatePoseFps + 0.00001);
+    updatePoseTimer_ = nh_.createTimer(ros::Duration(duration),
+                                       &ElevationMappingNode::updatePose, this, false, true);
   }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
@@ -142,13 +148,23 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
 }
 
-void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
+void ElevationMappingNode::updatePose(const ros::TimerEvent&)
 {
-  Eigen::Vector2d position(pose.pose.pose.position.x, pose.pose.pose.position.y);
+  tf::StampedTransform transformTf;
+  const auto& timeStamp = ros::Time::now();
+  try {
+    transformListener_.waitForTransform(mapFrameId_, baseFrameId_, timeStamp, ros::Duration(1.0));
+    transformListener_.lookupTransform(mapFrameId_, baseFrameId_, timeStamp, transformTf);
+  }
+  catch (tf::TransformException &ex) {
+    ROS_ERROR("%s", ex.what());
+    return;
+  }
+  Eigen::Vector2d position(transformTf.getOrigin().x(), transformTf.getOrigin().y());
   map_.move_to(position);
-  Eigen::Vector3d position3(pose.pose.pose.position.x, pose.pose.pose.position.y, pose.pose.pose.position.z);
-  Eigen::Vector4d orientation(pose.pose.pose.orientation.x, pose.pose.pose.orientation.y,
-                              pose.pose.pose.orientation.z, pose.pose.pose.orientation.w);
+  Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
+  Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(),
+                              transformTf.getRotation().z(), transformTf.getRotation().w());
   lowpassPosition_ = positionAlpha_ * position3 + (1 - positionAlpha_) * lowpassPosition_;
   lowpassOrientation_ = orientationAlpha_ * orientation + (1 - orientationAlpha_) * lowpassOrientation_;
   positionError_ = (position3 - lowpassPosition_).norm();
