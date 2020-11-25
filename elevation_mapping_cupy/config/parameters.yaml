@@ -22,6 +22,7 @@ max_height_range: 1.0                           # points higher than this value 
 recordable_fps: 5.0                             # fps for publishing map (in slower rate to record).
 update_variance_fps: 5.0                        # fps for updating variance.
 time_interval: 0.1                              # Time layer is updated with this interval.
+raw_map_publish_fps: 5.0                        # Raw map is fetched from GPU memory in this fps.
 
 max_ray_length: 10.0                            # maximum length for ray tracing.
 cleanup_step: 0.1                               # subtitute this value from validity layer at visibiltiy cleanup.
@@ -49,7 +50,8 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     '/point_cloud_filter/rslidar/point_cloud'
                     ]
 pose_topic: '/state_estimator/pose_in_odom'
-recordable_map_layers: ['elevation']
+raw_map_layers: ['elevation', 'traversability', 'min_filtered']     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+recordable_map_layers: ['elevation']                                # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 map_frame: 'odom'
 corrected_map_frame: 'corrected_odom'
 
@@ -57,5 +59,6 @@ corrected_map_frame: 'corrected_odom'
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
 initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
 initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
-dilation_size_initialize: 3                                         # dilation size after the init.
+dilation_size_initialize: 5                                         # dilation size after the init.
 initialize_tf_grid_size: 1.0                                        # This is not used if number of tf is more than 3.
+use_initializer_at_start: true                                      # Use initializer when the node starts.

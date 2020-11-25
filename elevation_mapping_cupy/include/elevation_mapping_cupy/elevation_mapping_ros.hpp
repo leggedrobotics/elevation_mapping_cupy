@@ -53,6 +53,7 @@ class ElevationMappingNode {
     void publishRecordableMap(const ros::TimerEvent&);
     void updateVariance(const ros::TimerEvent&);
     void updateTime(const ros::TimerEvent&);
+    void updateGridMap(const ros::TimerEvent&);
     void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
     void publishMapToOdom(double error);
@@ -76,11 +77,13 @@ class ElevationMappingNode {
     ros::Timer recordableTimer_;
     ros::Timer updateVarianceTimer_;
     ros::Timer updateTimeTimer_;
+    ros::Timer updateGridMapTimer_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
     std::string correctedMapFrameId_;
     grid_map::GridMap gridMap_;
+    std::vector<std::string> raw_map_layers_;
     std::vector<std::string> recordable_map_layers_;
     std::vector<std::string> initialize_frame_id_;
     std::vector<double> initialize_tf_offset_;

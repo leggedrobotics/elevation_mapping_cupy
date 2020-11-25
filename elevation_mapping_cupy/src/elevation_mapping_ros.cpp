@@ -25,11 +25,13 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh_ = nh;
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
-  std::vector<std::string>pointcloud_topics;
-  double recordableFps, updateVarianceFps, timeInterval;
+  std::vector<std::string> pointcloud_topics;
+  double recordableFps, updateVarianceFps, timeInterval, updateGridMapFps;
+  bool useInitializerAtStart;
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
+  nh.param<std::vector<std::string>>("raw_map_layers", raw_map_layers_, {"elevation", "traversability", "min_filtered"});
   nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
@@ -42,9 +44,11 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("update_variance_fps", updateVarianceFps, 1.0);
   nh.param<double>("time_interval", timeInterval, 0.1);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
+  nh.param<double>("raw_map_publish_fps", updateGridMapFps, 5.0);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
+  nh.param<bool>("use_initializer_at_start", useInitializerAtStart, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
@@ -79,6 +83,16 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     updateTimeTimer_ = nh_.createTimer(ros::Duration(duration),
                                        &ElevationMappingNode::updateTime, this, false, true);
   }
+  if (updateGridMapFps > 0) {
+    double duration = 1.0 / (updateGridMapFps + 0.00001);
+    updateGridMapTimer_ = nh_.createTimer(ros::Duration(duration),
+                                          &ElevationMappingNode::updateGridMap, this, false, true);
+  }
+  if (useInitializerAtStart) {
+    ROS_INFO("Clearing map with initializer.");
+    map_.clear();
+    initializeWithTF();
+  }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -112,29 +126,6 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   
   if (enableDriftCorrectedTFPublishing_) {
     publishMapToOdom(map_.get_additive_mean_error());
-  }
-
-  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-  map_.get_grid_map(gridMap_);
-  gridMap_.setTimestamp(ros::Time::now().toNSec());
-  grid_map_msgs::GridMap msg;
-  grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
-  mapPub_.publish(msg);
-  alivePub_.publish(std_msgs::Empty());
-
-  // grid_map_msgs::GridMap filteredMsg;
-  // grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
-
-  if (enableNormalArrowPublishing_) {
-    publishNormalAsArrow(gridMap_);
-  }
-
-  // scopedLockForGridMap.unlock();
-  // filteredMsg.basic_layers = {"min_filtered"};
-  // filteredMapPub_.publish(filteredMsg);
-
-  if (enablePointCloudPublishing_) {
-    publishAsPointCloud();
   }
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
@@ -340,6 +331,24 @@ void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
 
 void ElevationMappingNode::updateTime(const ros::TimerEvent&) {
   map_.update_time();
+}
+
+void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
+  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+  map_.get_grid_map(gridMap_, raw_map_layers_);
+  gridMap_.setTimestamp(ros::Time::now().toNSec());
+  grid_map_msgs::GridMap msg;
+  grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
+  mapPub_.publish(msg);
+  alivePub_.publish(std_msgs::Empty());
+
+  if (enableNormalArrowPublishing_) {
+    publishNormalAsArrow(gridMap_);
+  }
+
+  if (enablePointCloudPublishing_) {
+    publishAsPointCloud();
+  }
 }
 
 bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,

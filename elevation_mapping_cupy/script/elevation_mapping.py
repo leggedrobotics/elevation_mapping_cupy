@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as nsp
 import scipy.ndimage
+import threading
 
 from traversability_filter import TraversabilityFilter
 from parameter import Parameter
@@ -70,6 +71,8 @@ class ElevationMap(object):
         self.time_interval = param.time_interval
         self.max_drift = param.max_drift
 
+        self.map_lock = threading.Lock()
+
         # layers: elevation, variance, is_valid, traversability, time
         self.elevation_map = xp.zeros((5, self.cell_n, self.cell_n))
         self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
@@ -96,9 +99,10 @@ class ElevationMap(object):
                                               xp=cp, method='points')
 
     def clear(self):
-        self.elevation_map *= 0.0
-        # Initial variance
-        self.elevation_map[1] += self.initial_variance
+        with self.map_lock:
+            self.elevation_map *= 0.0
+            # Initial variance
+            self.elevation_map[1] += self.initial_variance
         self.mean_error = 0.0
         self.additive_mean_error = 0.0
 
@@ -123,15 +127,16 @@ class ElevationMap(object):
     def shift_map(self, delta_pixel):
         shift_value = delta_pixel
         shift_fn = sp.ndimage.interpolation.shift
-        # elevation
-        self.elevation_map[0] = shift_fn(self.elevation_map[0], shift_value,
-                                         cval=0.0)
-        # variance
-        self.elevation_map[1] = shift_fn(self.elevation_map[1], shift_value,
-                                         cval=self.initial_variance)
-        # is valid (1 is valid 0 is not valid)
-        self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
-                                         cval=0)
+        with self.map_lock:
+            # elevation
+            self.elevation_map[0] = shift_fn(self.elevation_map[0], shift_value,
+                                             cval=0.0)
+            # variance
+            self.elevation_map[1] = shift_fn(self.elevation_map[1], shift_value,
+                                             cval=self.initial_variance)
+            # is valid (1 is valid 0 is not valid)
+            self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
+                                             cval=0)
 
     def compile_kernels(self):
         self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
@@ -176,34 +181,35 @@ class ElevationMap(object):
         self.new_map *= 0.0
         error = xp.array([0.0], dtype=xp.float32)
         error_cnt = xp.array([0], dtype=xp.float32)
-        self.error_counting_kernel(self.elevation_map, points,
-                                   self.center[0], self.center[1], R, t,
-                                   self.new_map, error, error_cnt,
+        with self.map_lock:
+            self.error_counting_kernel(self.elevation_map, points,
+                                       self.center[0], self.center[1], R, t,
+                                       self.new_map, error, error_cnt,
+                                       size=(points.shape[0]))
+            if (self.enable_drift_compensation
+                    and error_cnt > self.min_height_drift_cnt
+                    and (position_noise > self.position_noise_thresh
+                         or orientation_noise > self.orientation_noise_thresh)):
+                self.mean_error = error / error_cnt
+                self.additive_mean_error += self.mean_error
+                if np.abs(self.mean_error) < self.max_drift:
+                    self.elevation_map[0] += self.mean_error * self.drift_compensation_alpha
+            self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
+                                   self.elevation_map, self.new_map,
                                    size=(points.shape[0]))
-        if (self.enable_drift_compensation
-                and error_cnt > self.min_height_drift_cnt
-                and (position_noise > self.position_noise_thresh
-                     or orientation_noise > self.orientation_noise_thresh)):
-            self.mean_error = error / error_cnt
-            self.additive_mean_error += self.mean_error
-            if np.abs(self.mean_error) < self.max_drift:
-                self.elevation_map[0] += self.mean_error * self.drift_compensation_alpha
-        self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
-                               self.elevation_map, self.new_map,
-                               size=(points.shape[0]))
-        self.average_map_kernel(self.new_map, self.elevation_map,
-                                size=(self.cell_n * self.cell_n))
-
-        # dilation before traversability_filter
-        self.traversability_input *= 0.0
-        self.dilation_filter_kernel(self.elevation_map[0],
-                                    self.elevation_map[2],
-                                    self.traversability_input,
-                                    self.traversability_mask_dummy,
+            self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
-        # calculate traversability
-        traversability = self.traversability_filter(self.traversability_input)
-        self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
+
+            # dilation before traversability_filter
+            self.traversability_input *= 0.0
+            self.dilation_filter_kernel(self.elevation_map[0],
+                                        self.elevation_map[2],
+                                        self.traversability_input,
+                                        self.traversability_mask_dummy,
+                                        size=(self.cell_n * self.cell_n))
+            # calculate traversability
+            traversability = self.traversability_filter(self.traversability_input)
+            self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
 
         # calculate normal vectors
         self.update_normal(self.traversability_input)
@@ -244,25 +250,39 @@ class ElevationMap(object):
         return min_filtered
 
     def update_normal(self, dilated_map):
-        self.normal_map *= 0.0
-        self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
+        with self.map_lock:
+            self.normal_map *= 0.0
+            self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
 
-    def get_maps(self):
-        elevation = xp.where(self.elevation_map[2] > 0.5,
-                             self.elevation_map[0].copy(), xp.nan)
-        variance = self.elevation_map[1].copy()
-        traversability = xp.where(self.elevation_map[2] > 0.5,
-                                  self.elevation_map[3].copy(), xp.nan)
-        min_filtered = self.get_min_filtered()
-        time_layer = self.elevation_map[4].copy()
-        self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
-        elevation = elevation[1:-1, 1:-1]
-        variance = variance[1:-1, 1:-1]
-        traversability = self.traversability_data[1:-1, 1:-1]
-        min_filtered = min_filtered[1:-1, 1:-1]
-        time_layer = time_layer[1:-1, 1:-1]
+    def get_maps(self, selection):
+        map_list = []
+        with self.map_lock:
+            if 0 in selection:
+                elevation = xp.where(self.elevation_map[2] > 0.5,
+                                     self.elevation_map[0].copy(), xp.nan)
+                elevation = elevation[1:-1, 1:-1]
+                map_list.append(elevation)
+            if 1 in selection:
+                variance = self.elevation_map[1].copy()
+                variance = variance[1:-1, 1:-1]
+                map_list.append(variance)
+            if 2 in selection:
+                traversability = xp.where(self.elevation_map[2] > 0.5,
+                                          self.elevation_map[3].copy(), xp.nan)
+                self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
+                traversability = self.traversability_data[1:-1, 1:-1]
+                map_list.append(traversability)
+            if 3 in selection:
+                min_filtered = self.get_min_filtered()
+                min_filtered = min_filtered[1:-1, 1:-1]
+                map_list.append(min_filtered)
+            if 4 in selection:
+                time_layer = self.elevation_map[4].copy()
+                time_layer = time_layer[1:-1, 1:-1]
+                map_list.append(time_layer)
 
-        maps = xp.stack([elevation, variance, traversability, min_filtered, time_layer], axis=0)
+        # maps = xp.stack([elevation, variance, traversability, min_filtered, time_layer], axis=0)
+        maps = xp.stack(map_list, axis=0)
         # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
@@ -280,17 +300,33 @@ class ElevationMap(object):
         maps = xp.asnumpy(maps)
         return maps
 
-    def get_maps_ref(self, elevation_data, variance_data, traversability_data, min_filtered_data, time_data,
+    def get_maps_ref(self,
+                     selection,  # list of numbers to get ex. [0, 1, 3]
+                     elevation_data,
+                     variance_data,
+                     traversability_data,
+                     min_filtered_data,
+                     time_data,
                      normal_x_data, normal_y_data, normal_z_data, normal=False):
-        maps = self.get_maps()
+        maps = self.get_maps(selection)
+        idx = 0
         # somehow elevation_data copy in non_blocking mode does not work.
-        elevation_data[...] = xp.asnumpy(maps[0])
+        if 0 in selection:
+            elevation_data[...] = xp.asnumpy(maps[idx])
+            idx += 1
         stream = cp.cuda.Stream(non_blocking=True)
-        # elevation_data[...] = xp.asnumpy(maps[0], stream=stream)
-        variance_data[...] = xp.asnumpy(maps[1], stream=stream)
-        traversability_data[...] = xp.asnumpy(maps[2], stream=stream)
-        min_filtered_data[...] = xp.asnumpy(maps[3], stream=stream)
-        time_data[...] = xp.asnumpy(maps[4], stream=stream)
+        if 1 in selection:
+            variance_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            idx += 1
+        if 2 in selection:
+            traversability_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            idx += 1
+        if 3 in selection:
+            min_filtered_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            idx += 1
+        if 4 in selection:
+            time_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            idx += 1
         if normal:
             normal_maps = self.get_normal_maps()
             normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=stream)
