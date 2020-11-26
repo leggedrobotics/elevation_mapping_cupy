@@ -23,6 +23,7 @@ recordable_fps: 5.0                             # fps for publishing map (in slo
 update_variance_fps: 5.0                        # fps for updating variance.
 time_interval: 0.1                              # Time layer is updated with this interval.
 raw_map_publish_fps: 5.0                        # Raw map is fetched from GPU memory in this fps.
+publish_statistics_fps: 1.0                     # Publish statistics topic in this fps.
 
 max_ray_length: 10.0                            # maximum length for ray tracing.
 cleanup_step: 0.1                               # subtitute this value from validity layer at visibiltiy cleanup.

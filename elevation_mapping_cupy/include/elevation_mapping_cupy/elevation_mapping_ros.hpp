@@ -57,6 +57,7 @@ class ElevationMappingNode {
     void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
     void publishMapToOdom(double error);
+    void publishStatistics(const ros::TimerEvent&);
 
     visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
     ros::NodeHandle nh_;
@@ -68,6 +69,7 @@ class ElevationMappingNode {
     ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
     ros::Publisher normalPub_;
+    ros::Publisher statisticsPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
     ros::ServiceServer clearMapWithInitializerService_;
@@ -78,6 +80,8 @@ class ElevationMappingNode {
     ros::Timer updateVarianceTimer_;
     ros::Timer updateTimeTimer_;
     ros::Timer updateGridMapTimer_;
+    ros::Timer publishStatisticsTimer_;
+    ros::Time lastStatisticsPublishedTime_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
@@ -104,6 +108,7 @@ class ElevationMappingNode {
     bool enableDriftCorrectedTFPublishing_;
     bool useInitializerAtStart_;
     double initializeTfGridSize_;
+    int pointCloudProcessCounter_;
 };
 
 }

@@ -9,6 +9,7 @@
 // #include <traversability_msgs/TraversabilityResult.h>
 #include <geometry_msgs/Point32.h>
 #include <elevation_map_msgs/CheckSafety.h>
+#include <elevation_map_msgs/Statistics.h>
 
 namespace elevation_mapping_cupy{
 
@@ -18,6 +19,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   lowpassOrientation_(0, 0, 0, 1),
   positionError_(0),
   orientationError_(0),
+  pointCloudProcessCounter_(0),
   positionAlpha_(0.1),
   orientationAlpha_(0.1),
   enablePointCloudPublishing_(false)
@@ -26,7 +28,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
   std::vector<std::string> pointcloud_topics;
-  double recordableFps, updateVarianceFps, timeInterval, updateGridMapFps;
+  double recordableFps, updateVarianceFps, timeInterval, updateGridMapFps, publishStatisticsFps;
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
@@ -44,6 +46,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("time_interval", timeInterval, 0.1);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<double>("raw_map_publish_fps", updateGridMapFps, 5.0);
+  nh.param<double>("publish_statistics_fps", publishStatisticsFps, 1.0);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
@@ -59,6 +62,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
   normalPub_ = nh_.advertise<visualization_msgs::MarkerArray>("normal", 1);
+  statisticsPub_ = nh_.advertise<elevation_map_msgs::Statistics>("statistics", 1);
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -87,6 +91,12 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     updateGridMapTimer_ = nh_.createTimer(ros::Duration(duration),
                                           &ElevationMappingNode::updateGridMap, this, false, true);
   }
+  if (publishStatisticsFps > 0) {
+    double duration = 1.0 / (publishStatisticsFps + 0.00001);
+    publishStatisticsTimer_ = nh_.createTimer(ros::Duration(duration),
+                                              &ElevationMappingNode::publishStatistics, this, false, true);
+  }
+  lastStatisticsPublishedTime_ = ros::Time::now();
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
 
@@ -125,6 +135,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
+  // This is used for publishing as statistics.
+  pointCloudProcessCounter_++;
 }
 
 void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose)
@@ -330,6 +342,18 @@ void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
 
 void ElevationMappingNode::updateTime(const ros::TimerEvent&) {
   map_.update_time();
+}
+
+void ElevationMappingNode::publishStatistics(const ros::TimerEvent&) {
+  ros::Time now = ros::Time::now();
+  double dt = (now - lastStatisticsPublishedTime_).toSec();
+  lastStatisticsPublishedTime_ = now;
+  elevation_map_msgs::Statistics msg;
+  msg.header.stamp = now;
+  if (dt > 0.0)
+    msg.pointcloud_process_fps = (double)pointCloudProcessCounter_ / dt;
+  pointCloudProcessCounter_ = 0;
+  statisticsPub_.publish(msg);
 }
 
 void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
