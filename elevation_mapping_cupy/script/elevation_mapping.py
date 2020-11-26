@@ -389,19 +389,21 @@ class ElevationMap(object):
 
     def initialize_map(self, points, method='cubic'):
         self.clear()
-        points = cp.asarray(points)
-        indices = transform_to_map_index(points[:, :2],
-                                         self.center,
-                                         self.cell_n,
-                                         self.resolution)
-        points[:, :2] = indices.astype(points.dtype)
-        self.map_initializer(self.elevation_map, points, method)
-        if self.dilation_size_initialize > 0:
-            self.dilation_filter_kernel_initializer(self.elevation_map[0],
-                                                    self.elevation_map[2],
-                                                    self.elevation_map[0],
-                                                    self.elevation_map[2],
-                                                    size=(self.cell_n * self.cell_n))
+        with self.map_lock:
+            points = cp.asarray(points)
+            indices = transform_to_map_index(points[:, :2],
+                                             self.center,
+                                             self.cell_n,
+                                             self.resolution)
+            points[:, :2] = indices.astype(points.dtype)
+            self.map_initializer(self.elevation_map, points, method)
+            if self.dilation_size_initialize > 0:
+                for i in range(2):
+                    self.dilation_filter_kernel_initializer(self.elevation_map[0],
+                                                            self.elevation_map[2],
+                                                            self.elevation_map[0],
+                                                            self.elevation_map[2],
+                                                            size=(self.cell_n * self.cell_n))
 
 
 if __name__ == '__main__':

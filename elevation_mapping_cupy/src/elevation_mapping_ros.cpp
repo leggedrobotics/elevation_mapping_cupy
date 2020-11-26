@@ -27,7 +27,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   std::string pose_topic, map_frame;
   std::vector<std::string> pointcloud_topics;
   double recordableFps, updateVarianceFps, timeInterval, updateGridMapFps;
-  bool useInitializerAtStart;
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
@@ -48,7 +47,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
-  nh.param<bool>("use_initializer_at_start", useInitializerAtStart, false);
+  nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
   poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
@@ -87,11 +86,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     double duration = 1.0 / (updateGridMapFps + 0.00001);
     updateGridMapTimer_ = nh_.createTimer(ros::Duration(duration),
                                           &ElevationMappingNode::updateGridMap, this, false, true);
-  }
-  if (useInitializerAtStart) {
-    ROS_INFO("Clearing map with initializer.");
-    map_.clear();
-    initializeWithTF();
   }
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
@@ -144,6 +138,11 @@ void ElevationMappingNode::poseCallback(const geometry_msgs::PoseWithCovarianceS
   lowpassOrientation_ = orientationAlpha_ * orientation + (1 - orientationAlpha_) * lowpassOrientation_;
   positionError_ = (position3 - lowpassPosition_).norm();
   orientationError_ = (orientation - lowpassOrientation_).norm();
+  if (useInitializerAtStart_) {
+    ROS_INFO("Clearing map with initializer.");
+    initializeWithTF();
+    useInitializerAtStart_ = false;
+  }
 }
 
 void ElevationMappingNode::publishAsPointCloud() {
