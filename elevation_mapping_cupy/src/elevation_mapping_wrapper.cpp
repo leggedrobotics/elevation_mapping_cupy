@@ -175,8 +175,7 @@ double ElevationMappingWrapper::get_additive_mean_error() {
   return additive_error;
 }
 
-void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
-
+void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection) {
   RowMatrixXd elevation(map_n_, map_n_);
   RowMatrixXd variance(map_n_, map_n_);
   RowMatrixXd traversability(map_n_, map_n_);
@@ -185,7 +184,14 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
   RowMatrixXd normal_x(map_n_, map_n_);
   RowMatrixXd normal_y(map_n_, map_n_);
   RowMatrixXd normal_z(map_n_, map_n_);
-  map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
+
+  // selection
+  RowMatrixXd selection_matrix(1, selection.size());
+  for (int i=0; i<selection.size(); i++)
+    selection_matrix(0, i) = selection[i];
+
+  map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(selection_matrix),
+                            static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
                             static_cast<Eigen::Ref<RowMatrixXd>>(variance),
                             static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
                             static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered),
@@ -196,20 +202,19 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
                             enable_normal_
                            );
   maps.clear();
-  maps.push_back(elevation);
-  maps.push_back(variance);
-  maps.push_back(traversability);
-  maps.push_back(min_filtered);
-  maps.push_back(time_layer);
+  for (const int idx: selection) {
+    if (idx == 0)
+      maps.push_back(elevation);
+    if (idx == 1)
+      maps.push_back(variance);
+    if (idx == 2)
+      maps.push_back(traversability);
+    if (idx == 3)
+      maps.push_back(min_filtered);
+    if (idx == 4)
+      maps.push_back(time_layer);
+  }
   if (enable_normal_) {
-    // RowMatrixXd normal_x(map_n_, map_n_);
-    // RowMatrixXd normal_y(map_n_, map_n_);
-    // RowMatrixXd normal_z(map_n_, map_n_);
-    // map_.attr("get_normal_ref")(
-    //                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
-    //                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
-    //                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_z)
-    //                            );
     maps.push_back(normal_x);
     maps.push_back(normal_y);
     maps.push_back(normal_z);
@@ -218,28 +223,46 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps) {
 }
 
 
-void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap) {
+void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames) {
+  std::vector<std::string> basicLayerNames;
+  std::vector<int> selection;
+  for (const auto& layerName: layerNames) {
+    if (layerName == "elevation") {
+      selection.push_back(0);
+      basicLayerNames.push_back("elevation");
+    }
+    if (layerName == "variance")
+      selection.push_back(1);
+    if (layerName == "traversability") {
+      selection.push_back(2);
+      basicLayerNames.push_back("traversability");
+    }
+    if (layerName == "min_filtered")
+      selection.push_back(3);
+    if (layerName == "time_since_update")
+      selection.push_back(4);
+  }
+  // if (enable_normal_) {
+  //   layerNames.push_back("normal_x");
+  //   layerNames.push_back("normal_y");
+  //   layerNames.push_back("normal_z");
+  // }
+
   RowMatrixXd pos(1, 2);
   map_.attr("get_position")(static_cast<Eigen::Ref<RowMatrixXd>>(pos));
-
   grid_map::Position position(pos(0, 0), pos(0, 1));
   grid_map::Length length(map_length_, map_length_);
   gridMap.setGeometry(length, resolution_, position);
   std::vector<Eigen::MatrixXd> maps;
-  get_maps(maps);
+  get_maps(maps, selection);
   // gridMap.add("elevation", maps[0].cast<float>());
   // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  std::vector<std::string> layerNames = {"elevation", "variance", "traversability", "min_filtered", "time_since_update"};
-  if (enable_normal_) {
-    layerNames.push_back("normal_x");
-    layerNames.push_back("normal_y");
-    layerNames.push_back("normal_z");
-  }
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }
-  gridMap.setBasicLayers({"elevation", "traversability"});
+  // gridMap.setBasicLayers({"elevation", "traversability"});
+  gridMap.setBasicLayers(basicLayerNames);
   if (enable_normal_ && enable_normal_color_) {
     addNormalColorLayer(gridMap);
   }
