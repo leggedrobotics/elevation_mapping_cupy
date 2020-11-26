@@ -6,9 +6,9 @@
 #include <pcl/common/projection_matrix.h>
 #include <tf_conversions/tf_eigen.h>
 #include <ros/package.h>
-// #include <traversability_msgs/TraversabilityResult.h>
 #include <geometry_msgs/Point32.h>
 #include <elevation_map_msgs/CheckSafety.h>
+#include <elevation_map_msgs/Statistics.h>
 
 namespace elevation_mapping_cupy{
 
@@ -51,7 +51,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
-  poseSub_ = nh_.subscribe(pose_topic, 1, &ElevationMappingNode::poseCallback, this);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);

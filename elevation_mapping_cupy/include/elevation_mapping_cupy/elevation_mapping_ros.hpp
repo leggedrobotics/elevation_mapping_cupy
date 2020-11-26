@@ -4,7 +4,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+// #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
@@ -40,7 +40,6 @@ class ElevationMappingNode {
   private:
     void readParameters();
     void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
-    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
     void publishAsPointCloud();
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     bool checkSafety(elevation_map_msgs::CheckSafety::Request& request,
@@ -63,7 +62,6 @@ class ElevationMappingNode {
     visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
-    ros::Subscriber poseSub_;
     ros::Publisher alivePub_;
     ros::Publisher mapPub_;
     ros::Publisher filteredMapPub_;
