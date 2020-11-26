@@ -4,7 +4,6 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-// #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
