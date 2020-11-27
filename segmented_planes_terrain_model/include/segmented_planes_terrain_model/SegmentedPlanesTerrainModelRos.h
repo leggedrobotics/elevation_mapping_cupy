@@ -11,6 +11,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <ocs2_core/misc/Benchmark.h>
 #include <convex_plane_decomposition_msgs/PlanarTerrain.h>
 
 #include "SegmentedPlanesTerrainModel.h"
@@ -19,12 +20,12 @@ namespace switched_model {
 
 class SegmentedPlanesTerrainModelRos {
  public:
-  std::string frameId_ = "odom";
-
   SegmentedPlanesTerrainModelRos(ros::NodeHandle& nodehandle);
 
-  /// Updates the terrain if a new one is available. Return if an update was made
-  bool update(std::unique_ptr<SegmentedPlanesTerrainModel>& terrainPtr);
+  ~SegmentedPlanesTerrainModelRos();
+
+  /// Extract the latest terrain model. Resets internal model to a nullptr
+  std::unique_ptr<SegmentedPlanesTerrainModel> getTerrainModel();
 
   void createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates, const Eigen::Vector3d& maxCoordinates);
 
@@ -32,6 +33,8 @@ class SegmentedPlanesTerrainModelRos {
 
  private:
   void callback(const convex_plane_decomposition_msgs::PlanarTerrain::ConstPtr& msg);
+
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> getSignedDistanceRange(const grid_map::GridMap& gridMap, const std::string& elevationLayer);
 
   ros::Subscriber terrainSubscriber_;
   ros::Publisher distanceFieldPublisher_;
@@ -43,10 +46,13 @@ class SegmentedPlanesTerrainModelRos {
   std::mutex updateCoordinatesMutex_;
   Eigen::Vector3d minCoordinates_;
   Eigen::Vector3d maxCoordinates_;
-  bool createSignedDistance_ = false;
+  bool externalCoordinatesGiven_;
 
   std::mutex pointCloudMutex_;
   pcl::PointCloud<pcl::PointXYZI> pointCloud_;
+  std::string frameId_;
+
+  ocs2::benchmark::RepeatedTimer callbackTimer_;
 };
 
 }  // namespace switched_model
