@@ -51,12 +51,17 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
+  nh.param<bool>("enable_filtered_map_publishing", enableFilteredMapPublishing_, false);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
   mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
-  filteredMapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_filtered", 1);
+  if (std::find(raw_map_layers_.begin(), raw_map_layers_.end(), "min_filtered") == raw_map_layers_.end())
+    enableFilteredMapPublishing_ = false;
+
+  if (enableFilteredMapPublishing_)
+    filteredMapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_filtered", 1);
   recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
@@ -342,10 +347,12 @@ void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
   scopedLockForGridMap.unlock();
   msg.basic_layers = layers;
   recordablePub_.publish(msg);
-  grid_map_msgs::GridMap filteredMsg;
-  grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
-  filteredMsg.basic_layers = {"min_filtered"};
-  filteredMapPub_.publish(filteredMsg);
+  if (enableFilteredMapPublishing_) {
+    grid_map_msgs::GridMap filteredMsg;
+    grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
+    filteredMsg.basic_layers = {"min_filtered"};
+    filteredMapPub_.publish(filteredMsg);
+  }
 
   return;
 }

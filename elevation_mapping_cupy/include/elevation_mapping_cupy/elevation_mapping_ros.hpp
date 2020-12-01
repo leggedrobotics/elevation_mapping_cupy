@@ -107,6 +107,7 @@ class ElevationMappingNode {
     bool enableNormalArrowPublishing_;
     bool enableDriftCorrectedTFPublishing_;
     bool useInitializerAtStart_;
+    bool enableFilteredMapPublishing_;
     double initializeTfGridSize_;
     int pointCloudProcessCounter_;
 };

@@ -1,5 +1,5 @@
-resolution: 0.02                                # resolution in m.
-map_length: 12                                  # map's size in m.
+resolution: 0.04                                # resolution in m.
+map_length: 10                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
@@ -42,6 +42,7 @@ enable_pointcloud_publishing: false
 enable_drift_corrected_TF_publishing: true
 enable_normal: false
 enable_normal_color: false
+enable_filtered_map_publishing: false
 
 weight_file: 'config/weights.dat'
 
@@ -49,9 +50,12 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     '/depth_camera_rear/depth/color/points',
                     '/depth_camera_left/depth/color/points',
                     '/depth_camera_right/depth/color/points',
-                    '/point_cloud_filter/rslidar/point_cloud'
+                    '/point_cloud_filter/rslidar/point_cloud',
+                    '/robot_self_filter/bpearl_front/point_cloud',
+                    '/robot_self_filter/bpearl_rear/point_cloud'
+                    # '/point_cloud_filter/lidar/point_cloud_filtered'
                     ]
-raw_map_layers: ['elevation', 'traversability', 'min_filtered']     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+raw_map_layers: ['elevation', 'traversability']                     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 recordable_map_layers: ['elevation']                                # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 map_frame: 'odom'
 base_frame: 'base'
