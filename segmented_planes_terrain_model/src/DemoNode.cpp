@@ -79,7 +79,8 @@ int main(int argc, char** argv) {
   // Node loop
   ros::Rate rate(1./5.);
   while (ros::ok()) {
-    if (segmentedPlanesTerrainModelRos.update(terrainModel)) {
+    if (auto newTerrain = segmentedPlanesTerrainModelRos.getTerrainModel()) {
+      terrainModel = std::move(newTerrain);
       ROS_INFO("Terrain model updated!!");
     }
 
