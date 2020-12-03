@@ -25,7 +25,11 @@ GridmapSignedDistanceField::GridmapSignedDistanceField(const grid_map::GridMap& 
   gridmap3DLookup_ = Gridmap3dLookup(gridsize, gridOrigin, gridMap.getResolution());
 
   data_.reserve(gridmap3DLookup_.linearSize());
-  computeSignedDistance(gridMap.get(elevationLayer));
+  const auto& elevationData = gridMap.get(elevationLayer);
+  if (elevationData.hasNaN()) {
+    std::cerr << "[GridmapSignedDistanceField] elevation data contains NaN" << std::endl;
+  }
+  computeSignedDistance(elevationData);
 }
 
 GridmapSignedDistanceField::GridmapSignedDistanceField(const GridmapSignedDistanceField& other)
