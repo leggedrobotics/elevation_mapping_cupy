@@ -74,15 +74,19 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(con
 
 void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
                                                               const Eigen::Vector3d& maxCoordinates) {
-  Eigen::Vector3d centerCoordinates = 0.5 * (minCoordinates + maxCoordinates);
-  Eigen::Vector3d lengths = maxCoordinates - minCoordinates;
+  // Compute coordinates of submap
+  const auto minXY = planarTerrain_.gridMap.getClosestPositionInMap({minCoordinates.x(), minCoordinates.y()});
+  const auto maxXY = planarTerrain_.gridMap.getClosestPositionInMap({maxCoordinates.x(), maxCoordinates.y()});
+  const auto centerXY = 0.5 * (minXY + maxXY);
+  const auto lengths = maxXY - minXY;
 
   bool success = true;
-  grid_map::GridMap subMap =
-      planarTerrain_.gridMap.getSubmap({centerCoordinates.x(), centerCoordinates.y()}, Eigen::Array2d(lengths.x(), lengths.y()), success);
+  grid_map::GridMap subMap = planarTerrain_.gridMap.getSubmap(centerXY, lengths, success);
   if (success) {
     signedDistanceField_ =
         std::make_unique<signed_distance_field::GridmapSignedDistanceField>(subMap, "elevation", minCoordinates.z(), maxCoordinates.z());
+  } else {
+    std::cerr << "[SegmentedPlanesTerrainModel] Failed to get subMap" << std::endl;
   }
 }
 
