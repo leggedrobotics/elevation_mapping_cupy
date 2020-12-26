@@ -4,7 +4,6 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
@@ -40,7 +39,6 @@ class ElevationMappingNode {
   private:
     void readParameters();
     void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
-    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped& pose);
     void publishAsPointCloud();
     bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
     bool checkSafety(elevation_map_msgs::CheckSafety::Request& request,
@@ -51,22 +49,25 @@ class ElevationMappingNode {
     bool clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
     void publishRecordableMap(const ros::TimerEvent&);
+    void updatePose(const ros::TimerEvent&);
     void updateVariance(const ros::TimerEvent&);
     void updateTime(const ros::TimerEvent&);
+    void updateGridMap(const ros::TimerEvent&);
     void publishNormalAsArrow(const grid_map::GridMap& map);
     void initializeWithTF();
     void publishMapToOdom(double error);
+    void publishStatistics(const ros::TimerEvent&);
 
     visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
     ros::NodeHandle nh_;
     std::vector<ros::Subscriber> pointcloudSubs_;
-    ros::Subscriber poseSub_;
     ros::Publisher alivePub_;
     ros::Publisher mapPub_;
     ros::Publisher filteredMapPub_;
     ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
     ros::Publisher normalPub_;
+    ros::Publisher statisticsPub_;
     ros::ServiceServer rawSubmapService_;
     ros::ServiceServer clearMapService_;
     ros::ServiceServer clearMapWithInitializerService_;
@@ -76,11 +77,17 @@ class ElevationMappingNode {
     ros::Timer recordableTimer_;
     ros::Timer updateVarianceTimer_;
     ros::Timer updateTimeTimer_;
+    ros::Timer updatePoseTimer_;
+    ros::Timer updateGridMapTimer_;
+    ros::Timer publishStatisticsTimer_;
+    ros::Time lastStatisticsPublishedTime_;
     tf::TransformListener transformListener_;
     ElevationMappingWrapper map_;
     std::string mapFrameId_;
     std::string correctedMapFrameId_;
+    std::string baseFrameId_;
     grid_map::GridMap gridMap_;
+    std::vector<std::string> raw_map_layers_;
     std::vector<std::string> recordable_map_layers_;
     std::vector<std::string> initialize_frame_id_;
     std::vector<double> initialize_tf_offset_;
@@ -99,7 +106,10 @@ class ElevationMappingNode {
     bool enablePointCloudPublishing_;
     bool enableNormalArrowPublishing_;
     bool enableDriftCorrectedTFPublishing_;
+    bool useInitializerAtStart_;
+    bool enableFilteredMapPublishing_;
     double initializeTfGridSize_;
+    int pointCloudProcessCounter_;
 };
 
 }

@@ -1,5 +1,5 @@
 resolution: 0.04                                # resolution in m.
-map_length: 12                                  # map's size in m.
+map_length: 10                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
@@ -13,15 +13,18 @@ traversability_inlier: 0.9                      # cells with higher traversabili
 dilation_size: 3                                # dilation filter size before traversability filter.
 wall_num_thresh: 20                             # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
 min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
-position_noise_thresh: 0.001                    # if the position change is bigger than this value, the drift compensation happens.
-orientation_noise_thresh: 0.001                 # if the orientation change is bigger than this value, the drift compensation happens.
-position_lowpass_alpha: 0.1                     # lowpass filter alpha used for detecting movements.
-orientation_lowpass_alpha: 0.1                  # lowpass filter alpha used for detecting movements.
+position_noise_thresh: 0.01                    # if the position change is bigger than this value, the drift compensation happens.
+orientation_noise_thresh: 0.01                 # if the orientation change is bigger than this value, the drift compensation happens.
+position_lowpass_alpha: 0.2                     # lowpass filter alpha used for detecting movements.
+orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
 min_valid_distance: 0.5                         # points with shorter distance will be filtered out.
 max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
 recordable_fps: 5.0                             # fps for publishing map (in slower rate to record).
 update_variance_fps: 5.0                        # fps for updating variance.
+update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
 time_interval: 0.1                              # Time layer is updated with this interval.
+raw_map_publish_fps: 5.0                        # Raw map is fetched from GPU memory in this fps.
+publish_statistics_fps: 1.0                     # Publish statistics topic in this fps.
 
 max_ray_length: 10.0                            # maximum length for ray tracing.
 cleanup_step: 0.1                               # subtitute this value from validity layer at visibiltiy cleanup.
@@ -39,6 +42,7 @@ enable_pointcloud_publishing: false
 enable_drift_corrected_TF_publishing: true
 enable_normal: false
 enable_normal_color: false
+enable_filtered_map_publishing: false
 
 weight_file: 'config/weights.dat'
 
@@ -46,9 +50,12 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     '/depth_camera_rear/depth/color/points',
                     '/depth_camera_left/depth/color/points',
                     '/depth_camera_right/depth/color/points',
-                    '/point_cloud_filter/rslidar/point_cloud'
+                    '/point_cloud_filter/rslidar/point_cloud',
+                    '/robot_self_filter/bpearl_front/point_cloud',
+                    '/robot_self_filter/bpearl_rear/point_cloud'
+                    # '/point_cloud_filter/lidar/point_cloud_filtered'
                     ]
-raw_map_layers: ['elevation', 'traversability', 'min_filtered']     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+raw_map_layers: ['elevation', 'traversability']                     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 recordable_map_layers: ['elevation']                                # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 map_frame: 'odom'
 base_frame: 'base'
@@ -58,5 +65,6 @@ corrected_map_frame: 'corrected_odom'
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
 initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
 initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
-dilation_size_initialize: 3                                         # dilation size after the init.
+dilation_size_initialize: 5                                         # dilation size after the init.
 initialize_tf_grid_size: 1.0                                        # This is not used if number of tf is more than 3.
+use_initializer_at_start: true                                      # Use initializer when the node starts.
