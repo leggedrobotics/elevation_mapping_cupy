@@ -163,7 +163,27 @@ void ElevationMappingNode::publishAsPointCloud() {
 
 bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response)
 {
+  std::string requestedFrameId = request.frame_id;
+  Eigen::Isometry3d transformationOdomToMap;
   grid_map::Position requestedSubmapPosition(request.position_x, request.position_y);
+  if (requestedFrameId != mapFrameId_) {
+    tf::StampedTransform transformTf;
+    const auto& timeStamp = ros::Time::now();
+    try {
+      transformListener_.waitForTransform(requestedFrameId, mapFrameId_, timeStamp, ros::Duration(1.0));
+      transformListener_.lookupTransform(requestedFrameId, mapFrameId_, timeStamp, transformTf);
+      tf::poseTFToEigen(transformTf, transformationOdomToMap);
+    }
+    catch (tf::TransformException &ex) {
+      ROS_ERROR("%s", ex.what());
+      return false;
+    }
+    // ROS_INFO_STREAM("transformation " << transformationOdomToMap);
+    Eigen::Vector3d p(request.position_x, request.position_y, 0);
+    Eigen::Vector3d mapP = transformationOdomToMap * p;
+    requestedSubmapPosition.x() = mapP.x();
+    requestedSubmapPosition.y() = mapP.y();
+  }
   grid_map::Length requestedSubmapLength(request.length_x, request.length_y);
   ROS_DEBUG("Elevation submap request: Position x=%f, y=%f, Length x=%f, y=%f.", requestedSubmapPosition.x(), requestedSubmapPosition.y(), requestedSubmapLength(0), requestedSubmapLength(1));
 
@@ -171,16 +191,10 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
   grid_map::Index index;
   grid_map::GridMap subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
   const auto& length = subMap.getLength();
-  Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(length(0), length(1));
-  subMap.add("horizontal_variance_x", zero.cast<float>());
-  subMap.add("horizontal_variance_y", zero.cast<float>());
-  subMap.add("horizontal_variance_xy", zero.cast<float>());
-  subMap.add("time", zero.cast<float>());
-  subMap.add("color", zero.cast<float>());
-  subMap.add("lowest_scan_point", zero.cast<float>());
-  subMap.add("sensor_x_at_lowest_scan", zero.cast<float>());
-  subMap.add("sensor_y_at_lowest_scan", zero.cast<float>());
-  subMap.add("sensor_z_at_lowest_scan", zero.cast<float>());
+  // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(length(0), length(1));
+  if (requestedFrameId != mapFrameId_) {
+    subMap = subMap.getTransformedMap(transformationOdomToMap, "elevation", requestedFrameId);
+  }
 
   if (request.layers.empty()) {
     grid_map::GridMapRosConverter::toMessage(subMap, response.map);

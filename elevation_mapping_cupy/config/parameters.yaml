@@ -1,4 +1,4 @@
-resolution: 0.02                                # resolution in m.
+resolution: 0.04                                # resolution in m.
 map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
@@ -48,9 +48,10 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     '/depth_camera_right/depth/color/points',
                     '/point_cloud_filter/rslidar/point_cloud'
                     ]
-pose_topic: '/state_estimator/pose_in_odom'
-recordable_map_layers: ['elevation']
+raw_map_layers: ['elevation', 'traversability', 'min_filtered']     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+recordable_map_layers: ['elevation']                                # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 map_frame: 'odom'
+base_frame: 'base'
 corrected_map_frame: 'corrected_odom'
 
 #  Initialization
