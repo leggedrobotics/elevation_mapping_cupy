@@ -201,7 +201,8 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
     }
     // ROS_INFO_STREAM("transformation " << transformationOdomToMap);
     Eigen::Vector3d p(request.position_x, request.position_y, 0);
-    Eigen::Vector3d mapP = transformationOdomToMap * p;
+    Eigen::Vector3d mapP = transformationOdomToMap.inverse() * p;
+    ROS_INFO_STREAM("mapP " << mapP);
     requestedSubmapPosition.x() = mapP.x();
     requestedSubmapPosition.y() = mapP.y();
   }

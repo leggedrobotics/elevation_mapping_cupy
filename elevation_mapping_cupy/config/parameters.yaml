@@ -57,7 +57,8 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     ]
 raw_map_layers: ['elevation', 'traversability']                     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 recordable_map_layers: ['elevation']                                # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
-map_frame: 'odom'
+# map_frame: 'odom'
+map_frame: 'msf_body_imu_map'
 base_frame: 'base'
 corrected_map_frame: 'corrected_odom'
 
