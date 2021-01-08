@@ -34,6 +34,9 @@ safe_thresh: 0.7                                # if traversability is smaller, 
 safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
 max_unsafe_n: 10                                # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
 
+overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
+overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
+
 gather_mode: 'mean'                             # gather mode (currently only mean is possible).
 enable_edge_sharpen: true
 enable_visibility_cleanup: true
@@ -43,6 +46,7 @@ enable_drift_corrected_TF_publishing: true
 enable_normal: false
 enable_normal_color: false
 enable_filtered_map_publishing: false
+enable_overlap_clearance: true
 
 weight_file: 'config/weights.dat'
 

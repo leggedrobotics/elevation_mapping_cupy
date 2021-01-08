@@ -30,10 +30,10 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
 }
 
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup;
+  bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup, enable_overlap_clearance;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier, max_drift, drift_compensation_alpha;
   float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh, max_variance, time_interval,
-        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh;
+        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh, overlap_clear_range_xy, overlap_clear_range_z;
   int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
@@ -47,6 +47,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<bool>("enable_normal", enable_normal_, false);
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);
+
+  nh.param<bool>("enable_overlap_clearance", enable_overlap_clearance, true);
+  param_.attr("set_enable_overlap_clearance")(enable_overlap_clearance);
 
   nh.param<float>("resolution", resolution, 0.02);
   param_.attr("set_resolution")(resolution);
@@ -113,6 +116,12 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<float>("safe_thresh", safe_thresh, 0.5);
   param_.attr("set_safe_thresh")(safe_thresh);
+
+  nh.param<float>("overlap_clear_range_xy", overlap_clear_range_xy, 4.0);
+  param_.attr("set_overlap_clear_range_xy")(overlap_clear_range_xy);
+
+  nh.param<float>("overlap_clear_range_z", overlap_clear_range_z, 2.0);
+  param_.attr("set_overlap_clear_range_z")(overlap_clear_range_z);
 
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
