@@ -92,10 +92,6 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 
     The distance measurements.
 
-* **`/pose`** ([geometry_msgs/PoseWithCovarianceStamped])
-
-    The robot pose and covariance.
-
 * **`/tf`** ([tf/tfMessage])
 
     The transformation tree.
