@@ -199,10 +199,8 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
       ROS_ERROR("%s", ex.what());
       return false;
     }
-    // ROS_INFO_STREAM("transformation " << transformationOdomToMap);
     Eigen::Vector3d p(request.position_x, request.position_y, 0);
     Eigen::Vector3d mapP = transformationOdomToMap.inverse() * p;
-    ROS_INFO_STREAM("mapP " << mapP);
     requestedSubmapPosition.x() = mapP.x();
     requestedSubmapPosition.y() = mapP.y();
   }
@@ -213,7 +211,6 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
   grid_map::Index index;
   grid_map::GridMap subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
   const auto& length = subMap.getLength();
-  // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(length(0), length(1));
   if (requestedFrameId != mapFrameId_) {
     subMap = subMap.getTransformedMap(transformationOdomToMap, "elevation", requestedFrameId);
   }
