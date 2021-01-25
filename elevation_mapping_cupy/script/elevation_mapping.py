@@ -70,6 +70,9 @@ class ElevationMap(object):
         self.min_filter_iteration = param.min_filter_iteration
         self.time_interval = param.time_interval
         self.max_drift = param.max_drift
+        self.overlap_clear_range_xy = param.overlap_clear_range_xy
+        self.overlap_clear_range_z = param.overlap_clear_range_z
+        self.enable_overlap_clearance = param.enable_overlap_clearance
 
         self.map_lock = threading.Lock()
 
@@ -200,6 +203,9 @@ class ElevationMap(object):
             self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
 
+            if self.enable_overlap_clearance:
+                self.clear_overlap_map(t)
+
             # dilation before traversability_filter
             self.traversability_input *= 0.0
             self.dilation_filter_kernel(self.elevation_map[0],
@@ -213,6 +219,20 @@ class ElevationMap(object):
 
         # calculate normal vectors
         self.update_normal(self.traversability_input)
+
+    def clear_overlap_map(self, t):
+        cell_range = int(self.overlap_clear_range_xy / self.resolution)
+        cell_range = np.clip(cell_range, 0, self.cell_n)
+        cell_min = self.cell_n // 2 - cell_range // 2
+        cell_max = self.cell_n // 2 + cell_range // 2
+        height_min = t[2] - self.overlap_clear_range_z
+        height_max = t[2] + self.overlap_clear_range_z
+        near_map = self.elevation_map[:, cell_min:cell_max, cell_min:cell_max]
+        clear_idx = cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
+        near_map[0][clear_idx] = 0.0
+        near_map[1][clear_idx] = self.initial_variance
+        near_map[2][clear_idx] = 0.0
+        self.elevation_map[:, cell_min:cell_max, cell_min:cell_max] = near_map
 
     def get_additive_mean_error(self):
         return self.additive_mean_error

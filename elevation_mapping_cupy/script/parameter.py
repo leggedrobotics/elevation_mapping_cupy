@@ -39,9 +39,13 @@ class Parameter(object):
 
         self.max_drift = 0.10
 
+        self.overlap_clear_range_xy = 4.0
+        self.overlap_clear_range_z = 2.0
+
         self.enable_edge_sharpen = True
         self.enable_drift_compensation = True
         self.enable_visibility_cleanup = True
+        self.enable_overlap_clearance = True
         self.position_noise_thresh = 0.1
         self.orientation_noise_thresh = 0.1
 
@@ -164,3 +168,12 @@ class Parameter(object):
 
     def set_time_interval(self, x):
         self.time_interval = x
+
+    def set_enable_overlap_clearance(self, x):
+        self.enable_overlap_clearance = x
+
+    def set_overlap_clear_range_xy(self, x):
+        self.overlap_clear_range_xy = x
+
+    def set_overlap_clear_range_z(self, x):
+        self.overlap_clear_range_z = x
