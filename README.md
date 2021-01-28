@@ -56,7 +56,7 @@ Also, on jetson you need fortran (should already be installed).
 sudo apt install gfortran
 ```
 
-cupy can be installed with specific CUDA versions. (On jetson, only "from source" could work)
+cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. via pip3 could work)
 > (For CUDA 9.0)
 > % pip install cupy-cuda90
 >
@@ -71,6 +71,19 @@ cupy can be installed with specific CUDA versions. (On jetson, only "from source
 >
 > (Install CuPy from source)
 > % pip install cupy
+
+#### On Jetson
+Since NVIDIA does not officially support focal yet, the libraries need the bionic compilers. CUDA C code needs to be compiled with gcc-7 or earlier.
+In your catkin workspace set:
+```
+catkin config --cmake-args -DCMAKE_C_COMPILER=/usr/bin/gcc-7
+```
+
+Link `gcc-7` and `g++-7` into CUDA installation. Install with `apt` if its not installed:
+```
+sudo ln -s /usr/bin/gcc-7 /usr/local/cuda/bin/gcc
+sudo ln -s /usr/bin/g++-7 /usr/local/cuda/bin/g++
+```
 
 ### ROS package dependencies
 - [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
@@ -89,18 +102,6 @@ pip3 install catkin_pkg
 ### Build
 ```bash
 catkin build elevation_mapping_cupy
-```
-#### On Jetson
-Since NVIDIA does not officially support focal yet, the libraries need the bionic compilers. CUDA C code needs to be compiled with gcc-7 or earlier:
-In your catkin workspace set:
-```
-catkin config --cmake-args -DCMAKE_C_COMPILER=/usr/bin/gcc-7
-```
-
-Link `gcc-7` and `g++-7` into CUDA installation. Install with `apt` if its not installed:
-```
-sudo ln -s /usr/bin/gcc-7 /usr/local/cuda/bin/gcc
-sudo ln -s /usr/bin/g++-7 /usr/local/cuda/bin/g++
 ```
 
 ### Run
