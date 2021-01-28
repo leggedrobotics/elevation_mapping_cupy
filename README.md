@@ -90,6 +90,19 @@ pip3 install catkin_pkg
 ```bash
 catkin build elevation_mapping_cupy
 ```
+#### On Jetson
+Since NVIDIA does not officially support focal yet, the libraries need the bionic compilers. CUDA C code needs to be compiled with gcc-7 or earlier:
+In your catkin workspace set:
+```
+catkin config --cmake-args -DCMAKE_C_COMPILER=/usr/bin/gcc-7
+```
+
+Link `gcc-7` and `g++-7` into CUDA installation. Install with `apt` if its not installed:
+```
+sudo ln -s /usr/bin/gcc-7 /usr/local/cuda/bin/gcc
+sudo ln -s /usr/bin/g++-7 /usr/local/cuda/bin/g++
+```
+
 ### Run
 ```bash
 roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
