@@ -27,7 +27,7 @@ For example, the tested version is with `libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64
 
 Then install them using the command below.
 ```bash
-sudo dpkg -i libcudnn7_7.5.1.10-1+cuda10.0_amd64.deb 
+sudo dpkg -i libcudnn7_7.5.1.10-1+cuda10.0_amd64.deb
 sudo dpkg -i libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64.deb
 ```
 
@@ -35,42 +35,50 @@ sudo dpkg -i libcudnn7-dev_7.5.1.10-1+cuda10.0_amd64.deb
 [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation)  
 [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux).
 
-### python dependencies
-- [numpy](https://www.numpy.org/)
-- [scipy](https://www.scipy.org/)
-- [cupy == 6.7.0](https://cupy.chainer.org/)
-- [chainer == 6.7.0](https://chainer.org/)
-- [shapely == 1.6.4](https://github.com/Toblerity/Shapely)
+
+#### On Jetson
+`CUDA` and `cuDNN` can be installed via apt.
+
+### Python dependencies
+- [numpy==1.17.4](https://www.numpy.org/)
+- [scipy==1.2.3](https://www.scipy.org/)
+- [cupy==6.7.0](https://cupy.chainer.org/)
+- [chainer==6.7.0](https://chainer.org/)
+- [shapely==1.6.4](https://github.com/Toblerity/Shapely)
 
 ```bash
-pip install numpy scipy cupy chainer shapely
+pip3 install numpy scipy cupy chainer shapely
 ```
-On jetson, pip builds the packages from source so it would take time.
+On jetson, pip3 builds the packages from source so it would take time.
 
-Also, on jetson you need to install fortran beforehand.
+Also, on jetson you need fortran (should already be installed).
 ```bash
-sudo apt-get install gfortran
+sudo apt install gfortran
 ```
 
 cupy can be installed with specific CUDA versions. (On jetson, only "from source" could work)
 > (For CUDA 9.0)
 > % pip install cupy-cuda90
-> 
+>
 > (For CUDA 9.1)
 > % pip install cupy-cuda91
-> 
+>
 > (For CUDA 9.2)
 > % pip install cupy-cuda92
-> 
+>
 > (For CUDA 10.0)
 > % pip install cupy-cuda100
-> 
+>
 > (Install CuPy from source)
 > % pip install cupy
 
 ### ROS package dependencies
 - [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
 - [grid_map_msgs](https://github.com/ANYbotics/grid_map)
+```
+sudo apt install ros-noetic-pybind11-catkin
+sudo apt install ros-noetic-grid-map-msgs
+```
 
 #### On Jetson
 ```bash
@@ -102,8 +110,8 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 * **`elevation_map_raw`** ([grid_map_msg/GridMap])
 
     The entire elevation map.
-    
-    
+
+
 * **`elevation_map_recordable`** ([grid_map_msg/GridMap])
 
     The entire elevation map with slower update rate for visualization and logging.
