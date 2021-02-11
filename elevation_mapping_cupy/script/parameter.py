@@ -57,7 +57,7 @@ class Parameter(object):
         self.w_out = np.zeros((1, 12, 1, 1))
 
     def load_weights(self, filename):
-        with open(filename) as file:
+        with open(filename,'rb') as file:
             weights = pickle.load(file)
             self.w1 = weights['conv1.weight']
             self.w2 = weights['conv2.weight']

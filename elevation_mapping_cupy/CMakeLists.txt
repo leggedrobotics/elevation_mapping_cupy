@@ -1,5 +1,5 @@
 # %Tag(FULLTEXT)%
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.2)
 project(elevation_mapping_cupy)
 
 find_package(Eigen3 REQUIRED)
