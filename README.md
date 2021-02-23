@@ -33,7 +33,7 @@ sudo apt-get install libboost-all-dev
 #### JSK-visualization
 For rviz-visualization the jsk-library is used.
 ```bash
-sudo apt-get install ros-melodic-jsk-visualization
+sudo apt-get install ros-noetic-jsk-visualization
 ```
 
 #### Grid Map

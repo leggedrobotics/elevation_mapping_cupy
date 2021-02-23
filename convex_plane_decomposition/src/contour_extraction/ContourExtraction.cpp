@@ -81,7 +81,7 @@ std::vector<CgalPolygonWithHoles2d> extractPolygonsFromBinaryImage(const cv::Mat
     return hierarchyVector[3] < 0;  // no parent
   };
 
-  cv::findContours(binary_image, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+  cv::findContours(binary_image, contours, hierarchy, cv::RETR_CCOMP, cv::CHAIN_APPROX_SIMPLE);
 
   std::vector<CgalPolygonWithHoles2d> plane_polygons;
   for (int i = 0; i < contours.size(); i++) {
