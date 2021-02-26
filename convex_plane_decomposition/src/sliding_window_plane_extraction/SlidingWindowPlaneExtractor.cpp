@@ -6,7 +6,8 @@
 
 #include <Eigen/Eigenvalues>
 
-#include <cv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <grid_map_core/grid_map_core.hpp>
 

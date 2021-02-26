@@ -24,7 +24,7 @@
 
   <!-- Launch the plane decomposition node. -->
   <include file="$(find convex_plane_decomposition_ros)/launch/convex_plane_decomposition.launch">
-    <arg name="node_parameter_file"    value="demo_node.yaml"/>
+    <arg name="node_parameter_file"    value="$(find convex_plane_decomposition_ros)/config/demo_node.yaml"/>
   </include>
 
   <!-- Launch rviz. -->

@@ -28,12 +28,21 @@ sudo apt-get install libmpfr-dev
 sudo apt-get install libboost-all-dev
 ```
 
+#### PCL
+PCL is required, but the ANYbotics distributed version does not contain visualization components. 
+With the following commands PCL can be build from source directly into your catkin workspace. 
+DO NOT do this on the ANYmal onboard PCs, only on OPC and simulation PCs.
+```bash
+sudo apt-get install libvtk7-dev
+catkin build pcl_catkin
+```
+
 ### ROS package dependencies
 
 #### JSK-visualization
 For rviz-visualization the jsk-library is used.
 ```bash
-sudo apt-get install ros-melodic-jsk-visualization
+sudo apt-get install ros-noetic-jsk-visualization
 ```
 
 #### Grid Map
@@ -49,7 +58,7 @@ catkin build convex_plane_decomposition_ros
 ```
 ### Run demo
 ```bash
-roslaunch convex_plane_decomposition_ros convex_plane_decomposition_demo.launch
+roslaunch convex_plane_decomposition_ros demo.launch
 ```
 
 ### Parameters
