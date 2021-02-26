@@ -58,7 +58,7 @@ catkin build convex_plane_decomposition_ros
 ```
 ### Run demo
 ```bash
-roslaunch convex_plane_decomposition_ros convex_plane_decomposition_demo.launch
+roslaunch convex_plane_decomposition_ros demo.launch
 ```
 
 ### Parameters
