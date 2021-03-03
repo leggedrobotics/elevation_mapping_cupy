@@ -4,7 +4,7 @@
     <version>0.0.0</version>
     <description>The convex_plane_decomposition_ros package</description>
 
-    <maintainer email="andrej@todo.todo">andrej</maintainer>
+    <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
     <license>TODO</license>
 
@@ -14,7 +14,6 @@
     <depend>grid_map_ros</depend>
     <depend>grid_map_cv</depend>
     <depend>grid_map_msgs</depend>
-    <depend>grid_map_rviz_plugin</depend>
     <depend>geometry_msgs</depend>
     <depend>jsk_recognition_msgs</depend>
     <depend>convex_plane_decomposition</depend>

@@ -8,7 +8,6 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_ros
 	grid_map_cv
 	grid_map_msgs
-	grid_map_rviz_plugin
 	geometry_msgs
 	jsk_recognition_msgs
 	convex_plane_decomposition
