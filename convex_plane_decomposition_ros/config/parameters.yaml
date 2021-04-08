@@ -1,4 +1,5 @@
 preprocessing:
+  resolution: 0.02    # Resampling resolution, set negative to skip, requires inpainting to be used
   kernelSize: 3       # Kernel size of the median filter
   numberOfRepeats: 3  # Number of times to apply the same filter
   increasing: True    # Increase the kernel size each iteration.

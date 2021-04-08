@@ -7,6 +7,8 @@
 namespace convex_plane_decomposition {
 
 struct PreprocessingParameters {
+  /// Resample to this resolution, set to negative values to skip
+  double resolution = -1.0;
   /// Kernel size of the median filter
   int kernelSize = 5;
   /// Number of times the image is filtered
@@ -21,11 +23,12 @@ class GridMapPreprocessing {
  public:
   GridMapPreprocessing(const PreprocessingParameters& parameters);
 
-  void preprocess(grid_map::GridMap& gridMap, const std::string& layer);
+  void preprocess(grid_map::GridMap& gridMap, const std::string& layer) const;
 
  private:
-  void denoise(grid_map::GridMap& gridMap, const std::string& layer);
-  void inpaint(grid_map::GridMap& gridMap, const std::string& layer, float minValue, float maxValue);
+  void denoise(grid_map::GridMap& gridMap, const std::string& layer) const;
+  void changeResolution(grid_map::GridMap& gridMap, const std::string& layer) const;
+  void inpaint(grid_map::GridMap& gridMap, const std::string& layer, float minValue, float maxValue) const;
 
   PreprocessingParameters parameters_;
 };
