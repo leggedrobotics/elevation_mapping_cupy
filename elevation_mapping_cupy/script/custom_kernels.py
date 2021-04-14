@@ -172,12 +172,9 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     // If invalid, do upper bound check, then skip
                     if (nmap_valid < 0.5) {
                       if (nz < nmap_upper || nmap_is_upper < 0.5) {
-                        // atomicAdd(&map[get_map_idx(nidx, 5)], nz);
-                        // atomicAdd(&map[get_map_idx(nidx, 6)], 1.0f);
                         map[get_map_idx(nidx, 5)] = nz;
                         map[get_map_idx(nidx, 6)] = 1.0f;
                       }
-                      // map[get_map_idx(n_idx, 5)] = nz
                       continue;
                     }
                     // If updated recently, skip
@@ -206,6 +203,11 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                         // Finally, this cell is penetrated by the ray.
                         atomicAdd(&map[get_map_idx(nidx, 2)], -${cleanup_step}/(ray_length / ${max_ray_length}));
                         atomicAdd(&map[get_map_idx(nidx, 1)], ${outlier_variance});
+                        // Do upper bound check.
+                        if (nz < nmap_upper || nmap_is_upper < 0.5) {
+                            map[get_map_idx(nidx, 5)] = nz;
+                            map[get_map_idx(nidx, 6)] = 1.0f;
+                        }
                     }
                 }
             }
