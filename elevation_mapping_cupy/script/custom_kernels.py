@@ -166,9 +166,12 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     // Time layer
                     U non_updated_t = map[get_map_idx(nidx, 4)];
 
-                    // If invalid, skip
+                    // If invalid, do upper bound check, then skip
                     if (nmap_valid < 0.5) {
-                      atomicAdd(&map[get_map_idx(nidx, 5)], nz);
+                      if (nz < map[get_map_idx(nidx, 5)] || map[get_map_idx(nidx, 6)] < 0.5) {
+                        atomicAdd(&map[get_map_idx(nidx, 5)], nz);
+                        atomicAdd(&map[get_map_idx(nidx, 6)], 1.0f);
+                      }
                       // map[get_map_idx(n_idx, 5)] = nz
                       continue;
                     }
