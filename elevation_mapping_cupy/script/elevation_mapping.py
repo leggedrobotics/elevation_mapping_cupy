@@ -207,7 +207,7 @@ class ElevationMap(object):
             self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
 
-            self.update_upper_bound_with_valid_elevation()
+            # self.update_upper_bound_with_valid_elevation()
 
             if self.enable_overlap_clearance:
                 self.clear_overlap_map(t)

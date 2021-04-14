@@ -141,6 +141,9 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                             map[get_map_idx(idx, 2)] = 1;
                             // Time layer
                             map[get_map_idx(idx, 4)] = 0.0;
+                            // Upper bound
+                            map[get_map_idx(idx, 5)] = new_h;
+                            map[get_map_idx(idx, 6)] = 0.0;
                         }
                         // visibility cleanup
                     }
