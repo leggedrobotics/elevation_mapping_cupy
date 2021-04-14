@@ -167,7 +167,11 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     U non_updated_t = map[get_map_idx(nidx, 4)];
 
                     // If invalid, skip
-                    if (nmap_valid < 0.5) {continue;}
+                    if (nmap_valid < 0.5) {
+                      atomicAdd(&map[get_map_idx(nidx, 5)], nz);
+                      // map[get_map_idx(n_idx, 5)] = nz
+                      continue;
+                    }
                     // If updated recently, skip
                     if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
 
