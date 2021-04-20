@@ -214,8 +214,8 @@ class ElevationMap(object):
 
             # dilation before traversability_filter
             self.traversability_input *= 0.0
-            self.dilation_filter_kernel(self.elevation_map[0],
-                                        self.elevation_map[2],
+            self.dilation_filter_kernel(self.elevation_map[5],
+                                        self.elevation_map[2]+self.elevation_map[6],
                                         self.traversability_input,
                                         self.traversability_mask_dummy,
                                         size=(self.cell_n * self.cell_n))
@@ -298,7 +298,7 @@ class ElevationMap(object):
                 variance = variance[1:-1, 1:-1]
                 map_list.append(variance)
             if 2 in selection:
-                traversability = xp.where(self.elevation_map[2] > 0.5,
+                traversability = xp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
                                           self.elevation_map[3].copy(), xp.nan)
                 self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
                 traversability = self.traversability_data[1:-1, 1:-1]
