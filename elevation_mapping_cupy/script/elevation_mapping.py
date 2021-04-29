@@ -238,6 +238,9 @@ class ElevationMap(object):
         near_map[0][clear_idx] = 0.0
         near_map[1][clear_idx] = self.initial_variance
         near_map[2][clear_idx] = 0.0
+        clear_idx = cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
+        near_map[5][clear_idx] = 0.0
+        near_map[6][clear_idx] = 0.0
         self.elevation_map[:, cell_min:cell_max, cell_min:cell_max] = near_map
 
     def get_additive_mean_error(self):
