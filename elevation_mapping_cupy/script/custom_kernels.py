@@ -181,7 +181,8 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       continue;
                     }
                     // If updated recently, skip
-                    if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
+                    // if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
+                    if (non_updated_t < 1.0) {continue;}
 
                     // If point is close, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
