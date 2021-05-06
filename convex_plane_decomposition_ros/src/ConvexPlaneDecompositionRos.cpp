@@ -133,6 +133,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
 
     // Visualize in Rviz.
     reapplyNans(planarTerrain.gridMap.get(elevationLayer_));
+    //    planarTerrain.gridMap.add("plane_classification");
+    //    cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), planarTerrain.gridMap.get("plane_classification"));
     planarTerrain.gridMap.add("segmentation");
     cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
     grid_map_msgs::GridMap outputMessage;
