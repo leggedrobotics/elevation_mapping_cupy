@@ -53,12 +53,13 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/contour_extraction/ContourExtraction.cpp
-	src/ransac/RansacPlaneExtractor.cpp
+  src/contour_extraction/ContourExtraction.cpp
+  src/ransac/RansacPlaneExtractor.cpp
   src/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.cpp
   src/GridMapPreprocessing.cpp
-	src/ConvexRegionGrowing.cpp
-	src/Draw.cpp
+  src/ConvexRegionGrowing.cpp
+  src/Draw.cpp
+  src/Postprocessing.cpp
 )
 add_dependencies(${PROJECT_NAME}
 	${catkin_EXPORTED_TARGETS}

@@ -57,4 +57,10 @@ sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidin
   return swParams;
 }
 
+PostprocessingParameters loadPostprocessingParameters(const ros::NodeHandle& nodeHandle, const std::string& prefix) {
+  PostprocessingParameters postprocessingParameters;
+  loadParameter(nodeHandle, prefix, "extracted_planes_height_offset", postprocessingParameters.extracted_planes_height_offset);
+  return postprocessingParameters;
+}
+
 }  // namespace convex_plane_decomposition
