@@ -172,6 +172,10 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     U nmap_upper = map[get_map_idx(nidx, 5)];
                     U nmap_is_upper = map[get_map_idx(nidx, 6)];
 
+                    // If point is close or is farther away than ray length, skip.
+                    float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
+                    if (d < 0.1 || d > ${max_ray_length}) {continue;}
+
                     // If invalid, do upper bound check, then skip
                     if (nmap_valid < 0.5) {
                       if (nz < nmap_upper || nmap_is_upper < 0.5) {
@@ -183,10 +187,6 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     // If updated recently, skip
                     // if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
                     if (non_updated_t < 1.0) {continue;}
-
-                    // If point is close, skip.
-                    float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    if (d < 0.1 ) {continue;}
 
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
                     // if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.3) {
