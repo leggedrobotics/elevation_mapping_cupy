@@ -122,7 +122,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     // Add grid map to the terrain
     planarTerrain.gridMap = std::move(elevationMap);
 
-    postprocessing_->postprocess(planarTerrain);
+    postprocessing_->postprocess(planarTerrain, elevationLayer_);
     auto t4 = std::chrono::high_resolution_clock::now();
     ROS_INFO_STREAM("Postprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << " [ms]");
 

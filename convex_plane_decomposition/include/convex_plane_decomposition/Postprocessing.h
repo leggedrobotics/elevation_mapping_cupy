@@ -13,10 +13,10 @@ class Postprocessing {
  public:
   Postprocessing(const PostprocessingParameters& parameters);
 
-  void postprocess(PlanarTerrain& planarTerrain) const;
+  void postprocess(PlanarTerrain& planarTerrain, const std::string& layer) const;
 
  private:
-  void addHeightOffset(PlanarTerrain& planarTerrain) const;
+  void addHeightOffset(PlanarTerrain& planarTerrain, const std::string& layer) const;
 
   PostprocessingParameters parameters_;
 };
