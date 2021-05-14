@@ -174,7 +174,8 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
 
                     // If point is close or is farther away than ray length, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    if (d < 0.1 || d > ${max_ray_length}) {continue;}
+                    // if (d < 0.1 || d > ${max_ray_length}) {continue;}
+                    if (d < 0.1 || !is_valid(x, y, z, t[0], t[1], t[2])) {continue;}
 
                     // If invalid, do upper bound check, then skip
                     if (nmap_valid < 0.5) {
