@@ -149,11 +149,10 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
           }
         }
 
-        // If batch contains nan, replace with min value.
-        for (auto& value : values) {
-          if (std::isnan(value)) {
-            value = minValue;
-          }
+        // Cannot interpolate if there are not 4 corner points.
+        if (std::any_of(values.begin(), values.end(), [](float value) { return std::isnan(value); })) {
+          H_out(rowId, colId) = minValue;
+          continue;
         }
 
         // Interpolation weights (https://en.wikipedia.org/wiki/Bilinear_interpolation).

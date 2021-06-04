@@ -15,7 +15,7 @@ namespace grid_map {
 namespace inpainting {
 
 /**
- * @brief Inpaint missing data using min value in neighborhood. The neighborhood search is only performed along the column and the row of
+ * @brief Inpaint missing data using min-value in neighborhood. The neighborhood search is only performed along the column and the row of
  * the missing element. In-place operation (layerIn = layerOut) is NOT supported.
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
@@ -25,7 +25,8 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
 
 /**
  * @brief Inpaint missing data using bi-linear interpolation. The neighborhood search is only performed along the column and the row of the
- * missing element. In-place operation (layerIn = layerOut) is NOT supported.
+ * missing element. If less than four neighbors are found, uses min-value approach. In-place operation (layerIn = layerOut) is NOT
+ * supported.
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)
