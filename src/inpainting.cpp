@@ -101,10 +101,10 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
       if (std::isnan(H_in(rowId, colId))) {
         auto minValue = static_cast<float>(std::numeric_limits<double>::max());
         const Eigen::Vector2i index0(rowId, colId);
-        std::fill(indices.begin(), indices.end(), index0);
         std::fill(values.begin(), values.end(), NAN);
 
         // Search in negative direction.
+        indices[0] = Eigen::Vector2i(0, colId);
         for (auto id = rowId - 1; id >= 0; --id) {
           auto newValue = H_in(id, colId);
           if (!std::isnan(newValue)) {
@@ -115,6 +115,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
           }
         }
 
+        indices[1] = Eigen::Vector2i(rowId, 0);
         for (auto id = colId - 1; id >= 0; --id) {
           auto newValue = H_in(rowId, id);
           if (!std::isnan(newValue)) {
@@ -126,6 +127,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
         }
 
         // Search in positive direction.
+        indices[2] = Eigen::Vector2i(H_in.rows() - 1, colId);
         for (auto id = rowId + 1; id < H_in.rows(); ++id) {
           auto newValue = H_in(id, colId);
           if (!std::isnan(newValue)) {
@@ -136,6 +138,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
           }
         }
 
+        indices[3] = Eigen::Vector2i(rowId, H_in.cols() - 1);
         for (auto id = colId + 1; id < H_in.cols(); ++id) {
           auto newValue = H_in(rowId, id);
           if (!std::isnan(newValue)) {
