@@ -94,8 +94,7 @@ class ElevationMap(object):
         self.traversability_filter = TraversabilityFilter(param.w1,
                                                           param.w2,
                                                           param.w3,
-                                                          param.w_out)
-        self.traversability_filter.to_gpu()
+                                                          param.w_out).cuda()
         self.untraversable_polygon = xp.zeros((1, 2))
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
