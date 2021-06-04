@@ -15,7 +15,8 @@ namespace grid_map {
 namespace inpainting {
 
 /**
- * Inpaint missing data using min value in neighborhood. In-place operation (layerIn = layerOut) is NOT supported.
+ * @brief Inpaint missing data using min value in neighborhood. The neighborhood search is only performed along the column and the row of
+ * the missing element. In-place operation (layerIn = layerOut) is NOT supported.
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)
@@ -23,7 +24,8 @@ namespace inpainting {
 void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut);
 
 /**
- * Inpaint missing data using bi-linear interpolation. In-place operation (layerIn = layerOut) is NOT supported.
+ * @brief Inpaint missing data using bi-linear interpolation. The neighborhood search is only performed along the column and the row of the
+ * missing element. In-place operation (layerIn = layerOut) is NOT supported.
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)
@@ -31,7 +33,7 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
 void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut);
 
 /**
- * nonlinear interpolation (open-cv function). In-place operation (layerIn = layerOut) is supported.
+ * @brief nonlinear interpolation (open-cv function). In-place operation (layerIn = layerOut) is supported.
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)

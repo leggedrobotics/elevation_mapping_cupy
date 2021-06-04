@@ -15,7 +15,7 @@ namespace grid_map {
 namespace smoothing {
 
 /**
- * Smoothing based on PCA. In-place operation (layerIn = layerOut) is supported.
+ * @brief Smoothing based on PCA. In-place operation (layerIn = layerOut) is supported.
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -24,7 +24,7 @@ namespace smoothing {
 void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double sigma = 0.999);
 
 /**
- * Sequential median filter (open-cv function). In-place operation (layerIn = layerOut) is supported.
+ * @brief Sequential median filter (open-cv function). In-place operation (layerIn = layerOut) is supported.
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -36,7 +36,7 @@ void median(grid_map::GridMap& map, const std::string& layerIn, const std::strin
             int numberOfRepeats = 1);
 
 /**
- * Sequential box blur filter (open cv-function). In-place operation (layerIn = layerOut) is supported.
+ * @brief Sequential box blur filter (open cv-function). In-place operation (layerIn = layerOut) is supported.
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -46,7 +46,7 @@ void median(grid_map::GridMap& map, const std::string& layerIn, const std::strin
 void boxBlur(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize, int numberOfRepeats = 1);
 
 /**
- * Gaussian blur filter (open cv-function). In-place operation (layerIn = layerOut) is supported.
+ * @brief Gaussian blur filter (open cv-function). In-place operation (layerIn = layerOut) is supported.
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -56,7 +56,7 @@ void boxBlur(grid_map::GridMap& map, const std::string& layerIn, const std::stri
 void gaussianBlur(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize, double sigma);
 
 /**
- * Non-Local means denoising filter (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention: slow (~5ms)!
+ * @brief Non-Local means denoising filter (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention: slow (~5ms)!
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -68,8 +68,8 @@ void nlm(grid_map::GridMap& map, const std::string& layerIn, const std::string& 
          float w = 45.F);
 
 /**
- * Performs image denoising using the Block-Matching and 3D-filtering algorithm (open-cv function). In-place operation (layerIn = layerOut)
- * is supported. Attention: very slow (~30ms)!
+ * @brief Performs image denoising using the Block-Matching and 3D-filtering algorithm (open-cv function). In-place operation (layerIn =
+ * layerOut) is supported. Attention: very slow (~30ms)!
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -81,7 +81,7 @@ void bm3d(grid_map::GridMap& map, const std::string& layerIn, const std::string&
           float w = 25.F);
 
 /**
- * Bilateral filter (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention:  slow (~0.3ms)!
+ * @brief Bilateral filter (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention:  slow (~0.3ms)!
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -91,7 +91,7 @@ void bm3d(grid_map::GridMap& map, const std::string& layerIn, const std::string&
 void bilateralFilter(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize = 0, double w = 0.2);
 
 /**
- * Optimization based (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention: slow (~15ms)!
+ * @brief Optimization based (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention: slow (~15ms)!
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
