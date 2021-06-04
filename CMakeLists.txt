@@ -7,7 +7,6 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-  robot_utils
   grid_map_cv
   grid_map_core
   message_logger

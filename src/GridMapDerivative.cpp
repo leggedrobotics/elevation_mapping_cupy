@@ -10,9 +10,6 @@
 // grid map filters rsl.
 #include <grid_map_filters_rsl/GridMapDerivative.hpp>
 
-// robot utils.
-#include <robot_utils/math/math.hpp>
-
 namespace grid_map {
 namespace derivative {
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD1_;
@@ -35,9 +32,9 @@ void GridMapDerivative::estimateGradient(const grid_map::GridMap& gridMap, Gradi
   constexpr int maxId = (kernelSize_ - 1) / 2;
   for (auto dim = 0U; dim < 2U; ++dim) {
     auto tempIndex = index;
-    for (auto id = -maxId; id <= maxId; ++id) {  // x or y
+    const auto centerId = getKernelCenter(gridMap, index, dim, maxId);
+    for (auto id = centerId - maxId; id <= centerId + maxId; ++id) {  // x or y
       tempIndex(dim) = index(dim) + id;
-      mapIndexToGrid(gridMap, tempIndex);
       gradient(dim) += kernelD1_[maxId + id] * H(tempIndex.x(), tempIndex.y());
     }
   }
@@ -55,19 +52,20 @@ void GridMapDerivative::estimateGradientAndCurvature(const grid_map::GridMap& gr
   // Gradient in Y for different x (used for computing the cross hessian).
   constexpr int maxId = (kernelSize_ - 1) / 2;
   std::array<double, kernelSize_> gradientYArray{0.0};
-  for (auto idY = -maxId; idY <= maxId; ++idY) {    // y
-    for (auto idX = -maxId; idX <= maxId; ++idX) {  // x
+  const auto centerIdY = getKernelCenter(gridMap, index, 1, maxId);
+  for (auto idY = centerIdY - maxId; idY <= centerIdY + maxId; ++idY) {  // y
+    const auto centerIdX = getKernelCenter(gridMap, index, 0, maxId);
+    for (auto idX = centerIdX - maxId; idX <= centerIdX + maxId; ++idX) {  // x
       grid_map::Index tempIndex = index + grid_map::Index(idX, idY);
-      mapIndexToGrid(gridMap, tempIndex);
       gradientYArray[maxId + idX] += kernelD1_[maxId + idY] * H(tempIndex.x(), tempIndex.y());
     }
   }
 
   for (auto dim = 0U; dim < 2U; ++dim) {
     auto tempIndex = index;
-    for (auto id = -maxId; id <= maxId; ++id) {  // x or y
+    const auto centerId = getKernelCenter(gridMap, index, dim, maxId);
+    for (auto id = centerId - maxId; id <= centerId + maxId; ++id) {  // x or y
       tempIndex(dim) = index(dim) + id;
-      mapIndexToGrid(gridMap, tempIndex);
       const auto arrayId = maxId + id;
 
       const double height = H(tempIndex.x(), tempIndex.y());
@@ -88,10 +86,11 @@ void GridMapDerivative::estimateGradientAndCurvature(const grid_map::GridMap& gr
   curvature *= oneDivResSquared_;
 }
 
-void GridMapDerivative::mapIndexToGrid(const grid_map::GridMap& gridMap, grid_map::Index& index) const {
-  for (auto dim = 0U; dim < 2U; ++dim) {
-    robot_utils::boundToRange(&index(dim), 0, gridMap.getSize()(dim) - 1);
-  }
+int GridMapDerivative::getKernelCenter(const grid_map::GridMap& gridMap, const grid_map::Index& centerIndex, unsigned int dim,
+                                       int maxKernelId) const {
+  constexpr int minId = 0;
+  const int maxId = gridMap.getSize()(dim) - 1;
+  return -std::min(centerIndex(dim) - maxKernelId, minId) - std::max(centerIndex(dim) + maxKernelId - maxId, 0);
 }
 }  // namespace derivative
 }  // namespace grid_map

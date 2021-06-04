@@ -57,11 +57,14 @@ class GridMapDerivative {
 
  private:
   /**
-   * @brief If the index is not within the grid map, then it will clip it back s.t. the index distance is the closest.
-   * @param gridMap     The grid map
-   * @param index       Grid map index
+   * @brief Return center of kernel s.t. kernel does not reach boundaries of grid map. By default returns 0.
+   * @param gridMap         The grid map
+   * @param centerIndex     index at which we want to apply the kernel
+   * @param dim             0 for x, 1 for y
+   * @param maxKernelId     max index of kernel in positive direction
+   * @return                center of kernel
    */
-  void mapIndexToGrid(const grid_map::GridMap& gridMap, grid_map::Index& index) const;
+  int getKernelCenter(const grid_map::GridMap& gridMap, const grid_map::Index& centerIndex, unsigned int dim, int maxKernelId) const;
 
   //! First order derivative kernel (https://en.wikipedia.org/wiki/Finite_difference_coefficient).
   static constexpr std::array<double, kernelSize_> kernelD1_{-1.0 / 12.0, 2.0 / 3.0, 0.0, -2.0 / 3.0, 1.0 / 12.0};
