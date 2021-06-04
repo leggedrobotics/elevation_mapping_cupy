@@ -15,7 +15,7 @@ namespace grid_map {
 namespace smoothing {
 
 /**
- * Smootinh based on PCA. In-place operation (layerIn = layerOut) is supported.
+ * Smoothing based on PCA. In-place operation (layerIn = layerOut) is supported.
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
@@ -56,7 +56,7 @@ void boxBlur(grid_map::GridMap& map, const std::string& layerIn, const std::stri
 void gaussianBlur(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize, double sigma);
 
 /**
- * Non-Local Means Denoising filter (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention: slow (~5ms)!
+ * Non-Local means denoising filter (open-cv function). In-place operation (layerIn = layerOut) is supported. Attention: slow (~5ms)!
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)
  * @param layerOut          output layer (filtered map is written into this layer)
