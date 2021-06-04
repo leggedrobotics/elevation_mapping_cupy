@@ -3,7 +3,7 @@
  * @authors     Fabian Jenelten
  * @date        18.05, 2021
  * @affiliation ETH RSL
- * @brief       Inpainting filters.
+ * @brief       Inpainting filter (extrapolate nan values from surrounding data).
  */
 
 #pragma once

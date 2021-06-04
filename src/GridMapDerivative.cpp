@@ -3,7 +3,7 @@
  * @authors     Fabian Jenelten
  * @date        20.05, 2021
  * @affiliation ETH RSL
- * @brief       Computes first and second order derivatives for grid map. Intended to be used for online applications (i.e, derivatives
+ * @brief       Computes first and second order derivatives for a grid map. Intended to be used for online applications (i.e, derivatives
  *              are not precomputed but computed at the time and location where they are needed).
  */
 
