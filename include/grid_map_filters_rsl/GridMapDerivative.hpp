@@ -13,6 +13,7 @@
 #include <grid_map_core/grid_map_core.hpp>
 
 namespace grid_map {
+namespace derivative {
 class GridMapDerivative {
  private:
   using Gradient = Eigen::Vector2d;
@@ -74,4 +75,5 @@ class GridMapDerivative {
 
   // static constexpr std::array<double, kernelSize_> kernelD2_{1.0 / (res_ * res_), -2.0 / (res_ * res_), 1.0 / (res_ * res_)};
 };
+}  // namespace derivative
 }  // namespace grid_map

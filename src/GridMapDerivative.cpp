@@ -14,6 +14,7 @@
 #include <robot_utils/math/math.hpp>
 
 namespace grid_map {
+namespace derivative {
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD1_;
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD2_;
 constexpr double GridMapDerivative::res_;
@@ -80,5 +81,5 @@ void GridMapDerivative::mapIndexToGrid(const grid_map::GridMap& gridMap, grid_ma
     robot_utils::boundToRange(&index(dim), 0, gridMap.getSize()(dim) - 1);
   }
 }
-
+}  // namespace derivative
 }  // namespace grid_map
