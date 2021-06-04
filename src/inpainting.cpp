@@ -92,6 +92,10 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
   A.setOnes();
   Eigen::Vector4f weights;
 
+  // Init.
+  std::fill(values.begin(), values.end(), NAN);
+  std::fill(indices.begin(), indices.end(), Eigen::Vector2i(0, 0));
+
   // Reference to in and out maps.
   const grid_map::Matrix& H_in = map.get(layerIn);
   grid_map::Matrix& H_out = map.get(layerOut);
@@ -99,12 +103,11 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
   for (auto colId = 0; colId < H_in.cols(); ++colId) {
     for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
       if (std::isnan(H_in(rowId, colId))) {
+        // Note: if we don't find a valid neighbour, we use the previous index-value pair.
         auto minValue = static_cast<float>(std::numeric_limits<double>::max());
         const Eigen::Vector2i index0(rowId, colId);
-        std::fill(values.begin(), values.end(), NAN);
 
         // Search in negative direction.
-        indices[0] = Eigen::Vector2i(0, colId);
         for (auto id = rowId - 1; id >= 0; --id) {
           auto newValue = H_in(id, colId);
           if (!std::isnan(newValue)) {
@@ -115,7 +118,6 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
           }
         }
 
-        indices[1] = Eigen::Vector2i(rowId, 0);
         for (auto id = colId - 1; id >= 0; --id) {
           auto newValue = H_in(rowId, id);
           if (!std::isnan(newValue)) {
@@ -127,7 +129,6 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
         }
 
         // Search in positive direction.
-        indices[2] = Eigen::Vector2i(H_in.rows() - 1, colId);
         for (auto id = rowId + 1; id < H_in.rows(); ++id) {
           auto newValue = H_in(id, colId);
           if (!std::isnan(newValue)) {
@@ -138,7 +139,6 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
           }
         }
 
-        indices[3] = Eigen::Vector2i(rowId, H_in.cols() - 1);
         for (auto id = colId + 1; id < H_in.cols(); ++id) {
           auto newValue = H_in(rowId, id);
           if (!std::isnan(newValue)) {
