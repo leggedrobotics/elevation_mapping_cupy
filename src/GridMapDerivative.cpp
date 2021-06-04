@@ -13,7 +13,7 @@
 // robot utils.
 #include <robot_utils/math/math.hpp>
 
-namespace tamols_mapping {
+namespace grid_map {
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD1_;
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD2_;
 constexpr double GridMapDerivative::res_;
@@ -81,4 +81,4 @@ void GridMapDerivative::mapIndexToGrid(const grid_map::GridMap& gridMap, grid_ma
   }
 }
 
-}  // namespace tamols_mapping
+}  // namespace grid_map

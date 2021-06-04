@@ -11,7 +11,7 @@
 // grid map.
 #include <grid_map_core/grid_map_core.hpp>
 
-namespace tamols_mapping {
+namespace grid_map {
 namespace smoothing {
 
 /**
@@ -101,4 +101,4 @@ void bilateralFilter(grid_map::GridMap& map, const std::string& layerIn, const s
 void tvL1(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double lambda = 1.0, int n = 60);
 
 }  // namespace smoothing
-}  // namespace tamols_mapping
+}  // namespace grid_map

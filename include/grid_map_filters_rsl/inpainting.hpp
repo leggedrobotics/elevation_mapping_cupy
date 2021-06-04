@@ -11,7 +11,7 @@
 // grid map.
 #include <grid_map_core/grid_map_core.hpp>
 
-namespace tamols_mapping {
+namespace grid_map {
 namespace inpainting {
 
 /**
@@ -39,4 +39,4 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
  */
 void nonlinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double inpaintRadius = 0.05);
 }  // namespace inpainting
-}  // namespace tamols_mapping
+}  // namespace grid_map

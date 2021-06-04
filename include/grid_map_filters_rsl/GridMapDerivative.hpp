@@ -12,7 +12,7 @@
 // grid_map_core
 #include <grid_map_core/grid_map_core.hpp>
 
-namespace tamols_mapping {
+namespace grid_map {
 class GridMapDerivative {
  private:
   using Gradient = Eigen::Vector2d;
@@ -74,4 +74,4 @@ class GridMapDerivative {
 
   // static constexpr std::array<double, kernelSize_> kernelD2_{1.0 / (res_ * res_), -2.0 / (res_ * res_), 1.0 / (res_ * res_)};
 };
-}  // namespace tamols_mapping
+}  // namespace grid_map

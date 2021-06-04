@@ -19,7 +19,7 @@
 // stl.
 #include <limits>
 
-namespace tamols_mapping {
+namespace grid_map {
 namespace inpainting {
 
 void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut) {
@@ -209,4 +209,4 @@ void nonlinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, 
   cv::cv2eigen(elevationImageFloat, map.get(layerOut));
 }
 }  // namespace inpainting
-}  // namespace tamols_mapping
+}  // namespace grid_map

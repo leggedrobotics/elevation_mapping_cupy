@@ -20,7 +20,7 @@
 // message logger.
 #include <message_logger/message_logger.hpp>
 
-namespace tamols_mapping {
+namespace grid_map {
 namespace smoothing {
 
 void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double sigma) {
@@ -258,4 +258,4 @@ void tvL1(grid_map::GridMap& map, const std::string& layerIn, const std::string&
   cv::cv2eigen(elevationImageFloat, map.get(layerOut));
 }
 }  // namespace smoothing
-}  // namespace tamols_mapping
+}  // namespace grid_map
