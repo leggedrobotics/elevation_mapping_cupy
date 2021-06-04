@@ -16,11 +16,10 @@ namespace grid_map {
 namespace derivative {
 class GridMapDerivative {
  private:
+  static constexpr int kernelSize_ = 5;
   using Gradient = Eigen::Vector2d;
   using Curvature = Eigen::Matrix2d;
-
-  //! Kernel size for derivatives.
-  static constexpr int kernelSize_ = 5;
+  using Kernel = Eigen::Matrix<float, kernelSize_, 1>;
 
  public:
   GridMapDerivative();
@@ -31,7 +30,7 @@ class GridMapDerivative {
    * @param res     resolution of the grid map
    * @return        true iff successful
    */
-  bool initialize(double res);
+  bool initialize(float res);
 
   /**
    * @brief Compute local gradient using grid map. Gradient is set to zero if the index is outside of the grid map.
@@ -57,30 +56,19 @@ class GridMapDerivative {
 
  private:
   /**
-   * @brief Return center of kernel s.t. kernel does not reach boundaries of grid map. By default returns 0.
+   * @brief Return center of kernel s.t. kernel does not reach boundaries of grid map. By default returns 0 (equals central difference).
    * @param gridMap         The grid map
    * @param centerIndex     index at which we want to apply the kernel
-   * @param dim             0 for x, 1 for y
    * @param maxKernelId     max index of kernel in positive direction
    * @return                center of kernel
    */
-  int getKernelCenter(const grid_map::GridMap& gridMap, const grid_map::Index& centerIndex, unsigned int dim, int maxKernelId) const;
+  static Eigen::Vector2i getKernelCenter(const grid_map::GridMap& gridMap, const grid_map::Index& centerIndex, int maxKernelId);
 
-  //! First order derivative kernel (https://en.wikipedia.org/wiki/Finite_difference_coefficient).
-  static constexpr std::array<double, kernelSize_> kernelD1_{-1.0 / 12.0, 2.0 / 3.0, 0.0, -2.0 / 3.0, 1.0 / 12.0};
+  //! First order derivative kernel.
+  Kernel kernelD1_;
 
-  // static constexpr std::array<double, kernelSize_> kernelD1_{1.0 / 2.0, 0.0, -1.0 / 2.0};
-
-  //! Second order derivative kernel (https://en.wikipedia.org/wiki/Finite_difference_coefficient).
-  static constexpr std::array<double, kernelSize_> kernelD2_{-1.0 / 12.0, 4.0 / 3.0, -5.0 / 2.0, 4.0 / 3.0, -1.0 / 12.0};
-
-  // static constexpr std::array<double, kernelSize_> kernelD2_{1.0, -2.0, 1.0 };
-
-  // One dived by grid map resolution
-  double oneDivRes_;
-
-  // One divided by squared grid map resolution.
-  double oneDivResSquared_;
+  //! Second order derivative kernel.
+  Kernel kernelD2_;
 };
 }  // namespace derivative
 }  // namespace grid_map

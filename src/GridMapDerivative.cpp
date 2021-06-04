@@ -12,85 +12,64 @@
 
 namespace grid_map {
 namespace derivative {
-constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD1_;
-constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD2_;
 constexpr int GridMapDerivative::kernelSize_;
 
-GridMapDerivative::GridMapDerivative() : oneDivRes_(0.0), oneDivResSquared_(0.0) {}
+GridMapDerivative::GridMapDerivative() : kernelD1_(), kernelD2_() {}
 
-bool GridMapDerivative::initialize(double res) {
-  oneDivRes_ = 1.0 / res;
-  oneDivResSquared_ = oneDivRes_ * oneDivRes_;
+bool GridMapDerivative::initialize(float res) {
+  // Central finite difference: https://en.wikipedia.org/wiki/Finite_difference_coefficient
+  kernelD1_ << -1.0 / 12.0, 2.0 / 3.0, 0.0, -2.0 / 3.0, 1.0 / 12.0;
+  kernelD2_ << -1.0 / 12.0, 4.0 / 3.0, -5.0 / 2.0, 4.0 / 3.0, -1.0 / 12.0;
+  kernelD1_ /= res;
+  kernelD2_ /= (res * res);
   return res > 0.0;
 }
 
 void GridMapDerivative::estimateGradient(const grid_map::GridMap& gridMap, Gradient& gradient, const grid_map::Index& index,
                                          const grid_map::Matrix& H) const {
-  // Init.
-  gradient.setZero();
-
+  // Indices.
   constexpr int maxId = (kernelSize_ - 1) / 2;
-  for (auto dim = 0U; dim < 2U; ++dim) {
-    auto tempIndex = index;
-    const auto centerId = getKernelCenter(gridMap, index, dim, maxId);
-    for (auto id = centerId - maxId; id <= centerId + maxId; ++id) {  // x or y
-      tempIndex(dim) = index(dim) + id;
-      gradient(dim) += kernelD1_[maxId + id] * H(tempIndex.x(), tempIndex.y());
-    }
-  }
+  const Eigen::Vector2i centerId = getKernelCenter(gridMap, index, maxId);
 
-  // Normalize.
-  gradient *= oneDivRes_;
+  // Gradient.
+  gradient.x() = kernelD1_.dot(H.block<kernelSize_, 1>(index.x() - maxId + centerId.x(), index.y()));
+  gradient.y() = kernelD1_.dot(H.block<1, kernelSize_>(index.x(), index.y() - maxId + centerId.y()));
 }
 
 void GridMapDerivative::estimateGradientAndCurvature(const grid_map::GridMap& gridMap, Gradient& gradient, Curvature& curvature,
                                                      const grid_map::Index& index, const grid_map::Matrix& H) const {
-  // Init.
-  gradient.setZero();
-  curvature.setZero();
+  // Note: Block implementation is twice as fast as iterating over the grid cells.
 
-  // Gradient in Y for different x (used for computing the cross hessian).
+  // Indices.
   constexpr int maxId = (kernelSize_ - 1) / 2;
-  std::array<double, kernelSize_> gradientYArray{0.0};
-  const auto centerIdY = getKernelCenter(gridMap, index, 1, maxId);
-  for (auto idY = centerIdY - maxId; idY <= centerIdY + maxId; ++idY) {  // y
-    const auto centerIdX = getKernelCenter(gridMap, index, 0, maxId);
-    for (auto idX = centerIdX - maxId; idX <= centerIdX + maxId; ++idX) {  // x
-      grid_map::Index tempIndex = index + grid_map::Index(idX, idY);
-      gradientYArray[maxId + idX] += kernelD1_[maxId + idY] * H(tempIndex.x(), tempIndex.y());
-    }
+  const Eigen::Vector2i centerId = getKernelCenter(gridMap, index, maxId);
+  const Eigen::Vector2i shiftedId(index.x() - maxId + centerId.x(), index.y() - maxId + centerId.y());
+
+  // Gradient in x for different y (used for computing the cross hessian).
+  Kernel gradientYArray;
+  for (auto idY = 0; idY < kernelSize_; ++idY) {
+    gradientYArray[idY] = kernelD1_.dot(H.block<kernelSize_, 1>(shiftedId.x(), shiftedId.y() + idY));
   }
 
-  for (auto dim = 0U; dim < 2U; ++dim) {
-    auto tempIndex = index;
-    const auto centerId = getKernelCenter(gridMap, index, dim, maxId);
-    for (auto id = centerId - maxId; id <= centerId + maxId; ++id) {  // x or y
-      tempIndex(dim) = index(dim) + id;
-      const auto arrayId = maxId + id;
+  // Gradient.
+  gradient(0U) = kernelD1_.dot(H.block<kernelSize_, 1>(shiftedId.x(), index.y()));
+  gradient(1U) = kernelD1_.dot(H.block<1, kernelSize_>(index.x(), shiftedId.y()));
 
-      const double height = H(tempIndex.x(), tempIndex.y());
-      gradient(dim) += kernelD1_[arrayId] * height;
-      curvature(dim, dim) += kernelD2_[arrayId] * height;
-
-      if (dim == 0U) {
-        curvature(0U, 1U) += kernelD1_[arrayId] * gradientYArray[arrayId];
-      }
-    }
-  }
-
-  // Curvature is symmetric.
+  // Curvature.
+  curvature(0U, 0U) = kernelD2_.dot(H.block<kernelSize_, 1>(shiftedId.x(), index.y()));
+  curvature(1U, 1U) = kernelD2_.dot(H.block<1, kernelSize_>(index.x(), shiftedId.y()));
+  curvature(0U, 1U) = kernelD1_.dot(gradientYArray);
   curvature(1U, 0U) = curvature(0U, 1U);
-
-  // Normalize.
-  gradient *= oneDivRes_;
-  curvature *= oneDivResSquared_;
 }
 
-int GridMapDerivative::getKernelCenter(const grid_map::GridMap& gridMap, const grid_map::Index& centerIndex, unsigned int dim,
-                                       int maxKernelId) const {
+Eigen::Vector2i GridMapDerivative::getKernelCenter(const grid_map::GridMap& gridMap, const grid_map::Index& centerIndex, int maxKernelId) {
   constexpr int minId = 0;
-  const int maxId = gridMap.getSize()(dim) - 1;
-  return -std::min(centerIndex(dim) - maxKernelId, minId) - std::max(centerIndex(dim) + maxKernelId - maxId, 0);
+  Eigen::Vector2i centerId;
+  for (auto dim = 0; dim < 2; ++dim) {
+    const int maxId = gridMap.getSize()(dim) - 1;
+    centerId(dim) = -std::min(centerIndex(dim) - maxKernelId, minId) - std::max(centerIndex(dim) + maxKernelId - maxId, 0);
+  }
+  return centerId;
 }
 }  // namespace derivative
 }  // namespace grid_map
