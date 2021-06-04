@@ -17,10 +17,15 @@ namespace grid_map {
 namespace derivative {
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD1_;
 constexpr std::array<double, GridMapDerivative::kernelSize_> GridMapDerivative::kernelD2_;
-constexpr double GridMapDerivative::res_;
 constexpr int GridMapDerivative::kernelSize_;
 
-GridMapDerivative::GridMapDerivative() {}
+GridMapDerivative::GridMapDerivative() : oneDivRes_(0.0), oneDivResSquared_(0.0) {}
+
+bool GridMapDerivative::initialize(double res) {
+  oneDivRes_ = 1.0 / res;
+  oneDivResSquared_ = oneDivRes_ * oneDivRes_;
+  return res > 0.0;
+}
 
 void GridMapDerivative::estimateGradient(const grid_map::GridMap& gridMap, Gradient& gradient, const grid_map::Index& index,
                                          const grid_map::Matrix& H) const {
@@ -36,6 +41,9 @@ void GridMapDerivative::estimateGradient(const grid_map::GridMap& gridMap, Gradi
       gradient(dim) += kernelD1_[maxId + id] * H(tempIndex.x(), tempIndex.y());
     }
   }
+
+  // Normalize.
+  gradient *= oneDivRes_;
 }
 
 void GridMapDerivative::estimateGradientAndCurvature(const grid_map::GridMap& gridMap, Gradient& gradient, Curvature& curvature,
@@ -74,6 +82,10 @@ void GridMapDerivative::estimateGradientAndCurvature(const grid_map::GridMap& gr
 
   // Curvature is symmetric.
   curvature(1U, 0U) = curvature(0U, 1U);
+
+  // Normalize.
+  gradient *= oneDivRes_;
+  curvature *= oneDivResSquared_;
 }
 
 void GridMapDerivative::mapIndexToGrid(const grid_map::GridMap& gridMap, grid_map::Index& index) const {
