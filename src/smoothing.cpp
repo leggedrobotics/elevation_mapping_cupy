@@ -23,7 +23,7 @@
 namespace tamols_mapping {
 namespace smoothing {
 
-void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut) {
+void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double sigma) {
   // https://en.wikipedia.org/wiki/Principal_component_analysis
 
   // Create new layer if missing.
@@ -45,7 +45,7 @@ void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& 
   const Eigen::VectorXf& s = svd.singularValues();
 
   // Determine number of relevant entries.
-  const double thresholdEnergy = 0.999 * s.squaredNorm();
+  const double thresholdEnergy = sigma * s.squaredNorm();
   auto numSingValues = 0U;
   double addedEnergy = 0.0;
   for (auto id = 0U; id < s.size(); ++id) {
