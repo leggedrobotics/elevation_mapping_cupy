@@ -69,6 +69,7 @@ if(CATKIN_ENABLE_TESTING)
 
   catkin_add_gtest(test_${PROJECT_NAME}
     test/TestDerivativeFilter.cpp
+    test/TestFilters.cpp
     )
 endif()
 

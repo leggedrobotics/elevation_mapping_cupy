@@ -1,7 +1,7 @@
 /**
  * @authors     Fabian Jenelten
  * @affiliation RSL
- * @brief       Tests for grid map derivative filter
+ * @brief       Tests for grid map derivative filter.
  */
 
 #include <gtest/gtest.h>
