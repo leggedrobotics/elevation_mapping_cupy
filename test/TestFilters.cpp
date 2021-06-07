@@ -10,7 +10,7 @@
 
 using namespace grid_map;
 
-TEST(TestInterpolation, initialization) {  // NOLINT
+TEST(TestInpainting, initialization) {  // NOLINT
   // Grid map with constant gradient.
   GridMap map;
   map.setGeometry(Length(1.0, 2.0), 0.1, Position(0.0, 0.0));
