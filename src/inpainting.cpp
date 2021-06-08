@@ -31,11 +31,13 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
   // Reference to in and out maps.
   const grid_map::Matrix& H_in = map.get(layerIn);
   grid_map::Matrix& H_out = map.get(layerOut);
+  bool success = true;
+  constexpr auto infinity = static_cast<float>(std::numeric_limits<double>::max());
 
   for (auto colId = 0; colId < H_in.cols(); ++colId) {
     for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
       if (std::isnan(H_in(rowId, colId))) {
-        auto minValue = static_cast<float>(std::numeric_limits<double>::max());
+        auto minValue = infinity;
 
         // Search in negative direction.
         for (auto id = rowId - 1; id >= 0; --id) {
@@ -72,9 +74,18 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
         }
 
         // Replace.
-        H_out(rowId, colId) = minValue;
+        if (minValue < infinity) {
+          H_out(rowId, colId) = minValue;
+        } else {
+          success = false;
+        }
       }
     }
+  }
+
+  // If failed, use a more fancy method.
+  if (!success) {
+    return nonlinearInterpolation(map, layerIn, layerOut);
   }
 }
 
@@ -91,6 +102,8 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
   Eigen::Vector4f b;
   A.setOnes();
   Eigen::Vector4f weights;
+  bool success = true;
+  constexpr auto infinity = static_cast<float>(std::numeric_limits<double>::max());
 
   // Init.
   std::fill(values.begin(), values.end(), NAN);
@@ -104,7 +117,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
     for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
       if (std::isnan(H_in(rowId, colId))) {
         // Note: if we don't find a valid neighbour, we use the previous index-value pair.
-        auto minValue = static_cast<float>(std::numeric_limits<double>::max());
+        auto minValue = infinity;
         const Eigen::Vector2i index0(rowId, colId);
 
         // Search in negative direction.
@@ -151,7 +164,11 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
 
         // Cannot interpolate if there are not 4 corner points.
         if (std::any_of(values.begin(), values.end(), [](float value) { return std::isnan(value); })) {
-          H_out(rowId, colId) = minValue;
+          if (minValue < infinity) {
+            H_out(rowId, colId) = minValue;
+          } else {
+            success = false;
+          }
           continue;
         }
 
@@ -169,6 +186,11 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
                                                           static_cast<float>(index0.x() * index0.y())));
       }
     }
+  }
+
+  // If failed, use a more fancy method.
+  if (!success) {
+    return nonlinearInterpolation(map, layerIn, layerOut);
   }
 }
 
