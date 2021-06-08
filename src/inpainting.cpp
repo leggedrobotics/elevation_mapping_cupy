@@ -83,9 +83,10 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
     }
   }
 
-  // If failed, use a more fancy method.
+  // If failed, try again.
   if (!success) {
-    return nonlinearInterpolation(map, layerIn, layerOut);
+    map.get(layerIn) = map.get(layerOut);
+    return minValues(map, layerIn, layerOut);
   }
 }
 
@@ -188,9 +189,10 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
     }
   }
 
-  // If failed, use a more fancy method.
+  // If failed, try again.
   if (!success) {
-    return nonlinearInterpolation(map, layerIn, layerOut);
+    map.get(layerIn) = map.get(layerOut);
+    return biLinearInterpolation(map, layerIn, layerOut);
   }
 }
 
