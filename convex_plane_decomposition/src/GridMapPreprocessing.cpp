@@ -29,12 +29,14 @@ void GridMapPreprocessing::denoise(grid_map::GridMap& gridMap, const std::string
   Eigen::MatrixXf& elevation_map = gridMap.get(layer);
 
   cv::Mat elevationImage;
-  cv::eigen2cv(elevation_map, elevationImage);
+  cv::eigen2cv(elevation_map, elevationImage); // creates CV_32F image
 
   int kernelSize = parameters_.kernelSize;
+
   for (int i = 0; i < parameters_.numberOfRepeats; ++i) {
-    cv::medianBlur(elevationImage, elevationImage, parameters_.kernelSize);
-    if (parameters_.increasing) {
+    kernelSize = std::max(3, std::min(kernelSize, 5)); // must be 3 or 5 for current image type, see doc of cv::medianBlur
+    cv::medianBlur(elevationImage, elevationImage, kernelSize);
+    if (parameters_.increasing) { // TODO (rgrandia) : remove this option or enable kernels of other size than 3 / 5
       kernelSize += 2;
     }
   }

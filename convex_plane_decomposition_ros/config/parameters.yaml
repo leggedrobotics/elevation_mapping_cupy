@@ -1,8 +1,8 @@
 preprocessing:
   resolution: 0.02    # Resampling resolution, set negative to skip, requires inpainting to be used
-  kernelSize: 3       # Kernel size of the median filter
+  kernelSize: 3       # Kernel size of the median filter, either 3 or 5
   numberOfRepeats: 3  # Number of times to apply the same filter
-  increasing: True    # Increase the kernel size each iteration.
+  increasing: False   # Increase the kernel size each iteration.
   inpaintRadius: 0.05 # [m]
 
 sliding_window_plane_extractor:

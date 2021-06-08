@@ -9,7 +9,7 @@ namespace convex_plane_decomposition {
 struct PreprocessingParameters {
   /// Resample to this resolution, set to negative values to skip
   double resolution = -1.0;
-  /// Kernel size of the median filter
+  /// Kernel size of the median filter, either 3 or 5
   int kernelSize = 5;
   /// Number of times the image is filtered
   int numberOfRepeats = 1;
