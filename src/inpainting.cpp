@@ -32,7 +32,7 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
   const grid_map::Matrix& H_in = map.get(layerIn);
   grid_map::Matrix& H_out = map.get(layerOut);
   bool success = true;
-  constexpr auto infinity = static_cast<float>(std::numeric_limits<double>::max());
+  constexpr auto infinity = std::numeric_limits<float>::max();
 
   for (auto colId = 0; colId < H_in.cols(); ++colId) {
     for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
@@ -86,7 +86,7 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
   // If failed, try again.
   if (!success) {
     map.get(layerIn) = map.get(layerOut);
-    return minValues(map, layerIn, layerOut);
+    return nonlinearInterpolation(map, layerIn, layerOut);
   }
 }
 
@@ -104,7 +104,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
   A.setOnes();
   Eigen::Vector4f weights;
   bool success = true;
-  constexpr auto infinity = static_cast<float>(std::numeric_limits<double>::max());
+  constexpr auto infinity = std::numeric_limits<float>::max();
 
   // Init.
   std::fill(values.begin(), values.end(), NAN);
@@ -192,7 +192,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
   // If failed, try again.
   if (!success) {
     map.get(layerIn) = map.get(layerOut);
-    return biLinearInterpolation(map, layerIn, layerOut);
+    return nonlinearInterpolation(map, layerIn, layerOut);
   }
 }
 
