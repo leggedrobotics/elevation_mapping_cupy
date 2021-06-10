@@ -153,12 +153,15 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                 float16 ray_x, ray_y, ray_z;
                 float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
                 ray_length = min(ray_length, (float16)${max_ray_length});
+                int last_nidx = -1;
                 for (float16 s=${ray_step}; s < ray_length; s+=${ray_step}) {
                     // iterate through ray
                     U nx = t[0] + ray_x * s;
                     U ny = t[1] + ray_y * s;
                     U nz = t[2] + ray_z * s;
                     int nidx = get_idx(nx, ny, center_x, center_y);
+                    if (last_nidx == nidx) {continue;}  // Skip if we're still in the same cell
+                    else {last_nidx = nidx;}
                     if (!is_inside(nidx)) {continue;}
 
                     U nmap_h = map[get_map_idx(nidx, 0)];
@@ -219,7 +222,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
                             outlier_variance=outlier_variance,
                             wall_num_thresh=wall_num_thresh,
-                            ray_step=resolution / 5.0,
+                            ray_step=resolution / 2**0.5,
                             max_ray_length=max_ray_length,
                             cleanup_step=cleanup_step,
                             cleanup_cos_thresh=cleanup_cos_thresh,
