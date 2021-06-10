@@ -16,6 +16,9 @@ ElevationMappingWrapper::ElevationMappingWrapper() {
 
 void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   // Add the elevation_mapping_cupy path to sys.path
+  auto threading = py::module::import("threading");
+  py::gil_scoped_acquire acquire;
+
   auto sys = py::module::import("sys");
   auto path = sys.attr("path");
   std::string module_path = ros::package::getPath("elevation_mapping_cupy");
@@ -36,6 +39,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
         orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh, overlap_clear_range_xy, overlap_clear_range_z;
   int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
+  py::gil_scoped_acquire acquire;
   nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
   param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
 
@@ -160,7 +164,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
 
 void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t, const double positionNoise, const double orientationNoise) {
-
+  py::gil_scoped_acquire acquire;
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
   map_.attr("input")(static_cast<Eigen::Ref<const RowMatrixXd>>(points),
@@ -171,15 +175,18 @@ void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& p
 
 
 void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
+  py::gil_scoped_acquire acquire;
   map_.attr("move_to")(static_cast<Eigen::Ref<const Eigen::VectorXd>>(p));
 }
 
 
 void ElevationMappingWrapper::clear() {
+  py::gil_scoped_acquire acquire;
   map_.attr("clear")();
 }
 
 double ElevationMappingWrapper::get_additive_mean_error() {
+  py::gil_scoped_acquire acquire;
   double additive_error = map_.attr("get_additive_mean_error")().cast<double>();
   return additive_error;
 }
@@ -201,6 +208,7 @@ void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps, const
   for (int i=0; i<selection.size(); i++)
     selection_matrix(0, i) = selection[i];
 
+  py::gil_scoped_acquire acquire;
   map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(selection_matrix),
                             static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
                             static_cast<Eigen::Ref<RowMatrixXd>>(variance),
@@ -270,6 +278,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   // }
 
   RowMatrixXd pos(1, 2);
+  py::gil_scoped_acquire acquire;
   map_.attr("get_position")(static_cast<Eigen::Ref<RowMatrixXd>>(pos));
   grid_map::Position position(pos(0, 0), pos(0, 1));
   grid_map::Length length(map_length_, map_length_);
@@ -306,6 +315,7 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
     polygon_m(i, 1) = p.y();
     i++;
   }
+  py::gil_scoped_acquire acquire;
   const int untraversable_polygon_num = map_.attr("get_polygon_traversability")(
       static_cast<Eigen::Ref<const RowMatrixXd>>(polygon_m),
       static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<int>();
@@ -334,6 +344,7 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> 
     points_m(i, 2) = p.z();
     i++;
   }
+  py::gil_scoped_acquire acquire;
   map_.attr("initialize_map")(static_cast<Eigen::Ref<const RowMatrixXd>>(points_m), method);
   return;
 }
@@ -377,11 +388,13 @@ void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map)
 }
 
 void ElevationMappingWrapper::update_variance() {
+  py::gil_scoped_acquire acquire;
   map_.attr("update_variance")();
   return;
 }
 
 void ElevationMappingWrapper::update_time() {
+  py::gil_scoped_acquire acquire;
   map_.attr("update_time")();
   return;
 }
