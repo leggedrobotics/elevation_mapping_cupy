@@ -12,7 +12,7 @@ Code are written in python and uses cupy for GPU calculation.
 The tested versions are CUDA10.2.89, cuDNN8.0.0.180
 
 #### CUDA
-You can download CUDA10.0 from [here](https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin).  
+You can download CUDA10.2 from [here](https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin).  
 You can follow the instruction.
 ```bash
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
@@ -50,12 +50,14 @@ NVIDIA does not provide a image for Ubuntu 20.04. The tested version therefore s
 - [shapely==1.7.1](https://github.com/Toblerity/Shapely)
 - [torch==1.8.0](https://pytorch.org/)
 
+Pytorch
 ```bash
 wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 pip3 install Cython
 pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 ```
 
+Others
 ```bash
 pip3 install scipy==1.5.4 cupy==9.1.0 shapely==1.7.1
 ```
@@ -83,6 +85,7 @@ cupy can be installed with specific CUDA versions. (On jetson, only "from source
 > % pip install cupy
 
 ### ROS package dependencies
+
 - [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
 - [grid_map_msgs](https://github.com/ANYbotics/grid_map)
 ```
