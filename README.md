@@ -95,10 +95,15 @@ sudo apt install ros-noetic-grid-map-msgs
 ```
 
 #### On Jetson
+
+- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
+- [grid_map_msgs](https://github.com/ANYbotics/grid_map)
+
 ```bash
 sudo apt install ros-melodic-pybind11-catkin
-sudo apt install ros-melodic-grid-map-msgs
 ```
+
+For interaction with ROS Noetic the recomended way is to compile grid map from source via the open source package or ANYmal Research.
 
 ## Usage
 ### Build
