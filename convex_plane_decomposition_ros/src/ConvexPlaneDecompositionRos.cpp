@@ -122,7 +122,13 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     // Add grid map to the terrain
     planarTerrain.gridMap = std::move(elevationMap);
 
-    postprocessing_->postprocess(planarTerrain, elevationLayer_);
+    // Add binary map
+    const std::string planeClassificationLayer{"plane_classification"};
+    planarTerrain.gridMap.add(planeClassificationLayer);
+    auto& traversabilityMask = planarTerrain.gridMap.get(planeClassificationLayer);
+    cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), traversabilityMask);
+
+    postprocessing_->postprocess(planarTerrain, elevationLayer_, planeClassificationLayer);
     auto t4 = std::chrono::high_resolution_clock::now();
     ROS_INFO_STREAM("Postprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << " [ms]");
 
@@ -133,8 +139,6 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
 
     // Visualize in Rviz.
     reapplyNans(planarTerrain.gridMap.get(elevationLayer_));
-    //    planarTerrain.gridMap.add("plane_classification");
-    //    cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), planarTerrain.gridMap.get("plane_classification"));
     planarTerrain.gridMap.add("segmentation");
     cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
     grid_map_msgs::GridMap outputMessage;

@@ -60,6 +60,8 @@ sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidin
 PostprocessingParameters loadPostprocessingParameters(const ros::NodeHandle& nodeHandle, const std::string& prefix) {
   PostprocessingParameters postprocessingParameters;
   loadParameter(nodeHandle, prefix, "extracted_planes_height_offset", postprocessingParameters.extracted_planes_height_offset);
+  loadParameter(nodeHandle, prefix, "nonplanar_height_offset", postprocessingParameters.nonplanar_height_offset);
+  loadParameter(nodeHandle, prefix, "nonplanar_horizontal_offset", postprocessingParameters.nonplanar_horizontal_offset);
   return postprocessingParameters;
 }
 

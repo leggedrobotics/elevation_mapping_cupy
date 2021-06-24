@@ -26,4 +26,6 @@ contour_extraction:
   offsetSize: 2    # Size of the kernel creating the boundary offset. In number of pixels.
 
 postprocessing:
-  extracted_planes_height_offset: 0.02  # Added offset in z direction to compensate for the location of the foot frame w.r.t. the elevation map
+  extracted_planes_height_offset: 0.02  # Added offset in Z direction for the full map to compensate for the location of the foot frame w.r.t. the contact point
+  nonplanar_height_offset: 0.02         # Added offset in Z direction for non-planar cells of the map. (Additional to extracted_planes_height_offset)
+  nonplanar_horizontal_offset: 2        # Added offset in XY direction for non-planar cells of the map. In number of pixels.
