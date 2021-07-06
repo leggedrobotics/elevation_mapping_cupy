@@ -8,7 +8,7 @@
 #include <sensor_msgs/PointCloud2.h>
 
 #include <convex_plane_decomposition_ros/MessageConversion.h>
-#include <ocs2_switched_model_interface/visualization/VisualizationHelpers.h>
+#include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
 
 namespace switched_model {
 
@@ -58,7 +58,7 @@ void SegmentedPlanesTerrainModelRos::publish() {
     sensor_msgs::PointCloud2 pointCloud2Msg;
     pcl::toROSMsg(pointcloud, pointCloud2Msg);
 
-    pointCloud2Msg.header = switched_model::getHeaderMsg(frameId_, ros::Time::now());
+    pointCloud2Msg.header = ocs2::getHeaderMsg(frameId_, ros::Time::now());
     distanceFieldPublisher_.publish(pointCloud2Msg);
   }
 }

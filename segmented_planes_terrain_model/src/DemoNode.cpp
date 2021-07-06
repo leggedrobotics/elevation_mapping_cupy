@@ -17,7 +17,7 @@
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_sdf/SignedDistanceField.hpp>
 
-#include <ocs2_switched_model_interface/visualization/VisualizationHelpers.h>
+#include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
 
 #include "segmented_planes_terrain_model/SegmentedPlanesTerrainVisualization.h"
 
@@ -26,22 +26,21 @@ std::unique_ptr<grid_map::GridMap> messageMap;
 
 visualization_msgs::MarkerArray toMarker(const switched_model::ConvexTerrain& convexTerrain) {
   visualization_msgs::MarkerArray markerArray =
-      switched_model::getConvexTerrainMarkers(convexTerrain, switched_model::Color::orange, 0.02, 0.005, 0.1);
+      switched_model::getConvexTerrainMarkers(convexTerrain, ocs2::Color::orange, 0.02, 0.005, 0.1);
 
   // Add headers and Id
   const ros::Time timeStamp = ros::Time::now();
-  switched_model::assignHeader(markerArray.markers.begin(), markerArray.markers.end(),
-                               switched_model::getHeaderMsg(frameId_, timeStamp));
-  switched_model::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
+  ocs2::assignHeader(markerArray.markers.begin(), markerArray.markers.end(), ocs2::getHeaderMsg(frameId_, timeStamp));
+  ocs2::assignIncreasingId(markerArray.markers.begin(), markerArray.markers.end());
 
   return markerArray;
 }
 
 visualization_msgs::Marker toMarker(const switched_model::vector3_t& position) {
-  auto marker = switched_model::getSphereMsg(position, switched_model::Color::green, 0.02);
+  auto marker = ocs2::getSphereMsg(position, ocs2::Color::green, 0.02);
 
   const ros::Time timeStamp = ros::Time::now();
-  marker.header = switched_model::getHeaderMsg(frameId_, timeStamp);
+  marker.header = ocs2::getHeaderMsg(frameId_, timeStamp);
   return marker;
 }
 
@@ -77,7 +76,7 @@ int main(int argc, char** argv) {
   auto elevationMapSubscriber = nodeHandle.subscribe("/convex_plane_decomposition_ros/filtered_map", 1, &elevationMappingCallback);
 
   // Node loop
-  ros::Rate rate(1./5.);
+  ros::Rate rate(1. / 5.);
   while (ros::ok()) {
     if (auto newTerrain = segmentedPlanesTerrainModelRos.getTerrainModel()) {
       terrainModel = std::move(newTerrain);
@@ -101,20 +100,24 @@ int main(int argc, char** argv) {
       double width = 1.5;
       double length = 2.0;
       bool success;
-      grid_map::GridMap localMap = messageMap->getSubmap({convexTerrain.plane.positionInWorld.x(), convexTerrain.plane.positionInWorld.y()}, Eigen::Array2d(width, length), success);
+      grid_map::GridMap localMap = messageMap->getSubmap({convexTerrain.plane.positionInWorld.x(), convexTerrain.plane.positionInWorld.y()},
+                                                         Eigen::Array2d(width, length), success);
       auto t2 = std::chrono::high_resolution_clock::now();
-      signed_distance_field::GridmapSignedDistanceField sdf(localMap, "elevation", convexTerrain.plane.positionInWorld.z() - heightClearance, convexTerrain.plane.positionInWorld.z() + heightClearance);
+      signed_distance_field::GridmapSignedDistanceField sdf(localMap, "elevation",
+                                                            convexTerrain.plane.positionInWorld.z() - heightClearance,
+                                                            convexTerrain.plane.positionInWorld.z() + heightClearance);
       auto t3 = std::chrono::high_resolution_clock::now();
       std::cout << "Sdf computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]\n";
 
       auto t4 = std::chrono::high_resolution_clock::now();
       auto sdfClone = std::unique_ptr<signed_distance_field::GridmapSignedDistanceField>(sdf.clone());
       auto t5 = std::chrono::high_resolution_clock::now();
-      std::cout << "Sdf.clone() computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() << " [ms]\n";
+      std::cout << "Sdf.clone() computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count()
+                << " [ms]\n";
 
       sensor_msgs::PointCloud2 pointCloud2Msg;
       pcl::toROSMsg(sdf.obstaclePointCloud(4), pointCloud2Msg);
-      pointCloud2Msg.header = switched_model::getHeaderMsg(frameId_, ros::Time::now());
+      pointCloud2Msg.header = ocs2::getHeaderMsg(frameId_, ros::Time::now());
 
       distanceFieldPublisher.publish(pointCloud2Msg);
     }

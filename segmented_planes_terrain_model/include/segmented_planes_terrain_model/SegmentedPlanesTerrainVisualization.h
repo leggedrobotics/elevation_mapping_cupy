@@ -7,12 +7,12 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
+#include <ocs2_ros_interfaces/visualization/VisualizationColors.h>
 #include <ocs2_switched_model_interface/terrain/ConvexTerrain.h>
-#include <ocs2_switched_model_interface/visualization/VisualizationHelpers.h>
 
 namespace switched_model {
 
-visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, Color color, double diameter, double linewidth,
-                                                        double normalLength);
+visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, ocs2::Color color, double diameter,
+                                                        double linewidth, double normalLength);
 
 }  // namespace switched_model
