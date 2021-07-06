@@ -21,8 +21,6 @@ class TraversabilityFilter(nn.Module):
         # Convert cupy tensor to pytorch.
         elevation_cupy = elevation_cupy.astype(cp.float32)
         elevation = torch.as_tensor(elevation_cupy, device=self.conv1.weight.device)
-        # Just for debug check if memory is the same.
-        assert elevation.__cuda_array_interface__['data'][0] == elevation_cupy.__cuda_array_interface__['data'][0]
 
         with torch.no_grad():
         # elevation = elevation_map[0]
@@ -43,8 +41,6 @@ class TraversabilityFilter(nn.Module):
             out = self.conv_out(out.abs())
             out = torch.exp(-out)
             out_cupy = cp.asarray(out)
-            # Just for debug check if memory is the same.
-            assert out_cupy.__cuda_array_interface__['data'][0] == out.__cuda_array_interface__['data'][0]
 
         return out_cupy
 
