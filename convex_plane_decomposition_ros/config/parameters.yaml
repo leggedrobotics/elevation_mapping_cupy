@@ -7,6 +7,7 @@ preprocessing:
 
 sliding_window_plane_extractor:
   kernel_size: 3                                        # Size of the sliding window patch used for normal vector calculation and planarity detection. Should be an odd number and at least 3.
+  planarity_erosion: 1                                  # [#] Erode planarity detection by this amount of pixels
   plane_inclination_threshold_degrees: 45.0             # [deg] Maximum allowed angle between the surface normal and the world-z direction for a patch
   plane_patch_error_threshold: 0.005                    # [m] The allowed root-mean-squared deviation from the plane fitted to the sliding window.
   min_number_points_per_label: 10                       # [#] Labels with less points assigned to them are discarded
@@ -26,6 +27,6 @@ contour_extraction:
   offsetSize: 2    # Size of the kernel creating the boundary offset. In number of pixels.
 
 postprocessing:
-  extracted_planes_height_offset: 0.02  # Added offset in Z direction for the full map to compensate for the location of the foot frame w.r.t. the contact point
+  extracted_planes_height_offset: 0.0   # Added offset in Z direction for the full map to compensate for the location of the foot frame w.r.t. the contact point
   nonplanar_height_offset: 0.02         # Added offset in Z direction for non-planar cells of the map. (Additional to extracted_planes_height_offset)
   nonplanar_horizontal_offset: 2        # Added offset in XY direction for non-planar cells of the map. In number of pixels.

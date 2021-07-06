@@ -46,6 +46,7 @@ sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidin
     const ros::NodeHandle& nodeHandle, const std::string& prefix) {
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters swParams;
   loadParameter(nodeHandle, prefix, "kernel_size", swParams.kernel_size);
+  loadParameter(nodeHandle, prefix, "planarity_erosion", swParams.planarity_erosion);
   loadParameter(nodeHandle, prefix, "plane_inclination_threshold_degrees", swParams.plane_inclination_threshold_degrees);
   loadParameter(nodeHandle, prefix, "plane_patch_error_threshold", swParams.plane_patch_error_threshold);
   loadParameter(nodeHandle, prefix, "min_number_points_per_label", swParams.min_number_points_per_label);

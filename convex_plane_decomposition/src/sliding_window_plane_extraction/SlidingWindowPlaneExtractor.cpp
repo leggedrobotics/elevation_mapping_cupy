@@ -128,6 +128,14 @@ void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
       binaryImagePatch_.at<bool>(index.x(), index.y()) = isLocallyPlanar(n, mean_error);
     }
   }
+
+  // erode
+  if (parameters_.planarity_erosion > 0) {
+    const int erosionSize = 2 * parameters_.planarity_erosion + 1;
+    const int erosionType = cv::MORPH_CROSS;
+    const auto erosionKernel_ = cv::getStructuringElement(erosionType, cv::Size(erosionSize, erosionSize));
+    cv::erode(binaryImagePatch_, binaryImagePatch_, erosionKernel_);
+  }
 }
 
 // Label cells according to which cell they belong to using connected component labeling.
