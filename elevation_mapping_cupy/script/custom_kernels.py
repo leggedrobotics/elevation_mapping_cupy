@@ -105,7 +105,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       enable_edge_shaped=True, enable_visibility_cleanup=True):
 
     add_points_kernel = cp.ElementwiseKernel(
-            in_params='raw U p, U center_x, U center_y, raw U R, raw U t, raw U norm_map',
+            in_params='raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map',
             out_params='raw U map, raw T newmap',
             preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
             operation=\
@@ -119,7 +119,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
             if (is_valid(x, y, z, t[0], t[1], t[2])) {
-                int idx = get_idx(x, y, center_x, center_y);
+                int idx = get_idx(x, y, center_x[0], center_y[0]);
                 if (is_inside(idx)) {
                     U map_h = map[get_map_idx(idx, 0)];
                     U map_v = map[get_map_idx(idx, 1)];
@@ -155,7 +155,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     U nx = t[0] + ray_x * s;
                     U ny = t[1] + ray_y * s;
                     U nz = t[2] + ray_z * s;
-                    int nidx = get_idx(nx, ny, center_x, center_y);
+                    int nidx = get_idx(nx, ny, center_x[0], center_y[0]);
                     if (!is_inside(nidx)) {continue;}
 
                     U nmap_h = map[get_map_idx(nidx, 0)];
@@ -215,7 +215,7 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
                           traversability_inlier, min_valid_distance, max_height_range):
 
     error_counting_kernel = cp.ElementwiseKernel(
-            in_params='raw U map, raw U p, U center_x, U center_y, raw U R, raw U t',
+            in_params='raw U map, raw U p, raw U center_x, raw U center_y, raw U R, raw U t',
             out_params='raw U newmap, raw T error, raw T error_cnt',
             preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
             operation=\
@@ -231,7 +231,7 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
             // if (!is_valid(z, t[2])) {return;}
             if (!is_valid(x, y, z, t[0], t[1], t[2])) {return;}
             // if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}
-            int idx = get_idx(x, y, center_x, center_y);
+            int idx = get_idx(x, y, center_x[0], center_y[0]);
             if (!is_inside(idx)) {
                 return;
             }
@@ -467,7 +467,7 @@ def normal_filter_kernel(width, height, resolution):
 
 def polygon_mask_kernel(width, height, resolution):
     polygon_mask_kernel = cp.ElementwiseKernel(
-            in_params='raw U polygon, U center_x, U center_y, int16 polygon_n, raw U polygon_bbox',
+            in_params='raw U polygon, raw U center_x, raw U center_y, raw int16 polygon_n, raw U polygon_bbox',
             out_params='raw U mask',
             preamble=\
             string.Template('''
@@ -557,11 +557,11 @@ def polygon_mask_kernel(width, height, resolution):
             ''').substitute(width=width, height=height, resolution=resolution),
             operation=\
             string.Template('''
-            // Point p = {get_idx_x(i, center_x), get_idx_y(i, center_y)};
+            // Point p = {get_idx_x(i, center_x[0]), get_idx_y(i, center_y[0])};
             Point p = {get_idx_x(i), get_idx_y(i)};
             Point extreme = {100000, p.y}; 
-            int bbox_min_idx = get_idx(polygon_bbox[0], polygon_bbox[1], center_x, center_y);
-            int bbox_max_idx = get_idx(polygon_bbox[2], polygon_bbox[3], center_x, center_y);
+            int bbox_min_idx = get_idx(polygon_bbox[0], polygon_bbox[1], center_x[0], center_y[0]);
+            int bbox_max_idx = get_idx(polygon_bbox[2], polygon_bbox[3], center_x[0], center_y[0]);
             Point bmin = {get_idx_x(bbox_min_idx), get_idx_y(bbox_min_idx)};
             Point bmax = {get_idx_x(bbox_max_idx), get_idx_y(bbox_max_idx)};
             if (p.x < bmin.x || p.x > bmax.x || p.y < bmin.y || p.y > bmax.y){
@@ -570,13 +570,13 @@ def polygon_mask_kernel(width, height, resolution):
             }
             else {
                 int intersect_cnt = 0;
-                for (int j = 0; j < polygon_n; j++) {
+                for (int j = 0; j < polygon_n[0]; j++) {
                     Point p1, p2;
-                    int i1 = get_idx(polygon[j * 2 + 0], polygon[j * 2 + 1], center_x, center_y);
+                    int i1 = get_idx(polygon[j * 2 + 0], polygon[j * 2 + 1], center_x[0], center_y[0]);
                     p1.x = get_idx_x(i1);
                     p1.y = get_idx_y(i1);
-                    int j2 = (j + 1) % polygon_n;
-                    int i2 = get_idx(polygon[j2 * 2 + 0], polygon[j2 * 2 + 1], center_x, center_y);
+                    int j2 = (j + 1) % polygon_n[0];
+                    int i2 = get_idx(polygon[j2 * 2 + 0], polygon[j2 * 2 + 1], center_x[0], center_y[0]);
                     p2.x = get_idx_x(i2);
                     p2.y = get_idx_y(i2);
                     if (doIntersect(p1, p2, p, extreme))

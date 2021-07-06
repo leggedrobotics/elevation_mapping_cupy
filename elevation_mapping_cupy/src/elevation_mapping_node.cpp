@@ -20,6 +20,7 @@ int main(int argc, char** argv)
 
   py::scoped_interpreter guard{}; // start the interpreter and keep it alive
   ElevationMappingNode mapNode(nh);
+  py::gil_scoped_release release;
 
   // Spin
   ros::AsyncSpinner spinner(1); // Use n threads
