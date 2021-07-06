@@ -160,7 +160,7 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&)
     ROS_ERROR("%s", ex.what());
     return;
   }
-  Eigen::Vector2d position(transformTf.getOrigin().x(), transformTf.getOrigin().y());
+  Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   map_.move_to(position);
   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(),
