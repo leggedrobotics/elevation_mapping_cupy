@@ -16,6 +16,7 @@ namespace convex_plane_decomposition {
 
 // Forward declarations
 class GridMapPreprocessing;
+class Postprocessing;
 namespace sliding_window_plane_extractor {
 class SlidingWindowPlaneExtractor;
 }
@@ -62,6 +63,7 @@ class ConvexPlaneExtractionROS {
   std::unique_ptr<GridMapPreprocessing> preprocessing_;
   std::unique_ptr<sliding_window_plane_extractor::SlidingWindowPlaneExtractor> slidingWindowPlaneExtractor_;
   std::unique_ptr<contour_extraction::ContourExtraction> contourExtraction_;
+  std::unique_ptr<Postprocessing> postprocessing_;
 };
 
 }  // namespace convex_plane_decomposition

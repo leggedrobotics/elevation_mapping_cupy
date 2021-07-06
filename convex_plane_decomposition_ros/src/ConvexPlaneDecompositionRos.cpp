@@ -11,6 +11,7 @@
 
 #include <convex_plane_decomposition/GridMapPreprocessing.h>
 #include <convex_plane_decomposition/Nan.h>
+#include <convex_plane_decomposition/Postprocessing.h>
 #include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
 #include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
 
@@ -67,12 +68,14 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
   const auto ransacPlaneExtractorParameters = loadRansacPlaneExtractorParameters(nodeHandle, "ransac_plane_refinement/");
   const auto slidingWindowPlaneExtractorParameters =
       loadSlidingWindowPlaneExtractorParameters(nodeHandle, "sliding_window_plane_extractor/");
+  const auto postprocessingParameters = loadPostprocessingParameters(nodeHandle, "postprocessing/");
 
   std::lock_guard<std::mutex> lock(mutex_);
   preprocessing_ = std::make_unique<GridMapPreprocessing>(preprocessingParameters);
   slidingWindowPlaneExtractor_ = std::make_unique<sliding_window_plane_extractor::SlidingWindowPlaneExtractor>(
       slidingWindowPlaneExtractorParameters, ransacPlaneExtractorParameters);
   contourExtraction_ = std::make_unique<contour_extraction::ContourExtraction>(contourExtractionParameters);
+  postprocessing_ = std::make_unique<Postprocessing>(postprocessingParameters);
 
   return true;
 }
@@ -118,6 +121,16 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
 
     // Add grid map to the terrain
     planarTerrain.gridMap = std::move(elevationMap);
+
+    // Add binary map
+    const std::string planeClassificationLayer{"plane_classification"};
+    planarTerrain.gridMap.add(planeClassificationLayer);
+    auto& traversabilityMask = planarTerrain.gridMap.get(planeClassificationLayer);
+    cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), traversabilityMask);
+
+    postprocessing_->postprocess(planarTerrain, elevationLayer_, planeClassificationLayer);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    ROS_INFO_STREAM("Postprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << " [ms]");
 
     // Publish terrain
     if (publishToController_) {

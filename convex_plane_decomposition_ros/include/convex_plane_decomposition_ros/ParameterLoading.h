@@ -7,6 +7,7 @@
 #include <ros/node_handle.h>
 
 #include <convex_plane_decomposition/GridMapPreprocessing.h>
+#include <convex_plane_decomposition/Postprocessing.h>
 #include <convex_plane_decomposition/contour_extraction/ContourExtractionParameters.h>
 #include <convex_plane_decomposition/ransac/RansacPlaneExtractorParameters.h>
 #include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractorParameters.h>
@@ -23,5 +24,7 @@ ransac_plane_extractor::RansacPlaneExtractorParameters loadRansacPlaneExtractorP
 
 sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidingWindowPlaneExtractorParameters(
     const ros::NodeHandle& nodeHandle, const std::string& prefix);
+
+PostprocessingParameters loadPostprocessingParameters(const ros::NodeHandle& nodeHandle, const std::string& prefix);
 
 }  // namespace convex_plane_decomposition

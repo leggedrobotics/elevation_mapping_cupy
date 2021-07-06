@@ -12,7 +12,7 @@ void RansacPlaneExtractor::setParameters(const RansacPlaneExtractorParameters& p
   cgalRansacParameters_.min_points = parameters.min_points;
   cgalRansacParameters_.epsilon = parameters.epsilon;
   cgalRansacParameters_.cluster_epsilon = parameters.cluster_epsilon;
-  cgalRansacParameters_.normal_threshold = parameters.normal_threshold;
+  cgalRansacParameters_.normal_threshold = std::cos(parameters.normal_threshold * M_PI / 180.0);
 }
 
 void RansacPlaneExtractor::detectPlanes(std::vector<PointWithNormal>& points_with_normal) {

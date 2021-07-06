@@ -16,6 +16,7 @@ void loadParameter(const ros::NodeHandle& nodeHandle, const std::string& prefix,
 
 PreprocessingParameters loadPreprocessingParameters(const ros::NodeHandle& nodeHandle, const std::string& prefix) {
   PreprocessingParameters preprocessingParameters;
+  loadParameter(nodeHandle, prefix, "resolution", preprocessingParameters.resolution);
   loadParameter(nodeHandle, prefix, "kernelSize", preprocessingParameters.kernelSize);
   loadParameter(nodeHandle, prefix, "numberOfRepeats", preprocessingParameters.numberOfRepeats);
   loadParameter(nodeHandle, prefix, "increasing", preprocessingParameters.increasing);
@@ -54,6 +55,14 @@ sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidin
   loadParameter(nodeHandle, prefix, "global_plane_fit_angle_error_threshold_degrees",
                 swParams.global_plane_fit_angle_error_threshold_degrees);
   return swParams;
+}
+
+PostprocessingParameters loadPostprocessingParameters(const ros::NodeHandle& nodeHandle, const std::string& prefix) {
+  PostprocessingParameters postprocessingParameters;
+  loadParameter(nodeHandle, prefix, "extracted_planes_height_offset", postprocessingParameters.extracted_planes_height_offset);
+  loadParameter(nodeHandle, prefix, "nonplanar_height_offset", postprocessingParameters.nonplanar_height_offset);
+  loadParameter(nodeHandle, prefix, "nonplanar_horizontal_offset", postprocessingParameters.nonplanar_horizontal_offset);
+  return postprocessingParameters;
 }
 
 }  // namespace convex_plane_decomposition
