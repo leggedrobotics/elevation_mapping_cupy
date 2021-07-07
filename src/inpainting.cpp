@@ -23,9 +23,12 @@ namespace grid_map {
 namespace inpainting {
 
 void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut) {
-  // Create new layer if missing.
+  // Create new layer if missing
   if (!map.exists(layerOut)) {
     map.add(layerOut, map.get(layerIn));
+  } else {
+    // initialize with a copy
+    map.get(layerOut) = map.get(layerIn);
   }
 
   // Reference to in and out maps.
@@ -91,9 +94,12 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
 }
 
 void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut) {
-  // Create new layer if missing.
+  // Create new layer if missing
   if (!map.exists(layerOut)) {
     map.add(layerOut, map.get(layerIn));
+  } else {
+    // initialize with a copy
+    map.get(layerOut) = map.get(layerIn);
   }
 
   // Helper variables.
