@@ -265,7 +265,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   //   layerNames.push_back("normal_z");
   // }
 
-  RowMatrixXd pos(1, 2);
+  RowMatrixXd pos(1, 3);
   py::gil_scoped_acquire acquire;
   map_.attr("get_position")(static_cast<Eigen::Ref<RowMatrixXd>>(pos));
   grid_map::Position position(pos(0, 0), pos(0, 1));

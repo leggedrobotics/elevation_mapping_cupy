@@ -31,7 +31,7 @@ cp.cuda.set_allocator(pool.malloc)
 class ElevationMap(object):
     def __init__(self, param):
         self.resolution = param.resolution
-        self.center = xp.array([0, 0], dtype=float)
+        self.center = xp.array([0, 0, 0], dtype=float)
         self.map_length = param.map_length
         # +2 is a border for outside map
         self.cell_n = int(self.map_length / self.resolution) + 2
@@ -113,20 +113,24 @@ class ElevationMap(object):
 
     def move(self, delta_position):
         delta_position = xp.asarray(delta_position)
-        delta_pixel = xp.round(delta_position / self.resolution)
-        delta_position = delta_pixel * self.resolution
-        self.center += xp.asarray(delta_position)
-        self.shift_map(delta_pixel)
+        delta_pixel = xp.round(delta_position[:2] / self.resolution)
+        delta_position_xy = delta_pixel * self.resolution
+        self.center[:2] += xp.asarray(delta_position_xy)
+        self.center[2] += xp.asarray(delta_position[2])
+        self.shift_map_xy(delta_pixel)
+        self.shift_map_z(-delta_position[2])
 
     def move_to(self, position):
         position = xp.asarray(position)
         delta = position - self.center
-        delta_pixel = xp.around(delta / self.resolution)
-        delta = delta_pixel * self.resolution
-        self.center += delta
-        self.shift_map(-delta_pixel)
+        delta_pixel = xp.around(delta[:2] / self.resolution)
+        delta_xy = delta_pixel * self.resolution
+        self.center[:2] += delta_xy
+        self.center[2] += delta[2]
+        self.shift_map_xy(-delta_pixel)
+        self.shift_map_z(-delta[2])
 
-    def shift_map(self, delta_pixel):
+    def shift_map_xy(self, delta_pixel):
         shift_value = delta_pixel
         shift_fn = sp.ndimage.interpolation.shift
         with self.map_lock:
@@ -139,6 +143,10 @@ class ElevationMap(object):
             # is valid (1 is valid 0 is not valid)
             self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
                                              cval=0)
+
+    def shift_map_z(self, delta_z):
+        with self.map_lock:
+            self.elevation_map[0] += delta_z
 
     def compile_kernels(self):
         self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
@@ -179,13 +187,17 @@ class ElevationMap(object):
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
+    def shift_translation_to_map_center(self, t):
+        t -= self.center
+
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
         error = xp.array([0.0], dtype=xp.float32)
         error_cnt = xp.array([0], dtype=xp.float32)
         with self.map_lock:
+            self.shift_translation_to_map_center(t)
             self.error_counting_kernel(self.elevation_map, points,
-                                       self.center[0], self.center[1], R, t,
+                                       cp.array([0.]), cp.array([0.]), R, t,
                                        self.new_map, error, error_cnt,
                                        size=(points.shape[0]))
             if (self.enable_drift_compensation
@@ -196,7 +208,7 @@ class ElevationMap(object):
                 self.additive_mean_error += self.mean_error
                 if np.abs(self.mean_error) < self.max_drift:
                     self.elevation_map[0] += self.mean_error * self.drift_compensation_alpha
-            self.add_points_kernel(points, self.center[0], self.center[1], R, t, self.normal_map,
+            self.add_points_kernel(points, cp.array([0.]), cp.array([0.]), R, t, self.normal_map,
                                    self.elevation_map, self.new_map,
                                    size=(points.shape[0]))
             self.average_map_kernel(self.new_map, self.elevation_map,
@@ -264,7 +276,6 @@ class ElevationMap(object):
                                        size=(self.cell_n * self.cell_n))
         min_filtered = xp.where(self.min_filtered_mask > 0.5,
                                 self.min_filtered.copy(), xp.nan)
-        # print('min_filtered ', min_filtered.shape, min_filtered.max())
         return min_filtered
 
     def update_normal(self, dilated_map):
@@ -278,7 +289,7 @@ class ElevationMap(object):
             if 0 in selection:
                 elevation = xp.where(self.elevation_map[2] > 0.5,
                                      self.elevation_map[0].copy(), xp.nan)
-                elevation = elevation[1:-1, 1:-1]
+                elevation = elevation[1:-1, 1:-1] + self.center[2]
                 map_list.append(elevation)
             if 1 in selection:
                 variance = self.elevation_map[1].copy()
@@ -292,7 +303,7 @@ class ElevationMap(object):
                 map_list.append(traversability)
             if 3 in selection:
                 min_filtered = self.get_min_filtered()
-                min_filtered = min_filtered[1:-1, 1:-1]
+                min_filtered = min_filtered[1:-1, 1:-1] + self.center[2]
                 map_list.append(min_filtered)
             if 4 in selection:
                 time_layer = self.elevation_map[4].copy()
@@ -361,8 +372,8 @@ class ElevationMap(object):
     def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)
         area = calculate_area(polygon)
-        pmin = self.center - self.map_length / 2 + self.resolution
-        pmax = self.center + self.map_length / 2 - self.resolution
+        pmin = self.center[:2] - self.map_length / 2 + self.resolution
+        pmax = self.center[:2] + self.map_length / 2 - self.resolution
         polygon[:, 0] = polygon[:, 0].clip(pmin[0], pmax[0])
         polygon[:, 1] = polygon[:, 1].clip(pmin[1], pmax[1])
         polygon_min = polygon.min(axis=0)
@@ -387,7 +398,7 @@ class ElevationMap(object):
         untraversable_polygon_num = 0
         if un_polygon is not None:
             un_polygon = transform_to_map_position(un_polygon,
-                                                   self.center,
+                                                   self.center[:2],
                                                    self.cell_n,
                                                    self.resolution)
             # print(un_polygon)
@@ -410,10 +421,11 @@ class ElevationMap(object):
         with self.map_lock:
             points = cp.asarray(points)
             indices = transform_to_map_index(points[:, :2],
-                                             self.center,
+                                             self.center[:2],
                                              self.cell_n,
                                              self.resolution)
             points[:, :2] = indices.astype(points.dtype)
+            points[:, 2] -= self.center[2]
             self.map_initializer(self.elevation_map, points, method)
             if self.dilation_size_initialize > 0:
                 for i in range(2):
