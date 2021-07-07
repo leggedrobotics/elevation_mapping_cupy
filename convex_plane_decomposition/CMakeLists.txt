@@ -6,6 +6,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 	cgal5_catkin
 	grid_map_core
 	ocs2_switched_model_interface
+	grid_map_filters_rsl
 )
 
 find_package(catkin REQUIRED COMPONENTS

@@ -20,7 +20,6 @@ PreprocessingParameters loadPreprocessingParameters(const ros::NodeHandle& nodeH
   loadParameter(nodeHandle, prefix, "kernelSize", preprocessingParameters.kernelSize);
   loadParameter(nodeHandle, prefix, "numberOfRepeats", preprocessingParameters.numberOfRepeats);
   loadParameter(nodeHandle, prefix, "increasing", preprocessingParameters.increasing);
-  loadParameter(nodeHandle, prefix, "inpaintRadius", preprocessingParameters.inpaintRadius);
   return preprocessingParameters;
 }
 

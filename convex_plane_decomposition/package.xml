@@ -12,6 +12,7 @@
   <depend>cgal5_catkin</depend>
   <depend>grid_map_core</depend>
   <depend>ocs2_switched_model_interface</depend>
+  <depend>grid_map_filters_rsl</depend>
 
 
 </package>

@@ -3,11 +3,10 @@ preprocessing:
   kernelSize: 3       # Kernel size of the median filter, either 3 or 5
   numberOfRepeats: 3  # Number of times to apply the same filter
   increasing: False   # Increase the kernel size each iteration.
-  inpaintRadius: 0.05 # [m]
 
 sliding_window_plane_extractor:
   kernel_size: 3                                        # Size of the sliding window patch used for normal vector calculation and planarity detection. Should be an odd number and at least 3.
-  planarity_erosion: 1                                  # [#] Erode planarity detection by this amount of pixels
+  planarity_erosion: 0                                  # [#] Erode planarity detection by this amount of pixels
   plane_inclination_threshold_degrees: 45.0             # [deg] Maximum allowed angle between the surface normal and the world-z direction for a patch
   plane_patch_error_threshold: 0.005                    # [m] The allowed root-mean-squared deviation from the plane fitted to the sliding window.
   min_number_points_per_label: 10                       # [#] Labels with less points assigned to them are discarded

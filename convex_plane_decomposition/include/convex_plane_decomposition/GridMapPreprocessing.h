@@ -15,8 +15,6 @@ struct PreprocessingParameters {
   int numberOfRepeats = 1;
   /// If the kernel size should increase each filter step.
   bool increasing = false;
-  /// [m] radius used for inpainting
-  double inpaintRadius = 0.05;
 };
 
 class GridMapPreprocessing {
@@ -28,7 +26,7 @@ class GridMapPreprocessing {
  private:
   void denoise(grid_map::GridMap& gridMap, const std::string& layer) const;
   void changeResolution(grid_map::GridMap& gridMap, const std::string& layer) const;
-  void inpaint(grid_map::GridMap& gridMap, const std::string& layer, float minValue, float maxValue) const;
+  void inpaint(grid_map::GridMap& gridMap, const std::string& layer) const;
 
   PreprocessingParameters parameters_;
 };

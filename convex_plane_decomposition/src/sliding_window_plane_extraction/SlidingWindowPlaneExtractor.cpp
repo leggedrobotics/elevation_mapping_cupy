@@ -11,8 +11,6 @@
 
 #include <grid_map_core/grid_map_core.hpp>
 
-#include "convex_plane_decomposition/Nan.h"
-
 namespace convex_plane_decomposition {
 namespace sliding_window_plane_extractor {
 
@@ -63,7 +61,7 @@ std::pair<Eigen::Vector3d, double> SlidingWindowPlaneExtractor::computeNormalAnd
   for (int kernel_col = 0; kernel_col < parameters_.kernel_size; ++kernel_col) {
     for (int kernel_row = 0; kernel_row < parameters_.kernel_size; ++kernel_row) {
       float height = windowData(kernel_row, kernel_col);
-      if (isNan(height)) {
+      if (!std::isfinite(height)) {
         continue;
       }
       // No need to account for map offset. Will substract the mean anyway.
@@ -117,7 +115,7 @@ void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
     Eigen::MatrixXf window_data = window_iterator.getData();
     const auto middleValue = window_data(kernelMiddle, kernelMiddle);
 
-    if (isNan(middleValue)) {
+    if (!std::isfinite(middleValue)) {
       binaryImagePatch_.at<bool>(index.x(), index.y()) = false;
     } else {
       Eigen::Vector3d n;

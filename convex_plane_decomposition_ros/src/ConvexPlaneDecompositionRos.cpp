@@ -10,7 +10,6 @@
 #include <grid_map_ros/GridMapRosConverter.hpp>
 
 #include <convex_plane_decomposition/GridMapPreprocessing.h>
-#include <convex_plane_decomposition/Nan.h>
 #include <convex_plane_decomposition/Postprocessing.h>
 #include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
 #include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
@@ -138,7 +137,6 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     }
 
     // Visualize in Rviz.
-    reapplyNans(planarTerrain.gridMap.get(elevationLayer_));
     planarTerrain.gridMap.add("segmentation");
     cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
     grid_map_msgs::GridMap outputMessage;
