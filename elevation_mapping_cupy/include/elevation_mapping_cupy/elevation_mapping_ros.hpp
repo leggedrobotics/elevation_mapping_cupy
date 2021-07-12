@@ -49,7 +49,6 @@ class ElevationMappingNode {
     bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
-    // void publishRecordableMap(const ros::TimerEvent&);
     void updatePose(const ros::TimerEvent&);
     void updateVariance(const ros::TimerEvent&);
     void updateTime(const ros::TimerEvent&);
@@ -65,9 +64,6 @@ class ElevationMappingNode {
     std::vector<ros::Subscriber> pointcloudSubs_;
     std::vector<ros::Publisher> mapPubs_;
     ros::Publisher alivePub_;
-    // ros::Publisher mapPub_;
-    // ros::Publisher filteredMapPub_;
-    // ros::Publisher recordablePub_;
     ros::Publisher pointPub_;
     ros::Publisher normalPub_;
     ros::Publisher statisticsPub_;
@@ -77,7 +73,6 @@ class ElevationMappingNode {
     ros::ServiceServer initializeMapService_;
     ros::ServiceServer setPublishPointService_;
     ros::ServiceServer checkSafetyService_;
-    // ros::Timer recordableTimer_;
     ros::Timer updateVarianceTimer_;
     ros::Timer updateTimeTimer_;
     ros::Timer updatePoseTimer_;
@@ -91,15 +86,15 @@ class ElevationMappingNode {
     std::string baseFrameId_;
     grid_map::GridMap gridMap_;
 
+    // map topics info
     std::vector<std::vector<std::string>> map_topics_;
     std::vector<std::vector<std::string>> map_layers_;
     std::vector<std::vector<std::string>> map_basic_layers_;
     std::set<std::string> map_layers_all_;
-    std::set<double> map_fps_unique_;
     std::vector<double> map_fps_;
+    std::set<double> map_fps_unique_;
     std::vector<ros::Timer> mapTimers_;
-    // std::vector<std::string> raw_map_layers_;
-    // std::vector<std::string> recordable_map_layers_;
+
     std::vector<std::string> initialize_frame_id_;
     std::vector<double> initialize_tf_offset_;
     std::string initializeMethod_;

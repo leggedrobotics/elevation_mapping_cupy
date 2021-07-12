@@ -19,7 +19,6 @@ position_lowpass_alpha: 0.2                     # lowpass filter alpha used for 
 orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
 min_valid_distance: 0.5                         # points with shorter distance will be filtered out.
 max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
-# recordable_fps: 5.0                             # fps for publishing map (in slower rate to record).
 update_variance_fps: 5.0                        # fps for updating variance.
 update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
 time_interval: 0.1                              # Time layer is updated with this interval.
@@ -55,16 +54,18 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
                     '/depth_camera_rear/depth/color/points',
                     '/depth_camera_left/depth/color/points',
                     '/depth_camera_right/depth/color/points',
-                    '/point_cloud_filter/rslidar/point_cloud',
                     '/robot_self_filter/bpearl_front/point_cloud',
                     '/robot_self_filter/bpearl_rear/point_cloud'
-                    # '/point_cloud_filter/lidar/point_cloud_filtered'
                     ]
 
 #### Publishers ########
+# topic_name:
+#   layers:                                                         # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+#   basic_layers:                                                   # basic_layers for rviz: Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+#   fps:                                                            # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance']
+    layers: ['elevation', 'traversability', 'variance', 'min_filtered']
     basic_layers: ['elevation']
     fps: 5.0
   elevation_map_recordable:
@@ -74,26 +75,13 @@ publishers:
   elevation_map_visualizable:
     layers: ['elevation']
     basic_layers: ['elevation']
-    fps: 2.0
+    fps: 1.0
 # Example of different basic layer
   elevation_map_filtered:
     layers: ['min_filtered']
     basic_layers: ['min_filtered']
-    fps: 2.5
-# map_topics: ['elevation_map_raw',
-#              'elevation_map_recordable',
-#              'elevation_map_visualizable']
-# map_layers: [['elevation', 'traversability'],
-#              ['elevation'],
-#              ['elevation']]
-# basic_layers: [['elevation'],
-#                ['elevation'],
-#                ['elevation']]
-# map_fps: [5.0, 5.0, 2.0]
-########################
-#
-# raw_map_layers: ['elevation', 'traversability']                     # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
-# recordable_map_layers: ['elevation']                                # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+    fps: 1.0
+
 map_frame: 'odom'  # 'msf_body_imu_map'
 base_frame: 'base'
 corrected_map_frame: 'corrected_odom'
