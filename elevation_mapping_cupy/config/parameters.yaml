@@ -61,8 +61,13 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
 #### Publishers ########
 # topic_name:
 #   layers:                                                         # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
-#   basic_layers:                                                   # basic_layers for rviz: Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
+#   basic_layers:                                                   # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
 #   fps:                                                            # Publish rate. Use smaller value than `map_acquire_fps`.
+### Example:
+# elevation_map_visualizable:
+#     layers: ['elevation']
+#     basic_layers: ['elevation']
+#     fps: 1.0
 publishers:
   elevation_map_raw:
     layers: ['elevation', 'traversability', 'variance', 'min_filtered']
@@ -72,15 +77,6 @@ publishers:
     layers: ['elevation', 'traversability']
     basic_layers: ['elevation']
     fps: 5.0
-  elevation_map_visualizable:
-    layers: ['elevation']
-    basic_layers: ['elevation']
-    fps: 1.0
-# Example of different basic layer
-  elevation_map_filtered:
-    layers: ['min_filtered']
-    basic_layers: ['min_filtered']
-    fps: 1.0
 
 map_frame: 'odom'  # 'msf_body_imu_map'
 base_frame: 'base'
