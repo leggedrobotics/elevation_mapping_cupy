@@ -1,2 +1,4 @@
 library 'continuous_integration_pipeline'
-ciPipeline("--environment anymal --dependencies git@bitbucket.org:leggedrobotics/ocs2_anymal.git;feature/perception;git")
+ciPipeline("--environment anymal \
+            --dependencies 'git@bitbucket.org:leggedrobotics/ocs2_anymal.git;feature/perception;git'\
+                           'git@bitbucket.org:leggedrobotics/ocs2_dev;feature/perception;git'")
