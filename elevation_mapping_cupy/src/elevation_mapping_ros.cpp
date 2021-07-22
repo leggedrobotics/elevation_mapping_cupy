@@ -69,6 +69,10 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     auto basic_layers = itr->second["basic_layers"];
     double fps = itr->second["fps"];
 
+    if (fps > updateGridMapFps) {
+      ROS_WARN("[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f fps.", topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
+    }
+
     for (int32_t i = 0; i < layers.size(); ++i) {
       layers_list.push_back(static_cast<std::string>(layers[i]));
       map_layers_all_.insert(static_cast<std::string>(layers[i]));
