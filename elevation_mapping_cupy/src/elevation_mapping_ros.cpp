@@ -25,12 +25,13 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh_ = nh;
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
+  XmlRpc::XmlRpcValue publishers;
   std::vector<std::string> pointcloud_topics;
+  std::vector<std::string> map_topics;
   double recordableFps, updateVarianceFps, timeInterval, updatePoseFps, updateGridMapFps, publishStatisticsFps;
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
-  nh.param<std::vector<std::string>>("recordable_map_layers", recordable_map_layers_, {"elevation"});
-  nh.param<std::vector<std::string>>("raw_map_layers", raw_map_layers_, {"elevation", "traversability", "min_filtered"});
+  nh.getParam("publishers", publishers);
   nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
   nh.param<std::string>("pose_topic", pose_topic, "pose");
@@ -45,7 +46,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<double>("time_interval", timeInterval, 0.1);
   nh.param<double>("update_pose_fps", updatePoseFps, 10.0);
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
-  nh.param<double>("raw_map_publish_fps", updateGridMapFps, 5.0);
+  nh.param<double>("map_acquire_fps", updateGridMapFps, 5.0);
   nh.param<double>("publish_statistics_fps", publishStatisticsFps, 1.0);
   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
@@ -56,17 +57,48 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
-  mapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_raw", 1);
-  if (std::find(raw_map_layers_.begin(), raw_map_layers_.end(), "min_filtered") == raw_map_layers_.end())
-    enableFilteredMapPublishing_ = false;
 
-  if (enableFilteredMapPublishing_)
-    filteredMapPub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_filtered", 1);
-  recordablePub_ = nh_.advertise<grid_map_msgs::GridMap>("elevation_map_recordable", 1);
+  // register map publishers
+  for(auto itr = publishers.begin(); itr != publishers.end(); ++itr)
+  {
+    // parse params
+    std::string topic_name = itr->first;
+    std::vector<std::string> layers_list;
+    std::vector<std::string> basic_layers_list;
+    auto layers = itr->second["layers"];
+    auto basic_layers = itr->second["basic_layers"];
+    double fps = itr->second["fps"];
+
+    if (fps > updateGridMapFps) {
+      ROS_WARN("[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f fps.", topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
+    }
+
+    for (int32_t i = 0; i < layers.size(); ++i) {
+      layers_list.push_back(static_cast<std::string>(layers[i]));
+      map_layers_all_.insert(static_cast<std::string>(layers[i]));
+    }
+    for (int32_t i = 0; i < basic_layers.size(); ++i) 
+      basic_layers_list.push_back(static_cast<std::string>(basic_layers[i]));
+
+    // make publishers
+    ros::Publisher pub = nh_.advertise<grid_map_msgs::GridMap>(topic_name, 1);
+    mapPubs_.push_back(pub);
+
+    // register map layers
+    map_layers_.push_back(layers_list);
+    map_basic_layers_.push_back(basic_layers_list);
+
+    // register map fps
+    map_fps_.push_back(fps);
+    map_fps_unique_.insert(fps);
+  }
+  setupMapPublishers();
+
   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
   normalPub_ = nh_.advertise<visualization_msgs::MarkerArray>("normal", 1);
   statisticsPub_ = nh_.advertise<elevation_map_msgs::Statistics>("statistics", 1);
+
   gridMap_.setFrameId(mapFrameId_);
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
@@ -74,11 +106,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   clearMapWithInitializerService_ = nh_.advertiseService("clear_map_with_initializer", &ElevationMappingNode::clearMapWithInitializer, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
   checkSafetyService_ = nh_.advertiseService("check_safety", &ElevationMappingNode::checkSafety, this);
-  if (recordableFps > 0) {
-    double duration = 1.0 / (recordableFps + 0.00001);
-    recordableTimer_= nh_.createTimer(ros::Duration(duration),
-                                      &ElevationMappingNode::publishRecordableMap, this, false, true);
-  }
 
   if (updateVarianceFps > 0) {
     double duration = 1.0 / (updateVarianceFps + 0.00001);
@@ -107,6 +134,45 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   }
   lastStatisticsPublishedTime_ = ros::Time::now();
   ROS_INFO("[ElevationMappingCupy] finish initialization");
+}
+
+
+void ElevationMappingNode::setupMapPublishers() {
+  // setup map publishers
+  // create timers for each unique map frequencies
+  for(auto fps : map_fps_unique_) {
+    // which publisher to call in the timer callback
+    std::vector<int> indices;
+    for(int i=0; i<map_fps_.size(); i++) {
+      if(map_fps_[i] == fps)
+        indices.push_back(i);
+    }
+    // callback funtion.
+    // It publishes to specific topics.
+    auto cb = [this, indices](const ros::TimerEvent&) { for(int i:indices) { publishMapOfIndex(i); } };
+    double duration = 1.0 / (fps + 0.00001);
+    mapTimers_.push_back(nh_.createTimer(ros::Duration(duration), cb));
+  }
+}
+
+
+void ElevationMappingNode::publishMapOfIndex(int index) {
+  // publish the map layers of index
+  grid_map_msgs::GridMap msg;
+  std::vector<std::string> layers;
+  for (const auto& layer: map_layers_[index]) {
+    if (gridMap_.exists(layer)) {
+      layers.push_back(layer);
+    }
+  }
+  if (layers.size() == 0) 
+    return;
+  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+  grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
+  scopedLockForGridMap.unlock();
+  msg.basic_layers = map_basic_layers_[index];
+  mapPubs_[index].publish(msg);
+  return;
 }
 
 
@@ -344,31 +410,6 @@ bool ElevationMappingNode::setPublishPoint(std_srvs::SetBool::Request& request, 
 }
 
 
-void ElevationMappingNode::publishRecordableMap(const ros::TimerEvent&) {
-  grid_map_msgs::GridMap msg;
-  std::vector<std::string> layers;
-  for (const auto& layer: recordable_map_layers_) {
-    if (gridMap_.exists(layer)) {
-      layers.push_back(layer);
-    }
-  }
-  if (layers.size() == 0) 
-    return;
-  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-  grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
-  scopedLockForGridMap.unlock();
-  msg.basic_layers = layers;
-  recordablePub_.publish(msg);
-  if (enableFilteredMapPublishing_) {
-    grid_map_msgs::GridMap filteredMsg;
-    grid_map::GridMapRosConverter::toMessage(gridMap_, {"min_filtered"}, filteredMsg);
-    filteredMsg.basic_layers = {"min_filtered"};
-    filteredMapPub_.publish(filteredMsg);
-  }
-
-  return;
-}
-
 void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
   map_.update_variance();
 }
@@ -390,20 +431,18 @@ void ElevationMappingNode::publishStatistics(const ros::TimerEvent&) {
 }
 
 void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
+  std::vector<std::string> layers(map_layers_all_.begin(), map_layers_all_.end());
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-  map_.get_grid_map(gridMap_, raw_map_layers_);
+  map_.get_grid_map(gridMap_, layers);
   gridMap_.setTimestamp(ros::Time::now().toNSec());
-  grid_map_msgs::GridMap msg;
-  grid_map::GridMapRosConverter::toMessage(gridMap_, msg);
-  mapPub_.publish(msg);
   alivePub_.publish(std_msgs::Empty());
 
-  if (enableNormalArrowPublishing_) {
-    publishNormalAsArrow(gridMap_);
-  }
-
+  // Mostly debug purpose
   if (enablePointCloudPublishing_) {
     publishAsPointCloud();
+  }
+  if (enableNormalArrowPublishing_) {
+    publishNormalAsArrow(gridMap_);
   }
 }
 
