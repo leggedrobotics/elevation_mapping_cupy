@@ -78,7 +78,7 @@ publishers:
     basic_layers: ['elevation']
     fps: 5.0
 
-map_frame: 'odom'  # 'msf_body_imu_map'
+map_frame: 'odom'
 base_frame: 'base'
 corrected_map_frame: 'corrected_odom'
 
