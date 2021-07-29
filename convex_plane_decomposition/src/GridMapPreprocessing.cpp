@@ -20,14 +20,14 @@ void GridMapPreprocessing::denoise(grid_map::GridMap& gridMap, const std::string
   Eigen::MatrixXf& elevation_map = gridMap.get(layer);
 
   cv::Mat elevationImage;
-  cv::eigen2cv(elevation_map, elevationImage); // creates CV_32F image
+  cv::eigen2cv(elevation_map, elevationImage);  // creates CV_32F image
 
   int kernelSize = parameters_.kernelSize;
 
   for (int i = 0; i < parameters_.numberOfRepeats; ++i) {
-    kernelSize = std::max(3, std::min(kernelSize, 5)); // must be 3 or 5 for current image type, see doc of cv::medianBlur
+    kernelSize = std::max(3, std::min(kernelSize, 5));  // must be 3 or 5 for current image type, see doc of cv::medianBlur
     cv::medianBlur(elevationImage, elevationImage, kernelSize);
-    if (parameters_.increasing) { // TODO (rgrandia) : remove this option or enable kernels of other size than 3 / 5
+    if (parameters_.increasing) {  // TODO (rgrandia) : remove this option or enable kernels of other size than 3 / 5
       kernelSize += 2;
     }
   }
@@ -65,6 +65,17 @@ void GridMapPreprocessing::inpaint(grid_map::GridMap& gridMap, const std::string
 
   gridMap.get(layer) = std::move(gridMap.get(layerOut));
   gridMap.erase(layerOut);
+}
+
+bool containsFiniteValue(const grid_map::Matrix& map) {
+  for (int col = 0; col < map.cols(); ++col) {
+    for (int row = 0; row < map.rows(); ++row) {
+      if (std::isfinite(map(col, row))) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 }  // namespace convex_plane_decomposition

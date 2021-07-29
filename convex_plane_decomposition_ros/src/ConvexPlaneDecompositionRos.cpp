@@ -89,6 +89,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMapRosConverter::fromMessage(message, messageMap, layers, false, false);
   bool success;
   grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapLength_, subMapWidth_), success);
+  success = success && containsFiniteValue(elevationMap.get(elevationLayer_)); // Check if there are values
   ROS_INFO("...done.");
 
   // Transform map if necessary

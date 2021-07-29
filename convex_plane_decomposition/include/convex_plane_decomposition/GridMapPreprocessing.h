@@ -31,4 +31,9 @@ class GridMapPreprocessing {
   PreprocessingParameters parameters_;
 };
 
+/**
+ * @return true if any of the elements in the map are finite
+ */
+bool containsFiniteValue(const grid_map::Matrix& map);
+
 }  // namespace convex_plane_decomposition
