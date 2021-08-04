@@ -13,7 +13,6 @@
 #include <grid_map_cv/GridMapCvConverter.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/imgproc.hpp>
 #include <opencv2/photo.hpp>
 
 // stl.

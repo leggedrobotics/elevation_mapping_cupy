@@ -38,6 +38,7 @@ catkin_package(
 add_library(${PROJECT_NAME}
   src/inpainting.cpp
   src/smoothing.cpp
+  src/processing.cpp
   src/GridMapDerivative.cpp
 )
 
