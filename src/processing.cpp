@@ -17,24 +17,6 @@
 namespace grid_map {
 namespace processing {
 
-void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize) {
-  // Create new layer if missing.
-  if (!map.exists(layerOut)) {
-    map.add(layerOut);
-  }
-
-  // Convert to image.
-  cv::Mat elevationImage;
-  cv::eigen2cv(map.get(layerIn), elevationImage);
-
-  // Box blur.
-  cv::Size kernelSize2D(kernelSize, kernelSize);
-  cv::dilate(elevationImage, elevationImage, cv::getStructuringElement(0, cv::Size(kernelSize, kernelSize)));
-
-  // Set output layer.
-  cv::cv2eigen(elevationImage, map.get(layerOut));
-}
-
 void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, const grid_map::Matrix& mask, int kernelSize) {
   // Create new layer if missing
   if (!map.exists(layerOut)) {
