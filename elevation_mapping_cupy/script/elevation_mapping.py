@@ -327,7 +327,7 @@ class ElevationMap(object):
             if 5 in selection:
                 upper_bound = xp.where(xp.logical_or(self.elevation_map[6] > 0.5, self.elevation_map[2] > 0.5),
                                        self.elevation_map[5].copy(), xp.nan)
-                upper_bound = upper_bound[1:-1, 1:-1]
+                upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
                 map_list.append(upper_bound)
             if 6 in selection:
                 is_upper_bound = xp.where(xp.logical_or(self.elevation_map[6] > 0.5, self.elevation_map[2] > 0.5),
