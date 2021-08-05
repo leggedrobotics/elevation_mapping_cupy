@@ -9,6 +9,7 @@
 #include <convex_plane_decomposition/ConvexRegionGrowing.h>
 #include <convex_plane_decomposition/GeometryUtils.h>
 #include <signed_distance_field/GridmapSignedDistanceField.h>
+#include <grid_map_filters_rsl/lookup.hpp>
 
 namespace switched_model {
 
@@ -196,6 +197,23 @@ std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decompos
   }
 
   return closestRegionAndProjection;
+}
+
+vector3_t SegmentedPlanesTerrainModel::getHighestObstacleAlongLine(const vector3_t& position1InWorld,
+                                                                   const vector3_t& position2InWorld) const {
+  const auto& elevationData = planarTerrain_.gridMap.get("elevation");  // TODO: retreive name somewhere;
+  const auto result = grid_map::lookup::maxValueBetweenLocations(
+      {position1InWorld.x(), position1InWorld.y()}, {position2InWorld.x(), position2InWorld.y()}, planarTerrain_.gridMap, elevationData);
+  if (result.isValid) {
+    return {result.position.x(), result.position.y(), result.value};
+  } else {
+    // return highest query point if the map didn't work.
+    if (position1InWorld.z() > position2InWorld.z()) {
+      return position1InWorld;
+    } else {
+      return position2InWorld;
+    }
+  }
 }
 
 }  // namespace switched_model
