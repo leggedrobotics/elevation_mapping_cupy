@@ -21,6 +21,17 @@ namespace processing {
  * @param layerOut      output layer (filtered map is written into this layer)
  * @param kernelSize    vicinity considered by filter (should be odd).
  */
-void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize = 10);
+void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize = 9);
+
+/**
+ * @brief Replaces values by max in region. In-place operation (layerIn = layerOut) is NOT supported.
+ * @param map           grid map
+ * @param layerIn       reference layer (filter is applied wrt this layer)
+ * @param layerOut      output layer (filtered map is written into this layer)
+ * @param mask          Filter is applied only where mask contains values of 1 and omitted where values are nan
+ * @param kernelSize    vicinity considered by filter (mist be odd).
+ */
+void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, const grid_map::Matrix& mask,
+            int kernelSize = 9);
 }  // namespace processing
 }  // namespace grid_map

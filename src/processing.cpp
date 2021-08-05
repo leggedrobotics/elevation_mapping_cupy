@@ -34,5 +34,41 @@ void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::strin
   // Set output layer.
   cv::cv2eigen(elevationImage, map.get(layerOut));
 }
+
+void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, const grid_map::Matrix& mask, int kernelSize) {
+  // Create new layer if missing
+  if (!map.exists(layerOut)) {
+    map.add(layerOut, map.get(layerIn));
+  }
+
+  // Reference to in and out maps.
+  const grid_map::Matrix& H_in = map.get(layerIn);
+  grid_map::Matrix& H_out = map.get(layerOut);
+
+  // Apply mask.
+  const grid_map::Matrix H_in_masked = H_in.cwiseProduct(mask);
+  const auto maxKernelId = (kernelSize - 1) / 2;
+
+  for (auto colId = 0; colId < H_in.cols(); ++colId) {
+    for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
+      // Move index to the korner of the kernel window.
+      auto cornerColId = std::max(colId - maxKernelId, 0);
+      auto cornerRowId = std::max(rowId - maxKernelId, 0);
+
+      // Make sure we don't overshoot.
+      if (cornerColId + kernelSize > H_in.cols()) {
+        cornerColId = H_in.cols() - kernelSize;
+      }
+
+      if (cornerRowId + kernelSize > H_in.rows()) {
+        cornerRowId = H_in.rows() - kernelSize;
+      }
+
+      // Find maximum in region.
+      const auto maxInKernel = H_in_masked.block(cornerRowId, cornerColId, kernelSize, kernelSize).maxCoeffOfFinites();
+      H_out(rowId, colId) = std::isnan(maxInKernel) ? H_in(rowId, colId) : maxInKernel;
+    }
+  }
+}
 }  // namespace processing
 }  // namespace grid_map
