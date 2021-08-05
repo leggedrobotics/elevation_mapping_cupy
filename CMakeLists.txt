@@ -36,9 +36,10 @@ catkin_package(
 ## Build ##
 ###########
 add_library(${PROJECT_NAME}
-  src/inpainting.cpp
-  src/smoothing.cpp
   src/GridMapDerivative.cpp
+  src/inpainting.cpp
+  src/lookup.cpp
+  src/smoothing.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -70,6 +71,7 @@ if(CATKIN_ENABLE_TESTING)
   catkin_add_gtest(test_${PROJECT_NAME}
     test/TestDerivativeFilter.cpp
     test/TestFilters.cpp
+    test/TestLookup.cpp
     )
 endif()
 
