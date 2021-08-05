@@ -46,7 +46,12 @@ void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::strin
   grid_map::Matrix& H_out = map.get(layerOut);
 
   // Apply mask.
-  const grid_map::Matrix H_in_masked = H_in.cwiseProduct(mask);
+  grid_map::Matrix H_in_masked;
+  if (mask.cols() == 0 || mask.rows() == 0) {
+    H_in_masked = H_in;
+  } else {
+    H_in_masked = H_in.cwiseProduct(mask);
+  }
   const auto maxKernelId = (kernelSize - 1) / 2;
 
   for (auto colId = 0; colId < H_in.cols(); ++colId) {
