@@ -9,11 +9,6 @@
 // grid map filters rsl.
 #include <grid_map_filters_rsl/processing.hpp>
 
-// open cv.
-#include <opencv2/core/eigen.hpp>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/imgproc.hpp>
-
 namespace grid_map {
 namespace processing {
 
