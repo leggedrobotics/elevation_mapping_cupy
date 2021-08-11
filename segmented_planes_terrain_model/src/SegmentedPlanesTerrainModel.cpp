@@ -13,8 +13,11 @@
 
 namespace switched_model {
 
+namespace {
 // TODO (rgrandia) : deadzone a parameter
 const double zHeightDistanceDeadzone = 0.1;  // [m] This difference in z height is not counted
+const std::string elevationLayerName = "elevation";
+}  // namespace
 
 double distanceCost(const vector3_t& query, const vector3_t& terrainPoint) {
   const double dx = query.x() - terrainPoint.x();
@@ -39,7 +42,9 @@ double distanceCostLowerbound(double distanceSquared) {
 }
 
 SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain)
-    : planarTerrain_(std::move(planarTerrain)), signedDistanceField_(nullptr) {}
+    : planarTerrain_(std::move(planarTerrain)),
+      signedDistanceField_(nullptr),
+      elevationData_(&planarTerrain_.gridMap.get(elevationLayerName)) {}
 
 TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
   const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
@@ -84,8 +89,8 @@ void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vecto
   bool success = true;
   grid_map::GridMap subMap = planarTerrain_.gridMap.getSubmap(centerXY, lengths, success);
   if (success) {
-    signedDistanceField_ =
-        std::make_unique<signed_distance_field::GridmapSignedDistanceField>(subMap, "elevation", minCoordinates.z(), maxCoordinates.z());
+    signedDistanceField_ = std::make_unique<signed_distance_field::GridmapSignedDistanceField>(subMap, elevationLayerName,
+                                                                                               minCoordinates.z(), maxCoordinates.z());
   } else {
     std::cerr << "[SegmentedPlanesTerrainModel] Failed to get subMap" << std::endl;
   }
@@ -201,9 +206,8 @@ std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decompos
 
 vector3_t SegmentedPlanesTerrainModel::getHighestObstacleAlongLine(const vector3_t& position1InWorld,
                                                                    const vector3_t& position2InWorld) const {
-  const auto& elevationData = planarTerrain_.gridMap.get("elevation");  // TODO: retreive name somewhere;
   const auto result = grid_map::lookup::maxValueBetweenLocations(
-      {position1InWorld.x(), position1InWorld.y()}, {position2InWorld.x(), position2InWorld.y()}, planarTerrain_.gridMap, elevationData);
+      {position1InWorld.x(), position1InWorld.y()}, {position2InWorld.x(), position2InWorld.y()}, planarTerrain_.gridMap, *elevationData_);
   if (result.isValid) {
     return {result.position.x(), result.position.y(), result.value};
   } else {
