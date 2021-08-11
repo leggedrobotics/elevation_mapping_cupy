@@ -3,6 +3,7 @@ project(segmented_planes_terrain_model)
 
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
+	grid_map_filters_rsl
 	ocs2_switched_model_interface
 	grid_map_sdf
 	pcl_ros
