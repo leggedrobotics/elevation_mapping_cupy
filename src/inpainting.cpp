@@ -25,8 +25,9 @@ namespace inpainting {
 void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize) {
   // Generate outline mask.
   grid_map::processing::outline(map, layerIn, "o");
+  grid_map::Matrix& H_outline = map.get("o");
   for (auto iter = 0; iter < kernelSize; ++iter) {
-    grid_map::processing::erode(map, "o", "o", map.get("o"), 3, false);
+    grid_map::processing::erode(map, "o", "o", grid_map::Matrix(), 3, false);
   }
 
   // Create new layer if missing
@@ -40,7 +41,6 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
   // Reference to in and out maps.
   const grid_map::Matrix& H_in = map.get(layerIn);
   grid_map::Matrix& H_out = map.get(layerOut);
-  const grid_map::Matrix& H_outline = map.get("o");
 
   bool success = true;
   constexpr auto infinity = std::numeric_limits<float>::max();
@@ -107,8 +107,9 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
 void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize) {
   // Generate outline mask.
   grid_map::processing::outline(map, layerIn, "o");
+  grid_map::Matrix& H_outline = map.get("o");
   for (auto iter = 0; iter < kernelSize; ++iter) {
-    grid_map::processing::erode(map, "o", "o", map.get("o"), 3, false);
+    grid_map::processing::erode(map, "o", "o", grid_map::Matrix(), 3, false);
   }
 
   // Create new layer if missing
@@ -136,7 +137,6 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
   // Reference to in and out maps.
   const grid_map::Matrix& H_in = map.get(layerIn);
   grid_map::Matrix& H_out = map.get(layerOut);
-  const grid_map::Matrix& H_outline = map.get("o");
 
   for (auto colId = 0; colId < H_in.cols(); ++colId) {
     for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
