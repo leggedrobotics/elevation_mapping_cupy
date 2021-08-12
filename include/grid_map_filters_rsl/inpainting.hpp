@@ -20,8 +20,9 @@ namespace inpainting {
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)
+ * @param kernelSize    kernel length in which candidate values for in-painting are considered.
  */
-void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut);
+void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize);
 
 /**
  * @brief Inpaint missing data using bi-linear interpolation. The neighborhood search is only performed along the column and the row of the
@@ -29,8 +30,9 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)
+ * @param kernelSize    kernel length in which candidate values for in-painting are considered.
  */
-void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut);
+void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize);
 
 /**
  * @brief nonlinear interpolation (open-cv function). In-place operation (layerIn = layerOut) is supported.
