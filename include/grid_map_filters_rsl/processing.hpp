@@ -38,7 +38,7 @@ void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::strin
  * @param inpaint       if true, also replaces potential nan values by the minimum
  */
 void erode(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut,
-           const grid_map::Matrix& mask = grid_map::Matrix(), int kernelSize = 9, bool inpaint = true);
+           const grid_map::Matrix& mask = grid_map::Matrix(), int kernelSize = 9, bool inpaint);
 
 /**
  * @brief Extracts a thin layer of height values, surrounding patches of nan-values. In-place operation (layerIn = layerOut) is NOT
