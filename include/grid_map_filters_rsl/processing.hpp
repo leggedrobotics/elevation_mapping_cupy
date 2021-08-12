@@ -24,6 +24,6 @@ namespace processing {
  * @param kernelSize    vicinity considered by filter (mist be odd).
  */
 void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut,
-            const grid_map::Matrix& mask = grid_map::Matrix(), int kernelSize = 9);
+            const grid_map::Matrix& mask = grid_map::Matrix(), int kernelSize);
 }  // namespace processing
 }  // namespace grid_map
