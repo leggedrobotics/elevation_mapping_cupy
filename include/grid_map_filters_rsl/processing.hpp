@@ -24,8 +24,8 @@ namespace processing {
  * @param kernelSize    vicinity considered by filter (mist be odd).
  * @param inpaint       if true, also replaces potential nan values by the minimum
  */
-void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut,
-            const grid_map::Matrix& mask = grid_map::Matrix(), int kernelSize = 9, bool inpaint);
+void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, const grid_map::Matrix& mask, int kernelSize,
+            bool inpaint = true);
 
 /**
  * @brief Replaces values by min in region. In-place operation (layerIn = layerOut) is NOT supported. Supports nan values.
@@ -37,8 +37,8 @@ void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::strin
  * @param kernelSize    vicinity considered by filter (mist be odd).
  * @param inpaint       if true, also replaces potential nan values by the minimum
  */
-void erode(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut,
-           const grid_map::Matrix& mask = grid_map::Matrix(), int kernelSize = 9, bool inpaint);
+void erode(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, const grid_map::Matrix& mask, int kernelSize,
+           bool inpaint = true);
 
 /**
  * @brief Extracts a thin layer of height values, surrounding patches of nan-values. In-place operation (layerIn = layerOut) is NOT
