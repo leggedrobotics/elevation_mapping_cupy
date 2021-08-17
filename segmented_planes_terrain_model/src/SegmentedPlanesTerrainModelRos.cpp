@@ -87,7 +87,7 @@ void SegmentedPlanesTerrainModelRos::callback(const convex_plane_decomposition_m
 
   {  // Move to storage under the lock
     std::lock_guard<std::mutex> lock(updateMutex_);
-    terrainPtr_ = std::move(terrainPtr);
+    terrainPtr_.swap(terrainPtr);
   }
 
   callbackTimer_.endTimer();
