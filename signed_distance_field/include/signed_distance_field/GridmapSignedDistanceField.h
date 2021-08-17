@@ -61,6 +61,7 @@ class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
 
   using node_data_t = std::array<float, 4>;
   static double distance(const node_data_t& nodeData) noexcept { return nodeData[0]; }
+  static float distanceFloat(const node_data_t& nodeData) noexcept { return nodeData[0]; }
   static Eigen::Vector3d derivative(const node_data_t& nodeData) noexcept { return {nodeData[1], nodeData[2], nodeData[3]}; }
 
   Gridmap3dLookup gridmap3DLookup_;

@@ -113,7 +113,7 @@ pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::asPointCloud(size_t 
       for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; rowX += decimation) {
         const Gridmap3dLookup::size_t_3d index3d = {rowX, colY, layerZ};
         const auto index = gridmap3DLookup_.linearIndex(index3d);
-        const auto signeddistance = distance(data_[index]);
+        const auto signeddistance = distanceFloat(data_[index]);
         if (condition(signeddistance)) {
           const auto p = gridmap3DLookup_.nodePosition(index3d);
           pcl::PointXYZI point;
