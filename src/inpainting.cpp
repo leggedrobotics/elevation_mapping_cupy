@@ -22,85 +22,72 @@
 namespace grid_map {
 namespace inpainting {
 
-void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize) {
-  // Generate outline mask.
-  grid_map::processing::outline(map, layerIn, "o");
-  grid_map::Matrix& H_outline = map.get("o");
-  for (auto iter = 0; iter < kernelSize; ++iter) {
-    grid_map::processing::erode(map, "o", "o", grid_map::Matrix(), 3, false);
-  }
-
+void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut) {
   // Create new layer if missing
   if (!map.exists(layerOut)) {
     map.add(layerOut, map.get(layerIn));
-  } else {
-    // initialize with a copy
-    map.get(layerOut) = map.get(layerIn);
   }
 
-  // Reference to in and out maps.
+  // Reference to in, and out maps, initialize with copy
   const grid_map::Matrix& H_in = map.get(layerIn);
   grid_map::Matrix& H_out = map.get(layerOut);
+  H_out = H_in;
 
-  bool success = true;
-  constexpr auto infinity = std::numeric_limits<float>::max();
+  // Some constant
+  const int numCols = H_in.cols();
+  const int maxColId = numCols - 1;
+  const int numRows = H_in.rows();
+  const int maxRowId = numRows - 1;
 
-  for (auto colId = 0; colId < H_in.cols(); ++colId) {
-    for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
-      if (std::isnan(H_in(rowId, colId))) {
-        auto minValue = infinity;
+  // Common operation of updating the minimum and keeping track if the minimum was updated.
+  auto compareAndStoreMin = [](float newValue, float& currentMin, bool& changedValue) {
+    if (!std::isnan(newValue)) {
+      if (newValue < currentMin || std::isnan(currentMin)) {
+        currentMin = newValue;
+        changedValue = true;
+      }
+    }
+  };
 
-        // Search in negative direction.
-        for (auto id = rowId - 1; id >= 0; --id) {
-          auto newValue = H_outline(id, colId);
-          if (!std::isnan(newValue)) {
-            minValue = std::fmin(minValue, newValue);
-            break;
+  /*
+   * Fill each cell that needs inpainting with the min of its neighbours until the map doesn't change anymore.
+   * This way each inpainted area gets the minimum value along its contour.
+   *
+   * We will be reading and writing to H_out during iteration. However, the aliasing does not break the correctness of the algorithm.
+   */
+  bool hasAtLeastOneValue = true;
+  bool changedValue = true;
+  while (changedValue && hasAtLeastOneValue) {
+    hasAtLeastOneValue = false;
+    changedValue = false;
+    for (int colId = 0; colId < numCols; ++colId) {
+      for (int rowId = 0; rowId < numRows; ++rowId) {
+        if (std::isnan(H_in(rowId, colId))) {
+          // left
+          if (colId > 0) {
+            const auto leftValue = H_out(rowId, colId - 1);
+            compareAndStoreMin(leftValue, H_out(rowId, colId), changedValue);
           }
-        }
-
-        for (auto id = colId - 1; id >= 0; --id) {
-          auto newValue = H_outline(rowId, id);
-          if (!std::isnan(newValue)) {
-            minValue = std::fmin(minValue, newValue);
-            break;
+          // right
+          if (colId < maxColId) {
+            const auto rightValue = H_out(rowId, colId + 1);
+            compareAndStoreMin(rightValue, H_out(rowId, colId), changedValue);
           }
-        }
-
-        // Search in positive direction.
-        for (auto id = rowId + 1; id < H_in.rows(); ++id) {
-          auto newValue = H_outline(id, colId);
-          if (!std::isnan(newValue)) {
-            minValue = std::fmin(minValue, newValue);
-            break;
+          // top
+          if (rowId > 0) {
+            const auto topValue = H_out(rowId - 1, colId);
+            compareAndStoreMin(topValue, H_out(rowId, colId), changedValue);
           }
-        }
-
-        for (auto id = colId + 1; id < H_in.cols(); ++id) {
-          auto newValue = H_outline(rowId, id);
-          if (!std::isnan(newValue)) {
-            minValue = std::fmin(minValue, newValue);
-            break;
+          // bottom
+          if (rowId < maxRowId) {
+            const auto bottomValue = H_out(rowId + 1, colId);
+            compareAndStoreMin(bottomValue, H_out(rowId, colId), changedValue);
           }
-        }
-
-        // Replace.
-        if (minValue < infinity) {
-          H_out(rowId, colId) = minValue;
         } else {
-          success = false;
+          hasAtLeastOneValue = true;
         }
       }
     }
-  }
-
-  // Delete outline mask.
-  map.erase("o");
-
-  // If failed, try again.
-  if (!success) {
-    map.get(layerIn) = map.get(layerOut);
-    return nonlinearInterpolation(map, layerIn, layerOut);
   }
 }
 

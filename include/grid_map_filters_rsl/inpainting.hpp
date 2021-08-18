@@ -20,9 +20,8 @@ namespace inpainting {
  * @param map           grid map
  * @param layerIn       reference layer (filter is applied wrt this layer)
  * @param layerOut      output layer (filtered map is written into this layer)
- * @param kernelSize    kernel length in which candidate values for in-painting are considered.
  */
-void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize);
+void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut);
 
 /**
  * @brief Inpaint missing data using bi-linear interpolation. The neighborhood search is only performed along the column and the row of the
