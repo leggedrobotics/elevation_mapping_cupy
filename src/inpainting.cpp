@@ -63,25 +63,27 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
     for (int colId = 0; colId < numCols; ++colId) {
       for (int rowId = 0; rowId < numRows; ++rowId) {
         if (std::isnan(H_in(rowId, colId))) {
+          auto& middleValue = H_out(rowId, colId);
+
           // left
           if (colId > 0) {
             const auto leftValue = H_out(rowId, colId - 1);
-            compareAndStoreMin(leftValue, H_out(rowId, colId), changedValue);
+            compareAndStoreMin(leftValue, middleValue, changedValue);
           }
           // right
           if (colId < maxColId) {
             const auto rightValue = H_out(rowId, colId + 1);
-            compareAndStoreMin(rightValue, H_out(rowId, colId), changedValue);
+            compareAndStoreMin(rightValue, middleValue, changedValue);
           }
           // top
           if (rowId > 0) {
             const auto topValue = H_out(rowId - 1, colId);
-            compareAndStoreMin(topValue, H_out(rowId, colId), changedValue);
+            compareAndStoreMin(topValue, middleValue, changedValue);
           }
           // bottom
           if (rowId < maxRowId) {
             const auto bottomValue = H_out(rowId + 1, colId);
-            compareAndStoreMin(bottomValue, H_out(rowId, colId), changedValue);
+            compareAndStoreMin(bottomValue, middleValue, changedValue);
           }
         } else {
           hasAtLeastOneValue = true;
