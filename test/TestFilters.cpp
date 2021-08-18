@@ -25,7 +25,7 @@ TEST(TestInpainting, initialization) {  // NOLINT
   // Fill in nan values.
   inpainting::nonlinearInterpolation(map, "elevation", "filled_nonlin", 0.1);
   inpainting::minValues(map, "elevation", "filled_min");
-  inpainting::biLinearInterpolation(map, "elevation", "filled_bilinear", 3);
+  inpainting::biLinearInterpolation(map, "elevation", "filled_bilinear");
 
   // Check if open-cv in-painting was successful.
   constexpr double threshold = 1.0e-9;
