@@ -32,7 +32,7 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
  * @param layerOut      output layer (filtered map is written into this layer)
  * @param kernelSize    kernel length in which candidate values for in-painting are considered.
  */
-void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize);
+void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut);
 
 /**
  * @brief nonlinear interpolation (open-cv function). In-place operation (layerIn = layerOut) is supported.

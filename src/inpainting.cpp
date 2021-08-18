@@ -104,7 +104,7 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
   }
 }
 
-void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize) {
+void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut) {
   // Create new layer if missing
   if (!map.exists(layerOut)) {
     map.add(layerOut, map.get(layerIn));
