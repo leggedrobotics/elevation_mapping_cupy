@@ -22,7 +22,7 @@ namespace processing {
  * @param mask          Filter is applied only where mask contains values of 1 and omitted where values are nan. If mask is an empty matrix,
  *                      applies unmasked dilation.
  * @param kernelSize    vicinity considered by filter (mist be odd).
- * @param inpaint       if true, also replaces potential nan values by the minimum
+ * @param inpaint       if true, also replaces potential nan values by the maximum
  */
 void dilate(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, const grid_map::Matrix& mask, int kernelSize,
             bool inpaint = true);
