@@ -129,6 +129,10 @@ void outline(grid_map::GridMap& map, const std::string& layerIn, const std::stri
         cornerColId = H_in.cols() - kernelSize;
       }
 
+      if (cornerRowId + kernelSize > H_in.rows()) {
+        cornerRowId = H_in.rows() - kernelSize;
+      }
+
       // Check if grid cell touches the nan grid cell.
       if (H_in.block(cornerRowId, cornerColId, kernelSize, kernelSize).hasNaN()) {
         H_out(rowId, colId) = H_in(rowId, colId);
