@@ -105,13 +105,6 @@ void minValues(grid_map::GridMap& map, const std::string& layerIn, const std::st
 }
 
 void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize) {
-  // Generate outline mask.
-  grid_map::processing::outline(map, layerIn, "o");
-  grid_map::Matrix& H_outline = map.get("o");
-  for (auto iter = 0; iter < kernelSize; ++iter) {
-    grid_map::processing::erode(map, "o", "o", grid_map::Matrix(), 3, false);
-  }
-
   // Create new layer if missing
   if (!map.exists(layerOut)) {
     map.add(layerOut, map.get(layerIn));
@@ -147,7 +140,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
 
         // Search in negative direction.
         for (auto id = rowId - 1; id >= 0; --id) {
-          auto newValue = H_outline(id, colId);
+          auto newValue = H_in(id, colId);
           if (!std::isnan(newValue)) {
             indices[0] = Eigen::Vector2i(id, colId);
             values[0] = newValue;
@@ -157,7 +150,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
         }
 
         for (auto id = colId - 1; id >= 0; --id) {
-          auto newValue = H_outline(rowId, id);
+          auto newValue = H_in(rowId, id);
           if (!std::isnan(newValue)) {
             indices[1] = Eigen::Vector2i(rowId, id);
             values[1] = newValue;
@@ -168,7 +161,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
 
         // Search in positive direction.
         for (auto id = rowId + 1; id < H_in.rows(); ++id) {
-          auto newValue = H_outline(id, colId);
+          auto newValue = H_in(id, colId);
           if (!std::isnan(newValue)) {
             indices[2] = Eigen::Vector2i(id, colId);
             values[2] = newValue;
@@ -178,7 +171,7 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
         }
 
         for (auto id = colId + 1; id < H_in.cols(); ++id) {
-          auto newValue = H_outline(rowId, id);
+          auto newValue = H_in(rowId, id);
           if (!std::isnan(newValue)) {
             indices[3] = Eigen::Vector2i(rowId, id);
             values[3] = newValue;
@@ -212,9 +205,6 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
       }
     }
   }
-
-  // Delete outline mask.
-  map.erase("o");
 
   // If failed, try again.
   if (!success) {
