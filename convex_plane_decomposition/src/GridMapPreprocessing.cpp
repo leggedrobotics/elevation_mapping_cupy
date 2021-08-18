@@ -11,8 +11,8 @@ namespace convex_plane_decomposition {
 GridMapPreprocessing::GridMapPreprocessing(const PreprocessingParameters& parameters) : parameters_(parameters) {}
 
 void GridMapPreprocessing::preprocess(grid_map::GridMap& gridMap, const std::string& layer) const {
-  denoise(gridMap, layer);
   inpaint(gridMap, layer);
+  denoise(gridMap, layer);
   changeResolution(gridMap, layer);
 }
 
