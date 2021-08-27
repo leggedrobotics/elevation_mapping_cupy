@@ -151,6 +151,7 @@ class ElevationMap(object):
     def shift_map_z(self, delta_z):
         with self.map_lock:
             self.elevation_map[0] += delta_z
+            self.elevation_map[5] += delta_z
 
     def compile_kernels(self):
         self.new_map = cp.zeros((7, self.cell_n, self.cell_n))
