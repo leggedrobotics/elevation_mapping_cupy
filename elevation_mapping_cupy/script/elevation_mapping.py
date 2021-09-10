@@ -79,8 +79,8 @@ class ElevationMap(object):
 
         self.map_lock = threading.Lock()
 
-        # layers: elevation, variance, is_valid, traversability, time
-        self.elevation_map = xp.zeros((5, self.cell_n, self.cell_n))
+        # layers: elevation, variance, is_valid, traversability, time, upper_bound, is_upper_bound
+        self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
         self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
         self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
         # Initial variance
@@ -146,13 +146,18 @@ class ElevationMap(object):
             # is valid (1 is valid 0 is not valid)
             self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
                                              cval=0)
+            self.elevation_map[5] = shift_fn(self.elevation_map[5], shift_value,
+                                             cval=0)
+            self.elevation_map[6] = shift_fn(self.elevation_map[6], shift_value,
+                                             cval=0)
 
     def shift_map_z(self, delta_z):
         with self.map_lock:
             self.elevation_map[0] += delta_z
+            self.elevation_map[5] += delta_z
 
     def compile_kernels(self):
-        self.new_map = cp.zeros((5, self.cell_n, self.cell_n))
+        self.new_map = cp.zeros((7, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
         self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n))
         self.min_filtered = cp.zeros((self.cell_n, self.cell_n))
@@ -223,13 +228,16 @@ class ElevationMap(object):
                                    size=(points.shape[0]))
             self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
+
+            # self.update_upper_bound_with_valid_elevation()
+
             if self.enable_overlap_clearance:
                 self.clear_overlap_map(t)
 
             # dilation before traversability_filter
             self.traversability_input *= 0.0
-            self.dilation_filter_kernel(self.elevation_map[0],
-                                        self.elevation_map[2],
+            self.dilation_filter_kernel(self.elevation_map[5],
+                                        self.elevation_map[2]+self.elevation_map[6],
                                         self.traversability_input,
                                         self.traversability_mask_dummy,
                                         size=(self.cell_n * self.cell_n))
@@ -252,6 +260,9 @@ class ElevationMap(object):
         near_map[0][clear_idx] = 0.0
         near_map[1][clear_idx] = self.initial_variance
         near_map[2][clear_idx] = 0.0
+        clear_idx = cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
+        near_map[5][clear_idx] = 0.0
+        near_map[6][clear_idx] = 0.0
         self.elevation_map[:, cell_min:cell_max, cell_min:cell_max] = near_map
 
     def get_additive_mean_error(self):
@@ -262,6 +273,11 @@ class ElevationMap(object):
 
     def update_time(self):
         self.elevation_map[4] += self.time_interval
+
+    def update_upper_bound_with_valid_elevation(self):
+        mask = self.elevation_map[2] > 0.5
+        self.elevation_map[5] = xp.where(mask, self.elevation_map[0], self.elevation_map[5])
+        self.elevation_map[6] = xp.where(mask, 0.0, self.elevation_map[6])
 
     def input(self, raw_points, R, t, position_noise, orientation_noise):
         raw_points = xp.asarray(raw_points)
@@ -306,7 +322,7 @@ class ElevationMap(object):
                 variance = variance[1:-1, 1:-1]
                 map_list.append(variance)
             if 2 in selection:
-                traversability = xp.where(self.elevation_map[2] > 0.5,
+                traversability = xp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
                                           self.elevation_map[3].copy(), xp.nan)
                 self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
                 traversability = self.traversability_data[1:-1, 1:-1]
@@ -319,6 +335,16 @@ class ElevationMap(object):
                 time_layer = self.elevation_map[4].copy()
                 time_layer = time_layer[1:-1, 1:-1]
                 map_list.append(time_layer)
+            if 5 in selection:
+                upper_bound = xp.where(xp.logical_or(self.elevation_map[6] > 0.5, self.elevation_map[2] > 0.5),
+                                       self.elevation_map[5].copy(), xp.nan)
+                upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
+                map_list.append(upper_bound)
+            if 6 in selection:
+                is_upper_bound = xp.where(xp.logical_or(self.elevation_map[6] > 0.5, self.elevation_map[2] > 0.5),
+                                          self.elevation_map[6].copy(), xp.nan)
+                is_upper_bound = is_upper_bound[1:-1, 1:-1]
+                map_list.append(is_upper_bound)
 
         # maps = xp.stack([elevation, variance, traversability, min_filtered, time_layer], axis=0)
         maps = xp.stack(map_list, axis=0)
@@ -346,6 +372,8 @@ class ElevationMap(object):
                      traversability_data,
                      min_filtered_data,
                      time_data,
+                     upper_bound,
+                     is_upper_bound,
                      normal_x_data, normal_y_data, normal_z_data, normal=False):
         maps = self.get_maps(selection)
         idx = 0
@@ -365,6 +393,12 @@ class ElevationMap(object):
             idx += 1
         if 4 in selection:
             time_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            idx += 1
+        if 5 in selection:
+            upper_bound[...] = xp.asnumpy(maps[idx], stream=stream)
+            idx += 1
+        if 6 in selection:
+            is_upper_bound[...] = xp.asnumpy(maps[idx], stream=stream)
             idx += 1
         if normal:
             normal_maps = self.get_normal_maps()
@@ -444,6 +478,7 @@ class ElevationMap(object):
                                                             self.elevation_map[0],
                                                             self.elevation_map[2],
                                                             size=(self.cell_n * self.cell_n))
+            self.update_upper_bound_with_valid_elevation()
 
 
 if __name__ == '__main__':
