@@ -29,6 +29,9 @@ class Parameter(object):
         self.cleanup_cos_thresh = 0.5
         self.min_valid_distance = 0.3
         self.max_height_range = 1.0
+        self.ramped_height_range_a = 0.3
+        self.ramped_height_range_b = 1.0
+        self.ramped_height_range_c = 0.2
 
         self.safe_thresh = 0.5
         self.safe_min_thresh = 0.5
@@ -129,6 +132,15 @@ class Parameter(object):
 
     def set_max_height_range(self, max_height_range):
         self.max_height_range = max_height_range
+
+    def set_ramped_height_range_a(self, x):
+        self.ramped_height_range_a = x
+
+    def set_ramped_height_range_b(self, x):
+        self.ramped_height_range_b = x
+
+    def set_ramped_height_range_c(self, x):
+        self.ramped_height_range_c = x
 
     def set_cleanup_step(self, cleanup_step):
         self.cleanup_step = cleanup_step

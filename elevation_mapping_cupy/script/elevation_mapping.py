@@ -63,6 +63,9 @@ class ElevationMap(object):
         self.orientation_noise_thresh = param.orientation_noise_thresh
         self.min_valid_distance = param.min_valid_distance
         self.max_height_range = param.max_height_range
+        self.ramped_height_range_a = param.ramped_height_range_a
+        self.ramped_height_range_b = param.ramped_height_range_b
+        self.ramped_height_range_c = param.ramped_height_range_c
         self.safe_thresh = param.safe_thresh
         self.safe_min_thresh = param.safe_min_thresh
         self.max_unsafe_n = param.max_unsafe_n
@@ -167,6 +170,9 @@ class ElevationMap(object):
                                                    self.min_valid_distance,
                                                    self.max_height_range,
                                                    self.cleanup_cos_thresh,
+                                                   self.ramped_height_range_a,
+                                                   self.ramped_height_range_b,
+                                                   self.ramped_height_range_c,
                                                    self.enable_edge_sharpen,
                                                    self.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
@@ -177,7 +183,11 @@ class ElevationMap(object):
                                                            self.drift_compensation_variance_inlier,
                                                            self.traversability_inlier,
                                                            self.min_valid_distance,
-                                                           self.max_height_range)
+                                                           self.max_height_range,
+                                                           self.ramped_height_range_a,
+                                                           self.ramped_height_range_b,
+                                                           self.ramped_height_range_c,
+                                                           )
         self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
                                                      self.max_variance, self.initial_variance)
 

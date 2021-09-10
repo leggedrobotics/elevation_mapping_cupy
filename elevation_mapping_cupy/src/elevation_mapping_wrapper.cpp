@@ -36,7 +36,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup, enable_overlap_clearance;
   float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier, max_drift, drift_compensation_alpha;
   float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh, max_variance, time_interval,
-        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh, overlap_clear_range_xy, overlap_clear_range_z;
+        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh, overlap_clear_range_xy, overlap_clear_range_z, ramped_height_range_a, ramped_height_range_b, ramped_height_range_c;
   int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
   std::string gather_mode, weight_file;
   py::gil_scoped_acquire acquire;
@@ -126,6 +126,15 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   nh.param<float>("overlap_clear_range_z", overlap_clear_range_z, 2.0);
   param_.attr("set_overlap_clear_range_z")(overlap_clear_range_z);
+
+  nh.param<float>("ramped_height_range_a", ramped_height_range_a, 0.3);
+  param_.attr("set_ramped_height_range_a")(ramped_height_range_a);
+
+  nh.param<float>("ramped_height_range_b", ramped_height_range_b, 1.0);
+  param_.attr("set_ramped_height_range_b")(ramped_height_range_b);
+
+  nh.param<float>("ramped_height_range_c", ramped_height_range_c, 0.2);
+  param_.attr("set_ramped_height_range_c")(ramped_height_range_c);
 
   nh.param<int>("dilation_size", dilation_size, 2);
   param_.attr("set_dilation_size")(dilation_size);
