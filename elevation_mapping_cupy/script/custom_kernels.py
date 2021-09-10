@@ -2,7 +2,8 @@ import cupy as cp
 import string
 
 
-def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range):
+def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range,
+              ramped_height_range_a, ramped_height_range_b, ramped_height_range_c):
     util_preamble = string.Template('''
         __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
 
@@ -53,10 +54,11 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
         __device__ bool is_valid(float16 x, float16 y, float16 z,
                                float16 sx, float16 sy, float16 sz) {
             float d = point_sensor_distance(x, y, z, sx, sy, sz);
+            float dxy = max(sqrt(x * x + y * y) - ${ramped_height_range_b}, 0.0);
             if (d < ${min_valid_distance} * ${min_valid_distance}) {
                 return false;
             }
-            else if (z - sz > ${max_height_range}) {
+            else if (z - sz > dxy * ${ramped_height_range_a} + ${ramped_height_range_c} || z - sz > ${max_height_range}) {
                 return false;
             }
             else {
@@ -94,7 +96,11 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
         ''').substitute(resolution=resolution, width=width, height=height,
                         sensor_noise_factor=sensor_noise_factor,
                         min_valid_distance=min_valid_distance,
-                        max_height_range=max_height_range)
+                        max_height_range=max_height_range,
+                        ramped_height_range_a=ramped_height_range_a,
+                        ramped_height_range_b=ramped_height_range_b,
+                        ramped_height_range_c=ramped_height_range_c,
+                        )
     return util_preamble
 
 
@@ -102,12 +108,14 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       mahalanobis_thresh, outlier_variance, wall_num_thresh,
                       max_ray_length, cleanup_step, min_valid_distance,
                       max_height_range, cleanup_cos_thresh,
+                      ramped_height_range_a, ramped_height_range_b, ramped_height_range_c,
                       enable_edge_shaped=True, enable_visibility_cleanup=True):
 
     add_points_kernel = cp.ElementwiseKernel(
             in_params='raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map',
             out_params='raw U map, raw T newmap',
-            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
+            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range,
+                               ramped_height_range_a, ramped_height_range_b, ramped_height_range_c),
             operation=\
             string.Template(
             '''
@@ -212,12 +220,15 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
 
 def error_counting_kernel(resolution, width, height, sensor_noise_factor,
                           mahalanobis_thresh, outlier_variance,
-                          traversability_inlier, min_valid_distance, max_height_range):
+                          traversability_inlier, min_valid_distance, max_height_range,
+                          ramped_height_range_a, ramped_height_range_b, ramped_height_range_c,
+                          ):
 
     error_counting_kernel = cp.ElementwiseKernel(
             in_params='raw U map, raw U p, raw U center_x, raw U center_y, raw U R, raw U t',
             out_params='raw U newmap, raw T error, raw T error_cnt',
-            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range),
+            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range,
+                               ramped_height_range_a, ramped_height_range_b, ramped_height_range_c),
             operation=\
             string.Template(
             '''

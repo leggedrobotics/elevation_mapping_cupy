@@ -19,6 +19,9 @@ position_lowpass_alpha: 0.2                     # lowpass filter alpha used for 
 orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
 min_valid_distance: 0.5                         # points with shorter distance will be filtered out.
 max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
+ramped_height_range_a: 0.3                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+ramped_height_range_b: 1.0                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+ramped_height_range_c: 0.2                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
 update_variance_fps: 5.0                        # fps for updating variance.
 update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
 time_interval: 0.1                              # Time layer is updated with this interval.
