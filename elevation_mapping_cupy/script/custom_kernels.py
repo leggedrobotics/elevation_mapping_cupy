@@ -198,7 +198,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     }
                     // If updated recently, skip
                     // if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
-                    if (non_updated_t < 1.0) {continue;}
+                    if (non_updated_t < 0.5) {continue;}
 
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
                     // if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.3) {
