@@ -336,12 +336,12 @@ class ElevationMap(object):
                 time_layer = time_layer[1:-1, 1:-1]
                 map_list.append(time_layer)
             if 5 in selection:
-                upper_bound = xp.where(xp.logical_or(self.elevation_map[6] > 0.5, self.elevation_map[2] > 0.5),
+                upper_bound = xp.where(xp.logical_or(xp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
                                        self.elevation_map[5].copy(), xp.nan)
                 upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
                 map_list.append(upper_bound)
             if 6 in selection:
-                is_upper_bound = xp.where(xp.logical_or(self.elevation_map[6] > 0.5, self.elevation_map[2] > 0.5),
+                is_upper_bound = xp.where(xp.logical_or(xp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
                                           self.elevation_map[6].copy(), xp.nan)
                 is_upper_bound = is_upper_bound[1:-1, 1:-1]
                 map_list.append(is_upper_bound)
