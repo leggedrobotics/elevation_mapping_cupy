@@ -8,13 +8,10 @@
 
 namespace switched_model {
 
-visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, ocs2::Color color, double diameter,
-                                                        double linewidth, double normalLength) {
+visualization_msgs::MarkerArray getConvexTerrainMarkers(const ConvexTerrain& convexTerrain, ocs2::Color color, double linewidth,
+                                                        double normalLength) {
   visualization_msgs::MarkerArray markerArray;
-  markerArray.markers.reserve(3);
-
-  // Mark the center point
-  markerArray.markers.emplace_back(ocs2::getSphereMsg(convexTerrain.plane.positionInWorld, color, diameter));
+  markerArray.markers.reserve(2);
 
   // Mark the surface normal
   const vector3_t surfaceNormal = normalLength * surfaceNormalInWorld(convexTerrain.plane);

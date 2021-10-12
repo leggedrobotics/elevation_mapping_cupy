@@ -25,8 +25,7 @@ const std::string frameId_ = "odom";
 std::unique_ptr<grid_map::GridMap> messageMap;
 
 visualization_msgs::MarkerArray toMarker(const switched_model::ConvexTerrain& convexTerrain) {
-  visualization_msgs::MarkerArray markerArray =
-      switched_model::getConvexTerrainMarkers(convexTerrain, ocs2::Color::orange, 0.02, 0.005, 0.1);
+  visualization_msgs::MarkerArray markerArray = switched_model::getConvexTerrainMarkers(convexTerrain, ocs2::Color::orange, 0.005, 0.1);
 
   // Add headers and Id
   const ros::Time timeStamp = ros::Time::now();
