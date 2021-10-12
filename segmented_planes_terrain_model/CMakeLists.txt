@@ -44,6 +44,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
+	src/SegmentedPlaneProjection.cpp
 	src/SegmentedPlanesTerrainModel.cpp
 	src/SegmentedPlanesTerrainModelRos.cpp
 	src/SegmentedPlanesTerrainVisualization.cpp
