@@ -62,6 +62,9 @@ PostprocessingParameters loadPostprocessingParameters(const ros::NodeHandle& nod
   loadParameter(nodeHandle, prefix, "extracted_planes_height_offset", postprocessingParameters.extracted_planes_height_offset);
   loadParameter(nodeHandle, prefix, "nonplanar_height_offset", postprocessingParameters.nonplanar_height_offset);
   loadParameter(nodeHandle, prefix, "nonplanar_horizontal_offset", postprocessingParameters.nonplanar_horizontal_offset);
+  loadParameter(nodeHandle, prefix, "smoothing_dilation_size", postprocessingParameters.smoothing_dilation_size);
+  loadParameter(nodeHandle, prefix, "smoothing_box_kernel_size", postprocessingParameters.smoothing_box_kernel_size);
+  loadParameter(nodeHandle, prefix, "smoothing_gauss_kernel_size", postprocessingParameters.smoothing_gauss_kernel_size);
   return postprocessingParameters;
 }
 
