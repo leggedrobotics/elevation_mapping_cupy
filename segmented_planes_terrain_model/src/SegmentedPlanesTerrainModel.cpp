@@ -27,8 +27,7 @@ TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongG
   const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
-  const auto& seedpointInWorldFrame =
-      positionInWorldFrameFromPositionInTerrain({seedpoint.x(), seedpoint.y(), 0.0}, region.planeParameters);
+  const auto& seedpointInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(seedpoint, region.planeParameters);
   return TerrainPlane{seedpointInWorldFrame, region.planeParameters.orientationWorldToTerrain};
 }
 
@@ -36,8 +35,7 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(con
   const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
-  const auto& seedpointInWorldFrame =
-      positionInWorldFrameFromPositionInTerrain({seedpoint.x(), seedpoint.y(), 0.0}, region.planeParameters);
+  const auto& seedpointInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(seedpoint, region.planeParameters);
 
   // Convert boundary and seedpoint to terrain frame
   const int numberOfVertices = 16;  // Multiple of 4 is nice for symmetry.

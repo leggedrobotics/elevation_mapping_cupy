@@ -11,32 +11,18 @@ namespace switched_model {
 // alias to avoid long namespace
 namespace cpd = convex_plane_decomposition;
 
-// TODO (rgrandia) : deadzone a parameter
-const double zHeightDistanceDeadzone = 0.1;  // [m] This difference in z height is not counted
-
 double distanceCost(const vector3_t& query, const vector3_t& terrainPoint) {
   const double dx = query.x() - terrainPoint.x();
   const double dy = query.y() - terrainPoint.y();
-  const double dz = std::max(0.0, std::abs(query.z() - terrainPoint.z()) - zHeightDistanceDeadzone);
+  const double dz = query.z() - terrainPoint.z();
   return dx * dx + dy * dy + dz * dz;
 }
 
 double distanceCostLowerbound(double distanceSquared) {
-  // cost = dx*dx + dy*dy + max(0.0, (|dz| - z0)).^2   with z0 >= 0
-  // Need a lower bound for this cost derived from square distance and shift
-  //
-  // dz*dz - z0*z0   < max(0.0, (|dz| - z0)).^2
-  // if |dz| > z0 ==>
-  //    dz*dz - 2*|dz|*z0 + z0*z0 = (|dz| - z0).^2
-  //    dz*dz - 2*z0*z0 + z0*z0   < (|dz| - z0).^2
-  //    dz*dz - z0*z0   < (|dz| - z0).^2
-  //
-  // if |dz| < z0 ==>
-  //    dz*dz - z0*z0  < 0.0  (true)
-  return distanceSquared - zHeightDistanceDeadzone * zHeightDistanceDeadzone;
+  return distanceSquared;
 }
 
-double singleSidedSquaredDistance(double value, double min, double max) {
+double intervalSquareDistance(double value, double min, double max) {
   //   -    |    0     |    +
   //       min        max
   // Returns 0.0 if between min and max. Returns the distance to one boundary otherwise.
@@ -51,12 +37,10 @@ double singleSidedSquaredDistance(double value, double min, double max) {
   }
 }
 
-double squaredDistanceToBoundingBox(const vector3_t& positionInWorld, const cpd::PlanarRegion& planarRegion) {
-  const auto& positionInTerrainFrame = positionInTerrainFrameFromPositionInWorld(positionInWorld, planarRegion.planeParameters);
-  double dxdx = singleSidedSquaredDistance(positionInTerrainFrame.x(), planarRegion.bbox2d.xmin(), planarRegion.bbox2d.xmax());
-  double dydy = singleSidedSquaredDistance(positionInTerrainFrame.y(), planarRegion.bbox2d.ymin(), planarRegion.bbox2d.ymax());
-  double dzdz = positionInTerrainFrame.z() * positionInTerrainFrame.z();
-  return dxdx + dydy + dzdz;
+double squaredDistanceToBoundingBox(const cpd::CgalPoint2d& point, const cpd::CgalBbox2d& boundingBox) {
+  double dxdx = intervalSquareDistance(point.x(), boundingBox.xmin(), boundingBox.xmax());
+  double dydy = intervalSquareDistance(point.y(), boundingBox.ymin(), boundingBox.ymax());
+  return dxdx + dydy;
 }
 
 const cpd::CgalPolygonWithHoles2d* findInsetContainingThePoint(const cpd::CgalPoint2d& point,
@@ -69,11 +53,7 @@ const cpd::CgalPolygonWithHoles2d* findInsetContainingThePoint(const cpd::CgalPo
   return nullptr;
 }
 
-std::pair<double, cpd::CgalPoint2d> squaredDistanceToBoundary(const vector3_t& positionInWorld, const cpd::PlanarRegion& planarRegion) {
-  const auto& positionInTerrainFrame = positionInTerrainFrameFromPositionInWorld(positionInWorld, planarRegion.planeParameters);
-  const double dzdz = positionInTerrainFrame.z() * positionInTerrainFrame.z();
-  const cpd::CgalPoint2d queryProjectedToPlane{positionInTerrainFrame.x(), positionInTerrainFrame.y()};
-
+cpd::CgalPoint2d projectToPlanarRegion(const cpd::CgalPoint2d& queryProjectedToPlane, const cpd::PlanarRegion& planarRegion) {
   // First search if the projected point is inside any of the insets.
   const auto* const insetPtrContainingPoint = findInsetContainingThePoint(queryProjectedToPlane, planarRegion.boundaryWithInset.insets);
 
@@ -103,41 +83,63 @@ std::pair<double, cpd::CgalPoint2d> squaredDistanceToBoundary(const vector3_t& p
     }
   }
 
-  return {dzdz + cpd::squaredDistance(projectedPoint, queryProjectedToPlane), projectedPoint};
+  return projectedPoint;
 }
 
-std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const std::vector<cpd::PlanarRegion>& planarRegions) {
+std::vector<RegionSortingInfo> sortWithBoundingBoxes(const vector3_t& positionInWorld,
+                                                     const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions) {
   // Compute distance to bounding boxes
-  std::vector<std::pair<const cpd::PlanarRegion*, double>> regionsAndBboxSquareDistances;
+  std::vector<RegionSortingInfo> regionsAndBboxSquareDistances;
   regionsAndBboxSquareDistances.reserve(planarRegions.size());
   for (const auto& planarRegion : planarRegions) {
-    double squareDistance = squaredDistanceToBoundingBox(positionInWorld, planarRegion);
-    regionsAndBboxSquareDistances.emplace_back(&planarRegion, distanceCostLowerbound(squareDistance));
+    const auto& positionInTerrainFrame = positionInTerrainFrameFromPositionInWorld(positionInWorld, planarRegion.planeParameters);
+    const double dzdz = positionInTerrainFrame.z() * positionInTerrainFrame.z();
+
+    RegionSortingInfo regionSortingInfo;
+    regionSortingInfo.regionPtr = &planarRegion;
+    regionSortingInfo.positionInTerrainFrame = {positionInTerrainFrame.x(), positionInTerrainFrame.y()};
+    regionSortingInfo.boundingBoxSquareDistance =
+        squaredDistanceToBoundingBox(regionSortingInfo.positionInTerrainFrame, planarRegion.bbox2d) + dzdz;
+
+    regionsAndBboxSquareDistances.push_back(regionSortingInfo);
   }
 
   // Sort regions close to far
   std::sort(regionsAndBboxSquareDistances.begin(), regionsAndBboxSquareDistances.end(),
-            [](const std::pair<const cpd::PlanarRegion*, double>& lhs, const std::pair<const cpd::PlanarRegion*, double>& rhs) {
-              return lhs.second < rhs.second;
+            [](const RegionSortingInfo& lhs, const RegionSortingInfo& rhs) {
+              return lhs.boundingBoxSquareDistance < rhs.boundingBoxSquareDistance;
             });
 
-  // Look for closest planar region. Use bbox as lower bound to stop searching.
-  double minDistSquared = std::numeric_limits<double>::max();
+  return regionsAndBboxSquareDistances;
+}
+
+std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> getPlanarRegionAtPositionInWorld(
+    const vector3_t& positionInWorld, const std::vector<cpd::PlanarRegion>& planarRegions) {
+  const auto sortedRegions = sortWithBoundingBoxes(positionInWorld, planarRegions);
+
+  // Look for closest planar region.
+  double minCost = std::numeric_limits<double>::max();
   std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> closestRegionAndProjection;
-  for (const auto& regionAndBboxSquareDistance : regionsAndBboxSquareDistances) {
-    if (regionAndBboxSquareDistance.second > minDistSquared) {
-      break;  // regions are sorted. Can exit on the first lower bound being larger than running minimum
+  for (const auto& regionInfo : sortedRegions) {
+    // Skip based on lower bound
+    if (distanceCostLowerbound(regionInfo.boundingBoxSquareDistance) > minCost) {
+      continue;
     }
 
-    const auto distanceSqrAndProjection = squaredDistanceToBoundary(positionInWorld, *regionAndBboxSquareDistance.first);
-    const auto& projectionInWorldFrame =
-        positionInWorldFrameFromPositionInTerrain({distanceSqrAndProjection.second.x(), distanceSqrAndProjection.second.y(), 0.0},
-                                                  regionAndBboxSquareDistance.first->planeParameters);
+    // Shorthand
+    const auto* regionPtr = regionInfo.regionPtr;
+    const auto& planeParameters = regionPtr->planeParameters;
+
+    // Project onto planar region
+    const auto projectedPointInTerrainFrame = projectToPlanarRegion(regionInfo.positionInTerrainFrame, *regionPtr);
+
+    // Express projected point in World frame
+    const auto projectionInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(projectedPointInTerrainFrame, planeParameters);
+
     const double distCost = distanceCost(positionInWorld, projectionInWorldFrame);
-    if (distCost < minDistSquared) {
-      minDistSquared = distCost;
-      closestRegionAndProjection = {regionAndBboxSquareDistance.first, distanceSqrAndProjection.second};
+    if (distCost < minCost) {
+      minCost = distCost;
+      closestRegionAndProjection = {regionPtr, projectedPointInTerrainFrame};
     }
   }
 
