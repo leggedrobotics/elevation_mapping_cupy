@@ -87,4 +87,35 @@ vector3_t SegmentedPlanesTerrainModel::getHighestObstacleAlongLine(const vector3
   }
 }
 
+std::vector<vector2_t> SegmentedPlanesTerrainModel::getHeightProfileAlongLine(const vector3_t& position1InWorld,
+                                                                              const vector3_t& position2InWorld) const {
+  const vector2_t diff2d = position2InWorld.head<2>() - position1InWorld.head<2>();
+  const scalar_t diffSquareNorm = diff2d.squaredNorm();
+  const auto resolution = planarTerrain_.gridMap.getResolution();
+
+  if (diffSquareNorm > (resolution * resolution)) {  // norm(p2-p1)_XY > resolution
+    const auto pointsOnLine =
+        grid_map::lookup::valuesBetweenLocations({position1InWorld.x(), position1InWorld.y()}, {position2InWorld.x(), position2InWorld.y()},
+                                                 planarTerrain_.gridMap, *elevationData_);
+
+    std::vector<vector2_t> heightProfile;
+    heightProfile.reserve(pointsOnLine.size());
+
+    for (const auto& point : pointsOnLine) {
+      const vector2_t pointDiff = point.head<2>() - position1InWorld.head<2>();
+      const scalar_t lineProgress = pointDiff.dot(diff2d) / diffSquareNorm;
+      if (lineProgress >= 0.0 && lineProgress <= 1.0) {
+        heightProfile.push_back({lineProgress, point.z()});
+      }
+    }
+
+    return heightProfile;
+  } else {
+    grid_map::Index index;
+    planarTerrain_.gridMap.getIndex({position1InWorld.x(), position1InWorld.y()}, index);
+    scalar_t heightData = (*elevationData_)(index(0), index(1));
+    return {{0.0, heightData}, {1.0, heightData}};
+  }
+}
+
 }  // namespace switched_model

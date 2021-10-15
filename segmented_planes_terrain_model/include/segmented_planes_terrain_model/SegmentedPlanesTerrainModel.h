@@ -25,6 +25,8 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
 
   vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
 
+  std::vector<vector2_t> getHeightProfileAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
+
   const convex_plane_decomposition::PlanarTerrain& planarTerrain() const { return planarTerrain_; }
 
  private:
