@@ -56,12 +56,12 @@ std::vector<grid_map::Position3> valuesBetweenLocations(const grid_map::Position
   lineValues.reserve(manhattanPixels);
 
   // Line iteration
+  grid_map::Position position;
   for (grid_map::LineIterator iterator(gridMap, startPos, endPos); !iterator.isPastEnd(); ++iterator) {
-    const grid_map::Index index = *iterator;
+    const auto& index = *iterator;
     const auto value = data(index(0), index(1));
 
     if (std::isfinite(value)) {
-      grid_map::Position position;
       gridMap.getPosition(index, position);
       lineValues.push_back({position.x(), position.y(), value});
     }
