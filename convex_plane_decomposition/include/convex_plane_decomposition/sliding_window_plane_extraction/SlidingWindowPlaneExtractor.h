@@ -26,14 +26,15 @@ class SlidingWindowPlaneExtractor {
 
  private:
   bool isGloballyPlanar(const Eigen::Vector3d& normalVectorPlane, const Eigen::Vector3d& supportVectorPlane,
-                        const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const;
+                        const std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) const;
 
   std::pair<Eigen::Vector3d, double> computeNormalAndErrorForWindow(const Eigen::MatrixXf& windowData) const;
   bool isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanError) const;
 
   int getLinearIndex(int row, int col) const { return row + col * map_->getSize()[0]; };
 
-  void computePlaneParametersForLabel(int label);
+  void computePlaneParametersForLabel(int label, std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal);
+  void refineLabelWithRansac(int label, std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal);
 
   void extractPlaneParametersFromLabeledImage();
 

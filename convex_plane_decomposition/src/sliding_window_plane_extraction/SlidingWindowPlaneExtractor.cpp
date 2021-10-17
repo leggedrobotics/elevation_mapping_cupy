@@ -14,8 +14,11 @@
 namespace convex_plane_decomposition {
 namespace sliding_window_plane_extractor {
 
-double angleBetweenVectorsInDegrees(const Eigen::Vector3d& v1, const Eigen::Vector3d& v2) {
-  double cos_rad = v1.normalized().dot(v2.normalized());
+namespace {
+
+// Assumes v1 and v2 are of unit lenght
+double angleBetweenNormalizedVectorsInDegrees(const Eigen::Vector3d& v1, const Eigen::Vector3d& v2) {
+  double cos_rad = v1.dot(v2);
   if (cos_rad < -1.0) {
     cos_rad = -1.0;
   } else if (cos_rad > 1.0) {
@@ -23,6 +26,32 @@ double angleBetweenVectorsInDegrees(const Eigen::Vector3d& v1, const Eigen::Vect
   }
   return std::abs(std::acos(cos_rad) * 180.0 / M_PI);
 }
+
+std::pair<Eigen::Vector3d, double> normalAndErrorFromCovariance(int numPoint, const Eigen::Vector3d& mean,
+                                                                const Eigen::Matrix3d& sumSquared) {
+  const Eigen::Matrix3d covarianceMatrix = sumSquared / numPoint - mean * mean.transpose();
+
+  // Compute Eigenvectors.
+  // Eigenvalues are ordered small to large.
+  // Worst case bound for zero eigenvalue from : https://eigen.tuxfamily.org/dox/classEigen_1_1SelfAdjointEigenSolver.html
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver;
+  solver.computeDirect(covarianceMatrix, Eigen::DecompositionOptions::ComputeEigenvectors);
+  if (solver.eigenvalues()(1) > 1e-8) {
+    Eigen::Vector3d unitaryNormalVector = solver.eigenvectors().col(0);
+
+    // Check direction of the normal vector and flip the sign upwards
+    if (unitaryNormalVector.z() < 0.0) {
+      unitaryNormalVector = -unitaryNormalVector;
+    }
+    // The first eigenvalue might become slightly negative due to numerics.
+    double rmsError = (solver.eigenvalues()(0) > 0.0) ? std::sqrt(solver.eigenvalues()(0)) : 0.0;
+    return {unitaryNormalVector, rmsError};
+  } else {  // If second eigenvalue is zero, the normal is not defined.
+    return {Eigen::Vector3d::UnitZ(), 1e30};
+  }
+}
+
+}  // namespace
 
 SlidingWindowPlaneExtractor::SlidingWindowPlaneExtractor(const SlidingWindowPlaneExtractorParameters& parameters,
                                                          const ransac_plane_extractor::RansacPlaneExtractorParameters& ransacParameters)
@@ -77,32 +106,13 @@ std::pair<Eigen::Vector3d, double> SlidingWindowPlaneExtractor::computeNormalAnd
     return {Eigen::Vector3d::UnitZ(), 1e30};
   } else {
     const Eigen::Vector3d mean = sum / nPoints;
-    const Eigen::Matrix3d covarianceMatrix = sumSquared / nPoints - mean * mean.transpose();
-
-    // Compute Eigenvectors.
-    // Eigenvalues are ordered small to large.
-    // Worst case bound for zero eigenvalue from : https://eigen.tuxfamily.org/dox/classEigen_1_1SelfAdjointEigenSolver.html
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> solver;
-    solver.computeDirect(covarianceMatrix, Eigen::DecompositionOptions::ComputeEigenvectors);
-    if (solver.eigenvalues()(1) > 1e-8) {
-      Eigen::Vector3d unitaryNormalVector = solver.eigenvectors().col(0);
-
-      // Check direction of the normal vector and flip the sign upwards
-      if (unitaryNormalVector.z() < 0.0) {
-        unitaryNormalVector = -unitaryNormalVector;
-      }
-      // The first eigenvalue might become slightly negative due to numerics.
-      double rmsError = (solver.eigenvalues()(0) > 0.0) ? std::sqrt(solver.eigenvalues()(0)) : 0.0;
-      return {unitaryNormalVector, rmsError};
-    } else {  // If second eigenvalue is zero, the normal is not defined.
-      return {Eigen::Vector3d::UnitZ(), 1e30};
-    }
+    return normalAndErrorFromCovariance(nPoints, mean, sumSquared);
   }
 }
 
 bool SlidingWindowPlaneExtractor::isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanError) const {
   return (meanError < parameters_.plane_patch_error_threshold &&
-          angleBetweenVectorsInDegrees(localNormal, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees);
+          angleBetweenNormalizedVectorsInDegrees(localNormal, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees);
 }
 
 void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
@@ -146,131 +156,132 @@ void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage() {
   const int numberOfExtractedPlanesWithoutRefinement =
       segmentedPlanesMap_.highestLabel;  // Make local copy. The highestLabel is incremented inside the loop
 
+  // Reserve a workvector that is reused between processing labels
+  std::vector<ransac_plane_extractor::PointWithNormal> pointsWithNormal;
+  pointsWithNormal.reserve(segmentedPlanesMap_.labeledImage.rows * segmentedPlanesMap_.labeledImage.cols);
+
   // Skip label 0. This is the background, i.e. non-planar region.
   for (int label = 1; label <= numberOfExtractedPlanesWithoutRefinement; ++label) {
-    computePlaneParametersForLabel(label);
+    computePlaneParametersForLabel(label, pointsWithNormal);
   }
 }
 
-void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label) {
+void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
+                                                                 std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) {
   const auto& elevationData = (*map_)[elevationLayer_];
+  pointsWithNormal.clear();  // clear the workvector
 
-  std::vector<ransac_plane_extractor::PointWithNormal> points_with_normal;
-  int approximate_num_points =
-      segmentedPlanesMap_.labeledImage.rows * segmentedPlanesMap_.labeledImage.cols / segmentedPlanesMap_.highestLabel;
-  points_with_normal.reserve(approximate_num_points);
-
-  int number_of_normal_instances = 0;
-  int number_of_position_instances = 0;
-  Eigen::Vector3d normal_vector_sum = Eigen::Vector3d::Zero();
-  Eigen::Vector3d support_vector_sum = Eigen::Vector3d::Zero();
-  for (int row = 0; row < segmentedPlanesMap_.labeledImage.rows; ++row) {
-    for (int col = 0; col < segmentedPlanesMap_.labeledImage.cols; ++col) {
+  int numPoints = 0;
+  Eigen::Vector3d sum = Eigen::Vector3d::Zero();
+  Eigen::Matrix3d sumSquared = Eigen::Matrix3d::Zero();
+  for (int col = 0; col < segmentedPlanesMap_.labeledImage.cols; ++col) {
+    for (int row = 0; row < segmentedPlanesMap_.labeledImage.rows; ++row) {
       if (segmentedPlanesMap_.labeledImage.at<int>(row, col) == label) {
         double height = elevationData(row, col);
         if (std::isfinite(height)) {
-          Eigen::Vector2i index{row, col};
+          const Eigen::Vector3d point3d{segmentedPlanesMap_.mapOrigin.x() - row * segmentedPlanesMap_.resolution,
+                                        segmentedPlanesMap_.mapOrigin.y() - col * segmentedPlanesMap_.resolution, height};
 
-          Eigen::Vector3d normal_vector_temp = surfaceNormals_[getLinearIndex(index.x(), index.y())];
-          normal_vector_sum += normal_vector_temp;
-          ++number_of_normal_instances;
+          ++numPoints;
+          sum += point3d;
+          sumSquared.noalias() += point3d * point3d.transpose();
 
-          Eigen::Vector3d point3d{segmentedPlanesMap_.mapOrigin.x() - row * segmentedPlanesMap_.resolution,
-                                  segmentedPlanesMap_.mapOrigin.y() - col * segmentedPlanesMap_.resolution, height};
-          support_vector_sum += point3d;
-          ++number_of_position_instances;
-
-          points_with_normal.emplace_back(
+          const auto& localSurfaceNormal = surfaceNormals_[getLinearIndex(row, col)];
+          pointsWithNormal.emplace_back(
               ransac_plane_extractor::Point3D(point3d.x(), point3d.y(), point3d.z()),
-              ransac_plane_extractor::Vector3D(normal_vector_temp.x(), normal_vector_temp.y(), normal_vector_temp.z()));
+              ransac_plane_extractor::Vector3D(localSurfaceNormal.x(), localSurfaceNormal.y(), localSurfaceNormal.z()));
         }
       }
     }
   }
-  if (number_of_position_instances < parameters_.min_number_points_per_label) {
+  if (numPoints < parameters_.min_number_points_per_label || numPoints < 3) {
     // Label has too little points, no plane parameters are created
     return;
   }
-  Eigen::Vector3d normal_vector_avg = normal_vector_sum / number_of_normal_instances;
-  normal_vector_avg.normalize();  // Averaging does not preserve norm
-  Eigen::Vector3d support_vector_avg = support_vector_sum / number_of_position_instances;
+
+  const Eigen::Vector3d supportVector = sum / numPoints;
+  const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
 
   // Compute error to fitted plane.
-  if (parameters_.include_ransac_refinement && !isGloballyPlanar(normal_vector_avg, support_vector_avg, points_with_normal)) {
-    // Fix the seed for each label to get deterministic behaviour
-    CGAL::get_default_random() = CGAL::Random(0);
-
-    // Run ransac
-    ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor(ransacParameters_);
-    ransac_plane_extractor.detectPlanes(points_with_normal);
-    const auto& planes = ransac_plane_extractor.getDetectedPlanes();
-
-    bool reuseLabel = true;
-    for (const auto& plane : planes) {
-      // Bookkeeping of labels : reuse old label for the first plane
-      int newLabel = (reuseLabel) ? label : ++segmentedPlanesMap_.highestLabel;
-      reuseLabel = false;
-
-      // Compute average plane parameters for refined segmentation
-      const std::vector<std::size_t>& plane_point_indices = plane->indices_of_assigned_points();
-      Eigen::Vector3d support_vector_refined_sum = Eigen::Vector3d::Zero();
-      Eigen::Vector3d normal_vector_refined_sum = Eigen::Vector3d::Zero();
-      for (const auto index : plane_point_indices) {
-        const auto& point = points_with_normal[index].first;
-        const auto& normal = points_with_normal[index].second;
-        support_vector_refined_sum += Eigen::Vector3d(point.x(), point.y(), point.z());
-        normal_vector_refined_sum += Eigen::Vector3d(normal.x(), normal.y(), normal.z());
-
-        // relabel if required
-        if (newLabel != label) {
-          // Need to lookup indices in map, because RANSAC has reordered the points
-          Eigen::Array2i map_indices;
-          map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
-          segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = newLabel;
-        }
-      }
-
-      Eigen::Vector3d normal_vector_refined_avg = normal_vector_refined_sum / plane_point_indices.size();
-      normal_vector_refined_avg.normalize();  // Averaging does not preserve norm
-      Eigen::Vector3d support_vector_refined_avg = support_vector_refined_sum / plane_point_indices.size();
-
-      if (angleBetweenVectorsInDegrees(normal_vector_refined_avg, Eigen::Vector3d::UnitZ()) <
-          parameters_.plane_inclination_threshold_degrees) {
-        const TerrainPlane temp_plane_parameters(
-            support_vector_refined_avg, switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normal_vector_refined_avg));
-        segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, temp_plane_parameters);
-      }
-    }
-
-    const auto& unassigned_points = ransac_plane_extractor.getUnassignedPointIndices();
-    for (const auto index : unassigned_points) {
-      const auto& point = points_with_normal[index].first;
-
-      // Need to lookup indices in map, because RANSAC has reordered the points
-      Eigen::Array2i map_indices;
-      map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
-      segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = 0;
-    }
+  if (parameters_.include_ransac_refinement && !isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) {
+    refineLabelWithRansac(label, pointsWithNormal);
   } else {
-    if (angleBetweenVectorsInDegrees(normal_vector_avg, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
-      const TerrainPlane temp_plane_parameters(support_vector_avg,
-                                               switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normal_vector_avg));
-      segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, temp_plane_parameters);
+    if (angleBetweenNormalizedVectorsInDegrees(normalVector, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
+      const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
+      segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
     }
+  }
+}
+
+void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) {
+  // Fix the seed for each label to get deterministic behaviour
+  CGAL::get_default_random() = CGAL::Random(0);
+
+  // Run ransac
+  ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor(ransacParameters_);
+  ransac_plane_extractor.detectPlanes(pointsWithNormal);
+  const auto& planes = ransac_plane_extractor.getDetectedPlanes();
+
+  bool reuseLabel = true;
+  for (const auto& plane : planes) {
+    // Bookkeeping of labels : reuse old label for the first plane
+    const int newLabel = (reuseLabel) ? label : ++segmentedPlanesMap_.highestLabel;
+    reuseLabel = false;
+
+    // Compute average plane parameters for refined segmentation
+    const std::vector<std::size_t>& plane_point_indices = plane->indices_of_assigned_points();
+    Eigen::Vector3d sum = Eigen::Vector3d::Zero();
+    Eigen::Matrix3d sumSquared = Eigen::Matrix3d::Zero();
+    for (const auto index : plane_point_indices) {
+      const auto& point = pointsWithNormal[index].first;
+      const Eigen::Vector3d point3d(point.x(), point.y(), point.z());
+
+      sum += point3d;
+      sumSquared.noalias() += point3d * point3d.transpose();
+
+      // relabel if required
+      if (newLabel != label) {
+        // Need to lookup indices in map, because RANSAC has reordered the points
+        Eigen::Array2i map_indices;
+        map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
+        segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = newLabel;
+      }
+    }
+
+    const auto numPoints = plane_point_indices.size();
+    const Eigen::Vector3d supportVector = sum / numPoints;
+    const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
+
+    if (angleBetweenNormalizedVectorsInDegrees(normalVector, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
+      const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
+      segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, TerrainPlane(supportVector, terrainOrientation));
+    }
+  }
+
+  const auto& unassigned_points = ransac_plane_extractor.getUnassignedPointIndices();
+  for (const auto index : unassigned_points) {
+    const auto& point = pointsWithNormal[index].first;
+
+    // Need to lookup indices in map, because RANSAC has reordered the points
+    Eigen::Array2i map_indices;
+    map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
+    segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = 0;
   }
 }
 
 bool SlidingWindowPlaneExtractor::isGloballyPlanar(const Eigen::Vector3d& normalVectorPlane, const Eigen::Vector3d& supportVectorPlane,
-                                                   const std::vector<ransac_plane_extractor::PointWithNormal>& points_with_normal) const {
-  for (const auto& point_with_normal : points_with_normal) {
-    Eigen::Vector3d p_S_P(point_with_normal.first.x() - supportVectorPlane.x(), point_with_normal.first.y() - supportVectorPlane.y(),
-                          point_with_normal.first.z() - supportVectorPlane.z());
-    double distanceError = std::abs(normalVectorPlane.dot(p_S_P));
+                                                   const std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) const {
+  const double normalDotSupportvector = normalVectorPlane.dot(supportVectorPlane);
+
+  for (const auto& pointWithNormal : pointsWithNormal) {
+    const double normalDotPoint = normalVectorPlane.x() * pointWithNormal.first.x() + normalVectorPlane.y() * pointWithNormal.first.y() +
+                                  normalVectorPlane.z() * pointWithNormal.first.z();
+    const double distanceError = std::abs(normalDotPoint - normalDotSupportvector);
     if (distanceError > parameters_.global_plane_fit_distance_error_threshold) {
       return false;
     } else {
-      Eigen::Vector3d pointNormal{point_with_normal.second.x(), point_with_normal.second.y(), point_with_normal.second.z()};
-      double angleError = angleBetweenVectorsInDegrees(pointNormal, normalVectorPlane);
+      Eigen::Vector3d pointNormal{pointWithNormal.second.x(), pointWithNormal.second.y(), pointWithNormal.second.z()};
+      double angleError = angleBetweenNormalizedVectorsInDegrees(pointNormal, normalVectorPlane);
       if (angleError > parameters_.global_plane_fit_angle_error_threshold_degrees) {
         return false;
       }
