@@ -6,8 +6,9 @@ preprocessing:
 
 sliding_window_plane_extractor:
   kernel_size: 3                                        # Size of the sliding window patch used for normal vector calculation and planarity detection. Should be an odd number and at least 3.
-  planarity_erosion: 0                                  # [#] Erode planarity detection by this amount of pixels
-  plane_inclination_threshold_degrees: 45.0             # [deg] Maximum allowed angle between the surface normal and the world-z direction for a patch
+  planarity_opening_filter: 2                           # [#] Apply opening filter (erosion -> dilation) to planarity detection by this amount of pixels
+  plane_inclination_threshold_degrees: 40.0             # [deg] Maximum allowed angle between the surface normal and the world-z direction for a patch
+  local_plane_inclination_threshold_degrees: 55.0       # [deg] Maximum allowed angle between the surface normal and the world-z direction for a cell
   plane_patch_error_threshold: 0.005                    # [m] The allowed root-mean-squared deviation from the plane fitted to the sliding window.
   min_number_points_per_label: 10                       # [#] Labels with less points assigned to them are discarded
   connectivity: 4                                       # Label kernel connectivity. 4 or 8 (cross or box)
@@ -23,7 +24,7 @@ ransac_plane_refinement:
   normal_threshold: 25.0  # [deg] Set maximum normal deviation between cluster surface_normal and point normal.
 
 contour_extraction:
-  offsetSize: 2    # Size of the kernel creating the boundary offset. In number of pixels.
+  offsetSize: 1    # Size of the kernel creating the boundary offset. In number of pixels.
 
 postprocessing:
   extracted_planes_height_offset: 0.0   # Added offset in Z direction for the full map to compensate for the location of the foot frame w.r.t. the contact point

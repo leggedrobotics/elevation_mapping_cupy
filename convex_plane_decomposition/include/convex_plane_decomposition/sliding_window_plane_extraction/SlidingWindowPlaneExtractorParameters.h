@@ -12,11 +12,14 @@ struct SlidingWindowPlaneExtractorParameters {
   /// Should be an odd number and at least 3.
   int kernel_size = 3;
 
-  /// [#] Erode planarity detection by this amount of pixels
-  int planarity_erosion = 0;
+  /// [#] Apply opening filter (erosion -> dilation) to planarity detection by this amount of pixels
+  int planarity_opening_filter = 0;
 
   /// [deg] Maximum allowed angle between the surface normal and the world-z direction for a patch
   double plane_inclination_threshold_degrees = 70.0;
+
+  /// [deg] Maximum allowed angle between the surface normal and the world-z direction for a cell
+  double local_plane_inclination_threshold_degrees = 70.0;
 
   /// [m] The allowed root-mean-squared deviation from the plane fitted to the patch. Higher -> not planar
   double plane_patch_error_threshold = 0.005;

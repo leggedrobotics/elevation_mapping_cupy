@@ -49,7 +49,7 @@ std::vector<BoundaryWithInset> extractBoundaryAndInset(cv::Mat& binary_image, co
   std::vector<CgalPolygonWithHoles2d> boundaries = extractPolygonsFromBinaryImage(binary_image);
 
   // Erode
-  cv::erode(binary_image, binary_image, erosionKernel);
+  cv::erode(binary_image, binary_image, erosionKernel, cv::Point(-1,-1), 1, cv::BORDER_REPLICATE);
 
   // Get insets
   std::vector<CgalPolygonWithHoles2d> insets = extractPolygonsFromBinaryImage(binary_image);

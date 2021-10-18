@@ -42,6 +42,8 @@ class SlidingWindowPlaneExtractor {
 
   void runSlidingWindowDetector();
 
+  void setToBackground(int label);
+
   SlidingWindowPlaneExtractorParameters parameters_;
   ransac_plane_extractor::RansacPlaneExtractorParameters ransacParameters_;
 

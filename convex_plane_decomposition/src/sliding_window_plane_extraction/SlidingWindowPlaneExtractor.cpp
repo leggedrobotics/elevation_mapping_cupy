@@ -80,6 +80,10 @@ void SlidingWindowPlaneExtractor::runExtraction(const grid_map::GridMap& map, co
   runSlidingWindowDetector();
   runSegmentation();
   extractPlaneParametersFromLabeledImage();
+
+  // Get classification from segmentation to account for unassigned points.
+  binaryImagePatch_ = segmentedPlanesMap_.labeledImage > 0;
+  binaryImagePatch_.setTo(1, binaryImagePatch_ == 255);
 }
 
 std::pair<Eigen::Vector3d, double> SlidingWindowPlaneExtractor::computeNormalAndErrorForWindow(const Eigen::MatrixXf& windowData) const {
@@ -112,7 +116,7 @@ std::pair<Eigen::Vector3d, double> SlidingWindowPlaneExtractor::computeNormalAnd
 
 bool SlidingWindowPlaneExtractor::isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanError) const {
   return (meanError < parameters_.plane_patch_error_threshold &&
-          angleBetweenNormalizedVectorsInDegrees(localNormal, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees);
+          angleBetweenNormalizedVectorsInDegrees(localNormal, Eigen::Vector3d::UnitZ()) < parameters_.local_plane_inclination_threshold_degrees);
 }
 
 void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
@@ -137,12 +141,12 @@ void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
     }
   }
 
-  // erode
-  if (parameters_.planarity_erosion > 0) {
-    const int erosionSize = 2 * parameters_.planarity_erosion + 1;
-    const int erosionType = cv::MORPH_CROSS;
-    const auto erosionKernel_ = cv::getStructuringElement(erosionType, cv::Size(erosionSize, erosionSize));
-    cv::erode(binaryImagePatch_, binaryImagePatch_, erosionKernel_);
+  // opening filter
+  if (parameters_.planarity_opening_filter > 0) {
+    const int openingKernelSize = 2 * parameters_.planarity_opening_filter + 1;
+    const int openingKernelType = cv::MORPH_RECT;
+    const auto kernel_ = cv::getStructuringElement(openingKernelType, cv::Size(openingKernelSize, openingKernelSize));
+    cv::morphologyEx(binaryImagePatch_, binaryImagePatch_, cv::MORPH_OPEN, kernel_, cv::Point(-1, -1), 1, cv::BORDER_REPLICATE);
   }
 }
 
@@ -209,6 +213,8 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
     if (angleBetweenNormalizedVectorsInDegrees(normalVector, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
+    } else {
+      setToBackground(label);
     }
   }
 }
@@ -221,6 +227,9 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
   ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor(ransacParameters_);
   ransac_plane_extractor.detectPlanes(pointsWithNormal);
   const auto& planes = ransac_plane_extractor.getDetectedPlanes();
+
+  // Set entire label to background, so unassigned points are automatically in background
+  setToBackground(label);
 
   bool reuseLabel = true;
   for (const auto& plane : planes) {
@@ -238,14 +247,6 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
 
       sum += point3d;
       sumSquared.noalias() += point3d * point3d.transpose();
-
-      // relabel if required
-      if (newLabel != label) {
-        // Need to lookup indices in map, because RANSAC has reordered the points
-        Eigen::Array2i map_indices;
-        map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
-        segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = newLabel;
-      }
     }
 
     const auto numPoints = plane_point_indices.size();
@@ -255,17 +256,17 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
     if (angleBetweenNormalizedVectorsInDegrees(normalVector, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, TerrainPlane(supportVector, terrainOrientation));
+
+      // Assign label in segmentation
+      for (const auto index : plane_point_indices) {
+        const auto& point = pointsWithNormal[index].first;
+
+        // Need to lookup indices in map, because RANSAC has reordered the points
+        Eigen::Array2i map_indices;
+        map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
+        segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = newLabel;
+      }
     }
-  }
-
-  const auto& unassigned_points = ransac_plane_extractor.getUnassignedPointIndices();
-  for (const auto index : unassigned_points) {
-    const auto& point = pointsWithNormal[index].first;
-
-    // Need to lookup indices in map, because RANSAC has reordered the points
-    Eigen::Array2i map_indices;
-    map_->getIndex(Eigen::Vector2d(point.x(), point.y()), map_indices);
-    segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = 0;
   }
 }
 
@@ -292,6 +293,10 @@ bool SlidingWindowPlaneExtractor::isGloballyPlanar(const Eigen::Vector3d& normal
   }
 
   return true;
+}
+
+void SlidingWindowPlaneExtractor::setToBackground(int label) {
+  segmentedPlanesMap_.labeledImage.setTo(0, segmentedPlanesMap_.labeledImage == label);
 }
 
 }  // namespace sliding_window_plane_extractor

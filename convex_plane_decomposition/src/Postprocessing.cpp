@@ -39,7 +39,7 @@ void Postprocessing::dilationInNonplanarRegions(Eigen::MatrixXf& elevationData, 
     const int dilationSize = 2 * parameters_.nonplanar_horizontal_offset + 1;  //
     const int dilationType = cv::MORPH_ELLIPSE;                                // ellipse inscribed in the square of size dilationSize
     const auto dilationKernel_ = cv::getStructuringElement(dilationType, cv::Size(dilationSize, dilationSize));
-    cv::dilate(elevationImage, elevationImage, dilationKernel_);
+    cv::dilate(elevationImage, elevationImage, dilationKernel_, cv::Point(-1, -1), 1, cv::BORDER_REPLICATE);
 
     // convert back
     Eigen::MatrixXf elevationDilated;
@@ -87,7 +87,7 @@ void Postprocessing::addSmoothLayer(grid_map::GridMap& gridMap, const Eigen::Mat
   // Dilate
   const int dilationType = cv::MORPH_ELLIPSE;  // ellipse inscribed in the square of size dilationSize
   const auto dilationKernel_ = cv::getStructuringElement(dilationType, cv::Size(dilationSize, dilationSize));
-  cv::dilate(elevationWithNaNImage, elevationWithNaNImage, dilationKernel_);
+  cv::dilate(elevationWithNaNImage, elevationWithNaNImage, dilationKernel_, cv::Point(-1, -1), 1, cv::BORDER_REPLICATE);
 
   // Take complement image where elevation data was set to NaN
   cv::Mat indicatorImage = cv::Mat::ones(elevationWithNaNImage.rows, elevationWithNaNImage.cols, CV_32F);
@@ -99,8 +99,8 @@ void Postprocessing::addSmoothLayer(grid_map::GridMap& gridMap, const Eigen::Mat
   // Filter definition
   auto smoothingFilter = [kernel, kernelGauss](const cv::Mat& imageIn) {
     cv::Mat imageOut;
-    cv::boxFilter(imageIn, imageOut, -1, {kernel, kernel}, cv::Point(-1, -1), true, cv::BorderTypes::BORDER_CONSTANT);
-    cv::GaussianBlur(imageOut, imageOut, {kernelGauss, kernelGauss}, 0, 0, cv::BorderTypes::BORDER_CONSTANT);
+    cv::boxFilter(imageIn, imageOut, -1, {kernel, kernel}, cv::Point(-1, -1), true, cv::BorderTypes::BORDER_REPLICATE);
+    cv::GaussianBlur(imageOut, imageOut, {kernelGauss, kernelGauss}, 0, 0, cv::BorderTypes::BORDER_REPLICATE);
     return imageOut;
   };
 
