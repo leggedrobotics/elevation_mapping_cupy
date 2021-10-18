@@ -39,7 +39,7 @@ class ConvexPlaneExtractionROS {
    */
   void callback(const grid_map_msgs::GridMap& message);
 
-  Eigen::Isometry3d getTransformToTargetFrame(const std::string& sourceFrame);
+  Eigen::Isometry3d getTransformToTargetFrame(const std::string& sourceFrame, const ros::Time& time);
 
   // Parameters
   std::string elevationMapTopic_;

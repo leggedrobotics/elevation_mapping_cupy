@@ -89,72 +89,76 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMapRosConverter::fromMessage(message, messageMap, layers, false, false);
   bool success;
   grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapLength_, subMapWidth_), success);
-  success = success && containsFiniteValue(elevationMap.get(elevationLayer_)); // Check if there are values
+  success = success && containsFiniteValue(elevationMap.get(elevationLayer_));  // Check if there are values
   ROS_INFO("...done.");
+
+  // Exit early if map is not valid.
+  if (!success) {
+    ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
+    return;
+  }
 
   // Transform map if necessary
   if (targetFrameId_ != elevationMap.getFrameId()) {
     std::string errorMsg;
-    if (tfBuffer_.canTransform(targetFrameId_, elevationMap.getFrameId(), ros::Time(0), &errorMsg)) {
-      elevationMap = elevationMap.getTransformedMap(getTransformToTargetFrame(elevationMap.getFrameId()), elevationLayer_, targetFrameId_);
+    ros::Time timeStamp(messageMap.getTimestamp());
+    if (tfBuffer_.canTransform(targetFrameId_, elevationMap.getFrameId(), timeStamp, &errorMsg)) {
+      elevationMap =
+          elevationMap.getTransformedMap(getTransformToTargetFrame(elevationMap.getFrameId(), timeStamp), elevationLayer_, targetFrameId_);
     } else {
       ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] " << errorMsg);
       return;
     }
   }
 
-  if (success) {
-    auto t0 = std::chrono::high_resolution_clock::now();
-    preprocessing_->preprocess(elevationMap, elevationLayer_);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " [ms]");
+  auto t0 = std::chrono::high_resolution_clock::now();
+  preprocessing_->preprocess(elevationMap, elevationLayer_);
+  auto t1 = std::chrono::high_resolution_clock::now();
+  ROS_INFO_STREAM("Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " [ms]");
 
-    // Run pipeline.
-    slidingWindowPlaneExtractor_->runExtraction(elevationMap, elevationLayer_);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " [ms]");
+  // Run pipeline.
+  slidingWindowPlaneExtractor_->runExtraction(elevationMap, elevationLayer_);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " [ms]");
 
-    PlanarTerrain planarTerrain;
-    planarTerrain.planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
-    auto t3 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
+  PlanarTerrain planarTerrain;
+  planarTerrain.planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
+  auto t3 = std::chrono::high_resolution_clock::now();
+  ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
 
-    // Add grid map to the terrain
-    planarTerrain.gridMap = std::move(elevationMap);
+  // Add grid map to the terrain
+  planarTerrain.gridMap = std::move(elevationMap);
 
-    // Add binary map
-    const std::string planeClassificationLayer{"plane_classification"};
-    planarTerrain.gridMap.add(planeClassificationLayer);
-    auto& traversabilityMask = planarTerrain.gridMap.get(planeClassificationLayer);
-    cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), traversabilityMask);
+  // Add binary map
+  const std::string planeClassificationLayer{"plane_classification"};
+  planarTerrain.gridMap.add(planeClassificationLayer);
+  auto& traversabilityMask = planarTerrain.gridMap.get(planeClassificationLayer);
+  cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), traversabilityMask);
 
-    postprocessing_->postprocess(planarTerrain, elevationLayer_, planeClassificationLayer);
-    auto t4 = std::chrono::high_resolution_clock::now();
-    ROS_INFO_STREAM("Postprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << " [ms]");
+  postprocessing_->postprocess(planarTerrain, elevationLayer_, planeClassificationLayer);
+  auto t4 = std::chrono::high_resolution_clock::now();
+  ROS_INFO_STREAM("Postprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << " [ms]");
 
-    // Publish terrain
-    if (publishToController_) {
-      regionPublisher_.publish(toMessage(planarTerrain));
-    }
-
-    // Visualize in Rviz.
-    planarTerrain.gridMap.add("segmentation");
-    cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
-    grid_map_msgs::GridMap outputMessage;
-    grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
-    filteredmapPublisher_.publish(outputMessage);
-
-    boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
-    insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
-  } else {
-    ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
+  // Publish terrain
+  if (publishToController_) {
+    regionPublisher_.publish(toMessage(planarTerrain));
   }
+
+  // Visualize in Rviz.
+  planarTerrain.gridMap.add("segmentation");
+  cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
+  grid_map_msgs::GridMap outputMessage;
+  grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
+  filteredmapPublisher_.publish(outputMessage);
+
+  boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
+  insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
 }
 
-Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std::string& sourceFrame) {
+Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std::string& sourceFrame, const ros::Time& time) {
   geometry_msgs::TransformStamped transformStamped;
   try {
-    transformStamped = tfBuffer_.lookupTransform(targetFrameId_, sourceFrame, ros::Time(0));
+    transformStamped = tfBuffer_.lookupTransform(targetFrameId_, sourceFrame, time);
   } catch (tf2::TransformException& ex) {
     ROS_ERROR("[ConvexPlaneExtractionROS] %s", ex.what());
     return Eigen::Isometry3d();
