@@ -15,6 +15,9 @@ void Postprocessing::postprocess(PlanarTerrain& planarTerrain, const std::string
   auto& elevationData = planarTerrain.gridMap.get(elevationLayer);
   const auto& planarityMask = planarTerrain.gridMap.get(planeSegmentationLayer);
 
+  // Store the unaltered map
+  planarTerrain.gridMap.add(elevationLayer + "_before_postprocess", elevationData);
+
   // post process planar regions
   addHeightOffset(planarTerrain.planarRegions);
 
