@@ -271,22 +271,26 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
 
 bool SlidingWindowPlaneExtractor::isGloballyPlanar(const Eigen::Vector3d& normalVectorPlane, const Eigen::Vector3d& supportVectorPlane,
                                                    const std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) const {
+  // Part of the plane projection that is independent of the point
   const double normalDotSupportvector = normalVectorPlane.dot(supportVectorPlane);
+
+  // Convert threshold in degrees to threshold on dot product (between normalized vectors)
+  const double dotProductThreshold = std::cos(parameters_.global_plane_fit_angle_error_threshold_degrees * M_PI / 180.0);
 
   for (const auto& pointWithNormal : pointsWithNormal) {
     const double normalDotPoint = normalVectorPlane.x() * pointWithNormal.first.x() + normalVectorPlane.y() * pointWithNormal.first.y() +
                                   normalVectorPlane.z() * pointWithNormal.first.z();
     const double distanceError = std::abs(normalDotPoint - normalDotSupportvector);
-    if (distanceError > parameters_.global_plane_fit_distance_error_threshold) {
+
+    const double dotProductNormals = normalVectorPlane.x() * pointWithNormal.second.x() +
+                                     normalVectorPlane.y() * pointWithNormal.second.y() +
+                                     normalVectorPlane.z() * pointWithNormal.second.z();
+
+    if (distanceError > parameters_.global_plane_fit_distance_error_threshold || dotProductNormals > dotProductThreshold) {
       return false;
-    } else {
-      Eigen::Vector3d pointNormal{pointWithNormal.second.x(), pointWithNormal.second.y(), pointWithNormal.second.z()};
-      double angleError = angleBetweenNormalizedVectorsInDegrees(pointNormal, normalVectorPlane);
-      if (angleError > parameters_.global_plane_fit_angle_error_threshold_degrees) {
-        return false;
-      }
     }
   }
+
   return true;
 }
 
