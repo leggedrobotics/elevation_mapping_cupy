@@ -16,17 +16,6 @@ namespace sliding_window_plane_extractor {
 
 namespace {
 
-// Assumes v1 and v2 are of unit lenght
-double angleBetweenNormalizedVectorsInDegrees(const Eigen::Vector3d& v1, const Eigen::Vector3d& v2) {
-  double cos_rad = v1.dot(v2);
-  if (cos_rad < -1.0) {
-    cos_rad = -1.0;
-  } else if (cos_rad > 1.0) {
-    cos_rad = 1.0;
-  }
-  return std::abs(std::acos(cos_rad) * 180.0 / M_PI);
-}
-
 std::pair<Eigen::Vector3d, double> normalAndErrorFromCovariance(int numPoint, const Eigen::Vector3d& mean,
                                                                 const Eigen::Matrix3d& sumSquared) {
   const Eigen::Matrix3d covarianceMatrix = sumSquared / numPoint - mean * mean.transpose();
@@ -44,8 +33,8 @@ std::pair<Eigen::Vector3d, double> normalAndErrorFromCovariance(int numPoint, co
       unitaryNormalVector = -unitaryNormalVector;
     }
     // The first eigenvalue might become slightly negative due to numerics.
-    double rmsError = (solver.eigenvalues()(0) > 0.0) ? std::sqrt(solver.eigenvalues()(0)) : 0.0;
-    return {unitaryNormalVector, rmsError};
+    double squareError = (solver.eigenvalues()(0) > 0.0) ? solver.eigenvalues()(0) : 0.0;
+    return {unitaryNormalVector, squareError};
   } else {  // If second eigenvalue is zero, the normal is not defined.
     return {Eigen::Vector3d::UnitZ(), 1e30};
   }
@@ -114,9 +103,12 @@ std::pair<Eigen::Vector3d, double> SlidingWindowPlaneExtractor::computeNormalAnd
   }
 }
 
-bool SlidingWindowPlaneExtractor::isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanError) const {
-  return (meanError < parameters_.plane_patch_error_threshold &&
-          angleBetweenNormalizedVectorsInDegrees(localNormal, Eigen::Vector3d::UnitZ()) < parameters_.local_plane_inclination_threshold_degrees);
+bool SlidingWindowPlaneExtractor::isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanSquaredError) const {
+  const double thresholdSquared = parameters_.plane_patch_error_threshold * parameters_.plane_patch_error_threshold;
+
+  // Dotproduct between normal and Eigen::Vector3d::UnitZ();
+  const double normalDotProduct = localNormal.z();
+  return (meanSquaredError < thresholdSquared && normalDotProduct > parameters_.local_plane_inclination_threshold);
 }
 
 void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
@@ -133,11 +125,11 @@ void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
       binaryImagePatch_.at<bool>(index.x(), index.y()) = false;
     } else {
       Eigen::Vector3d n;
-      double mean_error;
-      std::tie(n, mean_error) = computeNormalAndErrorForWindow(window_data);
+      double meanSquaredError;
+      std::tie(n, meanSquaredError) = computeNormalAndErrorForWindow(window_data);
 
       surfaceNormals_[getLinearIndex(index.x(), index.y())] = n;
-      binaryImagePatch_.at<bool>(index.x(), index.y()) = isLocallyPlanar(n, mean_error);
+      binaryImagePatch_.at<bool>(index.x(), index.y()) = isLocallyPlanar(n, meanSquaredError);
     }
   }
 
@@ -210,7 +202,7 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
   if (parameters_.include_ransac_refinement && !isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) {
     refineLabelWithRansac(label, pointsWithNormal);
   } else {
-    if (angleBetweenNormalizedVectorsInDegrees(normalVector, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
+    if (normalVector.z() > parameters_.plane_inclination_threshold) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
     } else {
@@ -253,7 +245,7 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
     const Eigen::Vector3d supportVector = sum / numPoints;
     const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
 
-    if (angleBetweenNormalizedVectorsInDegrees(normalVector, Eigen::Vector3d::UnitZ()) < parameters_.plane_inclination_threshold_degrees) {
+    if (normalVector.z() > parameters_.plane_inclination_threshold) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, TerrainPlane(supportVector, terrainOrientation));
 

@@ -54,9 +54,8 @@ void plotSlidingWindow(const sliding_window_plane_extractor::SlidingWindowPlaneE
 
   colors[0] = cv::Vec3b(0, 0, 0);  // background in white
   for (int label = 1; label <= planeExtractor.getSegmentedPlanesMap().highestLabel; ++label) {
-    const auto labelIt =
-        std::find_if(labelsAndPlaneParameters.begin(), labelsAndPlaneParameters.end(),
-                     [=](const std::pair<int, TerrainPlane>& x) { return x.first == label; });
+    const auto labelIt = std::find_if(labelsAndPlaneParameters.begin(), labelsAndPlaneParameters.end(),
+                                      [=](const std::pair<int, TerrainPlane>& x) { return x.first == label; });
     if (labelIt != labelsAndPlaneParameters.end()) {
       colors[label] = randomColor();
     } else {
@@ -76,17 +75,17 @@ void plotSlidingWindow(const sliding_window_plane_extractor::SlidingWindowPlaneE
 
 int main(int argc, char** argv) {
   std::string folder = "/home/rgrandia/git/anymal/convex_terrain_representation/convex_plane_decomposition_ros/data/";
-    std::string file = "elevationMap_8_139cm.png"; double heightScale = 1.39;
-//    std::string file = "demo_map.png"; double heightScale = 1.25;
-//  std::string file = "realStairs_125cm.png"; double heightScale = 1.25;
-//    std::string file = "terrain.png"; double heightScale = 1.25;
-//    std::string file = "holes.png"; double heightScale = 1.0;
-//    std::string file = "slope_1m_1m_20cm.png"; double heightScale = 0.2;
-//    std::string file = "straightStairs_1m_1m_60cm.png"; double heightScale = 0.6;
+  std::string file = "elevationMap_8_139cm.png";
+  double heightScale = 1.39;
+  //    std::string file = "demo_map.png"; double heightScale = 1.25;
+  //  std::string file = "realStairs_125cm.png"; double heightScale = 1.25;
+  //    std::string file = "terrain.png"; double heightScale = 1.25;
+  //    std::string file = "holes.png"; double heightScale = 1.0;
+  //    std::string file = "slope_1m_1m_20cm.png"; double heightScale = 0.2;
+  //    std::string file = "straightStairs_1m_1m_60cm.png"; double heightScale = 0.6;
   double resolution = 0.02;
 
   auto elevationMap = loadElevationMapFromFile(folder + file, resolution, heightScale);
-
 
   cv::Mat image;
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(elevationMap, "elevation", CV_8UC1, 0.0, heightScale, image);
@@ -108,7 +107,7 @@ int main(int argc, char** argv) {
   // ============== Sliding Window =================== //
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters swParams;
   swParams.kernel_size = 3;
-  swParams.plane_inclination_threshold_degrees = 45.0;
+  swParams.plane_inclination_threshold = std::cos(45.0 * M_PI / 180);
   swParams.plane_patch_error_threshold = 0.005;
   swParams.min_number_points_per_label = 10;
   swParams.include_ransac_refinement = true;
@@ -143,9 +142,9 @@ int main(int argc, char** argv) {
     cv::imshow("Polygon binary image label", binaryImagePlot);
 
     // Extract
-    int erosion_size = 2; // single sided length of the kernel
-    int erosion_type = cv::MORPH_CROSS; // cv::MORPH_ELLIPSE, cv::MORPH_RECT
-    cv::Mat element = cv::getStructuringElement( erosion_type, cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ) );
+    int erosion_size = 2;                // single sided length of the kernel
+    int erosion_type = cv::MORPH_CROSS;  // cv::MORPH_ELLIPSE, cv::MORPH_RECT
+    cv::Mat element = cv::getStructuringElement(erosion_type, cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1));
     const auto boundariesAndInsets = contour_extraction::extractBoundaryAndInset(binary_image, element);
 
     // Plot eroded image
@@ -156,10 +155,10 @@ int main(int argc, char** argv) {
 
     // Plot contours
     int scale = 5;
-    cv::Size scaledSize = {scale* binary_image.size().width, scale* binary_image.size().height}; // transposed
+    cv::Size scaledSize = {scale * binary_image.size().width, scale * binary_image.size().height};  // transposed
     cv::Mat realPolygonImage(scaledSize, CV_8UC3, cv::Vec3b(0, 0, 0));
     for (const auto& boundaryAndInset : boundariesAndInsets) {
-        drawContour(realPolygonImage, scaleShape(boundaryAndInset.boundary, scale));
+      drawContour(realPolygonImage, scaleShape(boundaryAndInset.boundary, scale));
       for (const auto& inset : boundaryAndInset.insets) {
         drawContour(realPolygonImage, scaleShape(inset, scale));
       }

@@ -46,8 +46,10 @@ sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidin
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters swParams;
   loadParameter(nodeHandle, prefix, "kernel_size", swParams.kernel_size);
   loadParameter(nodeHandle, prefix, "planarity_opening_filter", swParams.planarity_opening_filter);
-  loadParameter(nodeHandle, prefix, "plane_inclination_threshold_degrees", swParams.plane_inclination_threshold_degrees);
-  loadParameter(nodeHandle, prefix, "local_plane_inclination_threshold_degrees", swParams.local_plane_inclination_threshold_degrees);
+  loadParameter(nodeHandle, prefix, "plane_inclination_threshold_degrees", swParams.plane_inclination_threshold);
+  swParams.plane_inclination_threshold = std::cos(swParams.plane_inclination_threshold * M_PI / 180.0);
+  loadParameter(nodeHandle, prefix, "local_plane_inclination_threshold_degrees", swParams.local_plane_inclination_threshold);
+  swParams.local_plane_inclination_threshold = std::cos(swParams.local_plane_inclination_threshold * M_PI / 180.0);
   loadParameter(nodeHandle, prefix, "plane_patch_error_threshold", swParams.plane_patch_error_threshold);
   loadParameter(nodeHandle, prefix, "min_number_points_per_label", swParams.min_number_points_per_label);
   loadParameter(nodeHandle, prefix, "connectivity", swParams.connectivity);

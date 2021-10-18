@@ -29,7 +29,7 @@ class SlidingWindowPlaneExtractor {
                         const std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) const;
 
   std::pair<Eigen::Vector3d, double> computeNormalAndErrorForWindow(const Eigen::MatrixXf& windowData) const;
-  bool isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanError) const;
+  bool isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanSquaredError) const;
 
   int getLinearIndex(int row, int col) const { return row + col * map_->getSize()[0]; };
 
