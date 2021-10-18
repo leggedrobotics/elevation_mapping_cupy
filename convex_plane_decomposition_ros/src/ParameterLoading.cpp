@@ -7,10 +7,13 @@
 namespace convex_plane_decomposition {
 
 template <typename T>
-void loadParameter(const ros::NodeHandle& nodeHandle, const std::string& prefix, const std::string& param, T& value) {
+bool loadParameter(const ros::NodeHandle& nodeHandle, const std::string& prefix, const std::string& param, T& value) {
   if (!nodeHandle.getParam(prefix + param, value)) {
     ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] Could not read parameter `"
                      << param << "`. Setting parameter to default value : " << std::to_string(value));
+    return false;
+  } else {
+    return true;
   }
 }
 
@@ -46,10 +49,12 @@ sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters loadSlidin
   sliding_window_plane_extractor::SlidingWindowPlaneExtractorParameters swParams;
   loadParameter(nodeHandle, prefix, "kernel_size", swParams.kernel_size);
   loadParameter(nodeHandle, prefix, "planarity_opening_filter", swParams.planarity_opening_filter);
-  loadParameter(nodeHandle, prefix, "plane_inclination_threshold_degrees", swParams.plane_inclination_threshold);
-  swParams.plane_inclination_threshold = std::cos(swParams.plane_inclination_threshold * M_PI / 180.0);
-  loadParameter(nodeHandle, prefix, "local_plane_inclination_threshold_degrees", swParams.local_plane_inclination_threshold);
-  swParams.local_plane_inclination_threshold = std::cos(swParams.local_plane_inclination_threshold * M_PI / 180.0);
+  if (loadParameter(nodeHandle, prefix, "plane_inclination_threshold_degrees", swParams.plane_inclination_threshold)) {
+    swParams.plane_inclination_threshold = std::cos(swParams.plane_inclination_threshold * M_PI / 180.0);
+  }
+  if (loadParameter(nodeHandle, prefix, "local_plane_inclination_threshold_degrees", swParams.local_plane_inclination_threshold)) {
+    swParams.local_plane_inclination_threshold = std::cos(swParams.local_plane_inclination_threshold * M_PI / 180.0);
+  }
   loadParameter(nodeHandle, prefix, "plane_patch_error_threshold", swParams.plane_patch_error_threshold);
   loadParameter(nodeHandle, prefix, "min_number_points_per_label", swParams.min_number_points_per_label);
   loadParameter(nodeHandle, prefix, "connectivity", swParams.connectivity);
