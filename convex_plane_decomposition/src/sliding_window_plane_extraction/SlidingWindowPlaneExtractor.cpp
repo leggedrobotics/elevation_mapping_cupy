@@ -198,10 +198,18 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
   const Eigen::Vector3d supportVector = sum / numPoints;
   const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
 
-  // Compute error to fitted plane.
-  if (parameters_.include_ransac_refinement && !isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) {
-    refineLabelWithRansac(label, pointsWithNormal);
-  } else {
+  if (parameters_.include_ransac_refinement) { // with RANSAC
+    if (isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) { // Already planar enough
+      if (normalVector.z() > parameters_.plane_inclination_threshold) {
+        const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
+        segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
+      } else {
+        setToBackground(label);
+      }
+    } else {
+      refineLabelWithRansac(label, pointsWithNormal);
+    }
+  } else { // no RANSAC
     if (normalVector.z() > parameters_.plane_inclination_threshold) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
@@ -279,7 +287,7 @@ bool SlidingWindowPlaneExtractor::isGloballyPlanar(const Eigen::Vector3d& normal
                                      normalVectorPlane.y() * pointWithNormal.second.y() +
                                      normalVectorPlane.z() * pointWithNormal.second.z();
 
-    if (distanceError > parameters_.global_plane_fit_distance_error_threshold || dotProductNormals > dotProductThreshold) {
+    if (distanceError > parameters_.global_plane_fit_distance_error_threshold || dotProductNormals < dotProductThreshold) {
       return false;
     }
   }
