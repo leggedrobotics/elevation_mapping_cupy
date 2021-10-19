@@ -71,14 +71,20 @@ void Postprocessing::addHeightOffset(std::vector<PlanarRegion>& planarRegions) c
 
 void Postprocessing::addSmoothLayer(grid_map::GridMap& gridMap, const Eigen::MatrixXf& elevationData,
                                     const Eigen::MatrixXf& planarityMask) const {
-  const int dilationSize = 2 * std::round(parameters_.smoothing_dilation_size / gridMap.getResolution()) + 1;
-  const int kernel = 2 * std::round(parameters_.smoothing_box_kernel_size / gridMap.getResolution()) + 1;
-  const int kernelGauss = 2 * std::round(parameters_.smoothing_gauss_kernel_size / gridMap.getResolution()) + 1;
+  auto kernelSizeInPixels = [res = gridMap.getResolution()](double realSize) {
+    return 2 * static_cast<int>(std::round(realSize / res)) + 1;
+  };
+
+  const int dilationSize = kernelSizeInPixels(parameters_.smoothing_dilation_size);
+  const int kernel = kernelSizeInPixels(parameters_.smoothing_box_kernel_size);
+  const int kernelGauss = kernelSizeInPixels(parameters_.smoothing_gauss_kernel_size);
 
   // Set nonplanar regions to "NaN"
-  const auto lowestFloat = std::numeric_limits<float>::lowest(); // Take lowest to not interfere with Dilation, using true NaN doesn't work with opencv dilation.
+  const auto lowestFloat = std::numeric_limits<float>::lowest();  // Take lowest to not interfere with Dilation, using true NaN doesn't work
+                                                                  // with opencv dilation.
   Eigen::MatrixXf elevationWithNaN =
-      (planarityMask.array() == 1.0).select(elevationData, Eigen::MatrixXf::Constant(elevationData.rows(), elevationData.cols(), lowestFloat));
+      (planarityMask.array() == 1.0)
+          .select(elevationData, Eigen::MatrixXf::Constant(elevationData.rows(), elevationData.cols(), lowestFloat));
 
   // Convert to openCV
   cv::Mat elevationWithNaNImage;
