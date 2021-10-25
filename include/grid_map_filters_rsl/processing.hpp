@@ -59,8 +59,8 @@ void outline(grid_map::GridMap& map, const std::string& layerIn, const std::stri
  * @param layerOut      output layer (filtered map is written into this layer)
  * @param kernelSize    vicinity considered by filter (must be odd).
  */
-void applyFunction(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize,
-                   std::function<float(const Eigen::Ref<const grid_map::GridMap::Matrix>&)> func);
+void applyKernelFunction(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize,
+                         std::function<float(const Eigen::Ref<const grid_map::GridMap::Matrix>&)> func);
 
 }  // namespace processing
 }  // namespace grid_map

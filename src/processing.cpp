@@ -143,8 +143,8 @@ void outline(grid_map::GridMap& map, const std::string& layerIn, const std::stri
   }
 }
 
-void applyFunction(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize,
-                   std::function<float(const Eigen::Ref<const grid_map::GridMap::Matrix>&)> func) {
+void applyKernelFunction(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize,
+                         std::function<float(const Eigen::Ref<const grid_map::GridMap::Matrix>&)> func) {
   // Create new layer if missing
   if (!map.exists(layerOut)) {
     map.add(layerOut, map.get(layerIn));
