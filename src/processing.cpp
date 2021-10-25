@@ -142,5 +142,40 @@ void outline(grid_map::GridMap& map, const std::string& layerIn, const std::stri
     }
   }
 }
+
+void applyFunction(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize,
+                   std::function<float(const Eigen::Ref<const grid_map::GridMap::Matrix>&)> func) {
+  // Create new layer if missing
+  if (!map.exists(layerOut)) {
+    map.add(layerOut, map.get(layerIn));
+  }
+
+  // Reference to in and out maps.
+  const grid_map::Matrix& H_in = map.get(layerIn);
+  grid_map::Matrix& H_out = map.get(layerOut);
+
+  const auto maxKernelId = (kernelSize - 1) / 2;
+
+  for (auto colId = 0; colId < H_in.cols(); ++colId) {
+    for (auto rowId = 0; rowId < H_in.rows(); ++rowId) {
+      // Move index to the korner of the kernel window.
+      auto cornerColId = std::max(colId - maxKernelId, 0);
+      auto cornerRowId = std::max(rowId - maxKernelId, 0);
+
+      // Make sure we don't overshoot.
+      if (cornerColId + kernelSize > H_in.cols()) {
+        cornerColId = H_in.cols() - kernelSize;
+      }
+
+      if (cornerRowId + kernelSize > H_in.rows()) {
+        cornerRowId = H_in.rows() - kernelSize;
+      }
+
+      // Apply user defined function
+      H_out(rowId, colId) = func(H_in.block(cornerRowId, cornerColId, kernelSize, kernelSize));
+    }
+  }
+}
+
 }  // namespace processing
 }  // namespace grid_map
