@@ -50,6 +50,7 @@ void SlidingWindowPlaneExtractor::runExtraction(const grid_map::GridMap& map, co
   // Extract basic map information
   map_ = &map;
   elevationLayer_ = layer_height;
+  mapRows_ = map_->getSize()[0];
   segmentedPlanesMap_.resolution = map_->getResolution();
   map_->getPosition(Eigen::Vector2i(0, 0), segmentedPlanesMap_.mapOrigin);
 

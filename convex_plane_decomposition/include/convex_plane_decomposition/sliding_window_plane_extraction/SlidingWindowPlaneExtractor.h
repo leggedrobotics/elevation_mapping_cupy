@@ -35,7 +35,7 @@ class SlidingWindowPlaneExtractor {
   std::pair<Eigen::Vector3d, double> computeNormalAndErrorForWindow(const Eigen::MatrixXf& windowData) const;
   bool isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanSquaredError) const;
 
-  int getLinearIndex(int row, int col) const { return row + col * map_->getSize()[0]; };
+  int getLinearIndex(int row, int col) const { return row + col * mapRows_; };
 
   void computePlaneParametersForLabel(int label, std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal);
   void refineLabelWithRansac(int label, std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal);
@@ -53,6 +53,7 @@ class SlidingWindowPlaneExtractor {
 
   const grid_map::GridMap* map_;
   std::string elevationLayer_;
+  int mapRows_;
 
   std::vector<Eigen::Vector3d> surfaceNormals_;
 
