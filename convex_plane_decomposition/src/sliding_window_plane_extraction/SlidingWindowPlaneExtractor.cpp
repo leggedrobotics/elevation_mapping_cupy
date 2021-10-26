@@ -112,7 +112,7 @@ bool SlidingWindowPlaneExtractor::isLocallyPlanar(const Eigen::Vector3d& localNo
 }
 
 void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
-  grid_map::SlidingWindowIterator window_iterator(*map_, elevationLayer_, grid_map::SlidingWindowIterator::EdgeHandling::INSIDE,
+  grid_map::SlidingWindowIterator window_iterator(*map_, elevationLayer_, grid_map::SlidingWindowIterator::EdgeHandling::EMPTY,
                                                   parameters_.kernel_size);
   const int kernelMiddle = (parameters_.kernel_size - 1) / 2;
 
@@ -136,7 +136,7 @@ void SlidingWindowPlaneExtractor::runSlidingWindowDetector() {
   // opening filter
   if (parameters_.planarity_opening_filter > 0) {
     const int openingKernelSize = 2 * parameters_.planarity_opening_filter + 1;
-    const int openingKernelType = cv::MORPH_RECT;
+    const int openingKernelType = cv::MORPH_CROSS;
     const auto kernel_ = cv::getStructuringElement(openingKernelType, cv::Size(openingKernelSize, openingKernelSize));
     cv::morphologyEx(binaryImagePatch_, binaryImagePatch_, cv::MORPH_OPEN, kernel_, cv::Point(-1, -1), 1, cv::BORDER_REPLICATE);
   }
@@ -198,9 +198,9 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
   const Eigen::Vector3d supportVector = sum / numPoints;
   const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
 
-  if (parameters_.include_ransac_refinement) { // with RANSAC
-    if (isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) { // Already planar enough
-      if (normalVector.z() > parameters_.plane_inclination_threshold) {
+  if (parameters_.include_ransac_refinement) {                              // with RANSAC
+    if (isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) {  // Already planar enough
+      if (isWithinInclinationLimit(normalVector)) {
         const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
         segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
       } else {
@@ -209,8 +209,8 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
     } else {
       refineLabelWithRansac(label, pointsWithNormal);
     }
-  } else { // no RANSAC
-    if (normalVector.z() > parameters_.plane_inclination_threshold) {
+  } else {  // no RANSAC
+    if (isWithinInclinationLimit(normalVector)) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
     } else {
@@ -253,7 +253,7 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
     const Eigen::Vector3d supportVector = sum / numPoints;
     const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
 
-    if (normalVector.z() > parameters_.plane_inclination_threshold) {
+    if (isWithinInclinationLimit(normalVector)) {
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, TerrainPlane(supportVector, terrainOrientation));
 
@@ -267,6 +267,26 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
         segmentedPlanesMap_.labeledImage.at<int>(map_indices(0), map_indices(1)) = newLabel;
       }
     }
+  }
+}
+
+void SlidingWindowPlaneExtractor::addSurfaceNormalToMap(grid_map::GridMap& map, const std::string& layerPrefix) const {
+  map.add(layerPrefix + "_x");
+  map.add(layerPrefix + "_y");
+  map.add(layerPrefix + "_z");
+  auto& dataX = map.get(layerPrefix + "_x");
+  auto& dataY = map.get(layerPrefix + "_y");
+  auto& dataZ = map.get(layerPrefix + "_z");
+
+  grid_map::SlidingWindowIterator window_iterator(map, layerPrefix + "_x", grid_map::SlidingWindowIterator::EdgeHandling::EMPTY,
+                                                  parameters_.kernel_size);
+
+  for (; !window_iterator.isPastEnd(); ++window_iterator) {
+    grid_map::Index index = *window_iterator;
+    const auto& n = surfaceNormals_[getLinearIndex(index.x(), index.y())];
+    dataX(index.x(), index.y()) = n.x();
+    dataY(index.x(), index.y()) = n.y();
+    dataZ(index.x(), index.y()) = n.z();
   }
 }
 
@@ -293,6 +313,10 @@ bool SlidingWindowPlaneExtractor::isGloballyPlanar(const Eigen::Vector3d& normal
   }
 
   return true;
+}
+
+bool SlidingWindowPlaneExtractor::isWithinInclinationLimit(const Eigen::Vector3d& normalVectorPlane) const {
+  return normalVectorPlane.z() > parameters_.plane_inclination_threshold;
 }
 
 void SlidingWindowPlaneExtractor::setToBackground(int label) {

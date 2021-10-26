@@ -24,9 +24,13 @@ class SlidingWindowPlaneExtractor {
 
   const cv::Mat& getBinaryLabeledImage() const { return binaryImagePatch_; }
 
+  /** Can be run after extraction for debugging purpose */
+  void addSurfaceNormalToMap(grid_map::GridMap& map, const std::string& layerPrefix) const;
+
  private:
   bool isGloballyPlanar(const Eigen::Vector3d& normalVectorPlane, const Eigen::Vector3d& supportVectorPlane,
                         const std::vector<ransac_plane_extractor::PointWithNormal>& pointsWithNormal) const;
+  bool isWithinInclinationLimit(const Eigen::Vector3d& normalVectorPlane) const;
 
   std::pair<Eigen::Vector3d, double> computeNormalAndErrorForWindow(const Eigen::MatrixXf& windowData) const;
   bool isLocallyPlanar(const Eigen::Vector3d& localNormal, double meanSquaredError) const;
