@@ -5,6 +5,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include <grid_map_filters_rsl/processing.hpp>
+#include <grid_map_filters_rsl/inpainting.hpp>
 
 namespace convex_plane_decomposition {
 
@@ -75,32 +76,59 @@ void Postprocessing::addSmoothLayer(grid_map::GridMap& gridMap, const Eigen::Mat
     return 2 * static_cast<int>(std::round(realSize / res)) + 1;
   };
 
+  // Helper to convert to Eigen
+  auto toEigen = [](const cv::Mat& image) {
+    Eigen::MatrixXf data;
+    cv::cv2eigen(image, data);
+    return data;
+  };
+
+  // Helper to openCV
+  auto toCv = [](const Eigen::MatrixXf& data) {
+    cv::Mat image;
+    cv::eigen2cv(data, image);
+    return image;
+  };
+
   const int dilationSize = kernelSizeInPixels(parameters_.smoothing_dilation_size);
   const int kernel = kernelSizeInPixels(parameters_.smoothing_box_kernel_size);
   const int kernelGauss = kernelSizeInPixels(parameters_.smoothing_gauss_kernel_size);
 
-  // Set nonplanar regions to "NaN"
-  const auto lowestFloat = std::numeric_limits<float>::lowest();  // Take lowest to not interfere with Dilation, using true NaN doesn't work
-                                                                  // with opencv dilation.
+
+  // Set non planar regions to NaN
   Eigen::MatrixXf elevationWithNaN =
       (planarityMask.array() == 1.0)
-          .select(elevationData, Eigen::MatrixXf::Constant(elevationData.rows(), elevationData.cols(), lowestFloat));
+          .select(elevationData, Eigen::MatrixXf::Constant(elevationData.rows(), elevationData.cols(), NAN));
+  gridMap.add("elevationWithNaN", elevationWithNaN);
 
-  // Convert to openCV
-  cv::Mat elevationWithNaNImage;
-  cv::eigen2cv(elevationWithNaN, elevationWithNaNImage);  // creates CV_32F image
+  // Inpainting
+  grid_map::inpainting::minValues(gridMap, "elevationWithNaN", "elevationWithNaN_i");
 
-  // Dilate
+  // Closing
+  auto elevationWithNaNCv = toCv(gridMap.get("elevationWithNaN_i"));
   const int dilationType = cv::MORPH_ELLIPSE;  // ellipse inscribed in the square of size dilationSize
   const auto dilationKernel_ = cv::getStructuringElement(dilationType, cv::Size(dilationSize, dilationSize));
-  cv::dilate(elevationWithNaNImage, elevationWithNaNImage, dilationKernel_, cv::Point(-1, -1), 1, cv::BORDER_REPLICATE);
+  cv::morphologyEx(elevationWithNaNCv, elevationWithNaNCv, cv::MORPH_CLOSE, dilationKernel_, cv::Point(-1, -1), 1, cv::BORDER_REPLICATE);
 
-  // Take complement image where elevation data was set to NaN
-  cv::Mat indicatorImage = cv::Mat::ones(elevationWithNaNImage.rows, elevationWithNaNImage.cols, CV_32F);
-  indicatorImage.setTo(0.0, elevationWithNaNImage == lowestFloat);
+  gridMap.add("elevationWithNaNClosed", toEigen(elevationWithNaNCv));
 
-  // Set NaN's to 0.0
-  elevationWithNaNImage.setTo(0.0, elevationWithNaNImage == lowestFloat);
+  // Dilation with a slope of 45 deg
+  int halfDilationSize = (dilationSize - 1) / 2;
+  float slope = gridMap.getResolution();  // dh dpixel
+  Eigen::MatrixXf offsets(dilationSize, dilationSize);
+  for (int i = 0; i < dilationSize; ++i) {
+    for (int j = 0; j < dilationSize; ++j) {
+      const auto dx = (i - halfDilationSize);
+      const auto dy = (j - halfDilationSize);
+      offsets(i, j) = slope * std::sqrt(dx * dx + dy * dy);
+    }
+  }
+  grid_map::processing::applyKernelFunction(
+      gridMap, "elevationWithNaNClosed", "elevationWithNaNClosedDilated", dilationSize,
+      [&](const Eigen::Ref<const grid_map::GridMap::Matrix>& data) -> float { return (data - offsets).maxCoeffOfFinites(); });
+
+  // Convert to openCV
+  auto elevationWithNaNImage = toCv(gridMap.get("elevationWithNaNClosedDilated"));
 
   // Filter definition
   auto smoothingFilter = [kernel, kernelGauss](const cv::Mat& imageIn) {
@@ -109,23 +137,10 @@ void Postprocessing::addSmoothLayer(grid_map::GridMap& gridMap, const Eigen::Mat
     cv::GaussianBlur(imageOut, imageOut, {kernelGauss, kernelGauss}, 0, 0, cv::BorderTypes::BORDER_REPLICATE);
     return imageOut;
   };
-
-  // Helper to convert to Eigen
-  auto toEigen = [](const cv::Mat& image) {
-    Eigen::MatrixXf data;
-    cv::cv2eigen(image, data);
-    return data;
-  };
-
-  // Filter trick for data with NaN from: https://stackoverflow.com/questions/18697532/gaussian-filtering-a-image-with-nan-in-python
-  auto planarOnly = smoothingFilter(elevationWithNaNImage);
-  auto complement = smoothingFilter(indicatorImage);
-  complement += 1e-6;  // Prevent division by zero
-  cv::Mat result;
-  cv::divide(planarOnly, complement, result);
+  auto smooth_planar = smoothingFilter(elevationWithNaNImage);
 
   // Add layer to map.
-  gridMap.add("smooth_planar", toEigen(result));
+  gridMap.add("smooth_planar", toEigen(smooth_planar));
 }
 
 }  // namespace convex_plane_decomposition
