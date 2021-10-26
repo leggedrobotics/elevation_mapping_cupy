@@ -1,4 +1,4 @@
-elevation_topic: '/image_to_gridmap_demo/grid_map'
+elevation_topic: '/elevation_mapping/elevation_map_raw'
 height_layer: 'elevation'
 target_frame_id: 'odom'
 submap:

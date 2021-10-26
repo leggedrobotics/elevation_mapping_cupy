@@ -72,6 +72,13 @@ target_link_libraries(${PROJECT_NAME}_node
 	${PROJECT_NAME}
 )
 
+add_executable(${PROJECT_NAME}_add_noise
+	src/noiseNode.cpp
+)
+target_link_libraries(${PROJECT_NAME}_add_noise
+	${catkin_LIBRARIES}
+)
+
 add_executable(${PROJECT_NAME}_save_elevationmap
 	src/SaveElevationMapAsImageNode.cpp
 	)
