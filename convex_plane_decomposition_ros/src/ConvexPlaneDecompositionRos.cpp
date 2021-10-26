@@ -87,29 +87,32 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMap messageMap;
   std::vector<std::string> layers{elevationLayer_};
   grid_map::GridMapRosConverter::fromMessage(message, messageMap, layers, false, false);
-  bool success;
-  grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapLength_, subMapWidth_), success);
-  success = success && containsFiniteValue(elevationMap.get(elevationLayer_));  // Check if there are values
-  ROS_INFO("...done.");
-
-  // Exit early if map is not valid.
-  if (!success) {
-    ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
+  if (!containsFiniteValue(messageMap.get(elevationLayer_))) {
+    ROS_WARN("[ConvexPlaneExtractionROS] map does not contain any values");
     return;
   }
 
   // Transform map if necessary
-  if (targetFrameId_ != elevationMap.getFrameId()) {
+  if (targetFrameId_ != messageMap.getFrameId()) {
     std::string errorMsg;
-    ros::Time timeStamp(messageMap.getTimestamp());
-    if (tfBuffer_.canTransform(targetFrameId_, elevationMap.getFrameId(), timeStamp, &errorMsg)) {
-      elevationMap =
-          elevationMap.getTransformedMap(getTransformToTargetFrame(elevationMap.getFrameId(), timeStamp), elevationLayer_, targetFrameId_);
+    ros::Time timeStamp = getMessageTime(message);
+    if (tfBuffer_.canTransform(targetFrameId_, messageMap.getFrameId(), timeStamp, &errorMsg)) {
+      messageMap =
+          messageMap.getTransformedMap(getTransformToTargetFrame(messageMap.getFrameId(), timeStamp), elevationLayer_, targetFrameId_);
     } else {
       ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] " << errorMsg);
       return;
     }
   }
+
+  // Extract submap
+  bool success;
+  grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapLength_, subMapWidth_), success);
+  if (!success) {
+    ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
+    return;
+  }
+  ROS_INFO("...done.");
 
   auto t0 = std::chrono::high_resolution_clock::now();
   preprocessing_->preprocess(elevationMap, elevationLayer_);
@@ -125,6 +128,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   planarTerrain.planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
   auto t3 = std::chrono::high_resolution_clock::now();
   ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
+
+
 
   // Add grid map to the terrain
   planarTerrain.gridMap = std::move(elevationMap);
@@ -144,9 +149,15 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     regionPublisher_.publish(toMessage(planarTerrain));
   }
 
-  // Visualize in Rviz.
+  // --- Visualize in Rviz --- Not published to the controller
+
+  // Add surface normals
+  slidingWindowPlaneExtractor_->addSurfaceNormalToMap(planarTerrain.gridMap, "normal");
+
+  // Add surface normals
   planarTerrain.gridMap.add("segmentation");
   cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
+
   grid_map_msgs::GridMap outputMessage;
   grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
   filteredmapPublisher_.publish(outputMessage);
@@ -176,6 +187,15 @@ Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std:
                                         transformStamped.transform.rotation.y, transformStamped.transform.rotation.z);
   transformation.linear() = rotationQuaternion.toRotationMatrix();
   return transformation;
+}
+
+ros::Time ConvexPlaneExtractionROS::getMessageTime(const grid_map_msgs::GridMap& message) const {
+  try {
+    return ros::Time(message.info.header.stamp.toNSec());
+  } catch (std::runtime_error& ex) {
+    ROS_WARN("[ConvexPlaneExtractionROS::getMessageTime] %s", ex.what());
+    return ros::Time::now();
+  }
 }
 
 }  // namespace convex_plane_decomposition
