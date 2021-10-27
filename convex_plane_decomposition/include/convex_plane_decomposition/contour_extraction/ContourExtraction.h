@@ -27,7 +27,8 @@ class ContourExtraction {
 
  private:
   ContourExtractionParameters parameters_;
-  cv::Mat erosionKernel_;
+  cv::Mat insetKernel_;
+  cv::Mat marginKernel_;
 
   // Memory to reuse between calls
   cv::Mat binaryImage_;

@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
 
   // ============== planar regions extraction ================
   contour_extraction::ContourExtractionParameters polyParams;
-  polyParams.offsetSize = 2;
+  polyParams.marginSize = 2;
 
   contour_extraction::ContourExtraction contourExtraction(polyParams);
   contourExtraction.extractPlanarRegions(planeExtractor.getSegmentedPlanesMap());

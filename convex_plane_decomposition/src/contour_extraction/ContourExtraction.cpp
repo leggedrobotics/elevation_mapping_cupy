@@ -3,6 +3,7 @@
 //
 
 #include "convex_plane_decomposition/contour_extraction/ContourExtraction.h"
+#include "convex_plane_decomposition/contour_extraction/Upsampling.h"
 
 #include <convex_plane_decomposition/GeometryUtils.h>
 #include <opencv2/imgproc.hpp>
@@ -12,25 +13,44 @@ namespace contour_extraction {
 
 ContourExtraction::ContourExtraction(const ContourExtractionParameters& parameters)
     : parameters_(parameters), binaryImage_(cv::Size(0, 0), CV_8UC1) {
-  int erosionSize = parameters_.offsetSize;  // single sided length of the kernel
-  int erosionType = cv::MORPH_CROSS;         // cv::MORPH_ELLIPSE, cv::MORPH_RECT
-  erosionKernel_ = cv::getStructuringElement(erosionType, cv::Size(2 * erosionSize + 1, 2 * erosionSize + 1));
+  {
+    int erosionSize = 1;  // single sided length of the kernel
+    int erosionType = cv::MORPH_CROSS;
+    insetKernel_ = cv::getStructuringElement(erosionType, cv::Size(2 * erosionSize + 1, 2 * erosionSize + 1));
+  }
+  {
+    int erosionSize = 1 + parameters_.marginSize;  // single sided length of the kernel
+    int erosionType = cv::MORPH_ELLIPSE;
+    marginKernel_ = cv::getStructuringElement(erosionType, cv::Size(2 * erosionSize + 1, 2 * erosionSize + 1));
+  }
 }
 
 std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const SegmentedPlanesMap& segmentedPlanesMap) {
+  const auto upSampledMap = upSample(segmentedPlanesMap);
+
   std::vector<PlanarRegion> planarRegions;
-  for (const auto& label_plane : segmentedPlanesMap.labelPlaneParameters) {
+  for (const auto& label_plane : upSampledMap.labelPlaneParameters) {
     const int label = label_plane.first;
     const auto& plane_parameters = label_plane.second;
 
-    binaryImage_ = segmentedPlanesMap.labeledImage == label;
+    binaryImage_ = upSampledMap.labeledImage == label;
 
-    auto boundariesAndInsets = contour_extraction::extractBoundaryAndInset(binaryImage_, erosionKernel_);
+    // Try with safety margin
+    cv::erode(binaryImage_, binaryImage_, marginKernel_, cv::Point(-1,-1), 1, cv::BORDER_REPLICATE);
+    auto boundariesAndInsets = contour_extraction::extractBoundaryAndInset(binaryImage_, insetKernel_);
+
+    // If safety margin makes the region disappear -> try without
+    if (boundariesAndInsets.empty()) {
+      binaryImage_ = upSampledMap.labeledImage == label;
+      // still 1 pixel erosion to remove the growth after upsampling
+      cv::erode(binaryImage_, binaryImage_, insetKernel_, cv::Point(-1,-1), 1, cv::BORDER_REPLICATE);
+      boundariesAndInsets = contour_extraction::extractBoundaryAndInset(binaryImage_, insetKernel_);
+    }
 
     for (auto& boundaryAndInset : boundariesAndInsets) {
       // Transform points from pixel space to local terrain frame
       transformInPlace(boundaryAndInset, [&](CgalPoint2d& point) {
-        auto pointInWorld = pixelToWorldFrame(point, segmentedPlanesMap.resolution, segmentedPlanesMap.mapOrigin);
+        auto pointInWorld = pixelToWorldFrame(point, upSampledMap.resolution, upSampledMap.mapOrigin);
         point = worldFrameToTerrainFrame(pointInWorld, plane_parameters);
       });
 
@@ -45,6 +65,7 @@ std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const Segmente
 }
 
 std::vector<BoundaryWithInset> extractBoundaryAndInset(cv::Mat& binary_image, const cv::Mat& erosionKernel) {
+
   // Get boundary
   std::vector<CgalPolygonWithHoles2d> boundaries = extractPolygonsFromBinaryImage(binary_image);
 

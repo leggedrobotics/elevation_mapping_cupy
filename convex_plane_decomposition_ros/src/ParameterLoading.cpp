@@ -29,7 +29,7 @@ PreprocessingParameters loadPreprocessingParameters(const ros::NodeHandle& nodeH
 contour_extraction::ContourExtractionParameters loadContourExtractionParameters(const ros::NodeHandle& nodeHandle,
                                                                                 const std::string& prefix) {
   contour_extraction::ContourExtractionParameters contourParams;
-  loadParameter(nodeHandle, prefix, "offsetSize", contourParams.offsetSize);
+  loadParameter(nodeHandle, prefix, "marginSize", contourParams.marginSize);
   return contourParams;
 }
 
