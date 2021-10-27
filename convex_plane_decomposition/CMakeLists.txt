@@ -55,6 +55,7 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/contour_extraction/ContourExtraction.cpp
+  src/contour_extraction/Upsampling.cpp
   src/ransac/RansacPlaneExtractor.cpp
   src/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.cpp
   src/GridMapPreprocessing.cpp
@@ -91,3 +92,15 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 ## Testing ##
 #############
+
+catkin_add_gtest(test_${PROJECT_NAME}_upsampling
+	test/testUpsampling.cpp
+)
+target_link_libraries(test_${PROJECT_NAME}_upsampling
+	${PROJECT_NAME}
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	gmp
+	mpfr
+	gtest_main
+)
