@@ -6,6 +6,11 @@
 
 namespace signed_distance_field {
 
+inline Eigen::Matrix<bool, -1, -1> occupancyAtHeight(const grid_map::Matrix& elevationMap, float height) {
+  Eigen::Matrix<bool, -1, -1> occupany = elevationMap.unaryExpr([=](float val) { return val > height; });
+  return occupany;
+}
+
 inline bool isEqualSdf(const grid_map::Matrix& sdf0, const grid_map::Matrix& sdf1, float tol) {
   grid_map::Matrix error = (sdf0 - sdf1).array().abs();
   float maxDifference = error.maxCoeff();

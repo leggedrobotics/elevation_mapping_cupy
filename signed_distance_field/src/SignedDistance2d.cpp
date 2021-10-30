@@ -191,10 +191,10 @@ grid_map::Matrix pixelDistanceToObstacle(const grid_map::Matrix& elevationMap, f
 
 }  // namespace internal
 
-grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution) {
-  auto obstacleCount = (elevationMap.array() > height).count();
-  bool allPixelsAreObstacles = obstacleCount == elevationMap.size();
-  bool allPixelsAreFreeSpace = obstacleCount == 0;
+grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
+                                        float maxHeight) {
+  const bool allPixelsAreObstacles = height < minHeight;
+  const bool allPixelsAreFreeSpace = height > maxHeight;
 
   if (allPixelsAreObstacles) {
     return -resolution * internal::pixelDistanceToFreeSpace(elevationMap, height, resolution);

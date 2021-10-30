@@ -65,10 +65,13 @@ std::pair<switched_model::scalar_t, switched_model::vector3_t> GridmapSignedDist
 void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& elevation) {
   const auto gridOriginZ = static_cast<float>(gridmap3DLookup_.gridOrigin_.z());
   const auto resolution = static_cast<float>(gridmap3DLookup_.resolution_);
+  const auto minHeight = elevation.minCoeff();
+  const auto maxHeight = elevation.maxCoeff();
 
   // First layer: forward difference in z
-  grid_map::Matrix currentLayer = signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ, resolution);
-  grid_map::Matrix nextLayer = signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ + resolution, resolution);
+  grid_map::Matrix currentLayer = signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ, resolution, minHeight, maxHeight);
+  grid_map::Matrix nextLayer =
+      signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ + resolution, resolution, minHeight, maxHeight);
   grid_map::Matrix dz = signed_distance_field::layerFiniteDifference(currentLayer, nextLayer, resolution);  // dz / layer = +resolution
   grid_map::Matrix dy = signed_distance_field::columnwiseCentralDifference(currentLayer, -resolution);      // dy / dcol = -resolution
   grid_map::Matrix dx = signed_distance_field::rowwiseCentralDifference(currentLayer, -resolution);         // dx / drow = -resolution
@@ -78,7 +81,8 @@ void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& e
   for (size_t layerZ = 1; layerZ + 1 < gridmap3DLookup_.gridsize_.z; ++layerZ) {
     grid_map::Matrix previousLayer = std::move(currentLayer);
     currentLayer = std::move(nextLayer);
-    nextLayer = signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ + (layerZ + 1) * resolution, resolution);
+    nextLayer =
+        signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ + (layerZ + 1) * resolution, resolution, minHeight, maxHeight);
 
     dz = signed_distance_field::layerCentralDifference(previousLayer, nextLayer, resolution);
     dy = signed_distance_field::columnwiseCentralDifference(currentLayer, -resolution);
