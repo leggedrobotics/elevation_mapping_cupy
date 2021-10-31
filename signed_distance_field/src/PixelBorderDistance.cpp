@@ -4,11 +4,4 @@
 
 #include "signed_distance_field/PixelBorderDistance.h"
 
-
-namespace signed_distance_field {
-
-
-
-
-
-}
+namespace signed_distance_field {}

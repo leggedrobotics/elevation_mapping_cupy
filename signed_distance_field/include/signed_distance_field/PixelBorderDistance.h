@@ -5,8 +5,8 @@
 #pragma once
 
 #include <algorithm>
-#include <cmath>
 #include <cassert>
+#include <cmath>
 
 namespace signed_distance_field {
 
@@ -19,7 +19,7 @@ namespace signed_distance_field {
  * @return : absolute distance between center of pixel 1 and the border of pixel 2
  */
 inline float pixelBorderDistance(float i, float j) {
-  return std::max(std::abs(i-j) - 0.5F, 0.0F);
+  return std::max(std::abs(i - j) - 0.5F, 0.0F);
 }
 
 /**
@@ -27,11 +27,12 @@ inline float pixelBorderDistance(float i, float j) {
  * ! only works when i and j are cast from integers.
  */
 inline float squarePixelBorderDistance(float i, float j, float f) {
-  assert(i == j || std::abs(i - j) >= 1.0F); // Check that i and j are proper pixel locations: either the same pixel or non-overlapping pixels
+  assert(i == j ||
+         std::abs(i - j) >= 1.0F);  // Check that i and j are proper pixel locations: either the same pixel or non-overlapping pixels
   if (i == j) {
     return f;
   } else {
-    float diff = std::abs(i-j) - 0.5F;
+    float diff = std::abs(i - j) - 0.5F;
     return diff * diff + f;
   }
 }
@@ -42,18 +43,28 @@ namespace internal {
  * Return equidistancepoint between origin and pixel p (with p > 0) with offset fp
  */
 inline float intersectionPointRightSideOfOrigin(float p, float fp) {
+  /*
+   * There are 5 different solutions
+   * In decreasing order:
+   * sol 1   in [p^2, inf]
+   * sol 2   in [bound, p^2]
+   * sol 3   in [-bound, bound]
+   * sol 4   in [-p^2, -bound]
+   * sol 5   in [-inf, -p^2]
+   */
   auto pSquared = p * p;
-  auto fpAbs = std::abs(fp);
-  if (fpAbs >= pSquared) {
-    float s = (pSquared + fp) / (2.0F * p);
-    return (fp > 0.0F) ? s + 0.5F : s - 0.5F;
+  if (fp > pSquared) {
+    return (pSquared + p + fp) / (2.0F * p);  // sol 1
+  } else if (fp < -pSquared) {
+    return (pSquared - p + fp) / (2.0F * p);  // sol 5
   } else {
-    float boundary = pSquared - 2.0F * p + 1.0F;
-    if (fpAbs < boundary) {
-      return (pSquared - p + fp) / (2.0F * p - 2.0F);
+    float bound = pSquared - 2.0F * p + 1.0F; // Always positive because (p > 0)
+    if (fp > bound) {
+      return 0.5F + std::sqrt(fp);  // sol 2
+    } else if (fp < -bound) {
+      return p - 0.5F - std::sqrt(-fp);  // sol 4
     } else {
-      float s = 0.5F + std::sqrt(fpAbs);
-      return (fp > 0.0F) ? s : p - s;
+      return (pSquared - p + fp) / (2.0F * p - 2.0F);  // sol 3
     }
   }
 }
@@ -62,8 +73,12 @@ inline float intersectionPointRightSideOfOrigin(float p, float fp) {
  * Return equidistancepoint between origin and pixel p with offset fp
  */
 inline float intersectionOffsetFromOrigin(float p, float fp) {
-  float intersectionOffset = intersectionPointRightSideOfOrigin(std::abs(p), fp);
-  return (p > 0) ? intersectionOffset : -intersectionOffset;
+  if (p > 0.0F) {
+    return intersectionPointRightSideOfOrigin(p, fp);
+  } else {
+    // call with negative p and flip the result
+    return -intersectionPointRightSideOfOrigin(-p, fp);
+  }
 }
 
 }  // namespace internal
@@ -74,10 +89,11 @@ inline float intersectionOffsetFromOrigin(float p, float fp) {
  *      squarePixelBorderDistance(s, q, fq) == squarePixelBorderDistance(s, p, fp)
  */
 inline float equidistancePoint(float q, float fq, float p, float fp) {
-  assert(q == p || std::abs(q-p) >= 1.0F); // Check that q and p are proper pixel locations: either the same pixel or non-overlapping pixels
-  assert((q == p) ? fp == fq : true); // Check when q and p are equal, the offsets are also equal
+  assert(q == p ||
+         std::abs(q - p) >= 1.0F);     // Check that q and p are proper pixel locations: either the same pixel or non-overlapping pixels
+  assert((q == p) ? fp == fq : true);  // Check when q and p are equal, the offsets are also equal
 
-  if (fp == fq) { // quite common case when both pixels are of the same class (occupied / free)
+  if (fp == fq) {  // quite common case when both pixels are of the same class (occupied / free)
     return 0.5F * (p + q);
   } else {
     float df = fp - fq;
