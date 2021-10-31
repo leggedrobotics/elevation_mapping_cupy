@@ -16,100 +16,64 @@ struct DistanceLowerBound {
   float z_rhs;  // rhs of interval where this lower bound holds
 };
 
-inline std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d,
-                                                                 std::vector<DistanceLowerBound>& lowerBounds) {
-  const int n = squareDistance1d.size();
+std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d,
+                                                          std::vector<DistanceLowerBound>& lowerBounds) {
+  const auto n = squareDistance1d.size();
   const auto nFloat = static_cast<float>(n);
 
-  // Find minimum
-  int qMin = 0;
-  float fMin = squareDistance1d[0];
-  if (fMin > 0.0F) {
-    for (int q = 1; q < n; ++q) {
-      const float fq = squareDistance1d[q];
-      if (fq < fMin) {
-        qMin = q;
-        fMin = fq;
-        if (fMin == 0.0F) {
-          break;
-        }
-      }
-    }
-  }
-
   // Initialize
-  auto lowerBoundIt = lowerBounds.begin() + qMin;
-  *lowerBoundIt = DistanceLowerBound{static_cast<float>(qMin), fMin, -INF, INF};
+  auto rhsBoundIt = lowerBounds.begin();
+  *rhsBoundIt = DistanceLowerBound{0.0F, squareDistance1d[0], -INF, INF};
+  auto firstBoundIt = lowerBounds.begin();
 
   // Compute bounds to the right of minimum
-  float qFloat = static_cast<float>(qMin) + 1.0F;
-  for (int q = qMin + 1; q < n; ++q) {
-    // Storing these quantaties by value gives better performance (removed indirection?)
+  float qFloat = 1.0F;
+  for (Eigen::Index q = 1; q < n; ++q) {
+    // Storing this by value gives better performance (removed indirection?)
     const float fq = squareDistance1d[q];
-    DistanceLowerBound lastBound = *lowerBoundIt;
 
-    float s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+    float s = equidistancePoint(qFloat, fq, rhsBoundIt->v, rhsBoundIt->f);
     if (s < nFloat) {  // Can ignore the lower bound derived from this point if it is only active outsize of [0, n]
       // Search backwards in bounds until s is within [z_lhs, z_rhs]
-      while (s < lastBound.z_lhs) {
-        --lowerBoundIt;
-        lastBound = *lowerBoundIt;
-        s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
+      while (s < rhsBoundIt->z_lhs) {
+        --rhsBoundIt;
+        s = equidistancePoint(qFloat, fq, rhsBoundIt->v, rhsBoundIt->f);
       }
-      lowerBoundIt->z_rhs = s;
-      ++lowerBoundIt;
-      *lowerBoundIt = DistanceLowerBound{qFloat, fq, s, INF};
+      if (s >= 0.0F) {          // Intersection is within [0, n]. Adjust current lowerbound and insert the new one after
+        rhsBoundIt->z_rhs = s;  // Update the bound that comes before
+        ++rhsBoundIt;           // insert new bound after.
+        *rhsBoundIt = DistanceLowerBound{qFloat, fq, s, INF};  // Valid from s till infinity
+      } else {  // Intersection is outside [0, n]. This means that the new bound dominates all previous bounds
+        *rhsBoundIt = DistanceLowerBound{qFloat, fq, -INF, INF};
+        firstBoundIt = rhsBoundIt;  // No need to keep other bounds, so update the first bound iterator to this one.
+      }
     }
+
+    // Increment to follow loop counter as float
     qFloat += 1.0F;
   }
 
-  // Compute bounds to the left of minimum
-  lowerBoundIt = lowerBounds.begin() + qMin;
-  qFloat = static_cast<float>(qMin) - 1.0F;
-  for (int q = qMin - 1; q >= 0; --q) {
-    const float fq = squareDistance1d[q];
-    DistanceLowerBound lastBound = *lowerBoundIt;
-
-    float s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
-    if (s > 0.0F) {  // Can ignore the lower bound derived from this point if it is only active outsize of [0, n]
-      // Search forwards in bounds until s is within [z_lhs, z_rhs]
-      while (s > lastBound.z_rhs) {
-        ++lowerBoundIt;
-        lastBound = *lowerBoundIt;
-        s = equidistancePoint(qFloat, fq, lastBound.v, lastBound.f);
-      }
-      lowerBoundIt->z_lhs = s;
-      --lowerBoundIt;
-      *lowerBoundIt = DistanceLowerBound{qFloat, fq, -INF, s};
-    }
-    qFloat -= 1.0F;
-  }
-
-  return lowerBoundIt;
+  return firstBoundIt;
 }
 
-inline void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
-                             std::vector<DistanceLowerBound>::iterator lowerBoundIt) {
-  const int n = squareDistance1d.size();
+void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
+                      std::vector<DistanceLowerBound>::const_iterator lowerBoundIt) {
+  const auto n = squareDistance1d.size();
 
-  // Store active lower bound by value to remove indirection
+  // Store active bound by value to remove indirection
   auto lastz = lowerBoundIt->z_rhs;
-  auto lastv = lowerBoundIt->v;
-  auto lastf = lowerBoundIt->f;
 
   float qFloat = 0.0F;
-  for (int q = 0; q < n; q++) {
+  for (Eigen::Index q = 0; q < n; ++q) {
     // Find the new active lower bound if q no longer belongs to current interval
     if (qFloat > lastz) {
       do {
         ++lowerBoundIt;
-        lastz = lowerBoundIt->z_rhs;
-      } while (lastz < qFloat);
-      lastv = lowerBoundIt->v;
-      lastf = lowerBoundIt->f;
+      } while (lowerBoundIt->z_rhs < qFloat);
+      lastz = lowerBoundIt->z_rhs;
     }
 
-    squareDistance1d[q] = squarePixelBorderDistance(qFloat, lastv, lastf);
+    squareDistance1d[q] = squarePixelBorderDistance(qFloat, lowerBoundIt->v, lowerBoundIt->f);
     qFloat += 1.0F;
   }
 }

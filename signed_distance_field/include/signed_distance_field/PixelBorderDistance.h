@@ -58,7 +58,7 @@ inline float intersectionPointRightSideOfOrigin(float p, float fp) {
   } else if (fp < -pSquared) {
     return (pSquared - p + fp) / (2.0F * p);  // sol 5
   } else {
-    float bound = pSquared - 2.0F * p + 1.0F; // Always positive because (p > 0)
+    const float bound = pSquared - 2.0F * p + 1.0F; // Always positive because (p > 0)
     if (fp > bound) {
       return 0.5F + std::sqrt(fp);  // sol 2
     } else if (fp < -bound) {
