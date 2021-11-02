@@ -24,17 +24,13 @@ inline float pixelBorderDistance(float i, float j) {
 
 /**
  * Returns square pixelBorderDistance, adding offset f.
- * ! only works when i and j are cast from integers.
  */
 inline float squarePixelBorderDistance(float i, float j, float f) {
   assert(i == j ||
          std::abs(i - j) >= 1.0F);  // Check that i and j are proper pixel locations: either the same pixel or non-overlapping pixels
-  if (i == j) {
-    return f;
-  } else {
-    float diff = std::abs(i - j) - 0.5F;
-    return diff * diff + f;
-  }
+
+  float d = pixelBorderDistance(i, j);
+  return d * d + f;
 }
 
 namespace internal {
