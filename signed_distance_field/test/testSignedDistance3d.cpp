@@ -80,3 +80,74 @@ TEST(testSignedDistance3d, randomTerrainInterpolation) {
     }
   }
 }
+
+TEST(testSignedDistance3d, randomTerrainDerivative) {
+  const int n = 10;
+  const int m = 20;
+  const float resolution = 0.1;
+  grid_map::GridMap map;
+  map.setGeometry({n * resolution, m * resolution}, resolution);
+  map.add("elevation");
+  map.get("elevation").setRandom();  // random [-1.0, 1.0]
+  const grid_map::Matrix mapData = map.get("elevation");
+  const float minHeight = mapData.minCoeff();
+  const float maxHeight = mapData.maxCoeff();
+
+  signed_distance_field::GridmapSignedDistanceField sdf(map, "elevation", minHeight, maxHeight);
+
+  // Check at different heights/
+  int numLayers = (maxHeight - minHeight) / resolution;
+  for (int k = 0; k <= numLayers; ++k) {
+    const float height = minHeight + k * resolution;
+    const auto naiveSignedDistance = signed_distance_field::naiveSignedDistanceAtHeight(mapData, height, resolution);
+    const auto naiveSignedDistanceNext = signed_distance_field::naiveSignedDistanceAtHeight(mapData, height + resolution, resolution);
+    const auto naiveSignedDistancePrevious = signed_distance_field::naiveSignedDistanceAtHeight(mapData, height - resolution, resolution);
+
+    for (int i = 0; i < mapData.rows(); ++i) {
+      for (int j = 0; j < mapData.rows(); ++j) {
+        grid_map::Position position2d;
+        map.getPosition({i, j}, position2d);
+        const auto sdfderivative = sdf.valueAndDerivative(switched_model::vector3_t{position2d.x(), position2d.y(), height});
+        const auto sdfCheck = naiveSignedDistance(i, j);
+        ASSERT_LT(std::abs(sdfderivative.first - sdfCheck), 1e-4);
+
+        // Check finite difference
+        float dx = 0.0;
+        if (i > 0) {
+          if (i + 1 < mapData.rows()) {
+            dx = (naiveSignedDistance(i + 1, j) - naiveSignedDistance(i - 1, j)) / (-2.0 * resolution);
+          } else {
+            dx = (naiveSignedDistance(i, j) - naiveSignedDistance(i - 1, j)) / (-resolution);
+          }
+        } else {
+          dx = (naiveSignedDistance(i + 1, j) - naiveSignedDistance(i, j)) / (-resolution);
+        }
+        ASSERT_LT(std::abs(dx - sdfderivative.second.x()), 1e-4);
+
+        float dy = 0.0;
+        if (j > 0) {
+          if (j + 1 < mapData.cols()) {
+            dy = (naiveSignedDistance(i, j + 1) - naiveSignedDistance(i, j - 1)) / (-2.0 * resolution);
+          } else {
+            dy = (naiveSignedDistance(i, j) - naiveSignedDistance(i, j - 1)) / (-resolution);
+          }
+        } else {
+          dy = (naiveSignedDistance(i, j + 1) - naiveSignedDistance(i, j)) / (-resolution);
+        }
+        ASSERT_LT(std::abs(dy - sdfderivative.second.y()), 1e-4);
+
+        float dz = 0.0;
+        if (k > 0) {
+          if (k < numLayers) {
+            dz = (naiveSignedDistanceNext(i, j) - naiveSignedDistancePrevious(i, j)) / (2.0 * resolution);
+          } else {
+            dz = (naiveSignedDistance(i, j) - naiveSignedDistancePrevious(i, j)) / (resolution);
+          }
+        } else {
+          dz = (naiveSignedDistanceNext(i, j) - naiveSignedDistance(i, j)) / (resolution);
+        }
+        ASSERT_LT(std::abs(dz - sdfderivative.second.z()), 1e-4);
+      }
+    }
+  }
+}
