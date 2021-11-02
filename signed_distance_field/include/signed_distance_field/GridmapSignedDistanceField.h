@@ -56,6 +56,9 @@ class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
  private:
   GridmapSignedDistanceField(const GridmapSignedDistanceField& other);
   void computeSignedDistance(const grid_map::Matrix& elevation);
+  void computeLayerSdfandDeltaX(const grid_map::Matrix& elevation, grid_map::Matrix& currentLayer, grid_map::Matrix& dxTranspose,
+                                grid_map::Matrix& sdfTranspose, grid_map::Matrix& tmp, grid_map::Matrix& tmpTranspose,
+                                const float gridOriginZ, const float resolution, const float minHeight, const float maxHeight) const;
   void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dxTranspose, const grid_map::Matrix& dy,
                             const grid_map::Matrix& dz);
 

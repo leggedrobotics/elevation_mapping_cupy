@@ -27,9 +27,19 @@ grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, fl
 
 /**
  * Same as above, but returns the sdf in transposed form.
+ * Also takes temporary variables from outside to prevent memory allocation.
+ *
+ * @param elevationMap : elevation data.
+ * @param sdfTranspose : [output] resulting sdf in transposed form (automatically allocated if of wrong size)
+ * @param tmp : temporary of size elevationMap (automatically allocated if of wrong size)
+ * @param tmpTranspose : temporary of size elevationMap transpose (automatically allocated if of wrong size)
+ * @param height : height to generate the signed distance at.
+ * @param resolution : resolution of the elevation map. (The true distance [m] between cells in world frame)
+ * @param minHeight : the lowest height contained in elevationMap
+ * @param maxHeight : the maximum height contained in elevationMap
  */
-grid_map::Matrix signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
-                                        float maxHeight);
+void signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfTranspose, grid_map::Matrix& tmp,
+                                     grid_map::Matrix& tmpTranspose, float height, float resolution, float minHeight, float maxHeight);
 
 grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution);
 

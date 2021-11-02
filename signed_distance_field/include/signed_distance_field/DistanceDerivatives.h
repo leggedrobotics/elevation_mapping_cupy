@@ -8,11 +8,10 @@
 
 namespace signed_distance_field {
 
-inline Eigen::MatrixXf columnwiseCentralDifference(const Eigen::MatrixXf& data, float resolution) {
+inline void columnwiseCentralDifference(const Eigen::MatrixXf& data, Eigen::MatrixXf& centralDifference, float resolution) {
   assert(data.cols() >= 2);  // Minimum size to take finite differences.
 
   const int m = data.cols();
-  Eigen::MatrixXf centralDifference(data.rows(), data.cols());
 
   // First column
   centralDifference.col(0) = (data.col(1) - data.col(0)) / resolution;
@@ -25,21 +24,16 @@ inline Eigen::MatrixXf columnwiseCentralDifference(const Eigen::MatrixXf& data, 
 
   // Last column
   centralDifference.col(m - 1) = (data.col(m - 1) - data.col(m - 2)) / resolution;
-
-  return centralDifference;
 }
 
-inline Eigen::MatrixXf rowwiseCentralDifference(const Eigen::MatrixXf& data, float resolution) {
-  return columnwiseCentralDifference(data.transpose(), resolution).transpose();
+inline void layerFiniteDifference(const Eigen::MatrixXf& data_k, const Eigen::MatrixXf& data_kp1, Eigen::MatrixXf& result,
+                                             float resolution) {
+  result = (1.0F / resolution) * (data_kp1 - data_k);
 }
 
-inline Eigen::MatrixXf layerFiniteDifference(const Eigen::MatrixXf& data_k, const Eigen::MatrixXf& data_kp1, float resolution) {
-  return (data_kp1 - data_k) / resolution;
-}
-
-inline Eigen::MatrixXf layerCentralDifference(const Eigen::MatrixXf& data_km1, const Eigen::MatrixXf& data_kp1, float resolution) {
+inline void layerCentralDifference(const Eigen::MatrixXf& data_km1, const Eigen::MatrixXf& data_kp1, Eigen::MatrixXf& result, float resolution) {
   float doubleResolution = 2.0F * resolution;
-  return (data_kp1 - data_km1) / doubleResolution;
+  result = (1.0F / doubleResolution) * (data_kp1 - data_km1);
 }
 
 }  // namespace signed_distance_field

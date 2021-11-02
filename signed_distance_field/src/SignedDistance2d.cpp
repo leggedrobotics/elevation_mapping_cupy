@@ -16,6 +16,12 @@ struct DistanceLowerBound {
   float z_rhs;  // rhs of interval where this lower bound holds
 };
 
+/**
+ * 1D Euclidean Distance Transform based on: http://cs.brown.edu/people/pfelzens/dt/
+ * Adapted to work on Eigen objects directly
+ * Optimized computation of s.
+ * Some optimization to not keep track of bounds that lie fully outside the grid.
+ */
 std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d,
                                                           std::vector<DistanceLowerBound>& lowerBounds, Eigen::Index start) {
   const auto n = squareDistance1d.size();
@@ -57,7 +63,7 @@ std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen
   return firstBoundIt;
 }
 
-void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
+void extractSquareDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
                       std::vector<DistanceLowerBound>::const_iterator lowerBoundIt, Eigen::Index start) {
   const auto n = squareDistance1d.size();
 
@@ -82,7 +88,39 @@ void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::v
   }
 }
 
-Eigen::Index lastZero(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d) {
+/**
+ * Same as extractSquareDistances, but takes the sqrt as a final step.
+ * Because several cells will have a value of 0.0 (obstacle / free space label), we can skip the sqrt computation for those.
+ */
+void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
+                      std::vector<DistanceLowerBound>::const_iterator lowerBoundIt, Eigen::Index start) {
+  const auto n = squareDistance1d.size();
+
+  // Store active bound by value to remove indirection
+  auto lastz = lowerBoundIt->z_rhs;
+
+  auto qFloat = static_cast<float>(start);
+  for (Eigen::Index q = start; q < n; ++q) {
+    if (squareDistance1d[q] > 0.0F) {  // Observe that if squareDistance1d[q] == 0.0, this is already the minimum and it will stay 0.0
+      // Find the new active lower bound if q no longer belongs to current interval
+      if (qFloat > lastz) {
+        do {
+          ++lowerBoundIt;
+        } while (lowerBoundIt->z_rhs < qFloat);
+        lastz = lowerBoundIt->z_rhs;
+      }
+
+      squareDistance1d[q] = std::sqrt(squarePixelBorderDistance(qFloat, lowerBoundIt->v, lowerBoundIt->f));
+    }
+
+    qFloat += 1.0F;
+  }
+}
+
+/**
+ * Find the location of the last zero value from the front
+ */
+Eigen::Index lastZeroFromFront(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d) {
   const auto n = squareDistance1d.size();
 
   for (Eigen::Index q = 0; q < n; ++q) {
@@ -97,16 +135,29 @@ Eigen::Index lastZero(const Eigen::Ref<Eigen::VectorXf>& squareDistance1d) {
   return n;
 }
 
-/**
- * 1D Euclidean Distance Transform based on: http://cs.brown.edu/people/pfelzens/dt/
- * Adapted to work on Eigen objects directly
- * Optimized computation of s
- */
 inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d,
                                                 std::vector<DistanceLowerBound>& lowerBounds) {
   assert(lowerBounds.size() >= squareDistance1d.size());
 
-  auto start = lastZero(squareDistance1d);
+  auto start = lastZeroFromFront(squareDistance1d);
+
+  // Only need to process line if there are nonzero elements. Also the first zeros stay untouched.
+  if (start < squareDistance1d.size()) {
+    auto startIt = fillLowerBounds(squareDistance1d, lowerBounds, start);
+    extractSquareDistances(squareDistance1d, lowerBounds, startIt, start);
+  }
+}
+
+/**
+ * Same as above, but takes sqrt as final step (within the same loop)
+ * @param squareDistance1d : input as squared distance, output is the distance after sqrt.
+ * @param lowerBounds : work vector
+ */
+inline void distanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d,
+                                                std::vector<DistanceLowerBound>& lowerBounds) {
+  assert(lowerBounds.size() >= squareDistance1d.size());
+
+  auto start = lastZeroFromFront(squareDistance1d);
 
   // Only need to process line if there are nonzero elements. Also the first zeros stay untouched.
   if (start < squareDistance1d.size()) {
@@ -115,32 +166,29 @@ inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squa
   }
 }
 
-void squaredDistanceTransform_2d_columnwiseInplace(grid_map::Matrix& squareDistance, std::vector<DistanceLowerBound>& lowerBounds) {
-  const auto m = squareDistance.cols();
-  for (Eigen::Index i = 0; i < m; ++i) {
-    squaredDistanceTransform_1d_inplace(squareDistance.col(i), lowerBounds);
-  }
-}
+void computePixelDistance2dTranspose(grid_map::Matrix& input, grid_map::Matrix& distanceTranspose) {
+  const size_t n = input.rows();
+  const size_t m = input.cols();
 
-void computePixelDistance2dTranspose(grid_map::Matrix& squareDistance) {
   // Allocate a buffer big enough for processing both rowise and columnwise
-  const size_t n = squareDistance.rows();
-  const size_t m = squareDistance.cols();
   std::vector<DistanceLowerBound> lowerBounds(std::max(n, m));
 
   // Process columns
-  squaredDistanceTransform_2d_columnwiseInplace(squareDistance, lowerBounds);
+  for (Eigen::Index i = 0; i < m; ++i) {
+    squaredDistanceTransform_1d_inplace(input.col(i), lowerBounds);
+  }
 
-  // Process rows
-  squareDistance.transposeInPlace();
-  squaredDistanceTransform_2d_columnwiseInplace(squareDistance, lowerBounds);
-
-  // Convert square distance to absolute distance
-  squareDistance = squareDistance.cwiseSqrt();
+  // Process rows (= columns after transpose).
+  distanceTranspose = input.transpose();
+  for (Eigen::Index i = 0; i < n; ++i) {
+    // Fuses square distance algorithm and taking sqrt.
+    distanceTransform_1d_inplace(distanceTranspose.col(i), lowerBounds);
+  }
 }
 
 // Initialize with square distance in height direction in pixel units if above the surface
-grid_map::Matrix initializeObstacleDistance(const grid_map::Matrix& elevationMap, float height, float resolution) {
+void initializeObstacleDistance(const grid_map::Matrix& elevationMap, grid_map::Matrix& result, float height,
+                                            float resolution) {
   /* Vectorized implementation of:
    * if (height > elevation) {
    *    const auto diff = (height - elevation) / resolution;
@@ -149,11 +197,12 @@ grid_map::Matrix initializeObstacleDistance(const grid_map::Matrix& elevationMap
    *    return 0.0F;
    * }
    */
-  return ((1.0F / resolution) * (height - elevationMap.array()).cwiseMax(0.0F)).square();
+  result = ((1.0F / resolution) * (height - elevationMap.array()).cwiseMax(0.0F)).square();
 }
 
 // Initialize with square distance in height direction in pixel units if below the surface
-grid_map::Matrix initializeObstacleFreeDistance(const grid_map::Matrix& elevationMap, float height, float resolution) {
+void initializeObstacleFreeDistance(const grid_map::Matrix& elevationMap, grid_map::Matrix& result, float height,
+                                                float resolution) {
   /* Vectorized implementation of:
    * if (height < elevation) {
    *    const auto diff = (height - elevation) / resolution;
@@ -162,56 +211,66 @@ grid_map::Matrix initializeObstacleFreeDistance(const grid_map::Matrix& elevatio
    *    return 0.0F;
    * }
    */
-  return ((1.0F / resolution) * (height - elevationMap.array()).cwiseMin(0.0F)).square();
+  result = ((1.0F / resolution) * (height - elevationMap.array()).cwiseMin(0.0F)).square();
 }
 
-grid_map::Matrix pixelDistanceToFreeSpaceTranspose(const grid_map::Matrix& elevationMap, float height, float resolution) {
-  grid_map::Matrix sdfObstacleFree = internal::initializeObstacleFreeDistance(elevationMap, height, resolution);
-  internal::computePixelDistance2dTranspose(sdfObstacleFree);
-  return sdfObstacleFree;
+void pixelDistanceToFreeSpaceTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfObstacleFree, grid_map::Matrix& tmp, float height,
+                                                   float resolution) {
+  internal::initializeObstacleFreeDistance(elevationMap, tmp, height, resolution);
+  internal::computePixelDistance2dTranspose(tmp, sdfObstacleFree);
 }
 
-grid_map::Matrix pixelDistanceToObstacleTranspose(const grid_map::Matrix& elevationMap, float height, float resolution) {
-  grid_map::Matrix sdfObstacle = internal::initializeObstacleDistance(elevationMap, height, resolution);
-  internal::computePixelDistance2dTranspose(sdfObstacle);
-  return sdfObstacle;
+void pixelDistanceToObstacleTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfObstacleTranspose, grid_map::Matrix& tmp, float height,
+                                                  float resolution) {
+  internal::initializeObstacleDistance(elevationMap, tmp, height, resolution);
+  internal::computePixelDistance2dTranspose(tmp, sdfObstacleTranspose);
 }
 
 grid_map::Matrix signedDistanceFromOccupancyTranspose(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
   // Compute pixel distance to obstacles
-  grid_map::Matrix sdfObstacle = occupancyGrid.unaryExpr([=](bool val) { return (val) ? 0.0F : INF; });
-  internal::computePixelDistance2dTranspose(sdfObstacle);
+  grid_map::Matrix sdfObstacle;
+  grid_map::Matrix init = occupancyGrid.unaryExpr([=](bool val) { return (val) ? 0.0F : INF; });
+  internal::computePixelDistance2dTranspose(init, sdfObstacle);
 
   // Compute pixel distance to obstacle free space
-  grid_map::Matrix sdfObstacleFree = occupancyGrid.unaryExpr([=](bool val) { return (val) ? INF : 0.0F; });
-  internal::computePixelDistance2dTranspose(sdfObstacleFree);
+  grid_map::Matrix sdfObstacleFree;
+  init = occupancyGrid.unaryExpr([=](bool val) { return (val) ? INF : 0.0F; });
+  internal::computePixelDistance2dTranspose(init, sdfObstacleFree);
 
-  grid_map::Matrix sdf2d = resolution * (sdfObstacle - sdfObstacleFree);
-  return sdf2d;
+  return resolution * (sdfObstacle - sdfObstacleFree);
 }
 
 }  // namespace internal
 
-grid_map::Matrix signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
+void signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfTranspose, grid_map::Matrix& tmp, grid_map::Matrix& tmpTranspose,  float height, float resolution, float minHeight,
                                                  float maxHeight) {
   const bool allPixelsAreObstacles = height < minHeight;
   const bool allPixelsAreFreeSpace = height > maxHeight;
 
   if (allPixelsAreObstacles) {
-    return -resolution * internal::pixelDistanceToFreeSpaceTranspose(elevationMap, height, resolution);
+    internal::pixelDistanceToFreeSpaceTranspose(elevationMap, sdfTranspose, tmp, height, resolution);
+
+    sdfTranspose *= -resolution;
   } else if (allPixelsAreFreeSpace) {
-    return resolution * internal::pixelDistanceToObstacleTranspose(elevationMap, height, resolution);
+    internal::pixelDistanceToObstacleTranspose(elevationMap, sdfTranspose, tmp, height, resolution);
+
+    sdfTranspose *= resolution;
   } else {  // This layer contains a mix of obstacles and free space
-    return resolution * (internal::pixelDistanceToObstacleTranspose(elevationMap, height, resolution) -
-                         internal::pixelDistanceToFreeSpaceTranspose(elevationMap, height, resolution));
+    internal::pixelDistanceToObstacleTranspose(elevationMap, sdfTranspose, tmp, height, resolution);
+    internal::pixelDistanceToFreeSpaceTranspose(elevationMap,  tmpTranspose, tmp, height, resolution);
+
+    sdfTranspose = resolution * (sdfTranspose - tmpTranspose);
   }
 }
 
 grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
                                         float maxHeight) {
-  grid_map::Matrix sdfTranspose = signedDistanceAtHeightTranspose(elevationMap, height, resolution, minHeight, maxHeight);
-  sdfTranspose.transposeInPlace();
-  return sdfTranspose;
+  grid_map::Matrix sdfTranspose;
+  grid_map::Matrix tmp;
+  grid_map::Matrix tmpTranspose;
+
+  signedDistanceAtHeightTranspose(elevationMap, sdfTranspose, tmp, tmpTranspose, height, resolution, minHeight, maxHeight);
+  return sdfTranspose.transpose();
 }
 
 grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
@@ -220,9 +279,7 @@ grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& 
   if (hasObstacles) {
     bool hasFreeSpace = obstacleCount < occupancyGrid.size();
     if (hasFreeSpace) {
-      grid_map::Matrix sdfTranspose = internal::signedDistanceFromOccupancyTranspose(occupancyGrid, resolution);
-      sdfTranspose.transposeInPlace();
-      return sdfTranspose;
+      return internal::signedDistanceFromOccupancyTranspose(occupancyGrid, resolution).transpose();
     } else {
       // Only obstacles -> distance is minus infinity everywhere
       return grid_map::Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), -INF);
