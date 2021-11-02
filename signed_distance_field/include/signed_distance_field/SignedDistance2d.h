@@ -25,6 +25,12 @@ namespace signed_distance_field {
 grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
                                         float maxHeight);
 
+/**
+ * Same as above, but returns the sdf in transposed form.
+ */
+grid_map::Matrix signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
+                                        float maxHeight);
+
 grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution);
 
 }  // namespace signed_distance_field

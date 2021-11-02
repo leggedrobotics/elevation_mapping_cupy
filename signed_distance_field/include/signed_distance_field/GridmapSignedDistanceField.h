@@ -56,7 +56,7 @@ class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
  private:
   GridmapSignedDistanceField(const GridmapSignedDistanceField& other);
   void computeSignedDistance(const grid_map::Matrix& elevation);
-  void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx, const grid_map::Matrix& dy,
+  void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dxTranspose, const grid_map::Matrix& dy,
                             const grid_map::Matrix& dz);
 
   using node_data_t = std::array<float, 4>;

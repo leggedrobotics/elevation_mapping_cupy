@@ -68,42 +68,69 @@ void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& e
   const auto minHeight = elevation.minCoeff();
   const auto maxHeight = elevation.maxCoeff();
 
+  /*
+   * General strategy to reduce the amount of transposing:
+   *    - SDF at a height is in transposed form after computing it.
+   *    - Take the finite difference in dx, now that this data is continuous in memory.
+   *    - Transpose the SDF
+   *    - Take other finite differences, now dy is efficient.
+   *    - When writing to the 3D structure, keep in mind that dx is still transposed.
+   */
+
   // First layer: forward difference in z
-  grid_map::Matrix currentLayer = signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ, resolution, minHeight, maxHeight);
+  grid_map::Matrix currentLayer =
+      signed_distance_field::signedDistanceAtHeightTranspose(elevation, gridOriginZ, resolution, minHeight, maxHeight);
+  grid_map::Matrix dxTranspose = signed_distance_field::columnwiseCentralDifference(currentLayer, -resolution);  // dx / drow = -resolution
+  currentLayer.transposeInPlace();
+
   grid_map::Matrix nextLayer =
-      signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ + resolution, resolution, minHeight, maxHeight);
+      signed_distance_field::signedDistanceAtHeightTranspose(elevation, gridOriginZ + resolution, resolution, minHeight, maxHeight);
+  grid_map::Matrix dxNextTranspose = signed_distance_field::columnwiseCentralDifference(nextLayer, -resolution);
+  nextLayer.transposeInPlace();
+
   grid_map::Matrix dz = signed_distance_field::layerFiniteDifference(currentLayer, nextLayer, resolution);  // dz / layer = +resolution
   grid_map::Matrix dy = signed_distance_field::columnwiseCentralDifference(currentLayer, -resolution);      // dy / dcol = -resolution
-  grid_map::Matrix dx = signed_distance_field::rowwiseCentralDifference(currentLayer, -resolution);         // dx / drow = -resolution
-  emplacebackLayerData(currentLayer, dx, dy, dz);
+
+  emplacebackLayerData(currentLayer, dxTranspose, dy, dz);
 
   // Middle layers: central difference in z
   for (size_t layerZ = 1; layerZ + 1 < gridmap3DLookup_.gridsize_.z; ++layerZ) {
     grid_map::Matrix previousLayer = std::move(currentLayer);
     currentLayer = std::move(nextLayer);
-    nextLayer =
-        signed_distance_field::signedDistanceAtHeight(elevation, gridOriginZ + (layerZ + 1) * resolution, resolution, minHeight, maxHeight);
+    dxTranspose = std::move(dxNextTranspose);
 
+    // Compute next layer transposed
+    nextLayer = signed_distance_field::signedDistanceAtHeightTranspose(elevation, gridOriginZ + (layerZ + 1) * resolution, resolution,
+                                                                       minHeight, maxHeight);
+
+    // Take dx here, so we can operate on columns before transposing
+    dxNextTranspose = signed_distance_field::columnwiseCentralDifference(nextLayer, -resolution);
+
+    // Transpose the data
+    nextLayer.transposeInPlace();
+
+    // Compute other finite differences
     dz = signed_distance_field::layerCentralDifference(previousLayer, nextLayer, resolution);
     dy = signed_distance_field::columnwiseCentralDifference(currentLayer, -resolution);
-    dx = signed_distance_field::rowwiseCentralDifference(currentLayer, -resolution);
-    emplacebackLayerData(currentLayer, dx, dy, dz);
+
+    // Add the data to the 3D structure
+    emplacebackLayerData(currentLayer, dxTranspose, dy, dz);
   }
 
   // Last layer: backward difference in z
   grid_map::Matrix previousLayer = std::move(currentLayer);
   currentLayer = std::move(nextLayer);
+  dxTranspose = std::move(dxNextTranspose);
   dz = signed_distance_field::layerCentralDifference(previousLayer, currentLayer, resolution);
   dy = signed_distance_field::columnwiseCentralDifference(currentLayer, -resolution);
-  dx = signed_distance_field::rowwiseCentralDifference(currentLayer, -resolution);
-  emplacebackLayerData(currentLayer, dx, dy, dz);
+  emplacebackLayerData(currentLayer, dxTranspose, dy, dz);
 }
 
-void GridmapSignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dx,
+void GridmapSignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dxdxTranspose,
                                                       const grid_map::Matrix& dy, const grid_map::Matrix& dz) {
   for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; ++colY) {
     for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; ++rowX) {
-      data_.emplace_back(node_data_t{signedDistance(rowX, colY), dx(rowX, colY), dy(rowX, colY), dz(rowX, colY)});
+      data_.emplace_back(node_data_t{signedDistance(rowX, colY), dxdxTranspose(colY, rowX), dy(rowX, colY), dz(rowX, colY)});
     }
   }
 }
