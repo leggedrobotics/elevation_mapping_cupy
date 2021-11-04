@@ -234,32 +234,20 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
 
   bool reuseLabel = true;
   for (const auto& plane : planes) {
-    // Bookkeeping of labels : reuse old label for the first plane
-    const int newLabel = (reuseLabel) ? label : ++segmentedPlanesMap_.highestLabel;
-    reuseLabel = false;
-
-    // Compute average plane parameters for refined segmentation
-    const std::vector<std::size_t>& plane_point_indices = plane->indices_of_assigned_points();
-    Eigen::Vector3d sum = Eigen::Vector3d::Zero();
-    Eigen::Matrix3d sumSquared = Eigen::Matrix3d::Zero();
-    for (const auto index : plane_point_indices) {
-      const auto& point = pointsWithNormal[index].first;
-      const Eigen::Vector3d point3d(point.x(), point.y(), point.z());
-
-      sum += point3d;
-      sumSquared.noalias() += point3d * point3d.transpose();
-    }
-
-    const auto numPoints = plane_point_indices.size();
-    const Eigen::Vector3d supportVector = sum / numPoints;
-    const Eigen::Vector3d normalVector = normalAndErrorFromCovariance(numPoints, supportVector, sumSquared).first;
+    const auto planeInfo = ransac_plane_extractor::RansacPlaneExtractor::getPlaneParameters(plane.get());
+    const auto& normalVector = planeInfo.first;
+    const auto& supportVector = planeInfo.second;
 
     if (isWithinInclinationLimit(normalVector)) {
+      // Bookkeeping of labels : reuse old label for the first plane
+      const int newLabel = (reuseLabel) ? label : ++segmentedPlanesMap_.highestLabel;
+      reuseLabel = false;
+
       const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
       segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, TerrainPlane(supportVector, terrainOrientation));
 
       // Assign label in segmentation
-      for (const auto index : plane_point_indices) {
+      for (const auto index : plane->indices_of_assigned_points()) {
         const auto& point = pointsWithNormal[index].first;
 
         // Need to lookup indices in map, because RANSAC has reordered the points

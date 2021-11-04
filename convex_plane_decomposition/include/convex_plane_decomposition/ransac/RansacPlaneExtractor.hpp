@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include <Eigen/Core>
+
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Point_with_normal_3.h>
 #include <CGAL/Shape_detection/Efficient_RANSAC.h>
@@ -24,6 +26,7 @@ using NormalMap = CGAL::Second_of_pair_property_map<PointWithNormal>;
 using Traits = CGAL::Shape_detection::Efficient_RANSAC_traits<Kernel, PwnVector, PointMap, NormalMap>;
 using EfficientRansac = CGAL::Shape_detection::Efficient_RANSAC<Traits>;
 using Plane = CGAL::Shape_detection::Plane<Traits>;
+using Shape = CGAL::Shape_detection::Shape_base<Traits>;
 
 class RansacPlaneExtractor {
  public:
@@ -32,6 +35,9 @@ class RansacPlaneExtractor {
   void setParameters(const RansacPlaneExtractorParameters& parameters);
 
   void detectPlanes(std::vector<PointWithNormal>& points_with_normal);
+
+  /// Return {plane normal, support vector} for the detected shape
+  static std::pair<Eigen::Vector3d, Eigen::Vector3d> getPlaneParameters(Shape* shapePtr);
 
   /// Returns an iterator range. Data is still in the ransac_object
   EfficientRansac::Shape_range getDetectedPlanes() const { return ransac_.shapes(); };

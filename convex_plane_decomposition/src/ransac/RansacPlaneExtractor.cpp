@@ -20,4 +20,20 @@ void RansacPlaneExtractor::detectPlanes(std::vector<PointWithNormal>& points_wit
   ransac_.detect(cgalRansacParameters_);
 }
 
+std::pair<Eigen::Vector3d, Eigen::Vector3d> RansacPlaneExtractor::getPlaneParameters(Shape* shapePtr) {
+  const auto* planePtr = static_cast<Plane*>(shapePtr);
+
+  // Get Normal, pointing upwards
+  Eigen::Vector3d normalVector(planePtr->plane_normal().x(), planePtr->plane_normal().y(), planePtr->plane_normal().z());
+  if (normalVector.z() < 0.0) {
+    normalVector = -normalVector;
+  }
+
+  // Project origin to get a point on the plane.
+  const auto support = planePtr->projection({0.0, 0.0, 0.0});
+  const Eigen::Vector3d supportVector(support.x(), support.y(), support.z());
+
+  return {normalVector, supportVector};
+}
+
 }  // namespace ransac_plane_extractor
