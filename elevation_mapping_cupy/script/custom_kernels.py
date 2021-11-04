@@ -136,7 +136,7 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                         atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
                     }
                     else {
-                        if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) { 
+                        if (${enable_edge_shaped} && (num_points > ${wall_num_thresh}) && (z < map_h - map_v * ${mahalanobis_thresh} / num_points)) {
                           // continue;
                         }
                         else {
@@ -149,6 +149,9 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                             map[get_map_idx(idx, 2)] = 1;
                             // Time layer
                             map[get_map_idx(idx, 4)] = 0.0;
+                            // Upper bound
+                            map[get_map_idx(idx, 5)] = new_h;
+                            map[get_map_idx(idx, 6)] = 0.0;
                         }
                         // visibility cleanup
                     }
@@ -158,12 +161,15 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                 float16 ray_x, ray_y, ray_z;
                 float16 ray_length = ray_vector(t[0], t[1], t[2], x, y, z, ray_x, ray_y, ray_z);
                 ray_length = min(ray_length, (float16)${max_ray_length});
+                int last_nidx = -1;
                 for (float16 s=${ray_step}; s < ray_length; s+=${ray_step}) {
                     // iterate through ray
                     U nx = t[0] + ray_x * s;
                     U ny = t[1] + ray_y * s;
                     U nz = t[2] + ray_z * s;
                     int nidx = get_idx(nx, ny, center_x[0], center_y[0]);
+                    if (last_nidx == nidx) {continue;}  // Skip if we're still in the same cell
+                    else {last_nidx = nidx;}
                     if (!is_inside(nidx)) {continue;}
 
                     U nmap_h = map[get_map_idx(nidx, 0)];
@@ -173,15 +179,26 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     U nmap_trav = map[get_map_idx(nidx, 3)];
                     // Time layer
                     U non_updated_t = map[get_map_idx(nidx, 4)];
+                    // upper bound
+                    U nmap_upper = map[get_map_idx(nidx, 5)];
+                    U nmap_is_upper = map[get_map_idx(nidx, 6)];
 
-                    // If invalid, skip
-                    if (nmap_valid < 0.5) {continue;}
-                    // If updated recently, skip
-                    if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
-
-                    // If point is close, skip.
+                    // If point is close or is farther away than ray length, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    if (d < 0.1 ) {continue;}
+                    // if (d < 0.1 || d > ${max_ray_length}) {continue;}
+                    if (d < 0.1 || !is_valid(x, y, z, t[0], t[1], t[2])) {continue;}
+
+                    // If invalid, do upper bound check, then skip
+                    if (nmap_valid < 0.5) {
+                      if (nz < nmap_upper || nmap_is_upper < 0.5) {
+                        map[get_map_idx(nidx, 5)] = nz;
+                        map[get_map_idx(nidx, 6)] = 1.0f;
+                      }
+                      continue;
+                    }
+                    // If updated recently, skip
+                    // if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
+                    if (non_updated_t < 0.5) {continue;}
 
                     // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
                     // if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.3) {
@@ -202,13 +219,18 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                         // Finally, this cell is penetrated by the ray.
                         atomicAdd(&map[get_map_idx(nidx, 2)], -${cleanup_step}/(ray_length / ${max_ray_length}));
                         atomicAdd(&map[get_map_idx(nidx, 1)], ${outlier_variance});
+                        // Do upper bound check.
+                        if (nz < nmap_upper || nmap_is_upper < 0.5) {
+                            map[get_map_idx(nidx, 5)] = nz;
+                            map[get_map_idx(nidx, 6)] = 1.0f;
+                        }
                     }
                 }
             }
             ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
                             outlier_variance=outlier_variance,
                             wall_num_thresh=wall_num_thresh,
-                            ray_step=resolution / 5.0,
+                            ray_step=resolution / 2**0.5,
                             max_ray_length=max_ray_length,
                             cleanup_step=cleanup_step,
                             cleanup_cos_thresh=cleanup_cos_thresh,
@@ -570,7 +592,7 @@ def polygon_mask_kernel(width, height, resolution):
             string.Template('''
             // Point p = {get_idx_x(i, center_x[0]), get_idx_y(i, center_y[0])};
             Point p = {get_idx_x(i), get_idx_y(i)};
-            Point extreme = {100000, p.y}; 
+            Point extreme = {100000, p.y};
             int bbox_min_idx = get_idx(polygon_bbox[0], polygon_bbox[1], center_x[0], center_y[0]);
             int bbox_max_idx = get_idx(polygon_bbox[2], polygon_bbox[3], center_x[0], center_y[0]);
             Point bmin = {get_idx_x(bbox_min_idx), get_idx_y(bbox_min_idx)};
@@ -617,7 +639,7 @@ def polygon_mask_kernel(width, height, resolution):
 if __name__ == '__main__':
     for i in range(10):
         import random
-        a = cp.zeros((100, 100)) 
+        a = cp.zeros((100, 100))
         n = random.randint(3, 5)
 
         # polygon = cp.array([[-1, -1], [3, 4], [2, 4], [1, 3]], dtype=float)
@@ -638,4 +660,3 @@ if __name__ == '__main__':
         print(a)
         plt.imshow(cp.asnumpy(a))
         plt.show()
-
