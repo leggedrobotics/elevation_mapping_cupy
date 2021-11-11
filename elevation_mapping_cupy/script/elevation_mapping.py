@@ -34,7 +34,7 @@ class ElevationMap(object):
         self.center = xp.array([0, 0, 0], dtype=float)
         self.map_length = param.map_length
         # +2 is a border for outside map
-        self.cell_n = int(self.map_length / self.resolution) + 2
+        self.cell_n = int(round(self.map_length / self.resolution)) + 2
 
         # 'mean' or 'max'
         self.gather_mode = param.gather_mode

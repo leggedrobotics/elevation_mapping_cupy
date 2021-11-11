@@ -168,7 +168,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
 
   resolution_ = resolution;
   map_length_ = map_length;
-  map_n_ = (int)(map_length_ / resolution_);
+  map_n_ = static_cast<int>(round(map_length_ / resolution));
 }
 
 
