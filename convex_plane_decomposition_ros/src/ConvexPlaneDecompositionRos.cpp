@@ -113,6 +113,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     return;
   }
   ROS_INFO("...done.");
+  const auto elevationRaw = elevationMap.get(elevationLayer_);
 
   auto t0 = std::chrono::high_resolution_clock::now();
   preprocessing_->preprocess(elevationMap, elevationLayer_);
@@ -150,6 +151,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   }
 
   // --- Visualize in Rviz --- Not published to the controller
+  // Add raw map
+  planarTerrain.gridMap.add("elevation_raw", elevationRaw);
 
   // Add surface normals
   slidingWindowPlaneExtractor_->addSurfaceNormalToMap(planarTerrain.gridMap, "normal");
