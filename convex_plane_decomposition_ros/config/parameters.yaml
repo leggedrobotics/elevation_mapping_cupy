@@ -31,5 +31,5 @@ postprocessing:
   nonplanar_height_offset: 0.02         # Added offset in Z direction for non-planar cells of the map. (Additional to extracted_planes_height_offset)
   nonplanar_horizontal_offset: 1        # Added offset in XY direction for non-planar cells of the map. In number of pixels.
   smoothing_dilation_size: 0.2          # Half the width of the dilation used before the smooth layer [m]
-  smoothing_box_kernel_size: 0.2        # Half the width of the box kernel used for the smooth layer [m]
+  smoothing_box_kernel_size: 0.1        # Half the width of the box kernel used for the smooth layer [m]
   smoothing_gauss_kernel_size: 0.05     # Half the width of the Gaussian kernel used for the smooth layer [m]
