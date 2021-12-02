@@ -105,6 +105,12 @@ sudo apt install ros-melodic-pybind11-catkin
 
 For interaction with ROS Noetic the recomended way is to compile grid map from source via the open source package or ANYmal Research.
 
+If the Jetson is set up with Jetpack 4.5 with ROS Melodic the following package is additionally required:
+
+```bash
+git clone git@github.com:ros/filters.git -b noetic-devel
+```
+
 ## Usage
 ### Build
 ```bash
