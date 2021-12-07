@@ -3,29 +3,19 @@ project(pcl_catkin)
 
 find_package(catkin REQUIRED)
 
-include(ExternalProject)
+file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/lib/libpcl_visualization.so DESTINATION ${CATKIN_DEVEL_PREFIX}/lib)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/lib/libpcl_visualization.so.1.10 DESTINATION ${CATKIN_DEVEL_PREFIX}/lib)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/lib/libpcl_visualization.so.1.10.0 DESTINATION ${CATKIN_DEVEL_PREFIX}/lib)
 
-set(VERSION 1.10.0)
-
-file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
-
-set(PCL_VERSION 1.10.0)
-ExternalProject_Add(pcl
-  URL https://github.com/PointCloudLibrary/pcl/archive/pcl-${PCL_VERSION}.tar.gz
-  UPDATE_COMMAND ""
-  CMAKE_ARGS
-    -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
-    -DCMAKE_BUILD_TYPE:STRING=Release
-  BUILD_COMMAND $(MAKE)
-  INSTALL_COMMAND $(MAKE) install
-)
+file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib/pkgconfig)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/lib/pkgconfig/pcl_visualization-1.10.pc DESTINATION ${CATKIN_DEVEL_PREFIX}/lib/pkgconfig)
 
 catkin_package(
-  INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include
-  CFG_EXTRAS pcl-extras.cmake
+  INCLUDE_DIRS
 )
 
-install(DIRECTORY ${CATKIN_DEVEL_PREFIX}/include/pcl-1.10/pcl/
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/pcl/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
