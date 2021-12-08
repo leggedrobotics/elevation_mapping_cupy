@@ -130,8 +130,6 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   auto t3 = std::chrono::high_resolution_clock::now();
   ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
 
-
-
   // Add grid map to the terrain
   planarTerrain.gridMap = std::move(elevationMap);
 
