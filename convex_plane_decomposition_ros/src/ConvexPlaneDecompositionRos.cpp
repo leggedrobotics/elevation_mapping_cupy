@@ -113,7 +113,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     return;
   }
   ROS_INFO("...done.");
-  const auto elevationRaw = elevationMap.get(elevationLayer_);
+  const grid_map::Matrix elevationRaw = elevationMap.get(elevationLayer_);
 
   auto t0 = std::chrono::high_resolution_clock::now();
   preprocessing_->preprocess(elevationMap, elevationLayer_);
