@@ -18,7 +18,8 @@ double distanceCostLowerbound(double distanceSquared);
 
 double intervalSquareDistance(double value, double min, double max);
 
-double squaredDistanceToBoundingBox(const convex_plane_decomposition::CgalPoint2d& point, const convex_plane_decomposition::CgalBbox2d& boundingBox) ;
+double squaredDistanceToBoundingBox(const convex_plane_decomposition::CgalPoint2d& point,
+                                    const convex_plane_decomposition::CgalBbox2d& boundingBox);
 
 /** Converts a 3D position in world frame to a 2D position in the terrain frame. */
 inline convex_plane_decomposition::CgalPoint2d position2dInTerrainFrameFromPositionInWorld(const vector3_t& positionWorld,
@@ -48,6 +49,7 @@ std::vector<RegionSortingInfo> sortWithBoundingBoxes(const vector3_t& positionIn
                                                      const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions);
 
 std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decomposition::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions);
+    const vector3_t& positionInWorld, const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions,
+    std::function<scalar_t(const vector3_t&)> penaltyFunction);
 
 }  // namespace switched_model

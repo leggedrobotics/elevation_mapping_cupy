@@ -114,11 +114,12 @@ std::vector<RegionSortingInfo> sortWithBoundingBoxes(const vector3_t& positionIn
 }
 
 std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const std::vector<cpd::PlanarRegion>& planarRegions) {
+    const vector3_t& positionInWorld, const std::vector<cpd::PlanarRegion>& planarRegions,
+    std::function<scalar_t(const vector3_t&)> penaltyFunction) {
   const auto sortedRegions = sortWithBoundingBoxes(positionInWorld, planarRegions);
 
   // Look for closest planar region.
-  double minCost = std::numeric_limits<double>::max();
+  scalar_t minCost = std::numeric_limits<scalar_t>::max();
   std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> closestRegionAndProjection;
   for (const auto& regionInfo : sortedRegions) {
     // Skip based on lower bound
@@ -136,9 +137,9 @@ std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> getPlanarRegionAtPositionI
     // Express projected point in World frame
     const auto projectionInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(projectedPointInTerrainFrame, planeParameters);
 
-    const double distCost = distanceCost(positionInWorld, projectionInWorldFrame);
-    if (distCost < minCost) {
-      minCost = distCost;
+    const scalar_t cost = distanceCost(positionInWorld, projectionInWorldFrame) + penaltyFunction(projectionInWorldFrame);
+    if (cost < minCost) {
+      minCost = cost;
       closestRegionAndProjection = {regionPtr, projectedPointInTerrainFrame};
     }
   }

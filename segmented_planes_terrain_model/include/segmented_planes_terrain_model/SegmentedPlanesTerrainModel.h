@@ -15,9 +15,12 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
  public:
   SegmentedPlanesTerrainModel(convex_plane_decomposition::PlanarTerrain planarTerrain);
 
-  TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const override;
+  TerrainPlane getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld,
+                                                            std::function<scalar_t(const vector3_t&)> penaltyFunction) const override;
 
-  ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const override;
+  using switched_model::TerrainModel::getConvexTerrainAtPositionInWorld;
+  ConvexTerrain getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld,
+                                                  std::function<scalar_t(const vector3_t&)> penaltyFunction) const override;
 
   void createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates, const Eigen::Vector3d& maxCoordinates);
 
@@ -34,8 +37,5 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
   std::unique_ptr<signed_distance_field::GridmapSignedDistanceField> signedDistanceField_;
   const grid_map::Matrix* const elevationData_;
 };
-
-std::pair<const convex_plane_decomposition::PlanarRegion*, convex_plane_decomposition::CgalPoint2d> getPlanarRegionAtPositionInWorld(
-    const vector3_t& positionInWorld, const std::vector<convex_plane_decomposition::PlanarRegion>& planarRegions);
 
 }  // namespace switched_model

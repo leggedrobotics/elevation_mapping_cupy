@@ -23,16 +23,20 @@ SegmentedPlanesTerrainModel::SegmentedPlanesTerrainModel(convex_plane_decomposit
       signedDistanceField_(nullptr),
       elevationData_(&planarTerrain_.gridMap.get(elevationLayerName)) {}
 
-TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(const vector3_t& positionInWorld) const {
-  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
+TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongGravity(
+    const vector3_t& positionInWorld, std::function<scalar_t(const vector3_t&)> penaltyFunction) const {
+  const auto regionAndSeedPoint =
+      getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions, std::move(penaltyFunction));
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
   const auto& seedpointInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(seedpoint, region.planeParameters);
   return TerrainPlane{seedpointInWorldFrame, region.planeParameters.orientationWorldToTerrain};
 }
 
-ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(const vector3_t& positionInWorld) const {
-  const auto regionAndSeedPoint = getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions);
+ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
+    const vector3_t& positionInWorld, std::function<scalar_t(const vector3_t&)> penaltyFunction) const {
+  const auto regionAndSeedPoint =
+      getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions, std::move(penaltyFunction));
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
   const auto& seedpointInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(seedpoint, region.planeParameters);
