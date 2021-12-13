@@ -107,7 +107,16 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
 
   // Extract submap
   bool success;
-  grid_map::GridMap elevationMap = messageMap.getSubmap(messageMap.getPosition(), Eigen::Array2d(subMapLength_, subMapWidth_), success);
+  const grid_map::Position submapPosition = [&]() {
+    // The map center might be between cells. Taking the submap there can result in changing submap dimensions.
+    // project map center to an index and index to center s.t. we get the location of a cell.
+    grid_map::Index centerIndex;
+    grid_map::Position centerPosition;
+    messageMap.getIndex(messageMap.getPosition(), centerIndex);
+    messageMap.getPosition(centerIndex, centerPosition);
+    return centerPosition;
+  }();
+  grid_map::GridMap elevationMap = messageMap.getSubmap(submapPosition, Eigen::Array2d(subMapLength_, subMapWidth_), success);
   if (!success) {
     ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
     return;
