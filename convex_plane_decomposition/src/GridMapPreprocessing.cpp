@@ -37,12 +37,17 @@ void GridMapPreprocessing::denoise(grid_map::GridMap& gridMap, const std::string
 
 void GridMapPreprocessing::changeResolution(grid_map::GridMap& gridMap, const std::string& layer) const {
   if (parameters_.resolution > 0.0 && gridMap.getResolution() != parameters_.resolution) {
+    // Original map info
+    const auto oldPosition = gridMap.getPosition();
+    const auto oldSize = gridMap.getSize();
+    const auto oldResolution = gridMap.getResolution();
+
     Eigen::MatrixXf elevation_map = std::move(gridMap.get(layer));
 
     cv::Mat elevationImage;
     cv::eigen2cv(elevation_map, elevationImage);
 
-    double scaling = gridMap.getResolution() / parameters_.resolution;
+    double scaling = oldResolution / parameters_.resolution;
     int width = int(elevationImage.size[1] * scaling);
     int height = int(elevationImage.size[0] * scaling);
     cv::Size dim{width, height};
@@ -52,9 +57,12 @@ void GridMapPreprocessing::changeResolution(grid_map::GridMap& gridMap, const st
 
     cv::cv2eigen(resizedImage, elevation_map);
 
-    const auto oldPosition = gridMap.getPosition();
-    gridMap.setGeometry({elevation_map.rows() * parameters_.resolution, elevation_map.cols() * parameters_.resolution},
-                        parameters_.resolution, oldPosition);
+    // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
+    grid_map::Size newSize = {elevation_map.rows(), elevation_map.cols()};
+    const double newResolution = 0.5 * ((oldSize[0] * oldResolution) / newSize[0] + (oldSize[1] * oldResolution) / newSize[1]);
+    grid_map::Position newPosition = oldPosition;
+
+    gridMap.setGeometry({newSize[0] * newResolution, newSize[1] * newResolution}, newResolution, newPosition);
     gridMap.get(layer) = std::move(elevation_map);
   }
 }
