@@ -10,7 +10,7 @@ RansacPlaneExtractor::RansacPlaneExtractor(const RansacPlaneExtractorParameters&
 void RansacPlaneExtractor::setParameters(const RansacPlaneExtractorParameters& parameters) {
   cgalRansacParameters_.probability = parameters.probability;
   cgalRansacParameters_.min_points = parameters.min_points;
-  cgalRansacParameters_.epsilon = parameters.epsilon;
+  cgalRansacParameters_.epsilon = parameters.epsilon / 3.0;  // CGAL ransac puts the inlier tolerance at 3 times epsilon
   cgalRansacParameters_.cluster_epsilon = parameters.cluster_epsilon;
   cgalRansacParameters_.normal_threshold = std::cos(parameters.normal_threshold * M_PI / 180.0);
 }
