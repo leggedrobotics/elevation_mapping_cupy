@@ -208,6 +208,8 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
         setToBackground(label);
       }
     } else {
+      // Set entire label to background, so unassigned points are automatically in background
+      setToBackground(label);
       refineLabelWithRansac(label, pointsWithNormal);
     }
   } else {  // no RANSAC
@@ -228,9 +230,6 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
   ransac_plane_extractor::RansacPlaneExtractor ransac_plane_extractor(ransacParameters_);
   ransac_plane_extractor.detectPlanes(pointsWithNormal);
   const auto& planes = ransac_plane_extractor.getDetectedPlanes();
-
-  // Set entire label to background, so unassigned points are automatically in background
-  setToBackground(label);
 
   bool reuseLabel = true;
   for (const auto& plane : planes) {
