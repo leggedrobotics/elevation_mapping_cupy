@@ -52,6 +52,10 @@ NVIDIA does not provide a image for Ubuntu 20.04. The tested version therefore s
 
 Pytorch
 ```bash
+pip3 install numpy==1.19.5 torch==1.8.0
+```
+On jetson, you need the version for its CPU arch:
+```bash
 wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 pip3 install Cython
 pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
@@ -59,7 +63,7 @@ pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 
 Others
 ```bash
-pip3 install scipy==1.5.4 cupy==9.1.0 shapely==1.7.1
+pip3 install scipy==1.5.4 cupy-cuda102==9.1.0 shapely==1.7.1
 ```
 On jetson, pip3 builds the packages from source so it would take time.
 
