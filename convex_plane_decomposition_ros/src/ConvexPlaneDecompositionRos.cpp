@@ -34,7 +34,27 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle) 
   }
 }
 
-ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS() = default;
+ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS() {
+  std::stringstream infoStream;
+  if (callbackTimer_.getNumTimedIntervals() > 0) {
+    infoStream << "\n########################################################################\n";
+    infoStream << "The benchmarking is computed over " << callbackTimer_.getNumTimedIntervals() << " iterations. \n";
+    infoStream << "PlaneExtraction Benchmarking    : Average time [ms], Max time [ms]\n";
+    auto printLine = [](std::string name, const ocs2::benchmark::RepeatedTimer& timer) {
+      std::stringstream ss;
+      ss << std::fixed << std::setprecision(2);
+      ss << "\t" << name << "\t: " << std::setw(17) << timer.getAverageInMilliseconds() << ", " << std::setw(13)
+         << timer.getMaxIntervalInMilliseconds() << "\n";
+      return ss.str();
+    };
+    infoStream << printLine("Pre-process     ", preprocessTimer_);
+    infoStream << printLine("Sliding window  ", slidingWindowTimer_);
+    infoStream << printLine("Plane extraction", planeExtractionTimer_);
+    infoStream << printLine("Post-process    ", postprocessTimer_);
+    infoStream << printLine("Total callback  ", callbackTimer_);
+  }
+  std::cerr << infoStream.str() << std::endl;
+}
 
 bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle) {
   if (!nodeHandle.getParam("elevation_topic", elevationMapTopic_)) {
@@ -81,14 +101,15 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
 
 void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   std::lock_guard<std::mutex> lock(mutex_);
+  callbackTimer_.startTimer();
 
   // Convert message to map.
-  ROS_INFO("Reading input map...");
   grid_map::GridMap messageMap;
   std::vector<std::string> layers{elevationLayer_};
   grid_map::GridMapRosConverter::fromMessage(message, messageMap, layers, false, false);
   if (!containsFiniteValue(messageMap.get(elevationLayer_))) {
     ROS_WARN("[ConvexPlaneExtractionROS] map does not contain any values");
+    callbackTimer_.endTimer();
     return;
   }
 
@@ -101,6 +122,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
           messageMap.getTransformedMap(getTransformToTargetFrame(messageMap.getFrameId(), timeStamp), elevationLayer_, targetFrameId_);
     } else {
       ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] " << errorMsg);
+      callbackTimer_.endTimer();
       return;
     }
   }
@@ -119,27 +141,27 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMap elevationMap = messageMap.getSubmap(submapPosition, Eigen::Array2d(subMapLength_, subMapWidth_), success);
   if (!success) {
     ROS_WARN("[ConvexPlaneExtractionROS] Could not extract submap");
+    callbackTimer_.endTimer();
     return;
   }
-  ROS_INFO("...done.");
   const grid_map::Matrix elevationRaw = elevationMap.get(elevationLayer_);
 
-  auto t0 = std::chrono::high_resolution_clock::now();
+  preprocessTimer_.startTimer();
   preprocessing_->preprocess(elevationMap, elevationLayer_);
-  auto t1 = std::chrono::high_resolution_clock::now();
-  ROS_INFO_STREAM("Preprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count() << " [ms]");
+  preprocessTimer_.endTimer();
 
   // Run pipeline.
+  slidingWindowTimer_.startTimer();
   slidingWindowPlaneExtractor_->runExtraction(elevationMap, elevationLayer_);
-  auto t2 = std::chrono::high_resolution_clock::now();
-  ROS_INFO_STREAM("Sliding window took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << " [ms]");
+  slidingWindowTimer_.endTimer();
 
+  planeExtractionTimer_.startTimer();
   PlanarTerrain planarTerrain;
   planarTerrain.planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
-  auto t3 = std::chrono::high_resolution_clock::now();
-  ROS_INFO_STREAM("Contour extraction took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]");
+  planeExtractionTimer_.endTimer();
 
   // Add grid map to the terrain
+  postprocessTimer_.startTimer();
   planarTerrain.gridMap = std::move(elevationMap);
 
   // Add binary map
@@ -149,8 +171,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), traversabilityMask);
 
   postprocessing_->postprocess(planarTerrain, elevationLayer_, planeClassificationLayer);
-  auto t4 = std::chrono::high_resolution_clock::now();
-  ROS_INFO_STREAM("Postprocessing took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << " [ms]");
+  postprocessTimer_.endTimer();
 
   // Publish terrain
   if (publishToController_) {
@@ -174,6 +195,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
 
   boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
   insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
+
+  callbackTimer_.endTimer();
 }
 
 Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std::string& sourceFrame, const ros::Time& time) {
