@@ -104,3 +104,15 @@ target_link_libraries(test_${PROJECT_NAME}_upsampling
 	mpfr
 	gtest_main
 )
+
+catkin_add_gtest(test_${PROJECT_NAME}_regionGrowing
+	test/testRegionGrowing.cpp
+	)
+target_link_libraries(test_${PROJECT_NAME}_regionGrowing
+	${PROJECT_NAME}
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	gmp
+	mpfr
+	gtest_main
+	)
