@@ -151,3 +151,38 @@ TEST(testSignedDistance3d, randomTerrainDerivative) {
     }
   }
 }
+
+TEST(testSignedDistance3d, extrapolation) {
+  const int n = 20;
+  const int m = 30;
+  const float resolution = 0.1;
+  const float h = 0.5;
+  grid_map::GridMap map;
+  map.setGeometry({n * resolution, m * resolution}, resolution);
+  map.add("elevation");
+  map.get("elevation").setConstant(h);  // random [-1.0, 1.0]
+  const grid_map::Matrix mapData = map.get("elevation");
+  const float minHeight = h - resolution;
+  const float maxHeight = h + resolution;
+
+  signed_distance_field::GridmapSignedDistanceField sdf(map, "elevation", minHeight, maxHeight);
+
+  // Check at different heights/
+  for (float height = h - 1.0; height < h + 1.0; height += resolution) {
+    const auto naiveSignedDistance = signed_distance_field::naiveSignedDistanceAtHeight(mapData, height, resolution);
+
+    for (int i = 0; i < mapData.rows(); ++i) {
+      for (int j = 0; j < mapData.rows(); ++j) {
+        grid_map::Position position2d;
+        map.getPosition({i, j}, position2d);
+
+        const auto sdfValueAndDerivative = sdf.valueAndDerivative({position2d.x(), position2d.y(), height});
+        const auto sdfCheck = naiveSignedDistance(i, j);
+        ASSERT_LT(std::abs(sdfValueAndDerivative.first - sdfCheck), 1e-4);
+
+        // Constant terrain, derivative should be up everywhere
+        ASSERT_LT((sdfValueAndDerivative.second - switched_model::vector3_t::UnitZ()).norm(), 1e-4);
+      }
+    }
+  }
+}
