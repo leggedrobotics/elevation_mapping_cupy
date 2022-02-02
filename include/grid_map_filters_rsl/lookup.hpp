@@ -45,7 +45,8 @@ std::vector<grid_map::Position3> valuesBetweenLocations(const grid_map::Position
                                                         const grid_map::GridMap& gridMap, const grid_map::Matrix& data);
 
 /**
- *
+ * Project a point to inside the given gridmap with a specified margin
+ * 
  * @param gridMap : map object for map information.
  * @param position : point to project to map
  * @param margin : (minimum) distance from the map border after projection
