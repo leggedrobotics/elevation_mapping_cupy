@@ -224,7 +224,8 @@ Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std:
 
 ros::Time ConvexPlaneExtractionROS::getMessageTime(const grid_map_msgs::GridMap& message) const {
   try {
-    return ros::Time(message.info.header.stamp.toNSec());
+    ros::Time time;
+    return time.fromNSec(message.info.header.stamp.toNSec());
   } catch (std::runtime_error& ex) {
     ROS_WARN("[ConvexPlaneExtractionROS::getMessageTime] %s", ex.what());
     return ros::Time::now();
