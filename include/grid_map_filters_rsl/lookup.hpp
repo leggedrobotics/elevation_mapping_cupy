@@ -44,5 +44,14 @@ LookupResult maxValueBetweenLocations(const grid_map::Position& position1, const
 std::vector<grid_map::Position3> valuesBetweenLocations(const grid_map::Position& position1, const grid_map::Position& position2,
                                                         const grid_map::GridMap& gridMap, const grid_map::Matrix& data);
 
+/**
+ *
+ * @param gridMap : map object for map information.
+ * @param position : point to project to map
+ * @param margin : (minimum) distance from the map border after projection
+ * @return Projected position
+ */
+grid_map::Position projectToMapWithMargin(const grid_map::GridMap& gridMap, const grid_map::Position& position, double margin = 1e-6);
+
 }  // namespace lookup
 }  // namespace grid_map
