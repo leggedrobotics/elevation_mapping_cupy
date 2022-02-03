@@ -5,4 +5,4 @@ submap:
   width: 3.0
   length: 3.0
 publish_to_controller: true
-frequency: 10.0
+frequency: 20.0
