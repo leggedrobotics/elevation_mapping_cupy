@@ -9,6 +9,7 @@
 
 #include <convex_plane_decomposition_ros/MessageConversion.h>
 #include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
+#include <grid_map_filters_rsl/lookup.hpp>
 
 namespace switched_model {
 
@@ -112,8 +113,10 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> SegmentedPlanesTerrainModelRos::getS
     const auto& elevationData = gridMap.get(elevationLayer);
     const float minValue = elevationData.minCoeffOfFinites() - heightMargin;
     const float maxValue = elevationData.maxCoeffOfFinites() + heightMargin;
-    auto minXY = gridMap.getClosestPositionInMap({std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()});
-    auto maxXY = gridMap.getClosestPositionInMap({std::numeric_limits<double>::max(), std::numeric_limits<double>::max()});
+    auto minXY = grid_map::lookup::projectToMapWithMargin(
+        gridMap, grid_map::Position(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()));
+    auto maxXY = grid_map::lookup::projectToMapWithMargin(
+        gridMap, grid_map::Position(std::numeric_limits<double>::max(), std::numeric_limits<double>::max()));
     minCoordinates = {minXY.x(), minXY.y(), minValue};
     maxCoordinates = {maxXY.x(), maxXY.y(), maxValue};
   };

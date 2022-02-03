@@ -60,8 +60,8 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
 void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
                                                               const Eigen::Vector3d& maxCoordinates) {
   // Compute coordinates of submap
-  const auto minXY = planarTerrain_.gridMap.getClosestPositionInMap({minCoordinates.x(), minCoordinates.y()});
-  const auto maxXY = planarTerrain_.gridMap.getClosestPositionInMap({maxCoordinates.x(), maxCoordinates.y()});
+  const auto minXY = grid_map::lookup::projectToMapWithMargin(planarTerrain_.gridMap, grid_map::Position(minCoordinates.x(), minCoordinates.y()));
+  const auto maxXY = grid_map::lookup::projectToMapWithMargin(planarTerrain_.gridMap, grid_map::Position(maxCoordinates.x(), maxCoordinates.y()));
   const auto centerXY = 0.5 * (minXY + maxXY);
   const auto lengths = maxXY - minXY;
 
