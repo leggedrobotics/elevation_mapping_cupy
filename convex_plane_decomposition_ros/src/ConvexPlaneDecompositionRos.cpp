@@ -193,8 +193,10 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
   filteredmapPublisher_.publish(outputMessage);
 
-  boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
-  insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId()));
+  boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
+                                                            planarTerrain.gridMap.getTimestamp()));
+  insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
+                                                     planarTerrain.gridMap.getTimestamp()));
 
   callbackTimer_.endTimer();
 }

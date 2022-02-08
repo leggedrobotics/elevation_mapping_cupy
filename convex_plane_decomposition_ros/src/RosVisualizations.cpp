@@ -34,35 +34,48 @@ inline std::vector<geometry_msgs::PolygonStamped> to3d(const CgalPolygonWithHole
 }
 
 jsk_recognition_msgs::PolygonArray convertBoundariesToRosPolygons(const std::vector<PlanarRegion>& planarRegions,
-                                                                  const std::string& frameId) {
+                                                                  const std::string& frameId, grid_map::Time time) {
   jsk_recognition_msgs::PolygonArray polygon_buffer;
   std_msgs::Header header;
-  header.stamp = ros::Time::now();
+  header.stamp.fromNSec(time);
   header.frame_id = frameId;
 
   polygon_buffer.header = header;
   polygon_buffer.polygons.reserve(planarRegions.size());  // lower bound
+  polygon_buffer.labels.reserve(planarRegions.size());
+  uint32_t label = 0;
   for (const auto& planarRegion : planarRegions) {
     auto boundaries = to3d(planarRegion.boundaryWithInset.boundary, planarRegion.planeParameters, header);
     std::move(boundaries.begin(), boundaries.end(), std::back_inserter(polygon_buffer.polygons));
+    for (size_t i = 0; i < boundaries.size(); ++i) {
+      polygon_buffer.labels.push_back(label);
+    }
+    ++label;
   }
 
   return polygon_buffer;
 }
 
-jsk_recognition_msgs::PolygonArray convertInsetsToRosPolygons(const std::vector<PlanarRegion>& planarRegions, const std::string& frameId) {
+jsk_recognition_msgs::PolygonArray convertInsetsToRosPolygons(const std::vector<PlanarRegion>& planarRegions, const std::string& frameId,
+                                                              grid_map::Time time) {
   jsk_recognition_msgs::PolygonArray polygon_buffer;
   std_msgs::Header header;
-  header.stamp = ros::Time::now();
+  header.stamp.fromNSec(time);
   header.frame_id = frameId;
 
   polygon_buffer.header = header;
   polygon_buffer.polygons.reserve(planarRegions.size());  // lower bound
+  polygon_buffer.labels.reserve(planarRegions.size());
+  uint32_t label = 0;
   for (const auto& planarRegion : planarRegions) {
     for (const auto& inset : planarRegion.boundaryWithInset.insets) {
       auto insets = to3d(inset, planarRegion.planeParameters, header);
       std::move(insets.begin(), insets.end(), std::back_inserter(polygon_buffer.polygons));
+      for (size_t i = 0; i < insets.size(); ++i) {
+        polygon_buffer.labels.push_back(label);
+      }
     }
+    ++label;
   }
   return polygon_buffer;
 }
