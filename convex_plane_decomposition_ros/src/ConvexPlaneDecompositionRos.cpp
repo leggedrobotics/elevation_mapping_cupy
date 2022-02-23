@@ -116,7 +116,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   // Transform map if necessary
   if (targetFrameId_ != messageMap.getFrameId()) {
     std::string errorMsg;
-    ros::Time timeStamp = getMessageTime(message);
+    ros::Time timeStamp = ros::Time(0); // Use Time(0) to get the latest transform.
     if (tfBuffer_.canTransform(targetFrameId_, messageMap.getFrameId(), timeStamp, &errorMsg)) {
       messageMap =
           messageMap.getTransformedMap(getTransformToTargetFrame(messageMap.getFrameId(), timeStamp), elevationLayer_, targetFrameId_);
