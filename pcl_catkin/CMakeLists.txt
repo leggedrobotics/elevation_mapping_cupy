@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(pcl_catkin)
 
+include(GNUInstallDirs)
+
 find_package(catkin REQUIRED)
 
 file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/lib)
