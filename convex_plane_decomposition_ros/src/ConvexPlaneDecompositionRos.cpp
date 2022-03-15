@@ -8,6 +8,7 @@
 
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
+#include <grid_map_cv/GridMapCvProcessing.hpp>
 
 #include <convex_plane_decomposition/GridMapPreprocessing.h>
 #include <convex_plane_decomposition/Postprocessing.h>
@@ -118,8 +119,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
     std::string errorMsg;
     ros::Time timeStamp = ros::Time(0); // Use Time(0) to get the latest transform.
     if (tfBuffer_.canTransform(targetFrameId_, messageMap.getFrameId(), timeStamp, &errorMsg)) {
-      messageMap =
-          messageMap.getTransformedMap(getTransformToTargetFrame(messageMap.getFrameId(), timeStamp), elevationLayer_, targetFrameId_);
+      const auto transform = getTransformToTargetFrame(messageMap.getFrameId(), timeStamp);
+      messageMap = grid_map::GridMapCvProcessing::getTransformedMap(std::move(messageMap), transform, elevationLayer_, targetFrameId_);
     } else {
       ROS_ERROR_STREAM("[ConvexPlaneExtractionROS] " << errorMsg);
       callbackTimer_.endTimer();
