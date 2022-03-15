@@ -4,7 +4,6 @@ project(convex_plane_decomposition_ros)
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
 	roscpp
-	ocs2_core
 	grid_map_core
 	grid_map_ros
 	grid_map_cv
