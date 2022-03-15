@@ -9,6 +9,7 @@ inline geometry_msgs::PolygonStamped to3d(const CgalPolygon2d& polygon, const Ei
                                           const std_msgs::Header& header) {
   geometry_msgs::PolygonStamped polygon3d;
   polygon3d.header = header;
+  polygon3d.polygon.points.reserve(polygon.size());
   for (const auto& point : polygon) {
     geometry_msgs::Point32 point_ros;
     const auto pointInWorld = positionInWorldFrameFromPosition2dInPlane(point, transformPlaneToWorld);
