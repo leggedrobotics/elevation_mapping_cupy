@@ -31,7 +31,8 @@ std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const Segmente
   std::vector<PlanarRegion> planarRegions;
   for (const auto& label_plane : upSampledMap.labelPlaneParameters) {
     const int label = label_plane.first;
-    const auto& plane_parameters = label_plane.second;
+    const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(label_plane.second.normal);
+    const auto plane_parameters = switched_model::TerrainPlane(label_plane.second.position, terrainOrientation);
 
     binaryImage_ = upSampledMap.labeledImage == label;
 

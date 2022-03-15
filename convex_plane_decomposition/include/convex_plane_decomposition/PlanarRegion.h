@@ -16,6 +16,14 @@ namespace convex_plane_decomposition {
 
 using switched_model::TerrainPlane;
 
+struct NormalAndPosition {
+  /// 3D position.
+  Eigen::Vector3d position;
+
+  /// Surface normal.
+  Eigen::Vector3d normal;
+};
+
 struct BoundaryWithInset {
   /// Boundary of the planar region.
   CgalPolygonWithHoles2d boundary;
