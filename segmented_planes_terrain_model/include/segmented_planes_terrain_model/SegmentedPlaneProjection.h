@@ -21,19 +21,6 @@ double intervalSquareDistance(double value, double min, double max);
 double squaredDistanceToBoundingBox(const convex_plane_decomposition::CgalPoint2d& point,
                                     const convex_plane_decomposition::CgalBbox2d& boundingBox);
 
-/** Converts a 3D position in world frame to a 2D position in the terrain frame. */
-inline convex_plane_decomposition::CgalPoint2d position2dInTerrainFrameFromPositionInWorld(const vector3_t& positionWorld,
-                                                                                           const TerrainPlane& terrainPlane) {
-  const auto& positionInTerrainFrame = positionInTerrainFrameFromPositionInWorld(positionWorld, terrainPlane);
-  return {positionInTerrainFrame.x(), positionInTerrainFrame.y()};
-}
-
-/** Converts a 2D position in terrain frame to a 3D position in the world frame. */
-inline vector3_t positionInWorldFrameFromPosition2dInTerrain(const convex_plane_decomposition::CgalPoint2d& positionInTerrain,
-                                                             const TerrainPlane& terrainPlane) {
-  return positionInWorldFrameFromPositionInTerrain({positionInTerrain.x(), positionInTerrain.y(), 0.0}, terrainPlane);
-}
-
 const convex_plane_decomposition::CgalPolygonWithHoles2d* findInsetContainingThePoint(
     const convex_plane_decomposition::CgalPoint2d& point, const std::vector<convex_plane_decomposition::CgalPolygonWithHoles2d>& insets);
 

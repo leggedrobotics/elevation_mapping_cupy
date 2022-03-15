@@ -31,9 +31,6 @@ std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const Segmente
   std::vector<PlanarRegion> planarRegions;
   for (const auto& label_plane : upSampledMap.labelPlaneParameters) {
     const int label = label_plane.first;
-    const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(label_plane.second.normal);
-    const auto plane_parameters = switched_model::TerrainPlane(label_plane.second.position, terrainOrientation);
-
     binaryImage_ = upSampledMap.labeledImage == label;
 
     // Try with safety margin
@@ -48,16 +45,17 @@ std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const Segmente
       boundariesAndInsets = contour_extraction::extractBoundaryAndInset(binaryImage_, insetKernel_);
     }
 
+    const auto plane_parameters = getTransformLocalToGlobal(label_plane.second);
     for (auto& boundaryAndInset : boundariesAndInsets) {
       // Transform points from pixel space to local terrain frame
       transformInPlace(boundaryAndInset, [&](CgalPoint2d& point) {
         auto pointInWorld = pixelToWorldFrame(point, upSampledMap.resolution, upSampledMap.mapOrigin);
-        point = worldFrameToTerrainFrame(pointInWorld, plane_parameters);
+        point = projectToPlaneAlongGravity(pointInWorld, plane_parameters);
       });
 
       PlanarRegion planarRegion;
       planarRegion.boundaryWithInset = std::move(boundaryAndInset);
-      planarRegion.planeParameters = plane_parameters;
+      planarRegion.transformPlaneToWorld = plane_parameters;
       planarRegion.bbox2d = planarRegion.boundaryWithInset.boundary.outer_boundary().bbox();
       planarRegions.push_back(std::move(planarRegion));
     }
@@ -136,12 +134,6 @@ CgalPolygon2d cgalPolygonFromOpenCv(const std::vector<cv::Point>& openCvPolygon)
     polygon.container().emplace_back(point.x, point.y);
   }
   return polygon;
-}
-
-CgalPoint2d worldFrameToTerrainFrame(const CgalPoint2d& worldFrameXY, const TerrainPlane& plane) {
-  const auto projectedPositionInWorld = projectPositionInWorldOntoPlaneAlongGravity({worldFrameXY.x(), worldFrameXY.y(), 0.0}, plane);
-  const auto positionInTerrainFrame = positionInTerrainFrameFromPositionInWorld(projectedPositionInWorld, plane);
-  return {positionInTerrainFrame.x(), positionInTerrainFrame.y()};
 }
 
 CgalPoint2d pixelToWorldFrame(const CgalPoint2d& pixelspaceCgalPoint2d, double resolution, const Eigen::Vector2d& mapOffset) {

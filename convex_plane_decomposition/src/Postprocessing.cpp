@@ -65,7 +65,7 @@ void Postprocessing::addHeightOffset(Eigen::MatrixXf& elevationData, const Eigen
 void Postprocessing::addHeightOffset(std::vector<PlanarRegion>& planarRegions) const {
   if (parameters_.extracted_planes_height_offset != 0.0) {
     for (auto& planarRegion : planarRegions) {
-      planarRegion.planeParameters.positionInWorld.z() += parameters_.extracted_planes_height_offset;
+      planarRegion.transformPlaneToWorld.translation().z() += parameters_.extracted_planes_height_offset;
     }
   }
 }

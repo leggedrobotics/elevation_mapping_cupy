@@ -5,16 +5,13 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <grid_map_core/GridMap.hpp>
-
-#include <ocs2_switched_model_interface/terrain/TerrainPlane.h>
 
 #include "PolygonTypes.h"
 
 namespace convex_plane_decomposition {
-
-using switched_model::TerrainPlane;
 
 struct NormalAndPosition {
   /// 3D position.
@@ -39,13 +36,31 @@ struct PlanarRegion {
   /// 2D bounding box in terrain frame containing all the boundary points
   CgalBbox2d bbox2d;
 
-  /// 3D parameters of the plane
-  TerrainPlane planeParameters;
+  /// 3D Transformation from terrain to world. v_world = T * v_plane. Use .linear() for the rotation and .translation() for the translation
+  Eigen::Isometry3d transformPlaneToWorld;
 };
 
 struct PlanarTerrain {
   std::vector<PlanarRegion> planarRegions;
   grid_map::GridMap gridMap;
 };
+
+/**
+ * Convert a position and normal the a transform from the induced local frame and global frame.
+ *
+ * For example, if the normal and position are defined in world. We return a transform T terrain -> world, such that v_world = T * v_plane.
+ * The normal will be taken as the z-direction of the local frame. The x and y direction are arbitrary.
+ */
+Eigen::Isometry3d getTransformLocalToGlobal(const NormalAndPosition& normalAndPosition);
+
+/**
+ * Project a 2D point in world along gravity to obtain a 2D point in the plane
+ */
+CgalPoint2d projectToPlaneAlongGravity(const CgalPoint2d& worldFrameXY, const Eigen::Isometry3d& transformPlaneToWorld);
+
+/**
+ * Transforms a point on the plane to a 3D position expressed in the world frame
+ */
+Eigen::Vector3d positionInWorldFrameFromPosition2dInPlane(const CgalPoint2d& planeXY, const Eigen::Isometry3d& transformPlaneToWorld);
 
 }  // namespace convex_plane_decomposition

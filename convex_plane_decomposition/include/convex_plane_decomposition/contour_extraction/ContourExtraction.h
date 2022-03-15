@@ -41,8 +41,6 @@ std::vector<CgalPolygonWithHoles2d> extractPolygonsFromBinaryImage(const cv::Mat
 
 CgalPolygon2d cgalPolygonFromOpenCv(const std::vector<cv::Point>& openCvPolygon);
 
-CgalPoint2d worldFrameToTerrainFrame(const CgalPoint2d& worldFrameXY, const TerrainPlane& plane);
-
 CgalPoint2d pixelToWorldFrame(const CgalPoint2d& pixelspaceCgalPoint2d, double resolution, const Eigen::Vector2d& mapOffset);
 
 }  // namespace contour_extraction

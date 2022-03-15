@@ -23,7 +23,7 @@ convex_plane_decomposition_msgs::BoundingBox2d toMessage(const CgalBbox2d& bbox2
 
 PlanarRegion fromMessage(const convex_plane_decomposition_msgs::PlanarRegion& msg) {
   PlanarRegion planarRegion;
-  planarRegion.planeParameters = fromMessage(msg.plane_parameters);
+  planarRegion.transformPlaneToWorld = fromMessage(msg.plane_parameters);
   planarRegion.boundaryWithInset.boundary = fromMessage(msg.boundary);
   planarRegion.boundaryWithInset.insets.reserve(msg.insets.size());
   for (const auto& inset : msg.insets) {
@@ -35,7 +35,7 @@ PlanarRegion fromMessage(const convex_plane_decomposition_msgs::PlanarRegion& ms
 
 convex_plane_decomposition_msgs::PlanarRegion toMessage(const PlanarRegion& planarRegion) {
   convex_plane_decomposition_msgs::PlanarRegion msg;
-  msg.plane_parameters = toMessage(planarRegion.planeParameters);
+  msg.plane_parameters = toMessage(planarRegion.transformPlaneToWorld);
   msg.boundary = toMessage(planarRegion.boundaryWithInset.boundary);
   msg.insets.reserve(planarRegion.boundaryWithInset.insets.size());
   for (const auto& inset : planarRegion.boundaryWithInset.insets) {
@@ -65,26 +65,26 @@ convex_plane_decomposition_msgs::PlanarTerrain toMessage(const PlanarTerrain& pl
   return msg;
 }
 
-TerrainPlane fromMessage(const geometry_msgs::Pose& msg) {
-  TerrainPlane plane;
-  plane.positionInWorld.x() = msg.position.x;
-  plane.positionInWorld.y() = msg.position.y;
-  plane.positionInWorld.z() = msg.position.z;
-  Eigen::Quaterniond terrainOrientation;
-  terrainOrientation.x() = msg.orientation.x;
-  terrainOrientation.y() = msg.orientation.y;
-  terrainOrientation.z() = msg.orientation.z;
-  terrainOrientation.w() = msg.orientation.w;
-  plane.orientationWorldToTerrain = terrainOrientation.toRotationMatrix().transpose();
-  return plane;
+Eigen::Isometry3d fromMessage(const geometry_msgs::Pose& msg) {
+  Eigen::Isometry3d transform;
+  transform.translation().x() = msg.position.x;
+  transform.translation().y() = msg.position.y;
+  transform.translation().z() = msg.position.z;
+  Eigen::Quaterniond orientation;
+  orientation.x() = msg.orientation.x;
+  orientation.y() = msg.orientation.y;
+  orientation.z() = msg.orientation.z;
+  orientation.w() = msg.orientation.w;
+  transform.linear() = orientation.toRotationMatrix();
+  return transform;
 }
 
-geometry_msgs::Pose toMessage(const TerrainPlane& plane) {
+geometry_msgs::Pose toMessage(const Eigen::Isometry3d& transform) {
   geometry_msgs::Pose pose;
-  pose.position.x = plane.positionInWorld.x();
-  pose.position.y = plane.positionInWorld.y();
-  pose.position.z = plane.positionInWorld.z();
-  Eigen::Quaterniond terrainOrientation(plane.orientationWorldToTerrain.transpose());
+  pose.position.x = transform.translation().x();
+  pose.position.y = transform.translation().y();
+  pose.position.z = transform.translation().z();
+  Eigen::Quaterniond terrainOrientation(transform.linear());
   pose.orientation.x = terrainOrientation.x();
   pose.orientation.y = terrainOrientation.y();
   pose.orientation.z = terrainOrientation.z();

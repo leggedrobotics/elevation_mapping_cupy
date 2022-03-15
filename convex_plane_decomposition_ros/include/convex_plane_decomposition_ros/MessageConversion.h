@@ -27,8 +27,8 @@ convex_plane_decomposition_msgs::PlanarRegion toMessage(const PlanarRegion& plan
 PlanarTerrain fromMessage(const convex_plane_decomposition_msgs::PlanarTerrain& msg);
 convex_plane_decomposition_msgs::PlanarTerrain toMessage(const PlanarTerrain& planarTerrain);
 
-TerrainPlane fromMessage(const geometry_msgs::Pose& msg);
-geometry_msgs::Pose toMessage(const TerrainPlane& plane);
+Eigen::Isometry3d fromMessage(const geometry_msgs::Pose& msg);
+geometry_msgs::Pose toMessage(const Eigen::Isometry3d& transform);
 
 CgalPoint2d fromMessage(const convex_plane_decomposition_msgs::Point2d& msg);
 convex_plane_decomposition_msgs::Point2d toMessage(const CgalPoint2d& point2d);
