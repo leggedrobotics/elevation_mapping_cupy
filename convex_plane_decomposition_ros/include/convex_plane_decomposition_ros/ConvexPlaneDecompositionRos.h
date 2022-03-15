@@ -10,9 +10,9 @@
 
 #include <Eigen/Geometry>
 
-#include <ocs2_core/misc/Benchmark.h>
-
 #include <grid_map_msgs/GridMap.h>
+
+#include "Timer.h"
 
 namespace convex_plane_decomposition {
 
@@ -70,11 +70,11 @@ class ConvexPlaneExtractionROS {
   std::unique_ptr<Postprocessing> postprocessing_;
 
   // Timing
-  ocs2::benchmark::RepeatedTimer callbackTimer_;
-  ocs2::benchmark::RepeatedTimer preprocessTimer_;
-  ocs2::benchmark::RepeatedTimer slidingWindowTimer_;
-  ocs2::benchmark::RepeatedTimer planeExtractionTimer_;
-  ocs2::benchmark::RepeatedTimer postprocessTimer_;
+  Timer callbackTimer_;
+  Timer preprocessTimer_;
+  Timer slidingWindowTimer_;
+  Timer planeExtractionTimer_;
+  Timer postprocessTimer_;
 };
 
 }  // namespace convex_plane_decomposition

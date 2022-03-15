@@ -202,8 +202,7 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
   if (parameters_.include_ransac_refinement) {                              // with RANSAC
     if (isGloballyPlanar(normalVector, supportVector, pointsWithNormal)) {  // Already planar enough
       if (isWithinInclinationLimit(normalVector)) {
-        const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
-        segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
+        segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, NormalAndPosition{supportVector, normalVector});
       } else {
         setToBackground(label);
       }
@@ -214,8 +213,7 @@ void SlidingWindowPlaneExtractor::computePlaneParametersForLabel(int label,
     }
   } else {  // no RANSAC
     if (isWithinInclinationLimit(normalVector)) {
-      const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
-      segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, TerrainPlane(supportVector, terrainOrientation));
+      segmentedPlanesMap_.labelPlaneParameters.emplace_back(label, NormalAndPosition{supportVector, normalVector});
     } else {
       setToBackground(label);
     }
@@ -242,8 +240,7 @@ void SlidingWindowPlaneExtractor::refineLabelWithRansac(int label, std::vector<r
       const int newLabel = (reuseLabel) ? label : ++segmentedPlanesMap_.highestLabel;
       reuseLabel = false;
 
-      const auto terrainOrientation = switched_model::orientationWorldToTerrainFromSurfaceNormalInWorld(normalVector);
-      segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, TerrainPlane(supportVector, terrainOrientation));
+      segmentedPlanesMap_.labelPlaneParameters.emplace_back(newLabel, NormalAndPosition{supportVector, normalVector});
 
       // Assign label in segmentation
       for (const auto index : plane->indices_of_assigned_points()) {

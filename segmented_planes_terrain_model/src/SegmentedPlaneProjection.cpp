@@ -92,7 +92,7 @@ std::vector<RegionSortingInfo> sortWithBoundingBoxes(const vector3_t& positionIn
   std::vector<RegionSortingInfo> regionsAndBboxSquareDistances;
   regionsAndBboxSquareDistances.reserve(planarRegions.size());
   for (const auto& planarRegion : planarRegions) {
-    const auto& positionInTerrainFrame = positionInTerrainFrameFromPositionInWorld(positionInWorld, planarRegion.planeParameters);
+    const auto& positionInTerrainFrame = planarRegion.transformPlaneToWorld.inverse() * positionInWorld;
     const double dzdz = positionInTerrainFrame.z() * positionInTerrainFrame.z();
 
     RegionSortingInfo regionSortingInfo;
@@ -129,13 +129,13 @@ std::pair<const cpd::PlanarRegion*, cpd::CgalPoint2d> getPlanarRegionAtPositionI
 
     // Shorthand
     const auto* regionPtr = regionInfo.regionPtr;
-    const auto& planeParameters = regionPtr->planeParameters;
 
     // Project onto planar region
     const auto projectedPointInTerrainFrame = projectToPlanarRegion(regionInfo.positionInTerrainFrame, *regionPtr);
 
     // Express projected point in World frame
-    const auto projectionInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(projectedPointInTerrainFrame, planeParameters);
+    const auto projectionInWorldFrame =
+        convex_plane_decomposition::positionInWorldFrameFromPosition2dInPlane(projectedPointInTerrainFrame, regionPtr->transformPlaneToWorld);
 
     const scalar_t cost = distanceCost(positionInWorld, projectionInWorldFrame) + penaltyFunction(projectionInWorldFrame);
     if (cost < minCost) {

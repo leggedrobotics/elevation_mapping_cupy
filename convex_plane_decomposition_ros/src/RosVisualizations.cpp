@@ -5,13 +5,14 @@
 
 namespace convex_plane_decomposition {
 
-inline geometry_msgs::PolygonStamped to3d(const CgalPolygon2d& polygon, const TerrainPlane& planeParameters,
+inline geometry_msgs::PolygonStamped to3d(const CgalPolygon2d& polygon, const Eigen::Isometry3d& transformPlaneToWorld,
                                           const std_msgs::Header& header) {
   geometry_msgs::PolygonStamped polygon3d;
   polygon3d.header = header;
+  polygon3d.polygon.points.reserve(polygon.size());
   for (const auto& point : polygon) {
     geometry_msgs::Point32 point_ros;
-    const auto pointInWorld = positionInWorldFrameFromPositionInTerrain({point.x(), point.y(), 0.0}, planeParameters);
+    const auto pointInWorld = positionInWorldFrameFromPosition2dInPlane(point, transformPlaneToWorld);
     point_ros.x = pointInWorld.x();
     point_ros.y = pointInWorld.y();
     point_ros.z = pointInWorld.z();
@@ -20,15 +21,15 @@ inline geometry_msgs::PolygonStamped to3d(const CgalPolygon2d& polygon, const Te
   return polygon3d;
 }
 
-inline std::vector<geometry_msgs::PolygonStamped> to3d(const CgalPolygonWithHoles2d& polygonWithHoles, const TerrainPlane& planeParameters,
+inline std::vector<geometry_msgs::PolygonStamped> to3d(const CgalPolygonWithHoles2d& polygonWithHoles, const Eigen::Isometry3d& transformPlaneToWorld,
                                                        const std_msgs::Header& header) {
   std::vector<geometry_msgs::PolygonStamped> polygons;
 
   polygons.reserve(polygonWithHoles.number_of_holes() + 1);
-  polygons.emplace_back(to3d(polygonWithHoles.outer_boundary(), planeParameters, header));
+  polygons.emplace_back(to3d(polygonWithHoles.outer_boundary(), transformPlaneToWorld, header));
 
   for (const auto& hole : polygonWithHoles.holes()) {
-    polygons.emplace_back(to3d(hole, planeParameters, header));
+    polygons.emplace_back(to3d(hole, transformPlaneToWorld, header));
   }
   return polygons;
 }
@@ -45,7 +46,7 @@ jsk_recognition_msgs::PolygonArray convertBoundariesToRosPolygons(const std::vec
   polygon_buffer.labels.reserve(planarRegions.size());
   uint32_t label = 0;
   for (const auto& planarRegion : planarRegions) {
-    auto boundaries = to3d(planarRegion.boundaryWithInset.boundary, planarRegion.planeParameters, header);
+    auto boundaries = to3d(planarRegion.boundaryWithInset.boundary, planarRegion.transformPlaneToWorld, header);
     std::move(boundaries.begin(), boundaries.end(), std::back_inserter(polygon_buffer.polygons));
     for (size_t i = 0; i < boundaries.size(); ++i) {
       polygon_buffer.labels.push_back(label);
@@ -69,7 +70,7 @@ jsk_recognition_msgs::PolygonArray convertInsetsToRosPolygons(const std::vector<
   uint32_t label = 0;
   for (const auto& planarRegion : planarRegions) {
     for (const auto& inset : planarRegion.boundaryWithInset.insets) {
-      auto insets = to3d(inset, planarRegion.planeParameters, header);
+      auto insets = to3d(inset, planarRegion.transformPlaneToWorld, header);
       std::move(insets.begin(), insets.end(), std::back_inserter(polygon_buffer.polygons));
       for (size_t i = 0; i < insets.size(); ++i) {
         polygon_buffer.labels.push_back(label);

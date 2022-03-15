@@ -55,7 +55,7 @@ void plotSlidingWindow(const sliding_window_plane_extractor::SlidingWindowPlaneE
   colors[0] = cv::Vec3b(0, 0, 0);  // background in white
   for (int label = 1; label <= planeExtractor.getSegmentedPlanesMap().highestLabel; ++label) {
     const auto labelIt = std::find_if(labelsAndPlaneParameters.begin(), labelsAndPlaneParameters.end(),
-                                      [=](const std::pair<int, TerrainPlane>& x) { return x.first == label; });
+                                      [=](const std::pair<int, NormalAndPosition>& x) { return x.first == label; });
     if (labelIt != labelsAndPlaneParameters.end()) {
       colors[label] = randomColor();
     } else {
@@ -131,7 +131,6 @@ int main(int argc, char** argv) {
 
   for (const auto& label_plane : planeExtractor.getSegmentedPlanesMap().labelPlaneParameters) {
     const int label = label_plane.first;
-    const auto& plane_parameters = label_plane.second;
 
     binary_image = labeled_image == label;
 

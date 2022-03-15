@@ -40,7 +40,7 @@ ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS() {
     infoStream << "\n########################################################################\n";
     infoStream << "The benchmarking is computed over " << callbackTimer_.getNumTimedIntervals() << " iterations. \n";
     infoStream << "PlaneExtraction Benchmarking    : Average time [ms], Max time [ms]\n";
-    auto printLine = [](std::string name, const ocs2::benchmark::RepeatedTimer& timer) {
+    auto printLine = [](std::string name, const Timer& timer) {
       std::stringstream ss;
       ss << std::fixed << std::setprecision(2);
       ss << "\t" << name << "\t: " << std::setw(17) << timer.getAverageInMilliseconds() << ", " << std::setw(13)
@@ -207,7 +207,7 @@ Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std:
     transformStamped = tfBuffer_.lookupTransform(targetFrameId_, sourceFrame, time);
   } catch (tf2::TransformException& ex) {
     ROS_ERROR("[ConvexPlaneExtractionROS] %s", ex.what());
-    return Eigen::Isometry3d();
+    return Eigen::Isometry3d::Identity();
   }
 
   Eigen::Isometry3d transformation;

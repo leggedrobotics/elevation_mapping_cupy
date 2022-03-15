@@ -5,7 +5,6 @@ project(convex_plane_decomposition)
 set(CATKIN_PACKAGE_DEPENDENCIES
 	cgal5_catkin
 	grid_map_core
-	ocs2_switched_model_interface
 	grid_map_filters_rsl
 )
 
@@ -58,9 +57,10 @@ add_library(${PROJECT_NAME}
   src/contour_extraction/Upsampling.cpp
   src/ransac/RansacPlaneExtractor.cpp
   src/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.cpp
-  src/GridMapPreprocessing.cpp
   src/ConvexRegionGrowing.cpp
   src/Draw.cpp
+  src/GridMapPreprocessing.cpp
+  src/PlanarRegion.cpp
   src/Postprocessing.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -93,10 +93,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-catkin_add_gtest(test_${PROJECT_NAME}_upsampling
+catkin_add_gtest(test_${PROJECT_NAME}
+	test/testPlanarRegion.cpp
+	test/testRegionGrowing.cpp
 	test/testUpsampling.cpp
 )
-target_link_libraries(test_${PROJECT_NAME}_upsampling
+target_link_libraries(test_${PROJECT_NAME}
 	${PROJECT_NAME}
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
@@ -104,15 +106,3 @@ target_link_libraries(test_${PROJECT_NAME}_upsampling
 	mpfr
 	gtest_main
 )
-
-catkin_add_gtest(test_${PROJECT_NAME}_regionGrowing
-	test/testRegionGrowing.cpp
-	)
-target_link_libraries(test_${PROJECT_NAME}_regionGrowing
-	${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	gmp
-	mpfr
-	gtest_main
-	)

@@ -13,7 +13,7 @@ namespace convex_plane_decomposition {
 
 struct SegmentedPlanesMap {
   /// Unordered collection of all labels and corresponding plane parameters
-  std::vector<std::pair<int, TerrainPlane>> labelPlaneParameters;
+  std::vector<std::pair<int, NormalAndPosition>> labelPlaneParameters;
 
   /// Image with a each pixel being assigned and integer value corresponding to the label. Might contain labels that are not in
   /// labelPlaneParameters. These labels should be seen as background.

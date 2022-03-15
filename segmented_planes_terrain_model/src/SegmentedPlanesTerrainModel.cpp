@@ -29,8 +29,9 @@ TerrainPlane SegmentedPlanesTerrainModel::getLocalTerrainAtPositionInWorldAlongG
       getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions, std::move(penaltyFunction));
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
-  const auto& seedpointInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(seedpoint, region.planeParameters);
-  return TerrainPlane{seedpointInWorldFrame, region.planeParameters.orientationWorldToTerrain};
+  const auto& seedpointInWorldFrame =
+      convex_plane_decomposition::positionInWorldFrameFromPosition2dInPlane(seedpoint, region.transformPlaneToWorld);
+  return TerrainPlane{seedpointInWorldFrame, region.transformPlaneToWorld.linear().transpose()};
 }
 
 ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
@@ -39,7 +40,8 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
       getPlanarRegionAtPositionInWorld(positionInWorld, planarTerrain_.planarRegions, std::move(penaltyFunction));
   const auto& region = *regionAndSeedPoint.first;
   const auto& seedpoint = regionAndSeedPoint.second;
-  const auto& seedpointInWorldFrame = positionInWorldFrameFromPosition2dInTerrain(seedpoint, region.planeParameters);
+  const auto& seedpointInWorldFrame =
+      convex_plane_decomposition::positionInWorldFrameFromPosition2dInPlane(seedpoint, region.transformPlaneToWorld);
 
   // Convert boundary and seedpoint to terrain frame
   const int numberOfVertices = 16;  // Multiple of 4 is nice for symmetry.
@@ -49,7 +51,7 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
 
   // Return convex region with origin at the seedpoint
   ConvexTerrain convexTerrain;
-  convexTerrain.plane = {seedpointInWorldFrame, region.planeParameters.orientationWorldToTerrain};  // Origin is at the seedpoint
+  convexTerrain.plane = {seedpointInWorldFrame, region.transformPlaneToWorld.linear().transpose()};  // Origin is at the seedpoint
   convexTerrain.boundary.reserve(convexRegion.size());
   for (const auto& point : convexRegion) {
     convexTerrain.boundary.emplace_back(point.x() - seedpoint.x(), point.y() - seedpoint.y());  // Shift points to new origin
@@ -60,8 +62,10 @@ ConvexTerrain SegmentedPlanesTerrainModel::getConvexTerrainAtPositionInWorld(
 void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates,
                                                               const Eigen::Vector3d& maxCoordinates) {
   // Compute coordinates of submap
-  const auto minXY = grid_map::lookup::projectToMapWithMargin(planarTerrain_.gridMap, grid_map::Position(minCoordinates.x(), minCoordinates.y()));
-  const auto maxXY = grid_map::lookup::projectToMapWithMargin(planarTerrain_.gridMap, grid_map::Position(maxCoordinates.x(), maxCoordinates.y()));
+  const auto minXY =
+      grid_map::lookup::projectToMapWithMargin(planarTerrain_.gridMap, grid_map::Position(minCoordinates.x(), minCoordinates.y()));
+  const auto maxXY =
+      grid_map::lookup::projectToMapWithMargin(planarTerrain_.gridMap, grid_map::Position(maxCoordinates.x(), maxCoordinates.y()));
   const auto centerXY = 0.5 * (minXY + maxXY);
   const auto lengths = maxXY - minXY;
 
