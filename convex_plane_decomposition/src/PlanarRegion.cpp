@@ -42,8 +42,8 @@ CgalPoint2d projectToPlaneAlongGravity(const CgalPoint2d& worldFrameXY, const Ei
   // Vertical difference
   // solve surfaceNormalInWorld.dot(projectedPosition - planeOriginInWorld) = 0
   // with projectPosition XY = worldFrameXY;
-  Eigen::Vector3d planeOriginToProjectedPointInWorld(dx, dy, (-dx * surfaceNormalInWorld.x() - dy * surfaceNormalInWorld.y()) /
-                                                                 surfaceNormalInWorld.z());
+  Eigen::Vector3d planeOriginToProjectedPointInWorld(
+      dx, dy, (-dx * surfaceNormalInWorld.x() - dy * surfaceNormalInWorld.y()) / surfaceNormalInWorld.z());
 
   // Project XY coordinates to the plane frame
   return {xAxis.dot(planeOriginToProjectedPointInWorld), yAxis.dot(planeOriginToProjectedPointInWorld)};
@@ -51,9 +51,8 @@ CgalPoint2d projectToPlaneAlongGravity(const CgalPoint2d& worldFrameXY, const Ei
 
 Eigen::Vector3d positionInWorldFrameFromPosition2dInPlane(const CgalPoint2d& planeXY, const Eigen::Isometry3d& transformPlaneToWorld) {
   // Compute transform given that z in plane = 0.0
-  Eigen::Vector3d pointInWorld = transformPlaneToWorld.translation();
-  pointInWorld += planeXY.x() * transformPlaneToWorld.linear().col(0);
-  pointInWorld += planeXY.y() * transformPlaneToWorld.linear().col(1);
+  Eigen::Vector3d pointInWorld = transformPlaneToWorld.translation() + planeXY.x() * transformPlaneToWorld.linear().col(0) +
+                                 planeXY.y() * transformPlaneToWorld.linear().col(1);
   return pointInWorld;
 }
 
