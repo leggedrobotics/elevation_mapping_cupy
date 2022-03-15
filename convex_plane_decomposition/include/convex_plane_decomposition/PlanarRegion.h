@@ -46,9 +46,9 @@ struct PlanarTerrain {
 };
 
 /**
- * Convert a position and normal the a transform from the induced local frame and global frame.
+ * Convert a position and normal the a transform from the induced local frame to the global frame.
  *
- * For example, if the normal and position are defined in world. We return a transform T terrain -> world, such that v_world = T * v_plane.
+ * For example, if the normal and position are defined in world. We return a transform T, such that v_world = T * v_plane.
  * The normal will be taken as the z-direction of the local frame. The x and y direction are arbitrary.
  */
 Eigen::Isometry3d getTransformLocalToGlobal(const NormalAndPosition& normalAndPosition);
