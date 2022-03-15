@@ -13,9 +13,9 @@ inline geometry_msgs::PolygonStamped to3d(const CgalPolygon2d& polygon, const Ei
   for (const auto& point : polygon) {
     geometry_msgs::Point32 point_ros;
     const auto pointInWorld = positionInWorldFrameFromPosition2dInPlane(point, transformPlaneToWorld);
-    point_ros.x = pointInWorld.x();
-    point_ros.y = pointInWorld.y();
-    point_ros.z = pointInWorld.z();
+    point_ros.x = static_cast<float>(pointInWorld.x());
+    point_ros.y = static_cast<float>(pointInWorld.y());
+    point_ros.z = static_cast<float>(pointInWorld.z());
     polygon3d.polygon.points.push_back(point_ros);
   }
   return polygon3d;
