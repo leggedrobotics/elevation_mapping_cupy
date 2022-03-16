@@ -1,20 +1,10 @@
 #include "convex_plane_decomposition_ros/ConvexPlaneDecompositionRos.h"
 
-#include <chrono>
-
-#include <Eigen/Core>
-
-#include <opencv2/core/eigen.hpp>
-
 #include <grid_map_core/GridMap.hpp>
-#include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_cv/GridMapCvProcessing.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
 
-#include <convex_plane_decomposition/GridMapPreprocessing.h>
-#include <convex_plane_decomposition/Postprocessing.h>
-#include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
-#include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
-
+#include <convex_plane_decomposition/PlaneDecompositionPipeline.h>
 #include <convex_plane_decomposition_msgs/PlanarTerrain.h>
 
 #include "convex_plane_decomposition_ros/MessageConversion.h"
@@ -36,8 +26,8 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle) 
 }
 
 ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS() {
-  std::stringstream infoStream;
-  if (callbackTimer_.getNumTimedIntervals() > 0) {
+  if (callbackTimer_.getNumTimedIntervals() > 0 && planeDecompositionPipeline_ != nullptr) {
+    std::stringstream infoStream;
     infoStream << "\n########################################################################\n";
     infoStream << "The benchmarking is computed over " << callbackTimer_.getNumTimedIntervals() << " iterations. \n";
     infoStream << "PlaneExtraction Benchmarking    : Average time [ms], Max time [ms]\n";
@@ -48,13 +38,13 @@ ConvexPlaneExtractionROS::~ConvexPlaneExtractionROS() {
          << timer.getMaxIntervalInMilliseconds() << "\n";
       return ss.str();
     };
-    infoStream << printLine("Pre-process     ", preprocessTimer_);
-    infoStream << printLine("Sliding window  ", slidingWindowTimer_);
-    infoStream << printLine("Plane extraction", planeExtractionTimer_);
-    infoStream << printLine("Post-process    ", postprocessTimer_);
-    infoStream << printLine("Total callback  ", callbackTimer_);
+    infoStream << printLine("Pre-process        ", planeDecompositionPipeline_->getPrepocessTimer());
+    infoStream << printLine("Sliding window     ", planeDecompositionPipeline_->getSlidingWindowTimer());
+    infoStream << printLine("Contour extraction ", planeDecompositionPipeline_->getContourExtractionTimer());
+    infoStream << printLine("Post-process       ", planeDecompositionPipeline_->getPostprocessTimer());
+    infoStream << printLine("Total callback     ", callbackTimer_);
+    std::cerr << infoStream.str() << std::endl;
   }
-  std::cerr << infoStream.str() << std::endl;
 }
 
 bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle) {
@@ -83,25 +73,19 @@ bool ConvexPlaneExtractionROS::loadParameters(const ros::NodeHandle& nodeHandle)
     return false;
   }
 
-  const auto preprocessingParameters = loadPreprocessingParameters(nodeHandle, "preprocessing/");
-  const auto contourExtractionParameters = loadContourExtractionParameters(nodeHandle, "contour_extraction/");
-  const auto ransacPlaneExtractorParameters = loadRansacPlaneExtractorParameters(nodeHandle, "ransac_plane_refinement/");
-  const auto slidingWindowPlaneExtractorParameters =
-      loadSlidingWindowPlaneExtractorParameters(nodeHandle, "sliding_window_plane_extractor/");
-  const auto postprocessingParameters = loadPostprocessingParameters(nodeHandle, "postprocessing/");
+  PlaneDecompositionPipeline::Config config;
+  config.preprocessingParameters = loadPreprocessingParameters(nodeHandle, "preprocessing/");
+  config.contourExtractionParameters = loadContourExtractionParameters(nodeHandle, "contour_extraction/");
+  config.ransacPlaneExtractorParameters = loadRansacPlaneExtractorParameters(nodeHandle, "ransac_plane_refinement/");
+  config.slidingWindowPlaneExtractorParameters = loadSlidingWindowPlaneExtractorParameters(nodeHandle, "sliding_window_plane_extractor/");
+  config.postprocessingParameters = loadPostprocessingParameters(nodeHandle, "postprocessing/");
 
-  std::lock_guard<std::mutex> lock(mutex_);
-  preprocessing_ = std::make_unique<GridMapPreprocessing>(preprocessingParameters);
-  slidingWindowPlaneExtractor_ = std::make_unique<sliding_window_plane_extractor::SlidingWindowPlaneExtractor>(
-      slidingWindowPlaneExtractorParameters, ransacPlaneExtractorParameters);
-  contourExtraction_ = std::make_unique<contour_extraction::ContourExtraction>(contourExtractionParameters);
-  postprocessing_ = std::make_unique<Postprocessing>(postprocessingParameters);
+  planeDecompositionPipeline_ = std::make_unique<PlaneDecompositionPipeline>(config);
 
   return true;
 }
 
 void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
-  std::lock_guard<std::mutex> lock(mutex_);
   callbackTimer_.startTimer();
 
   // Convert message to map.
@@ -117,7 +101,7 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   // Transform map if necessary
   if (targetFrameId_ != messageMap.getFrameId()) {
     std::string errorMsg;
-    ros::Time timeStamp = ros::Time(0); // Use Time(0) to get the latest transform.
+    ros::Time timeStamp = ros::Time(0);  // Use Time(0) to get the latest transform.
     if (tfBuffer_.canTransform(targetFrameId_, messageMap.getFrameId(), timeStamp, &errorMsg)) {
       const auto transform = getTransformToTargetFrame(messageMap.getFrameId(), timeStamp);
       messageMap = grid_map::GridMapCvProcessing::getTransformedMap(std::move(messageMap), transform, elevationLayer_, targetFrameId_);
@@ -147,32 +131,9 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   }
   const grid_map::Matrix elevationRaw = elevationMap.get(elevationLayer_);
 
-  preprocessTimer_.startTimer();
-  preprocessing_->preprocess(elevationMap, elevationLayer_);
-  preprocessTimer_.endTimer();
-
   // Run pipeline.
-  slidingWindowTimer_.startTimer();
-  slidingWindowPlaneExtractor_->runExtraction(elevationMap, elevationLayer_);
-  slidingWindowTimer_.endTimer();
-
-  planeExtractionTimer_.startTimer();
-  PlanarTerrain planarTerrain;
-  planarTerrain.planarRegions = contourExtraction_->extractPlanarRegions(slidingWindowPlaneExtractor_->getSegmentedPlanesMap());
-  planeExtractionTimer_.endTimer();
-
-  // Add grid map to the terrain
-  postprocessTimer_.startTimer();
-  planarTerrain.gridMap = std::move(elevationMap);
-
-  // Add binary map
-  const std::string planeClassificationLayer{"plane_classification"};
-  planarTerrain.gridMap.add(planeClassificationLayer);
-  auto& traversabilityMask = planarTerrain.gridMap.get(planeClassificationLayer);
-  cv::cv2eigen(slidingWindowPlaneExtractor_->getBinaryLabeledImage(), traversabilityMask);
-
-  postprocessing_->postprocess(planarTerrain, elevationLayer_, planeClassificationLayer);
-  postprocessTimer_.endTimer();
+  planeDecompositionPipeline_->update(std::move(elevationMap), elevationLayer_);
+  auto& planarTerrain = planeDecompositionPipeline_->getPlanarTerrain();
 
   // Publish terrain
   if (publishToController_) {
@@ -183,12 +144,9 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   // Add raw map
   planarTerrain.gridMap.add("elevation_raw", elevationRaw);
 
-  // Add surface normals
-  slidingWindowPlaneExtractor_->addSurfaceNormalToMap(planarTerrain.gridMap, "normal");
-
-  // Add surface normals
+  // Add segmentation
   planarTerrain.gridMap.add("segmentation");
-  cv::cv2eigen(slidingWindowPlaneExtractor_->getSegmentedPlanesMap().labeledImage, planarTerrain.gridMap.get("segmentation"));
+  planeDecompositionPipeline_->getSegmentation(planarTerrain.gridMap.get("segmentation"));
 
   grid_map_msgs::GridMap outputMessage;
   grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
@@ -196,8 +154,8 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
 
   boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
                                                             planarTerrain.gridMap.getTimestamp()));
-  insetPublisher_.publish(convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
-                                                     planarTerrain.gridMap.getTimestamp()));
+  insetPublisher_.publish(
+      convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(), planarTerrain.gridMap.getTimestamp()));
 
   callbackTimer_.endTimer();
 }

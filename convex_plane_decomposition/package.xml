@@ -11,6 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>cgal5_catkin</depend>
   <depend>grid_map_core</depend>
+  <depend>grid_map_cv</depend>
   <depend>grid_map_filters_rsl</depend>
 
 </package>

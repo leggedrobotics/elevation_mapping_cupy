@@ -5,6 +5,7 @@ project(convex_plane_decomposition)
 set(CATKIN_PACKAGE_DEPENDENCIES
 	cgal5_catkin
 	grid_map_core
+	grid_map_cv
 	grid_map_filters_rsl
 )
 
@@ -60,7 +61,9 @@ add_library(${PROJECT_NAME}
   src/ConvexRegionGrowing.cpp
   src/Draw.cpp
   src/GridMapPreprocessing.cpp
+  src/LoadGridmapFromImage.cpp
   src/PlanarRegion.cpp
+  src/PlaneDecompositionPipeline.cpp
   src/Postprocessing.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -94,6 +97,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
+	test/testPipeline.cpp
 	test/testPlanarRegion.cpp
 	test/testRegionGrowing.cpp
 	test/testUpsampling.cpp

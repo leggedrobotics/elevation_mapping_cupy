@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 #include <string>
 
 #include <geometry_msgs/TransformStamped.h>
@@ -12,19 +11,12 @@
 
 #include <grid_map_msgs/GridMap.h>
 
-#include "Timer.h"
+#include <convex_plane_decomposition/Timer.h>
 
 namespace convex_plane_decomposition {
 
-// Forward declarations
-class GridMapPreprocessing;
-class Postprocessing;
-namespace sliding_window_plane_extractor {
-class SlidingWindowPlaneExtractor;
-}
-namespace contour_extraction {
-class ContourExtraction;
-}
+// Forward declaration of the pipeline
+class PlaneDecompositionPipeline;
 
 class ConvexPlaneExtractionROS {
  public:
@@ -32,9 +24,9 @@ class ConvexPlaneExtractionROS {
 
   ~ConvexPlaneExtractionROS();
 
+ private:
   bool loadParameters(const ros::NodeHandle& nodeHandle);
 
- private:
   /**
    * Callback method for the incoming grid map message.
    * @param message the incoming message.
@@ -63,18 +55,10 @@ class ConvexPlaneExtractionROS {
   tf2_ros::TransformListener tfListener_;
 
   // Pipeline
-  std::mutex mutex_;
-  std::unique_ptr<GridMapPreprocessing> preprocessing_;
-  std::unique_ptr<sliding_window_plane_extractor::SlidingWindowPlaneExtractor> slidingWindowPlaneExtractor_;
-  std::unique_ptr<contour_extraction::ContourExtraction> contourExtraction_;
-  std::unique_ptr<Postprocessing> postprocessing_;
+  std::unique_ptr<PlaneDecompositionPipeline> planeDecompositionPipeline_;
 
   // Timing
   Timer callbackTimer_;
-  Timer preprocessTimer_;
-  Timer slidingWindowTimer_;
-  Timer planeExtractionTimer_;
-  Timer postprocessTimer_;
 };
 
 }  // namespace convex_plane_decomposition
