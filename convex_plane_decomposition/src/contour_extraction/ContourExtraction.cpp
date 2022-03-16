@@ -29,6 +29,7 @@ std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const Segmente
   const auto upSampledMap = upSample(segmentedPlanesMap);
 
   std::vector<PlanarRegion> planarRegions;
+  planarRegions.reserve(upSampledMap.highestLabel + 1); // Can be more or less in the end if regions are split or removed.
   for (const auto& label_plane : upSampledMap.labelPlaneParameters) {
     const int label = label_plane.first;
     binaryImage_ = upSampledMap.labeledImage == label;
@@ -64,7 +65,6 @@ std::vector<PlanarRegion> ContourExtraction::extractPlanarRegions(const Segmente
 }
 
 std::vector<BoundaryWithInset> extractBoundaryAndInset(cv::Mat& binary_image, const cv::Mat& erosionKernel) {
-
   // Get boundary
   std::vector<CgalPolygonWithHoles2d> boundaries = extractPolygonsFromBinaryImage(binary_image);
 

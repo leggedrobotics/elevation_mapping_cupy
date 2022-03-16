@@ -9,37 +9,19 @@
 #include <algorithm>
 #include <iostream>
 
+#include <boost/filesystem/path.hpp>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 #include <convex_plane_decomposition/Draw.h>
 #include <convex_plane_decomposition/GridMapPreprocessing.h>
+#include <convex_plane_decomposition/LoadGridmapFromImage.h>
 #include <convex_plane_decomposition/contour_extraction/ContourExtraction.h>
 #include <convex_plane_decomposition/sliding_window_plane_extraction/SlidingWindowPlaneExtractor.h>
 
 using namespace convex_plane_decomposition;
-
-grid_map::GridMap loadElevationMapFromFile(const std::string& filePath, double resolution, double scale) {
-  // Read the file
-  cv::Mat image;
-  image = cv::imread(filePath, cv::ImreadModes::IMREAD_GRAYSCALE);
-
-  // Check for invalid input
-  if (!image.data) {
-    throw std::runtime_error("Could not open or find the image");
-  }
-
-  // Min max values
-  double minValue, maxValue;
-  cv::minMaxLoc(image, &minValue, &maxValue);
-
-  grid_map::GridMap mapOut({"elevation"});
-  mapOut.setFrameId("odom");
-  grid_map::GridMapCvConverter::initializeFromImage(image, resolution, mapOut, grid_map::Position(0.0, 0.0));
-  grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 1>(image, std::string("elevation"), mapOut, float(0.0), float(scale), 0.5);
-  return mapOut;
-}
 
 void plotSlidingWindow(const sliding_window_plane_extractor::SlidingWindowPlaneExtractor& planeExtractor) {
   cv::namedWindow("Sliding Window binarymap", cv::WindowFlags::WINDOW_NORMAL);
@@ -74,7 +56,8 @@ void plotSlidingWindow(const sliding_window_plane_extractor::SlidingWindowPlaneE
 }
 
 int main(int argc, char** argv) {
-  std::string folder = "/home/rgrandia/git/anymal/convex_terrain_representation/convex_plane_decomposition_ros/data/";
+  boost::filesystem::path filePath(__FILE__);
+  std::string folder = filePath.parent_path().parent_path().generic_string() + std::string{"/data/"};
   std::string file = "elevationMap_8_139cm.png";
   double heightScale = 1.39;
   //    std::string file = "demo_map.png"; double heightScale = 1.25;
@@ -85,7 +68,7 @@ int main(int argc, char** argv) {
   //    std::string file = "straightStairs_1m_1m_60cm.png"; double heightScale = 0.6;
   double resolution = 0.02;
 
-  auto elevationMap = loadElevationMapFromFile(folder + file, resolution, heightScale);
+  auto elevationMap = loadGridmapFromImage(folder + file, "elevation", "odom", resolution, heightScale);
 
   cv::Mat image;
   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(elevationMap, "elevation", CV_8UC1, 0.0, heightScale, image);

@@ -154,12 +154,11 @@ void SlidingWindowPlaneExtractor::extractPlaneParametersFromLabeledImage() {
       segmentedPlanesMap_.highestLabel;  // Make local copy. The highestLabel is incremented inside the loop
 
   // Reserve a workvector that is reused between processing labels
-  std::vector<ransac_plane_extractor::PointWithNormal> pointsWithNormal;
-  pointsWithNormal.reserve(segmentedPlanesMap_.labeledImage.rows * segmentedPlanesMap_.labeledImage.cols);
+  pointsWithNormal_.reserve(segmentedPlanesMap_.labeledImage.rows * segmentedPlanesMap_.labeledImage.cols);
 
   // Skip label 0. This is the background, i.e. non-planar region.
   for (int label = 1; label <= numberOfExtractedPlanesWithoutRefinement; ++label) {
-    computePlaneParametersForLabel(label, pointsWithNormal);
+    computePlaneParametersForLabel(label, pointsWithNormal_);
   }
 }
 

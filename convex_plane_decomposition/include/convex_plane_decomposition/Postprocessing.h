@@ -9,19 +9,19 @@ struct PostprocessingParameters {
   double extracted_planes_height_offset = 0.0;
 
   /// Added offset in z direction added in cells that are not traversable
-  double nonplanar_height_offset = 0.0;
+  double nonplanar_height_offset = 0.02;
 
   /// Size of the kernel creating the boundary offset. In number of pixels.
-  int nonplanar_horizontal_offset = 2;
+  int nonplanar_horizontal_offset = 1;
 
   /// Half the width of the dilation used before the smooth layer [m]
   double smoothing_dilation_size = 0.2;
 
   /// Half the width of the box kernel used for the smooth layer [m]
-  double smoothing_box_kernel_size = 0.3;
+  double smoothing_box_kernel_size = 0.1;
 
   /// Half the width of the Gaussian kernel used for the smooth layer [m]
-  double smoothing_gauss_kernel_size = 0.1;
+  double smoothing_gauss_kernel_size = 0.05;
 };
 
 class Postprocessing {

@@ -56,6 +56,7 @@ class SlidingWindowPlaneExtractor {
   int mapRows_;
 
   std::vector<Eigen::Vector3d> surfaceNormals_;
+  std::vector<ransac_plane_extractor::PointWithNormal> pointsWithNormal_;
 
   cv::Mat binaryImagePatch_;
   SegmentedPlanesMap segmentedPlanesMap_;
