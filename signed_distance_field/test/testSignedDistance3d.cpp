@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 10.08.20.
-//
+/*
+ * testSignedDistance3d.cpp
+ *
+ *  Created on: Aug 10, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #include <gtest/gtest.h>
 
@@ -24,14 +28,12 @@ TEST(testSignedDistance3d, flatTerrain) {
 
   const float testHeightAboveTerrain = 3.0;
   const auto naiveSignedDistanceAbove = naiveSignedDistanceAtHeight(map, testHeightAboveTerrain, resolution);
-  const auto signedDistanceAbove =
-      signedDistanceAtHeight(map, testHeightAboveTerrain, resolution, minHeight, maxHeight);
+  const auto signedDistanceAbove = signedDistanceAtHeight(map, testHeightAboveTerrain, resolution, minHeight, maxHeight);
   ASSERT_TRUE(isEqualSdf(signedDistanceAbove, naiveSignedDistanceAbove, 1e-4));
 
   const float testHeightBelowTerrain = -3.0;
   const auto naiveSignedDistanceBelow = naiveSignedDistanceAtHeight(map, testHeightBelowTerrain, resolution);
-  const auto signedDistanceBelow =
-      signedDistanceAtHeight(map, testHeightBelowTerrain, resolution, minHeight, maxHeight);
+  const auto signedDistanceBelow = signedDistanceAtHeight(map, testHeightBelowTerrain, resolution, minHeight, maxHeight);
   ASSERT_TRUE(isEqualSdf(signedDistanceBelow, naiveSignedDistanceBelow, 1e-4));
 }
 

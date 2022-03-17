@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 07.08.20.
-//
+/*
+ * PixelBorderDistance.h
+ *
+ *  Created on: Aug 7, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #pragma once
 

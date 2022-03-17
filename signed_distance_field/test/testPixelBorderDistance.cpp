@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 07.08.20.
-//
+/*
+ * testPixelBorderDistance.cpp
+ *
+ *  Created on: Aug 7, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #include <gtest/gtest.h>
 

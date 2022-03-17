@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 18.08.20.
-//
+/*
+ * test3dLookup.cpp
+ *
+ *  Created on: Aug 18, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #include <gtest/gtest.h>
 

@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 10.07.20.
-//
+/*
+ * SignedDistance2d.cpp
+ *
+ *  Created on: Jul 10, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #include "signed_distance_field/SignedDistance2d.h"
 

@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 13.08.20.
-//
+/*
+ * Gridmap3dLookup.h
+ *
+ *  Created on: Aug 13, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #pragma once
 

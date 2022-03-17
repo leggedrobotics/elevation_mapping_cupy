@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 10.07.20.
-//
+/*
+ * Utils.h
+ *
+ *  Created on: Jul 10, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #pragma once
 

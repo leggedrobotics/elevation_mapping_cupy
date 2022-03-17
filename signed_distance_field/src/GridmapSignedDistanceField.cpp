@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 10.07.20.
-//
+/*
+ * GridmapSignedDistanceField.cpp
+ *
+ *  Created on: Jul 10, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #include "signed_distance_field/GridmapSignedDistanceField.h"
 
@@ -10,11 +14,11 @@
 namespace grid_map {
 
 // Import from the signed_distance_field namespace
-using signed_distance_field::Gridmap3dLookup;
-using signed_distance_field::layerFiniteDifference;
 using signed_distance_field::columnwiseCentralDifference;
-using signed_distance_field::signedDistanceAtHeightTranspose;
+using signed_distance_field::Gridmap3dLookup;
 using signed_distance_field::layerCentralDifference;
+using signed_distance_field::layerFiniteDifference;
+using signed_distance_field::signedDistanceAtHeightTranspose;
 
 GridmapSignedDistanceField::GridmapSignedDistanceField(const GridMap& gridMap, const std::string& elevationLayer, double minHeight,
                                                        double maxHeight)

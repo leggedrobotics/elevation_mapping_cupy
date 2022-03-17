@@ -1,6 +1,10 @@
-//
-// Created by rgrandia on 10.08.20.
-//
+/*
+ * DistanceDerivatives.h
+ *
+ *  Created on: Aug 10, 2020
+ *      Author: Ruben Grandia
+ *   Institute: ETH Zurich
+ */
 
 #pragma once
 
