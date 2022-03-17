@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include <array>
-#include <vector>
+#include <grid_map_core/TypeDefs.hpp>
 
-#include <Eigen/Dense>
-
+namespace grid_map {
 namespace signed_distance_field {
 
 /**
@@ -28,7 +26,7 @@ struct Gridmap3dLookup {
   };
 
   size_t_3d gridsize_;
-  Eigen::Vector3d gridOrigin_;
+  Position3 gridOrigin_;
   double resolution_;
 
   /**
@@ -37,7 +35,7 @@ struct Gridmap3dLookup {
    * @param gridOrigin : position at x=y=z=0
    * @param resolution : (>0.0) size of 1 voxel
    */
-  Gridmap3dLookup(const size_t_3d& gridsize, const Eigen::Vector3d& gridOrigin, double resolution)
+  Gridmap3dLookup(const size_t_3d& gridsize, const Position3& gridOrigin, double resolution)
       : gridsize_(gridsize), gridOrigin_(gridOrigin), resolution_(resolution) {
     assert(resolution_ > 0.0);
     assert(gridsize_.x > 0);
@@ -49,14 +47,15 @@ struct Gridmap3dLookup {
   Gridmap3dLookup() : Gridmap3dLookup({1, 1, 1}, {0.0, 0.0, 0.0}, 1.0) {}
 
   /** Returns the 3d index of the grid node closest to the query position */
-  size_t_3d nearestNode(const Eigen::Vector3d& position) const noexcept {
-    Eigen::Vector3d subpixelVector{(gridOrigin_.x() - position.x()) / resolution_, (gridOrigin_.y() - position.y()) / resolution_, (position.z() - gridOrigin_.z()) / resolution_};
+  size_t_3d nearestNode(const Position3& position) const noexcept {
+    Position3 subpixelVector{(gridOrigin_.x() - position.x()) / resolution_, (gridOrigin_.y() - position.y()) / resolution_,
+                             (position.z() - gridOrigin_.z()) / resolution_};
     return {nearestPositiveInteger(subpixelVector.x(), gridsize_.x - 1), nearestPositiveInteger(subpixelVector.y(), gridsize_.y - 1),
             nearestPositiveInteger(subpixelVector.z(), gridsize_.z - 1)};
   }
 
   /** Returns the 3d node position from a 3d index */
-  Eigen::Vector3d nodePosition(const size_t_3d& index) const noexcept {
+  Position3 nodePosition(const size_t_3d& index) const noexcept {
     return {gridOrigin_.x() - index.x * resolution_, gridOrigin_.y() - index.y * resolution_, gridOrigin_.z() + index.z * resolution_};
   }
 
@@ -67,7 +66,7 @@ struct Gridmap3dLookup {
   size_t linearSize() const noexcept { return gridsize_.x * gridsize_.y * gridsize_.z; }
 
   /** rounds subindex value and clamps it to [0, max] */
-  static size_t nearestPositiveInteger(double val, size_t max) {
+  static size_t nearestPositiveInteger(double val, size_t max) noexcept {
     // Comparing bounds as double prevents underflow/overflow
     if (val > 0.0) {
       return static_cast<size_t>(std::min(std::round(val), static_cast<double>(max)));
@@ -78,3 +77,4 @@ struct Gridmap3dLookup {
 };
 
 }  // namespace signed_distance_field
+}  // namespace grid_map

@@ -12,13 +12,13 @@
 #include <grid_map_msgs/GridMap.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <signed_distance_field/GridmapSignedDistanceField.h>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_sdf/SignedDistanceField.hpp>
 
 #include <ocs2_ros_interfaces/visualization/VisualizationHelpers.h>
 
+#include "segmented_planes_terrain_model/SegmentedPlanesSignedDistanceField.h"
 #include "segmented_planes_terrain_model/SegmentedPlanesTerrainVisualization.h"
 
 const std::string frameId_ = "odom";
@@ -102,14 +102,14 @@ int main(int argc, char** argv) {
       grid_map::GridMap localMap = messageMap->getSubmap({convexTerrain.plane.positionInWorld.x(), convexTerrain.plane.positionInWorld.y()},
                                                          Eigen::Array2d(width, length), success);
       auto t2 = std::chrono::high_resolution_clock::now();
-      signed_distance_field::GridmapSignedDistanceField sdf(localMap, "elevation",
-                                                            convexTerrain.plane.positionInWorld.z() - heightClearance,
-                                                            convexTerrain.plane.positionInWorld.z() + heightClearance);
+      switched_model::SegmentedPlanesSignedDistanceField sdf(localMap, "elevation",
+                                                             convexTerrain.plane.positionInWorld.z() - heightClearance,
+                                                             convexTerrain.plane.positionInWorld.z() + heightClearance);
       auto t3 = std::chrono::high_resolution_clock::now();
       std::cout << "Sdf computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << " [ms]\n";
 
       auto t4 = std::chrono::high_resolution_clock::now();
-      auto sdfClone = std::unique_ptr<signed_distance_field::GridmapSignedDistanceField>(sdf.clone());
+      auto sdfClone = std::unique_ptr<switched_model::SegmentedPlanesSignedDistanceField>(sdf.clone());
       auto t5 = std::chrono::high_resolution_clock::now();
       std::cout << "Sdf.clone() computation took " << 1e-3 * std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count()
                 << " [ms]\n";

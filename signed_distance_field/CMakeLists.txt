@@ -5,7 +5,6 @@ project(signed_distance_field)
 set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_core
 	pcl_ros
-	ocs2_switched_model_interface
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -36,16 +35,15 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/PixelBorderDistance.cpp
   src/GridmapSignedDistanceField.cpp
-	src/SignedDistance2d.cpp
-	)
+  src/SignedDistance2d.cpp
+)
 add_dependencies(${PROJECT_NAME}
 	${catkin_EXPORTED_TARGETS}
-	)
+)
 target_link_libraries(${PROJECT_NAME}
 	${catkin_LIBRARIES}
-	)
+)
 
 
 #############
@@ -56,10 +54,10 @@ install(TARGETS ${PROJECT_NAME}
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-	)
+)
 install(DIRECTORY include/${PROJECT_NAME}/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-	)
+)
 
 #############
 ## Testing ##
@@ -71,9 +69,9 @@ add_executable(${PROJECT_NAME}_test
 	test/testPixelBorderDistance.cpp
 	test/testSignedDistance2d.cpp
 	test/testSignedDistance3d.cpp
-	)
+)
 target_link_libraries(${PROJECT_NAME}_test
 	${catkin_LIBRARIES}
 	${PROJECT_NAME}
 	gtest_main
-	)
+)

@@ -7,7 +7,7 @@
 #include <convex_plane_decomposition/PlanarRegion.h>
 #include <ocs2_switched_model_interface/terrain/TerrainModel.h>
 
-#include <signed_distance_field/GridmapSignedDistanceField.h>
+#include "segmented_planes_terrain_model/SegmentedPlanesSignedDistanceField.h"
 
 namespace switched_model {
 
@@ -24,7 +24,7 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
 
   void createSignedDistanceBetween(const Eigen::Vector3d& minCoordinates, const Eigen::Vector3d& maxCoordinates);
 
-  const signed_distance_field::GridmapSignedDistanceField* getSignedDistanceField() const override { return signedDistanceField_.get(); }
+  const SegmentedPlanesSignedDistanceField* getSignedDistanceField() const override { return signedDistanceField_.get(); }
 
   vector3_t getHighestObstacleAlongLine(const vector3_t& position1InWorld, const vector3_t& position2InWorld) const override;
 
@@ -34,7 +34,7 @@ class SegmentedPlanesTerrainModel : public switched_model::TerrainModel {
 
  private:
   const convex_plane_decomposition::PlanarTerrain planarTerrain_;
-  std::unique_ptr<signed_distance_field::GridmapSignedDistanceField> signedDistanceField_;
+  std::unique_ptr<SegmentedPlanesSignedDistanceField> signedDistanceField_;
   const grid_map::Matrix* const elevationData_;
 };
 

@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 
+namespace grid_map {
 namespace signed_distance_field {
 
 /**
@@ -51,7 +52,7 @@ inline float intersectionPointRightSideOfOrigin(float p, float fp) {
   } else if (fp < -pSquared) {
     return (pSquared - p + fp) / (2.0F * p);  // sol 5
   } else {
-    const float bound = pSquared - 2.0F * p + 1.0F; // Always positive because (p > 0)
+    const float bound = pSquared - 2.0F * p + 1.0F;  // Always positive because (p > 0)
     if (fp > bound) {
       return 0.5F + std::sqrt(fp);  // sol 2
     } else if (fp < -bound) {
@@ -96,3 +97,4 @@ inline float equidistancePoint(float q, float fq, float p, float fp) {
 }
 
 }  // namespace signed_distance_field
+}  // namespace grid_map

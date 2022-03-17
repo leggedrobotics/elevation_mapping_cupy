@@ -7,67 +7,71 @@
 #include "signed_distance_field/DistanceDerivatives.h"
 #include "signed_distance_field/SignedDistance2d.h"
 
-namespace signed_distance_field {
+namespace grid_map {
 
-GridmapSignedDistanceField::GridmapSignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer,
-                                                       double minHeight, double maxHeight) {
+// Import from the signed_distance_field namespace
+using signed_distance_field::Gridmap3dLookup;
+using signed_distance_field::layerFiniteDifference;
+using signed_distance_field::columnwiseCentralDifference;
+using signed_distance_field::signedDistanceAtHeightTranspose;
+using signed_distance_field::layerCentralDifference;
+
+GridmapSignedDistanceField::GridmapSignedDistanceField(const GridMap& gridMap, const std::string& elevationLayer, double minHeight,
+                                                       double maxHeight)
+    : frameId_(gridMap.getFrameId()), timestamp_(gridMap.getTimestamp()) {
   assert(maxHeight >= minHeight);
-  grid_map::Position mapOriginXY;
-  gridMap.getPosition(Eigen::Vector2i(0, 0), mapOriginXY);
-  Eigen::Vector3d gridOrigin(mapOriginXY.x(), mapOriginXY.y(), minHeight);
 
-  // Take minimum of two layers to enable finite difference in Z direction
+  // Determine origin of the 3D grid
+  Position mapOriginXY;
+  gridMap.getPosition(Eigen::Vector2i(0, 0), mapOriginXY);
+  Position3 gridOrigin(mapOriginXY.x(), mapOriginXY.y(), minHeight);
+
+  // Round up the Z-discretization. We need a minimum of two layers to enable finite difference in Z direction
   const auto numZLayers = static_cast<size_t>(std::max(std::ceil((maxHeight - minHeight) / gridMap.getResolution()), 2.0));
   const size_t numXrows = gridMap.getSize().x();
   const size_t numYrows = gridMap.getSize().y();
   Gridmap3dLookup::size_t_3d gridsize = {numXrows, numYrows, numZLayers};
 
+  // Initialize 3D lookup
   gridmap3DLookup_ = Gridmap3dLookup(gridsize, gridOrigin, gridMap.getResolution());
 
+  // Allocate the internal data structure
   data_.reserve(gridmap3DLookup_.linearSize());
+
+  // Check for NaN
   const auto& elevationData = gridMap.get(elevationLayer);
   if (elevationData.hasNaN()) {
-    std::cerr << "[GridmapSignedDistanceField] elevation data contains NaN" << std::endl;
+    std::cerr << "[GridmapSignedDistanceField] elevation data contains NaN. The generated SDF will be invalid" << std::endl;
   }
+
+  // Compute the SDF
   computeSignedDistance(elevationData);
 }
 
-GridmapSignedDistanceField::GridmapSignedDistanceField(const GridmapSignedDistanceField& other)
-    : switched_model::SignedDistanceField(), gridmap3DLookup_(other.gridmap3DLookup_), data_(other.data_) {}
-
-GridmapSignedDistanceField* GridmapSignedDistanceField::clone() const {
-  return new GridmapSignedDistanceField(*this);
-}
-
-switched_model::scalar_t GridmapSignedDistanceField::value(const switched_model::vector3_t& position) const {
+double GridmapSignedDistanceField::value(const Position3& position) const noexcept {
   const auto nodeIndex = gridmap3DLookup_.nearestNode(position);
-  const Eigen::Vector3d nodePosition = gridmap3DLookup_.nodePosition(nodeIndex);
-  const node_data_t nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
-  const Eigen::Vector3d jacobian = derivative(nodeData);
+  const auto nodePosition = gridmap3DLookup_.nodePosition(nodeIndex);
+  const auto nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
+  const auto jacobian = derivative(nodeData);
   return distance(nodeData) + jacobian.dot(position - nodePosition);
 }
 
-switched_model::vector3_t GridmapSignedDistanceField::derivative(const switched_model::vector3_t& position) const {
+GridmapSignedDistanceField::Derivative3 GridmapSignedDistanceField::derivative(const Position3& position) const noexcept {
   const auto nodeIndex = gridmap3DLookup_.nearestNode(position);
-  const node_data_t nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
+  const auto nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
   return derivative(nodeData);
 }
 
-std::pair<switched_model::scalar_t, switched_model::vector3_t> GridmapSignedDistanceField::valueAndDerivative(
-    const switched_model::vector3_t& position) const {
+std::pair<double, GridmapSignedDistanceField::Derivative3> GridmapSignedDistanceField::valueAndDerivative(
+    const Position3& position) const noexcept {
   const auto nodeIndex = gridmap3DLookup_.nearestNode(position);
-  const Eigen::Vector3d nodePosition = gridmap3DLookup_.nodePosition(nodeIndex);
-  const node_data_t nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
-  const Eigen::Vector3d jacobian = derivative(nodeData);
+  const auto nodePosition = gridmap3DLookup_.nodePosition(nodeIndex);
+  const auto nodeData = data_[gridmap3DLookup_.linearIndex(nodeIndex)];
+  const auto jacobian = derivative(nodeData);
   return {distance(nodeData) + jacobian.dot(position - nodePosition), jacobian};
 }
 
-void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& elevation) {
-  using signed_distance_field::columnwiseCentralDifference;
-  using signed_distance_field::layerCentralDifference;
-  using signed_distance_field::layerFiniteDifference;
-  using signed_distance_field::signedDistanceAtHeightTranspose;
-
+void GridmapSignedDistanceField::computeSignedDistance(const Matrix& elevation) {
   const auto gridOriginZ = static_cast<float>(gridmap3DLookup_.gridOrigin_.z());
   const auto resolution = static_cast<float>(gridmap3DLookup_.resolution_);
   const auto minHeight = elevation.minCoeff();
@@ -83,20 +87,20 @@ void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& e
    */
 
   // Memory needed to compute the SDF at a layer
-  grid_map::Matrix tmp; // allocated on first use
-  grid_map::Matrix tmpTranspose; // allocated on first use
-  grid_map::Matrix sdfTranspose; // allocated on first use
+  Matrix tmp;           // allocated on first use
+  Matrix tmpTranspose;  // allocated on first use
+  Matrix sdfTranspose;  // allocated on first use
 
   // Memory needed to keep a buffer of layers. We need 3 due to the central difference
-  grid_map::Matrix currentLayer; // allocated on first use
-  grid_map::Matrix nextLayer; // allocated on first use
-  grid_map::Matrix previousLayer; // allocated on first use
+  Matrix currentLayer;   // allocated on first use
+  Matrix nextLayer;      // allocated on first use
+  Matrix previousLayer;  // allocated on first use
 
   // Memory needed to compute finite differences
-  grid_map::Matrix dxTranspose = grid_map::Matrix::Zero(elevation.cols(), elevation.rows());
-  grid_map::Matrix dxNextTranspose = grid_map::Matrix::Zero(elevation.cols(), elevation.rows());
-  grid_map::Matrix dy = grid_map::Matrix::Zero(elevation.rows(), elevation.cols());
-  grid_map::Matrix dz = grid_map::Matrix::Zero(elevation.rows(), elevation.cols());
+  Matrix dxTranspose = Matrix::Zero(elevation.cols(), elevation.rows());
+  Matrix dxNextTranspose = Matrix::Zero(elevation.cols(), elevation.rows());
+  Matrix dy = Matrix::Zero(elevation.rows(), elevation.cols());
+  Matrix dz = Matrix::Zero(elevation.rows(), elevation.cols());
 
   // Compute SDF of first layer
   computeLayerSdfandDeltaX(elevation, currentLayer, dxTranspose, sdfTranspose, tmp, tmpTranspose, gridOriginZ, resolution, minHeight,
@@ -131,7 +135,7 @@ void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& e
     emplacebackLayerData(currentLayer, dxTranspose, dy, dz);
   }
 
-  // Circulate layer buffers on last time
+  // Circulate layer buffers one last time
   previousLayer.swap(currentLayer);
   currentLayer.swap(nextLayer);
   dxTranspose.swap(dxNextTranspose);
@@ -143,18 +147,17 @@ void GridmapSignedDistanceField::computeSignedDistance(const grid_map::Matrix& e
   // Add the data to the 3D structure
   emplacebackLayerData(currentLayer, dxTranspose, dy, dz);
 }
-void GridmapSignedDistanceField::computeLayerSdfandDeltaX(const grid_map::Matrix& elevation, grid_map::Matrix& currentLayer,
-                                                          grid_map::Matrix& dxTranspose, grid_map::Matrix& sdfTranspose,
-                                                          grid_map::Matrix& tmp, grid_map::Matrix& tmpTranspose, const float gridOriginZ,
-                                                          const float resolution, const float minHeight, const float maxHeight) const {
+void GridmapSignedDistanceField::computeLayerSdfandDeltaX(const Matrix& elevation, Matrix& currentLayer, Matrix& dxTranspose,
+                                                          Matrix& sdfTranspose, Matrix& tmp, Matrix& tmpTranspose, float height,
+                                                          float resolution, float minHeight, float maxHeight) const {
   // Compute SDF + dx of layer: compute sdfTranspose -> take dxTranspose -> transpose to get sdf
-  signedDistanceAtHeightTranspose(elevation, sdfTranspose, tmp, tmpTranspose, gridOriginZ, resolution, minHeight, maxHeight);
+  signedDistanceAtHeightTranspose(elevation, sdfTranspose, tmp, tmpTranspose, height, resolution, minHeight, maxHeight);
   columnwiseCentralDifference(sdfTranspose, dxTranspose, -resolution);  // dx / drow = -resolution
   currentLayer = sdfTranspose.transpose();
 }
 
-void GridmapSignedDistanceField::emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dxdxTranspose,
-                                                      const grid_map::Matrix& dy, const grid_map::Matrix& dz) {
+void GridmapSignedDistanceField::emplacebackLayerData(const Matrix& signedDistance, const Matrix& dxdxTranspose, const Matrix& dy,
+                                                      const Matrix& dz) {
   for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; ++colY) {
     for (size_t rowX = 0; rowX < gridmap3DLookup_.gridsize_.x; ++rowX) {
       data_.emplace_back(node_data_t{signedDistance(rowX, colY), dxdxTranspose(colY, rowX), dy(rowX, colY), dz(rowX, colY)});
@@ -165,6 +168,9 @@ void GridmapSignedDistanceField::emplacebackLayerData(const grid_map::Matrix& si
 pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::asPointCloud(size_t decimation,
                                                                          const std::function<bool(float)>& condition) const {
   pcl::PointCloud<pcl::PointXYZI> points;
+  points.header.stamp = timestamp_;
+  points.header.frame_id = frameId_;
+
   points.reserve(gridmap3DLookup_.linearSize());
   for (size_t layerZ = 0; layerZ < gridmap3DLookup_.gridsize_.z; layerZ += decimation) {
     for (size_t colY = 0; colY < gridmap3DLookup_.gridsize_.y; colY += decimation) {
@@ -195,4 +201,4 @@ pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::obstaclePointCloud(s
   return asPointCloud(decimation, [](float signedDistance) { return signedDistance <= 0.0F; });
 }
 
-}  // namespace signed_distance_field
+}  // namespace grid_map

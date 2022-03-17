@@ -6,8 +6,10 @@
 
 #include "signed_distance_field/PixelBorderDistance.h"
 
+using namespace grid_map;
+using namespace signed_distance_field;
+
 TEST(testPixelBorderDistance, distanceFunction) {
-  using signed_distance_field::pixelBorderDistance;
   // Basic properties of the distance function
   ASSERT_TRUE(pixelBorderDistance(0, 0) == 0.0F);
   ASSERT_FLOAT_EQ(pixelBorderDistance(0, 1), 0.5);
@@ -17,9 +19,6 @@ TEST(testPixelBorderDistance, distanceFunction) {
 }
 
 TEST(testPixelBorderDistance, equidistantPoint) {
-  using signed_distance_field::equidistancePoint;
-  using signed_distance_field::squarePixelBorderDistance;
-
   int pixelRange = 10;
   float offsetRange = 20.0;
   float offsetStep = 0.25;

@@ -4,22 +4,23 @@
 
 #pragma once
 
+namespace grid_map {
 namespace signed_distance_field {
 
-inline Eigen::Matrix<bool, -1, -1> occupancyAtHeight(const grid_map::Matrix& elevationMap, float height) {
+inline Eigen::Matrix<bool, -1, -1> occupancyAtHeight(const Matrix& elevationMap, float height) {
   Eigen::Matrix<bool, -1, -1> occupany = elevationMap.unaryExpr([=](float val) { return val > height; });
   return occupany;
 }
 
-inline bool isEqualSdf(const grid_map::Matrix& sdf0, const grid_map::Matrix& sdf1, float tol) {
-  grid_map::Matrix error = (sdf0 - sdf1).array().abs();
+inline bool isEqualSdf(const Matrix& sdf0, const Matrix& sdf1, float tol) {
+  Matrix error = (sdf0 - sdf1).array().abs();
   float maxDifference = error.maxCoeff();
   return maxDifference < tol;
 }
 
 // N^2 naive implementation, for testing purposes
-inline grid_map::Matrix naiveSignedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution) {
-  grid_map::Matrix signedDistance(elevationMap.rows(), elevationMap.cols());
+inline Matrix naiveSignedDistanceAtHeight(const Matrix& elevationMap, float height, float resolution) {
+  Matrix signedDistance(elevationMap.rows(), elevationMap.cols());
 
   // For each point
   for (int row = 0; row < elevationMap.rows(); ++row) {
@@ -57,8 +58,8 @@ inline grid_map::Matrix naiveSignedDistanceAtHeight(const grid_map::Matrix& elev
   return signedDistance;
 }
 
-inline grid_map::Matrix naiveSignedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
-  grid_map::Matrix signedDistance(occupancyGrid.rows(), occupancyGrid.cols());
+inline Matrix naiveSignedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
+  Matrix signedDistance(occupancyGrid.rows(), occupancyGrid.cols());
 
   // For each point
   for (int row = 0; row < occupancyGrid.rows(); ++row) {
@@ -95,4 +96,6 @@ inline grid_map::Matrix naiveSignedDistanceFromOccupancy(const Eigen::Matrix<boo
 
   return signedDistance;
 }
-}
+
+}  // namespace signed_distance_field
+}  // namespace grid_map
