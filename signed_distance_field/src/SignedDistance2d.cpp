@@ -6,6 +6,7 @@
 
 #include "signed_distance_field/PixelBorderDistance.h"
 
+namespace grid_map {
 namespace signed_distance_field {
 
 namespace internal {
@@ -64,7 +65,7 @@ std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen
 }
 
 void extractSquareDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
-                      std::vector<DistanceLowerBound>::const_iterator lowerBoundIt, Eigen::Index start) {
+                            std::vector<DistanceLowerBound>::const_iterator lowerBoundIt, Eigen::Index start) {
   const auto n = squareDistance1d.size();
 
   // Store active bound by value to remove indirection
@@ -153,8 +154,7 @@ inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squa
  * @param squareDistance1d : input as squared distance, output is the distance after sqrt.
  * @param lowerBounds : work vector
  */
-inline void distanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d,
-                                                std::vector<DistanceLowerBound>& lowerBounds) {
+inline void distanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d, std::vector<DistanceLowerBound>& lowerBounds) {
   assert(lowerBounds.size() >= squareDistance1d.size());
 
   auto start = lastZeroFromFront(squareDistance1d);
@@ -166,7 +166,7 @@ inline void distanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDista
   }
 }
 
-void computePixelDistance2dTranspose(grid_map::Matrix& input, grid_map::Matrix& distanceTranspose) {
+void computePixelDistance2dTranspose(Matrix& input, Matrix& distanceTranspose) {
   const size_t n = input.rows();
   const size_t m = input.cols();
 
@@ -187,8 +187,7 @@ void computePixelDistance2dTranspose(grid_map::Matrix& input, grid_map::Matrix& 
 }
 
 // Initialize with square distance in height direction in pixel units if above the surface
-void initializeObstacleDistance(const grid_map::Matrix& elevationMap, grid_map::Matrix& result, float height,
-                                            float resolution) {
+void initializeObstacleDistance(const Matrix& elevationMap, Matrix& result, float height, float resolution) {
   /* Vectorized implementation of:
    * if (height > elevation) {
    *    const auto diff = (height - elevation) / resolution;
@@ -201,8 +200,7 @@ void initializeObstacleDistance(const grid_map::Matrix& elevationMap, grid_map::
 }
 
 // Initialize with square distance in height direction in pixel units if below the surface
-void initializeObstacleFreeDistance(const grid_map::Matrix& elevationMap, grid_map::Matrix& result, float height,
-                                                float resolution) {
+void initializeObstacleFreeDistance(const Matrix& elevationMap, Matrix& result, float height, float resolution) {
   /* Vectorized implementation of:
    * if (height < elevation) {
    *    const auto diff = (height - elevation) / resolution;
@@ -214,26 +212,25 @@ void initializeObstacleFreeDistance(const grid_map::Matrix& elevationMap, grid_m
   result = ((1.0F / resolution) * (height - elevationMap.array()).cwiseMin(0.0F)).square();
 }
 
-void pixelDistanceToFreeSpaceTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfObstacleFree, grid_map::Matrix& tmp, float height,
-                                                   float resolution) {
+void pixelDistanceToFreeSpaceTranspose(const Matrix& elevationMap, Matrix& sdfObstacleFree, Matrix& tmp, float height, float resolution) {
   internal::initializeObstacleFreeDistance(elevationMap, tmp, height, resolution);
   internal::computePixelDistance2dTranspose(tmp, sdfObstacleFree);
 }
 
-void pixelDistanceToObstacleTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfObstacleTranspose, grid_map::Matrix& tmp, float height,
-                                                  float resolution) {
+void pixelDistanceToObstacleTranspose(const Matrix& elevationMap, Matrix& sdfObstacleTranspose, Matrix& tmp, float height,
+                                      float resolution) {
   internal::initializeObstacleDistance(elevationMap, tmp, height, resolution);
   internal::computePixelDistance2dTranspose(tmp, sdfObstacleTranspose);
 }
 
-grid_map::Matrix signedDistanceFromOccupancyTranspose(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
+Matrix signedDistanceFromOccupancyTranspose(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
   // Compute pixel distance to obstacles
-  grid_map::Matrix sdfObstacle;
-  grid_map::Matrix init = occupancyGrid.unaryExpr([=](bool val) { return (val) ? 0.0F : INF; });
+  Matrix sdfObstacle;
+  Matrix init = occupancyGrid.unaryExpr([=](bool val) { return (val) ? 0.0F : INF; });
   internal::computePixelDistance2dTranspose(init, sdfObstacle);
 
   // Compute pixel distance to obstacle free space
-  grid_map::Matrix sdfObstacleFree;
+  Matrix sdfObstacleFree;
   init = occupancyGrid.unaryExpr([=](bool val) { return (val) ? INF : 0.0F; });
   internal::computePixelDistance2dTranspose(init, sdfObstacleFree);
 
@@ -242,8 +239,8 @@ grid_map::Matrix signedDistanceFromOccupancyTranspose(const Eigen::Matrix<bool, 
 
 }  // namespace internal
 
-void signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfTranspose, grid_map::Matrix& tmp, grid_map::Matrix& tmpTranspose,  float height, float resolution, float minHeight,
-                                                 float maxHeight) {
+void signedDistanceAtHeightTranspose(const Matrix& elevationMap, Matrix& sdfTranspose, Matrix& tmp, Matrix& tmpTranspose, float height,
+                                     float resolution, float minHeight, float maxHeight) {
   const bool allPixelsAreObstacles = height < minHeight;
   const bool allPixelsAreFreeSpace = height > maxHeight;
 
@@ -257,23 +254,22 @@ void signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, grid_
     sdfTranspose *= resolution;
   } else {  // This layer contains a mix of obstacles and free space
     internal::pixelDistanceToObstacleTranspose(elevationMap, sdfTranspose, tmp, height, resolution);
-    internal::pixelDistanceToFreeSpaceTranspose(elevationMap,  tmpTranspose, tmp, height, resolution);
+    internal::pixelDistanceToFreeSpaceTranspose(elevationMap, tmpTranspose, tmp, height, resolution);
 
     sdfTranspose = resolution * (sdfTranspose - tmpTranspose);
   }
 }
 
-grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
-                                        float maxHeight) {
-  grid_map::Matrix sdfTranspose;
-  grid_map::Matrix tmp;
-  grid_map::Matrix tmpTranspose;
+Matrix signedDistanceAtHeight(const Matrix& elevationMap, float height, float resolution, float minHeight, float maxHeight) {
+  Matrix sdfTranspose;
+  Matrix tmp;
+  Matrix tmpTranspose;
 
   signedDistanceAtHeightTranspose(elevationMap, sdfTranspose, tmp, tmpTranspose, height, resolution, minHeight, maxHeight);
   return sdfTranspose.transpose();
 }
 
-grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
+Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution) {
   auto obstacleCount = occupancyGrid.count();
   bool hasObstacles = obstacleCount > 0;
   if (hasObstacles) {
@@ -282,12 +278,13 @@ grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& 
       return internal::signedDistanceFromOccupancyTranspose(occupancyGrid, resolution).transpose();
     } else {
       // Only obstacles -> distance is minus infinity everywhere
-      return grid_map::Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), -INF);
+      return Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), -INF);
     }
   } else {
     // No obstacles -> planar distance is infinite
-    return grid_map::Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), INF);
+    return Matrix::Constant(occupancyGrid.rows(), occupancyGrid.cols(), INF);
   }
 }
 
 }  // namespace signed_distance_field
+}  // namespace grid_map

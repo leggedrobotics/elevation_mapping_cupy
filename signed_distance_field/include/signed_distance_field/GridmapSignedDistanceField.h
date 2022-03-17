@@ -11,27 +11,56 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/TypeDefs.hpp>
 
-#include <pcl/conversions.h>
+#include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-
-#include <ocs2_switched_model_interface/terrain/SignedDistanceField.h>
 
 #include "Gridmap3dLookup.h"
 
-namespace signed_distance_field {
+namespace grid_map {
 
-class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
+/**
+ * This class creates a dense 3D signed distance field grid for a given elevation map.
+ * The 3D grid uses the same resolution as the 2D map. i.e. all voxels are of size (resolution x resolution x resolution).
+ * The size of the 3D grid is the same as the map in XY direction. The size is Z direction is specified in the constructor.
+ *
+ * During the creation of the class all values and derivatives are pre-computed in one go. This makes repeated lookups very cheap.
+ * Querying a point outside of the constructed grid will result in linear extrapolation.
+ */
+class GridmapSignedDistanceField {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using Derivative3 = Eigen::Vector3d;
 
-  GridmapSignedDistanceField(const grid_map::GridMap& gridMap, const std::string& elevationLayer, double minHeight, double maxHeight);
-  ~GridmapSignedDistanceField() override = default;
-  GridmapSignedDistanceField* clone() const override;
+  /**
+   * Create a signed distance field and its derivative for an elevation layer in the grid map.
+   *
+   * @param gridMap : Input map to create the SDF for.
+   * @param elevationLayer : Name of the elevation layer.
+   * @param minHeight : Desired starting height of the 3D SDF grid.
+   * @param maxHeight : Desired ending height of the 3D SDF grid. (Will be rounded up to match the resolution)
+   */
+  GridmapSignedDistanceField(const GridMap& gridMap, const std::string& elevationLayer, double minHeight, double maxHeight);
 
-  switched_model::scalar_t value(const switched_model::vector3_t& position) const override;
-  switched_model::vector3_t derivative(const switched_model::vector3_t& position) const override;
-  std::pair<switched_model::scalar_t, switched_model::vector3_t> valueAndDerivative(
-      const switched_model::vector3_t& position) const override;
+  /**
+   * Get the signed distance value at a 3D position.
+   * @param position : 3D position in the frame of the gridmap.
+   * @return signed distance to the elevation surface.
+   */
+  double value(const Position3& position) const noexcept;
+
+  /**
+   * Get the signed distance derivative at a 3D position.
+   * @param position : 3D position in the frame of the gridmap.
+   * @return derivative of the signed distance field.
+   */
+  Derivative3 derivative(const Position3& position) const noexcept;
+
+  /**
+   * Get both the signed distance value and derivative at a 3D position.
+   * @param position : 3D position in the frame of the gridmap.
+   * @return {value, derivative} of the signed distance field.
+   */
+  std::pair<double, Derivative3> valueAndDerivative(const Position3& position) const noexcept;
 
   /**
    * Return the signed distance field as a pointcloud. The signed distance is assigned to the point's intensity.
@@ -54,21 +83,61 @@ class GridmapSignedDistanceField : public switched_model::SignedDistanceField {
   pcl::PointCloud<pcl::PointXYZI> obstaclePointCloud(size_t decimation = 1) const;
 
  private:
-  GridmapSignedDistanceField(const GridmapSignedDistanceField& other);
-  void computeSignedDistance(const grid_map::Matrix& elevation);
-  void computeLayerSdfandDeltaX(const grid_map::Matrix& elevation, grid_map::Matrix& currentLayer, grid_map::Matrix& dxTranspose,
-                                grid_map::Matrix& sdfTranspose, grid_map::Matrix& tmp, grid_map::Matrix& tmpTranspose,
-                                const float gridOriginZ, const float resolution, const float minHeight, const float maxHeight) const;
-  void emplacebackLayerData(const grid_map::Matrix& signedDistance, const grid_map::Matrix& dxTranspose, const grid_map::Matrix& dy,
-                            const grid_map::Matrix& dz);
+  /**
+   * Implementation of the signed distance field computation in this class.
+   * @param elevation
+   */
+  void computeSignedDistance(const Matrix& elevation);
 
+  /**
+   * Simultaneously compute the signed distance and derivative in x direction at a given height
+   * @param elevation [in] : elevation data
+   * @param currentLayer [out] : signed distance values
+   * @param dxTranspose [out] : derivative in x direction (the matrix is transposed)
+   * @param sdfTranspose [tmp] : temporary variable to reuse between calls (allocated on first use)
+   * @param tmp [tmp] : temporary variable (allocated on first use)
+   * @param tmpTranspose [tmp] : temporary variable (allocated on first use)
+   * @param height [in] : height the signed distance is create for.
+   * @param resolution [in] : resolution of the map.
+   * @param minHeight [in] : smallest height value in the elevation data.
+   * @param maxHeight [in] : largest height value in the elevation data.
+   */
+  void computeLayerSdfandDeltaX(const Matrix& elevation, Matrix& currentLayer, Matrix& dxTranspose, Matrix& sdfTranspose, Matrix& tmp,
+                                Matrix& tmpTranspose, float height, float resolution, float minHeight, float maxHeight) const;
+
+  /**
+   * Add the computed signed distance values and derivatives at a particular height to the grid.
+   * Adds the layer to the back of data_
+   * @param signedDistance : signed distance values.
+   * @param dxTranspose : x components of the derivative (matrix is transposed).
+   * @param dy : y components of the derivative.
+   * @param dz : z components of the derivative.
+   */
+  void emplacebackLayerData(const Matrix& signedDistance, const Matrix& dxTranspose, const Matrix& dy, const Matrix& dz);
+
+  //! Data structure to store together {signed distance value, derivative}.
   using node_data_t = std::array<float, 4>;
-  static double distance(const node_data_t& nodeData) noexcept { return nodeData[0]; }
-  static float distanceFloat(const node_data_t& nodeData) noexcept { return nodeData[0]; }
-  static Eigen::Vector3d derivative(const node_data_t& nodeData) noexcept { return {nodeData[1], nodeData[2], nodeData[3]}; }
 
-  Gridmap3dLookup gridmap3DLookup_;
+  /** Helper function to extract the sdf value */
+  static double distance(const node_data_t& nodeData) noexcept { return nodeData[0]; }
+
+  /** Helper function to extract the sdf value as float */
+  static float distanceFloat(const node_data_t& nodeData) noexcept { return nodeData[0]; }
+
+  /** Helper function to extract the sdf derivative */
+  static Derivative3 derivative(const node_data_t& nodeData) noexcept { return {nodeData[1], nodeData[2], nodeData[3]}; }
+
+  //! Object encoding the 3D grid.
+  signed_distance_field::Gridmap3dLookup gridmap3DLookup_;
+
+  //! Object encoding the signed distance value and derivative in the grid.
   std::vector<node_data_t> data_;
+
+  //! Frame id of the grid map.
+  std::string frameId_;
+
+  //! Timestamp of the grid map (nanoseconds).
+  Time timestamp_;
 };
 
-}  // namespace signed_distance_field
+}  // namespace grid_map

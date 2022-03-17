@@ -10,6 +10,7 @@
 
 #include "Utils.h"
 
+namespace grid_map {
 namespace signed_distance_field {
 
 /**
@@ -22,8 +23,7 @@ namespace signed_distance_field {
  * @param maxHeight : the maximum height contained in elevationMap
  * @return The signed distance field at the query height.
  */
-grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, float height, float resolution, float minHeight,
-                                        float maxHeight);
+Matrix signedDistanceAtHeight(const Matrix& elevationMap, float height, float resolution, float minHeight, float maxHeight);
 
 /**
  * Same as above, but returns the sdf in transposed form.
@@ -38,9 +38,18 @@ grid_map::Matrix signedDistanceAtHeight(const grid_map::Matrix& elevationMap, fl
  * @param minHeight : the lowest height contained in elevationMap
  * @param maxHeight : the maximum height contained in elevationMap
  */
-void signedDistanceAtHeightTranspose(const grid_map::Matrix& elevationMap, grid_map::Matrix& sdfTranspose, grid_map::Matrix& tmp,
-                                     grid_map::Matrix& tmpTranspose, float height, float resolution, float minHeight, float maxHeight);
+void signedDistanceAtHeightTranspose(const Matrix& elevationMap, Matrix& sdfTranspose, Matrix& tmp, Matrix& tmpTranspose, float height,
+                                     float resolution, float minHeight, float maxHeight);
 
-grid_map::Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution);
+/**
+ * Gets the 2D signed distance from an occupancy grid.
+ * Returns +INF if there are no obstacles, and -INF if there are only obstacles
+ *
+ * @param occupancyGrid : occupancy grid with true = obstacle, false = free space
+ * @param resolution : resolution of the grid.
+ * @return signed distance for each point in the grid to the occupancy border.
+ */
+Matrix signedDistanceFromOccupancy(const Eigen::Matrix<bool, -1, -1>& occupancyGrid, float resolution);
 
 }  // namespace signed_distance_field
+}  // namespace grid_map

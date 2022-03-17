@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include <convex_plane_decomposition/ConvexRegionGrowing.h>
-#include <signed_distance_field/GridmapSignedDistanceField.h>
+
 #include <grid_map_filters_rsl/lookup.hpp>
 
 #include "segmented_planes_terrain_model/SegmentedPlaneProjection.h"
@@ -72,7 +72,7 @@ void SegmentedPlanesTerrainModel::createSignedDistanceBetween(const Eigen::Vecto
   bool success = true;
   grid_map::GridMap subMap = planarTerrain_.gridMap.getSubmap(centerXY, lengths, success);
   if (success) {
-    signedDistanceField_ = std::make_unique<signed_distance_field::GridmapSignedDistanceField>(subMap, elevationLayerName,
+    signedDistanceField_ = std::make_unique<SegmentedPlanesSignedDistanceField>(subMap, elevationLayerName,
                                                                                                minCoordinates.z(), maxCoordinates.z());
   } else {
     std::cerr << "[SegmentedPlanesTerrainModel] Failed to get subMap" << std::endl;

@@ -6,20 +6,23 @@
 
 #include "signed_distance_field/DistanceDerivatives.h"
 
+using namespace grid_map;
+using namespace signed_distance_field;
+
 TEST(testDerivatives, columnwise) {
-  Eigen::MatrixXf data(2, 3);
+  Matrix data(2, 3);
   data << 1.0, 2.0, 4.0,
       2.0, 4.0, 6.0;
 
   float resolution = 0.1;
   float doubleResolution = 2.0F * resolution;
 
-  Eigen::MatrixXf manualDifference(2, 3);
+  Matrix manualDifference(2, 3);
   manualDifference << 1.0 /resolution, 3.0 /doubleResolution, 2.0 /resolution,
       2.0 /resolution, 4.0 /doubleResolution, 2.0 /resolution;
 
-  Eigen::MatrixXf computedDifference = Eigen::MatrixXf::Zero(data.rows(), data.cols());
-  signed_distance_field::columnwiseCentralDifference(data, computedDifference, resolution);
+  Matrix computedDifference = Matrix::Zero(data.rows(), data.cols());
+  columnwiseCentralDifference(data, computedDifference, resolution);
 
   ASSERT_TRUE(manualDifference.isApprox(computedDifference));
 }

@@ -8,11 +8,12 @@
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_cv/grid_map_cv.hpp>
 
-#include <signed_distance_field/GridmapSignedDistanceField.h>
 #include <signed_distance_field/SignedDistance2d.h>
 #include <grid_map_sdf/SignedDistanceField.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgcodecs.hpp>
+
+#include "segmented_planes_terrain_model/SegmentedPlanesSignedDistanceField.h"
 
 grid_map::GridMap loadElevationMapFromFile(const std::string& filePath, double resolution, double scale) {
   // Read the file
@@ -100,7 +101,7 @@ int main(int argc, char** argv) {
 //    for (float h = minHeight; h < maxHeight; h += resolution_) {
 //      data_.emplace_back(signed_distance_field::signedDistanceAtHeight(map, h, resolution));
 //    }
-    signed_distance_field::GridmapSignedDistanceField sdf(gridMap, layer, minHeight, maxHeight);
+    switched_model::SegmentedPlanesSignedDistanceField sdf(gridMap, layer, minHeight, maxHeight);
 
     // =========================================================
   }
