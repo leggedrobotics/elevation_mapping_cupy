@@ -25,8 +25,16 @@ struct Gridmap3dLookup {
     size_t z;
   };
 
+  //! 3D size of the grid
   size_t_3d gridsize_;
+
+  //! Origin position of the grid
   Position3 gridOrigin_;
+
+  //! Maximum index per dimension stored as double
+  Position3 gridMaxIndexAsDouble_;
+
+  //! Grid resolution
   double resolution_;
 
   /**
@@ -36,7 +44,11 @@ struct Gridmap3dLookup {
    * @param resolution : (>0.0) size of 1 voxel
    */
   Gridmap3dLookup(const size_t_3d& gridsize, const Position3& gridOrigin, double resolution)
-      : gridsize_(gridsize), gridOrigin_(gridOrigin), resolution_(resolution) {
+      : gridsize_(gridsize),
+        gridOrigin_(gridOrigin),
+        gridMaxIndexAsDouble_(static_cast<double>(gridsize_.x - 1), static_cast<double>(gridsize_.y - 1),
+                              static_cast<double>(gridsize_.z - 1)),
+        resolution_(resolution) {
     assert(resolution_ > 0.0);
     assert(gridsize_.x > 0);
     assert(gridsize_.y > 0);
@@ -48,10 +60,12 @@ struct Gridmap3dLookup {
 
   /** Returns the 3d index of the grid node closest to the query position */
   size_t_3d nearestNode(const Position3& position) const noexcept {
-    Position3 subpixelVector{(gridOrigin_.x() - position.x()) / resolution_, (gridOrigin_.y() - position.y()) / resolution_,
-                             (position.z() - gridOrigin_.z()) / resolution_};
-    return {nearestPositiveInteger(subpixelVector.x(), gridsize_.x - 1), nearestPositiveInteger(subpixelVector.y(), gridsize_.y - 1),
-            nearestPositiveInteger(subpixelVector.z(), gridsize_.z - 1)};
+    const double resInv = 1.0 / resolution_;
+    Position3 subpixelVector{(gridOrigin_.x() - position.x()) * resInv, (gridOrigin_.y() - position.y()) * resInv,
+                             (position.z() - gridOrigin_.z()) * resInv};
+    return {nearestPositiveInteger(subpixelVector.x(), gridMaxIndexAsDouble_.x()),
+            nearestPositiveInteger(subpixelVector.y(), gridMaxIndexAsDouble_.y()),
+            nearestPositiveInteger(subpixelVector.z(), gridMaxIndexAsDouble_.z())};
   }
 
   /** Returns the 3d node position from a 3d index */
@@ -66,13 +80,9 @@ struct Gridmap3dLookup {
   size_t linearSize() const noexcept { return gridsize_.x * gridsize_.y * gridsize_.z; }
 
   /** rounds subindex value and clamps it to [0, max] */
-  static size_t nearestPositiveInteger(double val, size_t max) noexcept {
-    // Comparing bounds as double prevents underflow/overflow
-    if (val > 0.0) {
-      return static_cast<size_t>(std::min(std::round(val), static_cast<double>(max)));
-    } else {
-      return 0;
-    }
+  static size_t nearestPositiveInteger(double val, double max) noexcept {
+    // Comparing bounds as double prevents underflow/overflow of size_t
+    return static_cast<size_t>(std::max(0.0, std::min(std::round(val), max)));
   }
 };
 
