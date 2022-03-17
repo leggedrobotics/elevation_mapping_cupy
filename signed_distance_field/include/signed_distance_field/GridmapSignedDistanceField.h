@@ -97,7 +97,7 @@ class GridmapSignedDistanceField {
    * @param sdfTranspose [tmp] : temporary variable to reuse between calls (allocated on first use)
    * @param tmp [tmp] : temporary variable (allocated on first use)
    * @param tmpTranspose [tmp] : temporary variable (allocated on first use)
-   * @param height [in] : height the signed distance is create for.
+   * @param height [in] : height the signed distance is created for.
    * @param resolution [in] : resolution of the map.
    * @param minHeight [in] : smallest height value in the elevation data.
    * @param maxHeight [in] : largest height value in the elevation data.

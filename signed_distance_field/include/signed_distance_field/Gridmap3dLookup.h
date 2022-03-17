@@ -12,7 +12,7 @@ namespace signed_distance_field {
 /**
  * Stores 3 dimensional grid information and provides methods to convert between position - 3d Index - linear index.
  *
- * As with grid map, the X-Y position is opposite to the row-col-index: (X,Y) is highest at (0,0) and lowest at (n, m).
+ * As with the 2D GridMap, the X-Y position is opposite to the row-col-index: (X,Y) is highest at (0,0) and lowest at (n, m).
  * The z-position is increasing with the layer-index.
  */
 struct Gridmap3dLookup {
