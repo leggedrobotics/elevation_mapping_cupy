@@ -68,8 +68,8 @@ std::vector<DistanceLowerBound>::iterator fillLowerBounds(const Eigen::Ref<Eigen
   return firstBoundIt;
 }
 
-void extractSquareDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
-                            std::vector<DistanceLowerBound>::const_iterator lowerBoundIt, Eigen::Index start) {
+void extractSquareDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, std::vector<DistanceLowerBound>::const_iterator lowerBoundIt,
+                            Eigen::Index start) {
   const auto n = squareDistance1d.size();
 
   // Store active bound by value to remove indirection
@@ -97,8 +97,8 @@ void extractSquareDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const 
  * Same as extractSquareDistances, but takes the sqrt as a final step.
  * Because several cells will have a value of 0.0 (obstacle / free space label), we can skip the sqrt computation for those.
  */
-void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, const std::vector<DistanceLowerBound>& lowerBounds,
-                      std::vector<DistanceLowerBound>::const_iterator lowerBoundIt, Eigen::Index start) {
+void extractDistances(Eigen::Ref<Eigen::VectorXf> squareDistance1d, std::vector<DistanceLowerBound>::const_iterator lowerBoundIt,
+                      Eigen::Index start) {
   const auto n = squareDistance1d.size();
 
   // Store active bound by value to remove indirection
@@ -142,14 +142,12 @@ Eigen::Index lastZeroFromFront(const Eigen::Ref<Eigen::VectorXf>& squareDistance
 
 inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d,
                                                 std::vector<DistanceLowerBound>& lowerBounds) {
-  assert(lowerBounds.size() >= squareDistance1d.size());
-
   auto start = lastZeroFromFront(squareDistance1d);
 
   // Only need to process line if there are nonzero elements. Also the first zeros stay untouched.
   if (start < squareDistance1d.size()) {
     auto startIt = fillLowerBounds(squareDistance1d, lowerBounds, start);
-    extractSquareDistances(squareDistance1d, lowerBounds, startIt, start);
+    extractSquareDistances(squareDistance1d, startIt, start);
   }
 }
 
@@ -159,20 +157,18 @@ inline void squaredDistanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squa
  * @param lowerBounds : work vector
  */
 inline void distanceTransform_1d_inplace(Eigen::Ref<Eigen::VectorXf> squareDistance1d, std::vector<DistanceLowerBound>& lowerBounds) {
-  assert(lowerBounds.size() >= squareDistance1d.size());
-
   auto start = lastZeroFromFront(squareDistance1d);
 
   // Only need to process line if there are nonzero elements. Also the first zeros stay untouched.
   if (start < squareDistance1d.size()) {
     auto startIt = fillLowerBounds(squareDistance1d, lowerBounds, start);
-    extractDistances(squareDistance1d, lowerBounds, startIt, start);
+    extractDistances(squareDistance1d, startIt, start);
   }
 }
 
 void computePixelDistance2dTranspose(Matrix& input, Matrix& distanceTranspose) {
-  const size_t n = input.rows();
-  const size_t m = input.cols();
+  const auto n = input.rows();
+  const auto m = input.cols();
 
   // Allocate a buffer big enough for processing both rowise and columnwise
   std::vector<DistanceLowerBound> lowerBounds(std::max(n, m));

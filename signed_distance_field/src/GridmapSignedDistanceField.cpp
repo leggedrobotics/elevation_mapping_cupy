@@ -45,7 +45,8 @@ GridmapSignedDistanceField::GridmapSignedDistanceField(const GridMap& gridMap, c
   // Check for NaN
   const auto& elevationData = gridMap.get(elevationLayer);
   if (elevationData.hasNaN()) {
-    std::cerr << "[GridmapSignedDistanceField] elevation data contains NaN. The generated SDF will be invalid" << std::endl;
+    std::cerr << "[GridmapSignedDistanceField] elevation data contains NaN. The generated SDF will be invalid! Apply inpainting first"
+              << std::endl;
   }
 
   // Compute the SDF
@@ -151,6 +152,7 @@ void GridmapSignedDistanceField::computeSignedDistance(const Matrix& elevation) 
   // Add the data to the 3D structure
   emplacebackLayerData(currentLayer, dxTranspose, dy, dz);
 }
+
 void GridmapSignedDistanceField::computeLayerSdfandDeltaX(const Matrix& elevation, Matrix& currentLayer, Matrix& dxTranspose,
                                                           Matrix& sdfTranspose, Matrix& tmp, Matrix& tmpTranspose, float height,
                                                           float resolution, float minHeight, float maxHeight) const {
