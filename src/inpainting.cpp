@@ -240,5 +240,41 @@ void nonlinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, 
   // Set new output layer.
   cv::cv2eigen(elevationImageFloat, map.get(layerOut));
 }
+
+void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
+  // Original map info
+  const auto oldPos = map.getPosition();
+  const auto oldSize = map.getSize();
+  const auto oldRes = map.getResolution();
+
+  if (oldRes == newRes) {
+    return;
+  }
+
+  Eigen::MatrixXf elevation_map = std::move(map.get(layer));
+
+  // Convert elevation map ro open-cv image.
+  cv::Mat elevationImage;
+  cv::eigen2cv(elevation_map, elevationImage);
+
+  // Compute new dimensions.
+  const double scaling = oldRes / newRes;
+  int width = int(elevationImage.size[1] * scaling);
+  int height = int(elevationImage.size[0] * scaling);
+  cv::Size dim{width, height};
+
+  // Resize image
+  cv::Mat resizedImage;
+  cv::resize(elevationImage, resizedImage, dim, 0, 0, cv::INTER_LINEAR);
+  cv::cv2eigen(resizedImage, elevation_map);
+
+  // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
+  grid_map::Size newSize = {elevation_map.rows(), elevation_map.cols()};
+  newRes = 0.5 * ((oldSize[0] * oldRes) / newSize[0] + (oldSize[1] * oldRes) / newSize[1]);
+
+  // Store new map.
+  map.setGeometry({newSize[0] * newRes, newSize[1] * newRes}, newRes, oldPos);
+  map.get(layer) = std::move(elevation_map);
+}
 }  // namespace inpainting
 }  // namespace grid_map

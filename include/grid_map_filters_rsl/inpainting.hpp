@@ -40,5 +40,13 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
  * @param inpaintRadius vicinity considered by inpaint filter.
  */
 void nonlinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double inpaintRadius = 0.05);
+
+/**
+ * @brief Up- or down-sample elevation map
+ * @param map         grid map
+ * @param layer       resampling is done based in this layer
+ * @param newRes      new resolution.
+ */
+void resample(grid_map::GridMap& map, const std::string& layer, double newRes);
 }  // namespace inpainting
 }  // namespace grid_map
