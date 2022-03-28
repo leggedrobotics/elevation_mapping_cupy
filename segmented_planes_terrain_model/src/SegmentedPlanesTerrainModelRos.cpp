@@ -58,8 +58,6 @@ void SegmentedPlanesTerrainModelRos::publish() {
   if (!pointcloud.empty()) {
     sensor_msgs::PointCloud2 pointCloud2Msg;
     pcl::toROSMsg(pointcloud, pointCloud2Msg);
-
-    pointCloud2Msg.header = ocs2::getHeaderMsg(frameId_, ros::Time::now());
     distanceFieldPublisher_.publish(pointCloud2Msg);
   }
 }
@@ -83,7 +81,6 @@ void SegmentedPlanesTerrainModelRos::callback(const convex_plane_decomposition_m
     auto pointCloud = sdfPtr->asPointCloud(1, [](float val) { return -0.05F <= val && val <= 0.0F; });
     std::lock_guard<std::mutex> lock(pointCloudMutex_);
     pointCloud_.swap(pointCloud);
-    frameId_ = terrainPtr->planarTerrain().gridMap.getFrameId();
   }
 
   {  // Move to storage under the lock

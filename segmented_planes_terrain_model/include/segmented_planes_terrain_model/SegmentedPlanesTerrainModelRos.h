@@ -50,7 +50,6 @@ class SegmentedPlanesTerrainModelRos {
 
   std::mutex pointCloudMutex_;
   pcl::PointCloud<pcl::PointXYZI> pointCloud_;
-  std::string frameId_;
 
   ocs2::benchmark::RepeatedTimer callbackTimer_;
 };

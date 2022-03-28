@@ -8,6 +8,8 @@
 
 #include "signed_distance_field/GridmapSignedDistanceField.h"
 
+#include <pcl_conversions/pcl_conversions.h>
+
 #include "signed_distance_field/DistanceDerivatives.h"
 #include "signed_distance_field/SignedDistance2d.h"
 
@@ -174,7 +176,9 @@ void GridmapSignedDistanceField::emplacebackLayerData(const Matrix& signedDistan
 pcl::PointCloud<pcl::PointXYZI> GridmapSignedDistanceField::asPointCloud(size_t decimation,
                                                                          const std::function<bool(float)>& condition) const {
   pcl::PointCloud<pcl::PointXYZI> points;
-  points.header.stamp = timestamp_;
+
+  // Convert Gridmap time -> ros time -> pcl time
+  points.header.stamp = pcl_conversions::toPCL(ros::Time().fromNSec(timestamp_));
   points.header.frame_id = frameId_;
 
   points.reserve(gridmap3DLookup_.linearSize());
