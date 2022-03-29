@@ -259,8 +259,6 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
     layer_names.push_back(layer);
   }
 
-  grid_map::Size newSize;
-
   for (const auto& layer_name : layer_names) {
     Eigen::MatrixXf elevationMap = std::move(map.get(layer_name));
 
@@ -280,15 +278,13 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
     cv::cv2eigen(resizedImage, elevationMap);
 
     // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
-    newSize = {elevationMap.rows(), elevationMap.cols()};
+    grid_map::Size newSize = {elevationMap.rows(), elevationMap.cols()};
     newRes = 0.5 * ((oldSize[0] * oldRes) / newSize[0] + (oldSize[1] * oldRes) / newSize[1]);
 
     // Store new map.
+    map.setGeometry({newSize[0] * newRes, newSize[1] * newRes}, newRes, oldPos);
     map.get(layer_name) = std::move(elevationMap);
   }
-
-  // Store new geometry.
-  map.setGeometry({newSize[0] * newRes, newSize[1] * newRes}, newRes, oldPos);
 }
 }  // namespace inpainting
 }  // namespace grid_map
