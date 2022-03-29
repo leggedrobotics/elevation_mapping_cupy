@@ -288,7 +288,7 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
     map.get(layer_name) = std::move(elevationMap);
   }
 
-  // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
+  // Store new geometry.
   map.setGeometry({newSize[0] * newRes, newSize[1] * newRes}, newRes, oldPos);
 }
 }  // namespace inpainting
