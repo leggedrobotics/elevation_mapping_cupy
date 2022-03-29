@@ -251,30 +251,46 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
     return;
   }
 
-  Eigen::MatrixXf elevation_map = std::move(map.get(layer));
+  // Layers to be resampled.
+  std::vector<std::string> layer_names;
+  if (layer == "all") {
+    layer_names = map.getLayers();
+  } else {
+    layer_names.push_back(layer);
+  }
 
-  // Convert elevation map ro open-cv image.
   cv::Mat elevationImage;
-  cv::eigen2cv(elevation_map, elevationImage);
+  Eigen::MatrixXf elevationMap;
+  grid_map::Size newSize;
 
-  // Compute new dimensions.
-  const double scaling = oldRes / newRes;
-  int width = int(elevationImage.size[1] * scaling);
-  int height = int(elevationImage.size[0] * scaling);
-  cv::Size dim{width, height};
+  for (const auto& layer_name : layer_names) {
+    elevationMap = std::move(map.get(layer_name));
 
-  // Resize image
-  cv::Mat resizedImage;
-  cv::resize(elevationImage, resizedImage, dim, 0, 0, cv::INTER_LINEAR);
-  cv::cv2eigen(resizedImage, elevation_map);
+    // Convert elevation map ro open-cv image.
+    cv::eigen2cv(elevationMap, elevationImage);
+
+    // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
+    newSize = {elevationMap.rows(), elevationMap.cols()};
+    newRes = 0.5 * ((oldSize[0] * oldRes) / newSize[0] + (oldSize[1] * oldRes) / newSize[1]);
+
+    // Compute new dimensions.
+    const double scaling = oldRes / newRes;
+    int width = int(elevationImage.size[1] * scaling);
+    int height = int(elevationImage.size[0] * scaling);
+    cv::Size dim{width, height};
+
+    // Resize image
+    cv::Mat resizedImage;
+    cv::resize(elevationImage, resizedImage, dim, 0, 0, cv::INTER_LINEAR);
+
+    // Convert back to map store.
+    cv::cv2eigen(resizedImage, elevationMap);
+    grid_map::Size newSize = {elevationMap.rows(), elevationMap.cols()};
+    map.get(layer_name) = std::move(elevationMap);
+  }
 
   // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
-  grid_map::Size newSize = {elevation_map.rows(), elevation_map.cols()};
-  newRes = 0.5 * ((oldSize[0] * oldRes) / newSize[0] + (oldSize[1] * oldRes) / newSize[1]);
-
-  // Store new map.
   map.setGeometry({newSize[0] * newRes, newSize[1] * newRes}, newRes, oldPos);
-  map.get(layer) = std::move(elevation_map);
 }
 }  // namespace inpainting
 }  // namespace grid_map
