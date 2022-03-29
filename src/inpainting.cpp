@@ -259,19 +259,15 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
     layer_names.push_back(layer);
   }
 
-  cv::Mat elevationImage;
-  Eigen::MatrixXf elevationMap;
   grid_map::Size newSize;
 
   for (const auto& layer_name : layer_names) {
+    Eigen::MatrixXf elevationMap;
     elevationMap = std::move(map.get(layer_name));
 
     // Convert elevation map ro open-cv image.
+    cv::Mat elevationImage;
     cv::eigen2cv(elevationMap, elevationImage);
-
-    // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
-    newSize = {elevationMap.rows(), elevationMap.cols()};
-    newRes = 0.5 * ((oldSize[0] * oldRes) / newSize[0] + (oldSize[1] * oldRes) / newSize[1]);
 
     // Compute new dimensions.
     const double scaling = oldRes / newRes;
@@ -282,10 +278,13 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
     // Resize image
     cv::Mat resizedImage;
     cv::resize(elevationImage, resizedImage, dim, 0, 0, cv::INTER_LINEAR);
-
-    // Convert back to map store.
     cv::cv2eigen(resizedImage, elevationMap);
-    grid_map::Size newSize = {elevationMap.rows(), elevationMap.cols()};
+
+    // Compute true new resolution. Might be slightly different due to rounding. Take average of both dimensions.
+    newSize = {elevationMap.rows(), elevationMap.cols()};
+    newRes = 0.5 * ((oldSize[0] * oldRes) / newSize[0] + (oldSize[1] * oldRes) / newSize[1]);
+
+    // Store new map.
     map.get(layer_name) = std::move(elevationMap);
   }
 
