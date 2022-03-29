@@ -42,9 +42,10 @@ void biLinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, c
 void nonlinearInterpolation(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double inpaintRadius = 0.05);
 
 /**
- * @brief Up- or down-sample elevation map (open-cv function). In-place operation only.
+ * @brief Up- or down-sample elevation map (open-cv function). In-place operation only. Only the layer with name "layer" is resampled, while
+ * all other layers (if there are any) are left untouched. If the map contains several layers, this filter may be applied for those aswell.
  * @param map         grid map
- * @param layer       resampling is done based in this layer (all other layers, if there are any, are left untouched)
+ * @param layer       resampling is done based in this layer
  * @param newRes      new resolution.
  */
 void resample(grid_map::GridMap& map, const std::string& layer, double newRes);
