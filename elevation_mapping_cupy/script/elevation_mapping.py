@@ -3,7 +3,7 @@ import scipy as nsp
 import scipy.ndimage
 import threading
 
-from traversability_filter import TraversabilityFilter
+from traversability_filter import get_filter_chainer, get_filter_torch
 from parameter import Parameter
 from custom_kernels import add_points_kernel
 from custom_kernels import error_counting_kernel
@@ -94,10 +94,10 @@ class ElevationMap(object):
 
         self.compile_kernels()
 
-        self.traversability_filter = TraversabilityFilter(param.w1,
-                                                          param.w2,
-                                                          param.w3,
-                                                          param.w_out).cuda()
+        if param.use_chainer:
+            self.traversability_filter = get_filter_chainer(param.w1, param.w2, param.w3, param.w_out)
+        else:
+            self.traversability_filter = get_filter_torch(param.w1, param.w2, param.w3, param.w_out)
         self.untraversable_polygon = xp.zeros((1, 2))
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
@@ -229,8 +229,6 @@ class ElevationMap(object):
             self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
 
-            # self.update_upper_bound_with_valid_elevation()
-
             if self.enable_overlap_clearance:
                 self.clear_overlap_map(t)
 
@@ -346,9 +344,7 @@ class ElevationMap(object):
                 is_upper_bound = is_upper_bound[1:-1, 1:-1]
                 map_list.append(is_upper_bound)
 
-        # maps = xp.stack([elevation, variance, traversability, min_filtered, time_layer], axis=0)
         maps = xp.stack(map_list, axis=0)
-        # maps = xp.transpose(maps, axes=(0, 2, 1))
         maps = xp.flip(maps, 1)
         maps = xp.flip(maps, 2)
         maps = xp.asnumpy(maps)
@@ -438,17 +434,13 @@ class ElevationMap(object):
                                              self.safe_thresh,
                                              self.safe_min_thresh,
                                              self.max_unsafe_n)
-        # print(untraversable_polygon)
         untraversable_polygon_num = 0
         if un_polygon is not None:
             un_polygon = transform_to_map_position(un_polygon,
                                                    self.center[:2],
                                                    self.cell_n,
                                                    self.resolution)
-            # print(un_polygon)
             untraversable_polygon_num = un_polygon.shape[0]
-            # print(untraversable_polygon_num)
-        # print(untraversable_polygon)
         if clipped_area < 0.001:
             is_safe = False
             print('requested polygon is outside of the map')
@@ -457,7 +449,6 @@ class ElevationMap(object):
         return untraversable_polygon_num
 
     def get_untraversable_polygon(self, untraversable_polygon):
-        # print(self.untraversable_polygon)
         untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
 
     def initialize_map(self, points, method='cubic'):
@@ -493,7 +484,7 @@ if __name__ == '__main__':
     param = Parameter()
     param.load_weights('../config/weights.dat')
     elevation = ElevationMap(param)
-    for i in range(200):
+    for i in range(500):
         elevation.input(points, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
         print(i)

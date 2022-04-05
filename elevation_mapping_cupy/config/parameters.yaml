@@ -49,6 +49,7 @@ enable_normal: false
 enable_normal_color: false
 enable_filtered_map_publishing: false
 enable_overlap_clearance: true
+use_chainer: true                               # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer.
 
 weight_file: 'config/weights.dat'
 

@@ -32,11 +32,18 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   map_ = elevation_mapping.attr("ElevationMap")(param_);
 }
 
+/*  
+ *  Load ros parameters into Parameter class.
+ *  Search for the same name within the name space.
+ */
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  std::string weight_file;
+  // Get all parameters names and types.
   py::list paramNames = param_.attr("get_names")();
   py::list paramTypes = param_.attr("get_types")();
   py::gil_scoped_acquire acquire;
+
+  // Try to find the parameter in the ros parameter server.
+  // If there was a parameter, set it to the Parameter variable.
   for (int i = 0; i < paramNames.size(); i++) {
     std::string type = py::cast<std::string>(paramTypes[i]);
     std::string name = py::cast<std::string>(paramNames[i]);
@@ -62,6 +69,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
     }
   }
 
+  std::string weight_file;
   nh.param<std::string>("weight_file", weight_file, "config/weights.dat");
   std::string path = ros::package::getPath("elevation_mapping_cupy");
 
