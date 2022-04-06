@@ -73,6 +73,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<std::string>("weight_file", weight_file, "config/weights.dat");
   std::string path = ros::package::getPath("elevation_mapping_cupy");
 
+  nh.param<bool>("enable_normal", enable_normal_, false);
+  nh.param<bool>("enable_normal_color", enable_normal_color_, false);
+
   weight_file = path + "/" + weight_file;
   param_.attr("load_weights")(weight_file);
 

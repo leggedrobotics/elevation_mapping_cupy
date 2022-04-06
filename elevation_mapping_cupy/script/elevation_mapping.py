@@ -29,53 +29,14 @@ cp.cuda.set_allocator(pool.malloc)
 
 
 class ElevationMap(object):
-    def __init__(self, param):
+    def __init__(self, param: Parameter):
+        self.param = param
+
         self.resolution = param.resolution
         self.center = xp.array([0, 0, 0], dtype=float)
         self.map_length = param.map_length
         # +2 is a border for outside map
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
-
-        # 'mean' or 'max'
-        self.gather_mode = param.gather_mode
-
-        self.sensor_noise_factor = param.sensor_noise_factor
-        self.mahalanobis_thresh = param.mahalanobis_thresh
-        self.outlier_variance = param.outlier_variance
-        self.drift_compensation_variance_inlier = param.drift_compensation_variance_inlier
-        self.time_variance = param.time_variance
-        self.drift_compensation_alpha = param.drift_compensation_alpha
-
-        self.max_variance = param.max_variance
-        self.dilation_size = param.dilation_size
-        self.dilation_size_initialize = param.dilation_size_initialize
-        self.traversability_inlier = param.traversability_inlier
-        self.wall_num_thresh = param.wall_num_thresh
-        self.min_height_drift_cnt = param.min_height_drift_cnt
-        self.max_ray_length = param.max_ray_length
-        self.cleanup_step = param.cleanup_step
-        self.cleanup_cos_thresh = param.cleanup_cos_thresh
-
-        self.enable_edge_sharpen = param.enable_edge_sharpen
-        self.enable_visibility_cleanup = param.enable_visibility_cleanup
-        self.enable_drift_compensation = param.enable_drift_compensation
-        self.position_noise_thresh = param.position_noise_thresh
-        self.orientation_noise_thresh = param.orientation_noise_thresh
-        self.min_valid_distance = param.min_valid_distance
-        self.max_height_range = param.max_height_range
-        self.ramped_height_range_a = param.ramped_height_range_a
-        self.ramped_height_range_b = param.ramped_height_range_b
-        self.ramped_height_range_c = param.ramped_height_range_c
-        self.safe_thresh = param.safe_thresh
-        self.safe_min_thresh = param.safe_min_thresh
-        self.max_unsafe_n = param.max_unsafe_n
-        self.min_filter_size = param.min_filter_size
-        self.min_filter_iteration = param.min_filter_iteration
-        self.time_interval = param.time_interval
-        self.max_drift = param.max_drift
-        self.overlap_clear_range_xy = param.overlap_clear_range_xy
-        self.overlap_clear_range_z = param.overlap_clear_range_z
-        self.enable_overlap_clearance = param.enable_overlap_clearance
 
         self.map_lock = threading.Lock()
 
@@ -166,39 +127,39 @@ class ElevationMap(object):
         self.add_points_kernel = add_points_kernel(self.resolution,
                                                    self.cell_n,
                                                    self.cell_n,
-                                                   self.sensor_noise_factor,
-                                                   self.mahalanobis_thresh,
-                                                   self.outlier_variance,
-                                                   self.wall_num_thresh,
-                                                   self.max_ray_length,
-                                                   self.cleanup_step,
-                                                   self.min_valid_distance,
-                                                   self.max_height_range,
-                                                   self.cleanup_cos_thresh,
-                                                   self.ramped_height_range_a,
-                                                   self.ramped_height_range_b,
-                                                   self.ramped_height_range_c,
-                                                   self.enable_edge_sharpen,
-                                                   self.enable_visibility_cleanup)
+                                                   self.param.sensor_noise_factor,
+                                                   self.param.mahalanobis_thresh,
+                                                   self.param.outlier_variance,
+                                                   self.param.wall_num_thresh,
+                                                   self.param.max_ray_length,
+                                                   self.param.cleanup_step,
+                                                   self.param.min_valid_distance,
+                                                   self.param.max_height_range,
+                                                   self.param.cleanup_cos_thresh,
+                                                   self.param.ramped_height_range_a,
+                                                   self.param.ramped_height_range_b,
+                                                   self.param.ramped_height_range_c,
+                                                   self.param.enable_edge_sharpen,
+                                                   self.param.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
                                                            self.cell_n,
                                                            self.cell_n,
-                                                           self.sensor_noise_factor,
-                                                           self.mahalanobis_thresh,
-                                                           self.drift_compensation_variance_inlier,
-                                                           self.traversability_inlier,
-                                                           self.min_valid_distance,
-                                                           self.max_height_range,
-                                                           self.ramped_height_range_a,
-                                                           self.ramped_height_range_b,
-                                                           self.ramped_height_range_c,
+                                                           self.param.sensor_noise_factor,
+                                                           self.param.mahalanobis_thresh,
+                                                           self.param.drift_compensation_variance_inlier,
+                                                           self.param.traversability_inlier,
+                                                           self.param.min_valid_distance,
+                                                           self.param.max_height_range,
+                                                           self.param.ramped_height_range_a,
+                                                           self.param.ramped_height_range_b,
+                                                           self.param.ramped_height_range_c,
                                                            )
         self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
-                                                     self.max_variance, self.initial_variance)
+                                                     self.param.max_variance, self.initial_variance)
 
-        self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
-        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size_initialize)
-        self.min_filter_kernel = min_filter_kernel(self.cell_n, self.cell_n, self.min_filter_size)
+        self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size)
+        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size_initialize)
+        self.min_filter_kernel = min_filter_kernel(self.cell_n, self.cell_n, self.param.min_filter_size)
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
@@ -215,21 +176,21 @@ class ElevationMap(object):
                                        cp.array([0.]), cp.array([0.]), R, t,
                                        self.new_map, error, error_cnt,
                                        size=(points.shape[0]))
-            if (self.enable_drift_compensation
-                    and error_cnt > self.min_height_drift_cnt
-                    and (position_noise > self.position_noise_thresh
-                         or orientation_noise > self.orientation_noise_thresh)):
+            if (self.param.enable_drift_compensation
+                    and error_cnt > self.param.min_height_drift_cnt
+                    and (position_noise > self.param.position_noise_thresh
+                         or orientation_noise > self.param.orientation_noise_thresh)):
                 self.mean_error = error / error_cnt
                 self.additive_mean_error += self.mean_error
-                if np.abs(self.mean_error) < self.max_drift:
-                    self.elevation_map[0] += self.mean_error * self.drift_compensation_alpha
+                if np.abs(self.mean_error) < self.param.max_drift:
+                    self.elevation_map[0] += self.mean_error * self.param.drift_compensation_alpha
             self.add_points_kernel(points, cp.array([0.]), cp.array([0.]), R, t, self.normal_map,
                                    self.elevation_map, self.new_map,
                                    size=(points.shape[0]))
             self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
 
-            if self.enable_overlap_clearance:
+            if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
 
             # dilation before traversability_filter
@@ -247,12 +208,12 @@ class ElevationMap(object):
         self.update_normal(self.traversability_input)
 
     def clear_overlap_map(self, t):
-        cell_range = int(self.overlap_clear_range_xy / self.resolution)
+        cell_range = int(self.param.overlap_clear_range_xy / self.resolution)
         cell_range = np.clip(cell_range, 0, self.cell_n)
         cell_min = self.cell_n // 2 - cell_range // 2
         cell_max = self.cell_n // 2 + cell_range // 2
-        height_min = t[2] - self.overlap_clear_range_z
-        height_max = t[2] + self.overlap_clear_range_z
+        height_min = t[2] - self.param.overlap_clear_range_z
+        height_max = t[2] + self.param.overlap_clear_range_z
         near_map = self.elevation_map[:, cell_min:cell_max, cell_min:cell_max]
         clear_idx = cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
         near_map[0][clear_idx] = 0.0
@@ -267,10 +228,10 @@ class ElevationMap(object):
         return self.additive_mean_error
 
     def update_variance(self):
-        self.elevation_map[1] += self.time_variance * self.elevation_map[2]
+        self.elevation_map[1] += self.param.time_variance * self.elevation_map[2]
 
     def update_time(self):
-        self.elevation_map[4] += self.time_interval
+        self.elevation_map[4] += self.param.time_interval
 
     def update_upper_bound_with_valid_elevation(self):
         mask = self.elevation_map[2] > 0.5
@@ -285,14 +246,13 @@ class ElevationMap(object):
     def get_min_filtered(self):
         self.min_filtered *= 0.0
         self.min_filtered_mask *= 0.0
-        # print('self.min_filtered ', self.min_filtered)
         self.min_filter_kernel(self.elevation_map[0],
                                self.elevation_map[2],
                                self.min_filtered,
                                self.min_filtered_mask,
                                size=(self.cell_n * self.cell_n))
-        if self.min_filter_iteration > 1:
-            for i in range(self.min_filter_iteration - 1):
+        if self.param.min_filter_iteration > 1:
+            for i in range(self.param.min_filter_iteration - 1):
                 self.min_filter_kernel(self.min_filtered,
                                        self.min_filtered_mask,
                                        self.min_filtered,
@@ -431,9 +391,9 @@ class ElevationMap(object):
         else:
             t = 0.0
         is_safe, un_polygon = is_traversable(masked,
-                                             self.safe_thresh,
-                                             self.safe_min_thresh,
-                                             self.max_unsafe_n)
+                                             self.param.safe_thresh,
+                                             self.param.safe_min_thresh,
+                                             self.param.max_unsafe_n)
         untraversable_polygon_num = 0
         if un_polygon is not None:
             un_polygon = transform_to_map_position(un_polygon,
@@ -462,7 +422,7 @@ class ElevationMap(object):
             points[:, :2] = indices.astype(points.dtype)
             points[:, 2] -= self.center[2]
             self.map_initializer(self.elevation_map, points, method)
-            if self.dilation_size_initialize > 0:
+            if self.param.dilation_size_initialize > 0:
                 for i in range(2):
                     self.dilation_filter_kernel_initializer(self.elevation_map[0],
                                                             self.elevation_map[2],
