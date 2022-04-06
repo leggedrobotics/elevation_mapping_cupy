@@ -5,7 +5,6 @@ import numpy as np
 @dataclass
 class Parameter:
     resolution: float = 0.02
-    gather_mode: str = 'mean'
 
     map_length:float = 10.0
     sensor_noise_factor:float = 0.05
@@ -52,6 +51,9 @@ class Parameter:
     use_chainer:bool = True
     position_noise_thresh:float = 0.1
     orientation_noise_thresh:float = 0.1
+
+    plugin_config_file: str = "config/plugin_config.yaml"
+    package_dir: str = "~/catkin_ws/src/elevation_mapping_cupy/elevation_mapping_cupy"
 
     initial_variance:float = 10.0
     initialized_variance:float = 10.0

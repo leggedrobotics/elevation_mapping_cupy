@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy as nsp
 import scipy.ndimage
@@ -13,6 +14,7 @@ from custom_kernels import min_filter_kernel
 from custom_kernels import normal_filter_kernel
 from custom_kernels import polygon_mask_kernel
 from map_initializer import MapInitializer
+from plugins.plugin_manager import PluginManger
 
 from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
 
@@ -42,6 +44,7 @@ class ElevationMap(object):
 
         # layers: elevation, variance, is_valid, traversability, time, upper_bound, is_upper_bound
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
+        self.layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
         self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
         self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
         # Initial variance
@@ -60,6 +63,11 @@ class ElevationMap(object):
         else:
             self.traversability_filter = get_filter_torch(param.w1, param.w2, param.w3, param.w_out)
         self.untraversable_polygon = xp.zeros((1, 2))
+
+        # Plugins
+        self.plugin_manager = PluginManger(cell_n=self.cell_n)
+        plugin_config_file = os.path.join(param.package_dir, param.plugin_config_file)
+        self.plugin_manager.load_plugin_settings(plugin_config_file)
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
                                               xp=cp, method='points')
@@ -267,28 +275,40 @@ class ElevationMap(object):
             self.normal_map *= 0.0
             self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
 
+    def get_elevation(self):
+        elevation = xp.where(self.elevation_map[2] > 0.5,
+                             self.elevation_map[0].copy(), xp.nan)
+        elevation = elevation[1:-1, 1:-1] + self.center[2]
+        return elevation
+
+    def get_variance(self):
+        variance = self.elevation_map[1].copy()
+        variance = variance[1:-1, 1:-1]
+        return variance
+
+    def get_traversability(self):
+        traversability = xp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
+                                  self.elevation_map[3].copy(), xp.nan)
+        self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
+        traversability = self.traversability_data[1:-1, 1:-1]
+        return traversability
+
+    def get_min_filtered_map(self):
+        min_filtered = self.get_min_filtered()
+        min_filtered = min_filtered[1:-1, 1:-1] + self.center[2]
+        return min_filtered
+
     def get_maps(self, selection):
         map_list = []
         with self.map_lock:
             if 0 in selection:
-                elevation = xp.where(self.elevation_map[2] > 0.5,
-                                     self.elevation_map[0].copy(), xp.nan)
-                elevation = elevation[1:-1, 1:-1] + self.center[2]
-                map_list.append(elevation)
+                map_list.append(self.get_elevation())
             if 1 in selection:
-                variance = self.elevation_map[1].copy()
-                variance = variance[1:-1, 1:-1]
-                map_list.append(variance)
+                map_list.append(self.get_variance())
             if 2 in selection:
-                traversability = xp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
-                                          self.elevation_map[3].copy(), xp.nan)
-                self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
-                traversability = self.traversability_data[1:-1, 1:-1]
-                map_list.append(traversability)
+                map_list.append(self.get_traversability())
             if 3 in selection:
-                min_filtered = self.get_min_filtered()
-                min_filtered = min_filtered[1:-1, 1:-1] + self.center[2]
-                map_list.append(min_filtered)
+                map_list.append(self.get_min_filtered_map())
             if 4 in selection:
                 time_layer = self.elevation_map[4].copy()
                 time_layer = time_layer[1:-1, 1:-1]
@@ -321,6 +341,10 @@ class ElevationMap(object):
         maps = xp.asnumpy(maps)
         return maps
 
+    def get_plugin_maps(self):
+        self.plugin_manager.update_sync(self.elevation_map, self.layer_names)
+        return self.plugin_manager.get_synced_maps()
+
     def get_maps_ref(self,
                      selection,  # list of numbers to get ex. [0, 1, 3]
                      elevation_data,
@@ -337,37 +361,37 @@ class ElevationMap(object):
         if 0 in selection:
             elevation_data[...] = xp.asnumpy(maps[idx])
             idx += 1
-        stream = cp.cuda.Stream(non_blocking=True)
+        self.stream = cp.cuda.Stream(non_blocking=True)
         if 1 in selection:
-            variance_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            variance_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
             idx += 1
         if 2 in selection:
-            traversability_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            traversability_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
             idx += 1
         if 3 in selection:
-            min_filtered_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            min_filtered_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
             idx += 1
         if 4 in selection:
-            time_data[...] = xp.asnumpy(maps[idx], stream=stream)
+            time_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
             idx += 1
         if 5 in selection:
-            upper_bound[...] = xp.asnumpy(maps[idx], stream=stream)
+            upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
             idx += 1
         if 6 in selection:
-            is_upper_bound[...] = xp.asnumpy(maps[idx], stream=stream)
+            is_upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
             idx += 1
         if normal:
             normal_maps = self.get_normal_maps()
-            normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=stream)
-            normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=stream)
-            normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=stream)
+            normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=self.stream)
+            normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=self.stream)
+            normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=self.stream)
 
     def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
         maps = self.get_normal_maps()
-        stream = cp.cuda.Stream(non_blocking=True)
-        normal_x_data[...] = xp.asnumpy(maps[0], stream=stream)
-        normal_y_data[...] = xp.asnumpy(maps[1], stream=stream)
-        normal_z_data[...] = xp.asnumpy(maps[2], stream=stream)
+        self.stream = cp.cuda.Stream(non_blocking=True)
+        normal_x_data[...] = xp.asnumpy(maps[0], stream=self.stream)
+        normal_y_data[...] = xp.asnumpy(maps[1], stream=self.stream)
+        normal_z_data[...] = xp.asnumpy(maps[2], stream=self.stream)
 
     def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)

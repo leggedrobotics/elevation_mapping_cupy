@@ -25,7 +25,6 @@ def get_filter_torch(*args, **kwargs):
             elevation = torch.as_tensor(elevation_cupy, device=self.conv1.weight.device)
 
             with torch.no_grad():
-            # elevation = elevation_map[0]
                 out1 = self.conv1(elevation.view(-1, 1,
                                                  elevation.shape[0],
                                                  elevation.shape[1]))
@@ -78,7 +77,6 @@ def get_filter_chainer(*args, **kwargs):
             chainer.config.enable_backprop = False
 
         def __call__(self, elevation):
-            # elevation = elevation_map[0]
             out1 = self.conv1(elevation.reshape(-1, 1,
                                                 elevation.shape[0],
                                                 elevation.shape[1]))

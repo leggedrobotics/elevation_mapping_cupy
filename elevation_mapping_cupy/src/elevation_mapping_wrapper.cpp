@@ -69,19 +69,21 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
     }
   }
 
-  std::string weight_file;
+  std::string weight_file, plugin_config_file;
   nh.param<std::string>("weight_file", weight_file, "config/weights.dat");
   std::string path = ros::package::getPath("elevation_mapping_cupy");
-
-  nh.param<bool>("enable_normal", enable_normal_, false);
-  nh.param<bool>("enable_normal_color", enable_normal_color_, false);
 
   weight_file = path + "/" + weight_file;
   param_.attr("load_weights")(weight_file);
 
+  param_.attr("set_value")("package_dir", path);
+
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
   map_length_ = py::cast<float>(param_.attr("get_value")("map_length"));
   map_n_ = static_cast<int>(round(map_length_ / resolution_));
+
+  nh.param<bool>("enable_normal", enable_normal_, false);
+  nh.param<bool>("enable_normal_color", enable_normal_color_, false);
 }
 
 

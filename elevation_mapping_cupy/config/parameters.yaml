@@ -1,3 +1,4 @@
+#### Basic parameters ########
 resolution: 0.04                                # resolution in m.
 map_length: 12                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
@@ -13,8 +14,8 @@ traversability_inlier: 0.9                      # cells with higher traversabili
 dilation_size: 3                                # dilation filter size before traversability filter.
 wall_num_thresh: 20                             # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
 min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
-position_noise_thresh: 0.01                    # if the position change is bigger than this value, the drift compensation happens.
-orientation_noise_thresh: 0.01                 # if the orientation change is bigger than this value, the drift compensation happens.
+position_noise_thresh: 0.01                     # if the position change is bigger than this value, the drift compensation happens.
+orientation_noise_thresh: 0.01                  # if the orientation change is bigger than this value, the drift compensation happens.
 position_lowpass_alpha: 0.2                     # lowpass filter alpha used for detecting movements.
 orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
 min_valid_distance: 0.5                         # points with shorter distance will be filtered out.
@@ -39,18 +40,27 @@ max_unsafe_n: 10                                # if the number of cells under s
 overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
 overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
 
+map_frame: 'odom'                               # The map frame where the odometry source uses.
+base_frame: 'base'                              # The robot's base frame. This frame will be a center of the map.
+corrected_map_frame: 'corrected_odom'
+
+#### Feature toggles ########
 enable_edge_sharpen: true
 enable_visibility_cleanup: true
 enable_drift_compensation: true
+enable_overlap_clearance: true
 enable_pointcloud_publishing: false
 enable_drift_corrected_TF_publishing: true
 enable_normal: false
 enable_normal_color: false
 enable_filtered_map_publishing: false
-enable_overlap_clearance: true
-use_chainer: true                               # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer.
 
-weight_file: 'config/weights.dat'
+#### Traversability filter ########
+use_chainer: true                               # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer.
+weight_file: 'config/weights.dat'               # Weight file for traversability filter
+
+#### Plugins ########
+plugin_config_file: 'config/plugin_config.yaml'
 
 #### Subscribers ########
 pointcloud_topics: ['/depth_camera_front/depth/color/points',
@@ -66,11 +76,6 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
 #   layers:                                                         # Choose from 'elevation', 'variance', 'traversability', 'min_filtered', 'time_since_update'
 #   basic_layers:                                                   # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
 #   fps:                                                            # Publish rate. Use smaller value than `map_acquire_fps`.
-### Example:
-# elevation_map_visualizable:
-#     layers: ['elevation']
-#     basic_layers: ['elevation']
-#     fps: 1.0
 publishers:
   elevation_map_raw:
     layers: ['elevation', 'traversability', 'variance', 'min_filtered']
@@ -80,10 +85,6 @@ publishers:
     layers: ['elevation', 'traversability']
     basic_layers: ['elevation']
     fps: 5.0
-
-map_frame: 'odom'
-base_frame: 'base'
-corrected_map_frame: 'corrected_odom'
 
 #  Initialization
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
