@@ -2,7 +2,7 @@
 min_filter:
   enable: True
   layer_name: "min_filter"
-  is_sync: True                # sync with map update.
+  is_sync: True                # sync with map aquiring.
   callback_fps: 5.0            # call this plugin with this fps. (if is_sync is false)
   create_service_call: False   # creates a ros service call to call.
   extra_params:                # This params are passed to the plugin class on initialization.
@@ -11,7 +11,7 @@ min_filter:
 smooth_filter:
   enable: False
   layer_name: "smooth"
-  is_sync: True                # sync with map update.
+  is_sync: True                # sync with map aquiring.
   callback_fps: 5.0            # call this plugin with this fps. (if is_sync is false)
   create_service_call: False   # creates a ros service call to call.
   extra_params:

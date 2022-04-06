@@ -11,7 +11,7 @@ from ruamel.yaml import YAML
 class PluginParams:
     name: str
     layer_name: str
-    is_sync: bool = True                # sync with map update.
+    is_sync: bool = True                # sync with map acquiring.
     callback_fps: float = 5.0           # call this plugin with this fps.
     create_service_call: bool = False   # creates a ros service call to call.
 
