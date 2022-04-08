@@ -89,7 +89,6 @@ class MinFilter(PluginBase):
         for i in range(self.iteration_n):
             self.min_filter_kernel(elevation_map[0],
                                    elevation_map[2],
-                                   # self.min_filtered_mask,
                                    self.min_filtered,
                                    self.min_filtered_mask,
                                    size=(self.width * self.height))

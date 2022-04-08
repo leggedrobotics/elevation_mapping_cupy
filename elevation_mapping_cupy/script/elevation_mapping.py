@@ -11,7 +11,6 @@ from custom_kernels import add_points_kernel
 from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
-from custom_kernels import min_filter_kernel
 from custom_kernels import normal_filter_kernel
 from custom_kernels import polygon_mask_kernel
 from map_initializer import MapInitializer
@@ -168,7 +167,6 @@ class ElevationMap(object):
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size)
         self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size_initialize)
-        self.min_filter_kernel = min_filter_kernel(self.cell_n, self.cell_n, self.param.min_filter_size)
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
@@ -252,25 +250,6 @@ class ElevationMap(object):
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
         self.update_map_with_kernel(raw_points, cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
 
-    def get_min_filtered(self):
-        self.min_filtered *= 0.0
-        self.min_filtered_mask *= 0.0
-        self.min_filter_kernel(self.elevation_map[0],
-                               self.elevation_map[2],
-                               self.min_filtered,
-                               self.min_filtered_mask,
-                               size=(self.cell_n * self.cell_n))
-        if self.param.min_filter_iteration > 1:
-            for i in range(self.param.min_filter_iteration - 1):
-                self.min_filter_kernel(self.min_filtered,
-                                       self.min_filtered_mask,
-                                       self.min_filtered,
-                                       self.min_filtered_mask,
-                                       size=(self.cell_n * self.cell_n))
-        min_filtered = cp.where(self.min_filtered_mask > 0.5,
-                                self.min_filtered.copy(), cp.nan)
-        return min_filtered
-
     def update_normal(self, dilated_map):
         with self.map_lock:
             self.normal_map *= 0.0
@@ -297,11 +276,6 @@ class ElevationMap(object):
         self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         traversability = self.traversability_data[1:-1, 1:-1]
         return traversability
-
-    def get_min_filtered_map(self):
-        min_filtered = self.get_min_filtered()
-        min_filtered = min_filtered[1:-1, 1:-1] + self.center[2]
-        return min_filtered
 
     def get_time(self):
         return self.process_map_for_publish(self.elevation_map[4], fill_nan=False, add_z=False)
@@ -379,29 +353,29 @@ class ElevationMap(object):
         self.copy_to_cpu(m, data, stream=stream)
         # print('t = ', time.time() - s)
 
-    def get_maps(self, selection):
-        map_list = []
-        with self.map_lock:
-            if 0 in selection:
-                map_list.append(self.get_elevation())
-            if 1 in selection:
-                map_list.append(self.get_variance())
-            if 2 in selection:
-                map_list.append(self.get_traversability())
-            if 3 in selection:
-                map_list.append(self.get_min_filtered_map())
-            if 4 in selection:
-                map_list.append(self.get_time())
-            if 5 in selection:
-                map_list.append(self.get_upper_bound())
-            if 6 in selection:
-                map_list.append(self.get_is_upper_bound())
-
-        maps = xp.stack(map_list, axis=0)
-        maps = xp.flip(maps, 1)
-        maps = xp.flip(maps, 2)
-        maps = xp.asnumpy(maps)
-        return maps
+    # def get_maps(self, selection):
+    #     map_list = []
+    #     with self.map_lock:
+    #         if 0 in selection:
+    #             map_list.append(self.get_elevation())
+    #         if 1 in selection:
+    #             map_list.append(self.get_variance())
+    #         if 2 in selection:
+    #             map_list.append(self.get_traversability())
+    #         if 3 in selection:
+    #             map_list.append(self.get_min_filtered_map())
+    #         if 4 in selection:
+    #             map_list.append(self.get_time())
+    #         if 5 in selection:
+    #             map_list.append(self.get_upper_bound())
+    #         if 6 in selection:
+    #             map_list.append(self.get_is_upper_bound())
+    # 
+    #     maps = xp.stack(map_list, axis=0)
+    #     maps = xp.flip(maps, 1)
+    #     maps = xp.flip(maps, 2)
+    #     maps = xp.asnumpy(maps)
+    #     return maps
 
     def get_normal_maps(self):
         normal = self.normal_map.copy()
@@ -414,52 +388,48 @@ class ElevationMap(object):
         maps = xp.asnumpy(maps)
         return maps
 
-    def get_plugin_maps(self):
-        self.plugin_manager.update_sync(self.elevation_map, self.layer_names)
-        return self.plugin_manager.get_synced_maps()
-
-    def get_maps_ref(self,
-                     selection,  # list of numbers to get ex. [0, 1, 3]
-                     elevation_data,
-                     variance_data,
-                     traversability_data,
-                     min_filtered_data,
-                     time_data,
-                     upper_bound,
-                     is_upper_bound,
-                     normal_x_data, normal_y_data, normal_z_data, normal=False):
-        s = time.time()
-        maps = self.get_maps(selection)
-        idx = 0
-        # somehow elevation_data copy in non_blocking mode does not work.
-        if 0 in selection:
-            elevation_data[...] = xp.asnumpy(maps[idx])
-            idx += 1
-        self.stream = cp.cuda.Stream(non_blocking=True)
-        if 1 in selection:
-            variance_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-            idx += 1
-        if 2 in selection:
-            traversability_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-            idx += 1
-        if 3 in selection:
-            min_filtered_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-            idx += 1
-        if 4 in selection:
-            time_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-            idx += 1
-        if 5 in selection:
-            upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
-            idx += 1
-        if 6 in selection:
-            is_upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
-            idx += 1
-        if normal:
-            normal_maps = self.get_normal_maps()
-            normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=self.stream)
-            normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=self.stream)
-            normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=self.stream)
-        print('get maps ref t = ', time.time() - s)
+    # def get_maps_ref(self,
+    #                  selection,  # list of numbers to get ex. [0, 1, 3]
+    #                  elevation_data,
+    #                  variance_data,
+    #                  traversability_data,
+    #                  min_filtered_data,
+    #                  time_data,
+    #                  upper_bound,
+    #                  is_upper_bound,
+    #                  normal_x_data, normal_y_data, normal_z_data, normal=False):
+    #     s = time.time()
+    #     maps = self.get_maps(selection)
+    #     idx = 0
+    #     # somehow elevation_data copy in non_blocking mode does not work.
+    #     if 0 in selection:
+    #         elevation_data[...] = xp.asnumpy(maps[idx])
+    #         idx += 1
+    #     self.stream = cp.cuda.Stream(non_blocking=True)
+    #     if 1 in selection:
+    #         variance_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
+    #         idx += 1
+    #     if 2 in selection:
+    #         traversability_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
+    #         idx += 1
+    #     if 3 in selection:
+    #         min_filtered_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
+    #         idx += 1
+    #     if 4 in selection:
+    #         time_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
+    #         idx += 1
+    #     if 5 in selection:
+    #         upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
+    #         idx += 1
+    #     if 6 in selection:
+    #         is_upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
+    #         idx += 1
+    #     if normal:
+    #         normal_maps = self.get_normal_maps()
+    #         normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=self.stream)
+    #         normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=self.stream)
+    #         normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=self.stream)
+    #     print('get maps ref t = ', time.time() - s)
 
     def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
         maps = self.get_normal_maps()

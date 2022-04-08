@@ -33,6 +33,5 @@ class SmoothFilter(PluginBase):
         hs1 = ndimage.uniform_filter(h, size=3)
         hs1 = ndimage.uniform_filter(hs1, size=3)
         hm2 = ndimage.median_filter(h, size=30)
-        # remove filter artifacts (peaks not filtered out at corner points)
         hs2 = ndimage.median_filter(hm2, size=15)
         return hs2
