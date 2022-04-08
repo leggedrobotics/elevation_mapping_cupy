@@ -3,6 +3,7 @@ import numpy as np
 import scipy as nsp
 import scipy.ndimage
 import threading
+import time
 
 from traversability_filter import get_filter_chainer, get_filter_torch
 from parameter import Parameter
@@ -176,8 +177,8 @@ class ElevationMap(object):
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
-        error = xp.array([0.0], dtype=xp.float32)
-        error_cnt = xp.array([0], dtype=xp.float32)
+        error = cp.array([0.0], dtype=cp.float32)
+        error_cnt = cp.array([0], dtype=cp.float32)
         with self.map_lock:
             self.shift_translation_to_map_center(t)
             self.error_counting_kernel(self.elevation_map, points,
@@ -243,13 +244,13 @@ class ElevationMap(object):
 
     def update_upper_bound_with_valid_elevation(self):
         mask = self.elevation_map[2] > 0.5
-        self.elevation_map[5] = xp.where(mask, self.elevation_map[0], self.elevation_map[5])
-        self.elevation_map[6] = xp.where(mask, 0.0, self.elevation_map[6])
+        self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
+        self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
 
     def input(self, raw_points, R, t, position_noise, orientation_noise):
-        raw_points = xp.asarray(raw_points)
-        raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points, xp.asarray(R), xp.asarray(t), position_noise, orientation_noise)
+        raw_points = cp.asarray(raw_points)
+        raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
+        self.update_map_with_kernel(raw_points, cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
 
     def get_min_filtered(self):
         self.min_filtered *= 0.0
@@ -266,8 +267,8 @@ class ElevationMap(object):
                                        self.min_filtered,
                                        self.min_filtered_mask,
                                        size=(self.cell_n * self.cell_n))
-        min_filtered = xp.where(self.min_filtered_mask > 0.5,
-                                self.min_filtered.copy(), xp.nan)
+        min_filtered = cp.where(self.min_filtered_mask > 0.5,
+                                self.min_filtered.copy(), cp.nan)
         return min_filtered
 
     def update_normal(self, dilated_map):
@@ -275,20 +276,24 @@ class ElevationMap(object):
             self.normal_map *= 0.0
             self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
 
+    def process_map_for_publish(self, input_map, fill_nan=False, add_z=False, xp=cp):
+        m = input_map.copy()
+        if fill_nan:
+            m = xp.where(self.elevation_map[2] > 0.5,
+                    m, xp.nan)
+        if add_z:
+            m = m + self.center[2]
+        return m[1:-1, 1:-1]
+
     def get_elevation(self):
-        elevation = xp.where(self.elevation_map[2] > 0.5,
-                             self.elevation_map[0].copy(), xp.nan)
-        elevation = elevation[1:-1, 1:-1] + self.center[2]
-        return elevation
+        return self.process_map_for_publish(self.elevation_map[0], fill_nan=True, add_z=True)
 
     def get_variance(self):
-        variance = self.elevation_map[1].copy()
-        variance = variance[1:-1, 1:-1]
-        return variance
+        return self.process_map_for_publish(self.elevation_map[1], fill_nan=False, add_z=False)
 
     def get_traversability(self):
-        traversability = xp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
-                                  self.elevation_map[3].copy(), xp.nan)
+        traversability = cp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
+                                  self.elevation_map[3].copy(), cp.nan)
         self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         traversability = self.traversability_data[1:-1, 1:-1]
         return traversability
@@ -297,6 +302,82 @@ class ElevationMap(object):
         min_filtered = self.get_min_filtered()
         min_filtered = min_filtered[1:-1, 1:-1] + self.center[2]
         return min_filtered
+
+    def get_time(self):
+        return self.process_map_for_publish(self.elevation_map[4], fill_nan=False, add_z=False)
+
+    def get_upper_bound(self):
+        upper_bound = cp.where(cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
+                               self.elevation_map[5].copy(), cp.nan)
+        upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
+        return upper_bound
+
+    def get_is_upper_bound(self):
+        is_upper_bound = cp.where(cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
+                                  self.elevation_map[6].copy(), cp.nan)
+        is_upper_bound = is_upper_bound[1:-1, 1:-1]
+        return is_upper_bound
+
+    def get_layer_index_with_name(self, name: str)->int:
+        try:
+            idx = self.layer_names.index(name)
+            return idx
+        except Exception as e:
+            print("Error with layer {}: {}".format(name, e))
+            return None
+
+    def xp_of_array(self, array):
+        if type(array) == cp.ndarray:
+            return cp
+        elif type(array) == np.ndarray:
+            return np
+
+    def copy_to_cpu(self, array, data, stream=None):
+        if type(array) == np.ndarray:
+            data[...] = array
+        elif type(array) == cp.ndarray:
+            if stream is not None:
+                data[...] = cp.asnumpy(array, stream=stream)
+            else:
+                data[...] = cp.asnumpy(array)
+
+    def get_map_with_name_ref(self, name, data):
+        # print('get map with name ref ', name)
+        # self.layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
+        s = time.time()
+        use_stream = True
+        xp = cp
+        with self.map_lock:
+            if name == "elevation":
+                m = self.get_elevation()
+                use_stream = False
+            elif name == "variance":
+                m = self.get_variance()
+            elif name == "traversability":
+                m = self.get_traversability()
+            elif name == "time":
+                m = self.get_time()
+            elif name == "upper_bound":
+                m = self.get_upper_bound()
+            elif name == "is_upper_bound":
+                m = self.get_is_upper_bound()
+            elif name in self.plugin_manager.layer_names:
+                self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names)
+                m = self.plugin_manager.get_map_with_name(name)
+                p = self.plugin_manager.get_param_with_name(name)
+                xp = self.xp_of_array(m)
+                m = self.process_map_for_publish(m, fill_nan=p.fill_nan, add_z=p.is_height_layer, xp=xp)
+            else:
+                print("Layer {} is not in the map".format(name))
+                return
+        m = xp.flip(m, 0)
+        m = xp.flip(m, 1)
+        if use_stream:
+            stream = cp.cuda.Stream(non_blocking=False)
+        else:
+            stream = None
+        self.copy_to_cpu(m, data, stream=stream)
+        # print('t = ', time.time() - s)
 
     def get_maps(self, selection):
         map_list = []
@@ -310,19 +391,11 @@ class ElevationMap(object):
             if 3 in selection:
                 map_list.append(self.get_min_filtered_map())
             if 4 in selection:
-                time_layer = self.elevation_map[4].copy()
-                time_layer = time_layer[1:-1, 1:-1]
-                map_list.append(time_layer)
+                map_list.append(self.get_time())
             if 5 in selection:
-                upper_bound = xp.where(xp.logical_or(xp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
-                                       self.elevation_map[5].copy(), xp.nan)
-                upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
-                map_list.append(upper_bound)
+                map_list.append(self.get_upper_bound())
             if 6 in selection:
-                is_upper_bound = xp.where(xp.logical_or(xp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
-                                          self.elevation_map[6].copy(), xp.nan)
-                is_upper_bound = is_upper_bound[1:-1, 1:-1]
-                map_list.append(is_upper_bound)
+                map_list.append(self.get_is_upper_bound())
 
         maps = xp.stack(map_list, axis=0)
         maps = xp.flip(maps, 1)
@@ -355,6 +428,7 @@ class ElevationMap(object):
                      upper_bound,
                      is_upper_bound,
                      normal_x_data, normal_y_data, normal_z_data, normal=False):
+        s = time.time()
         maps = self.get_maps(selection)
         idx = 0
         # somehow elevation_data copy in non_blocking mode does not work.
@@ -385,6 +459,7 @@ class ElevationMap(object):
             normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=self.stream)
             normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=self.stream)
             normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=self.stream)
+        print('get maps ref t = ', time.time() - s)
 
     def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
         maps = self.get_normal_maps()

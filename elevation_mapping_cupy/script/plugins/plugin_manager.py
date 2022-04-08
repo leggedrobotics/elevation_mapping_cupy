@@ -14,6 +14,8 @@ class PluginParams:
     is_sync: bool = True                # sync with map acquiring.
     callback_fps: float = 5.0           # call this plugin with this fps.
     create_service_call: bool = False   # creates a ros service call to call.
+    fill_nan: bool = False              # fill nan to invalid region
+    is_height_layer: bool = False       # if this is a height layer
 
 
 class PluginBase(ABC):
@@ -81,6 +83,8 @@ class PluginManger(object):
                         PluginParams(
                             name=k,
                             layer_name=v['layer_name'],
+                            fill_nan=v['fill_nan'],
+                            is_height_layer=v['is_height_layer'],
                             is_sync=v['is_sync'],
                             callback_fps=v['callback_fps'],
                             create_service_call=v['create_service_call'])
@@ -133,7 +137,7 @@ class PluginManger(object):
             return None
 
     def update_with_name(self, name: str, elevation_map: cp.ndarray, layer_names: List[str]):
-        idx = self.get_plugin_index_with_name(name)
+        idx = self.get_layer_index_with_name(name)
         if idx is not None:
             self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)
 
@@ -141,6 +145,11 @@ class PluginManger(object):
         idx = self.get_layer_index_with_name(name)
         if idx is not None:
             return self.layers[idx]
+
+    def get_param_with_name(self, name: str)->PluginParams:
+        idx = self.get_layer_index_with_name(name)
+        if idx is not None:
+            return self.plugin_params[idx]
 
     def get_synced_maps(self):
         return self.layers[self.sync_indices]

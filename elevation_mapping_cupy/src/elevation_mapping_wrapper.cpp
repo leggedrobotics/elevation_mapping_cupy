@@ -186,9 +186,9 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
       selection.push_back(2);
       basicLayerNames.push_back("traversability");
     }
-    if (layerName == "min_filtered")
+    if (layerName == "min_filter")
       selection.push_back(3);
-    if (layerName == "time_since_update")
+    if (layerName == "time")
       selection.push_back(4);
     if (layerName == "upper_bound")
       selection.push_back(5);
@@ -208,7 +208,16 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   grid_map::Length length(map_length_, map_length_);
   gridMap.setGeometry(length, resolution_, position);
   std::vector<Eigen::MatrixXd> maps;
-  get_maps(maps, selection);
+  // map_.attr("initialize_stream")();
+  for (const auto& layerName: layerNames) {
+    RowMatrixXd map(map_n_, map_n_);
+    map_.attr("get_map_with_name_ref")(
+        layerName,
+        static_cast<Eigen::Ref<RowMatrixXd>>(map));
+    maps.push_back(map);
+  }
+  // map_.attr("sync_stream")();
+  // get_maps(maps, selection);
   // gridMap.add("elevation", maps[0].cast<float>());
   // gridMap.add("traversability", maps[2].cast<float>());
   // std::vector<std::string> layerNames = {"elevation", "traversability"};

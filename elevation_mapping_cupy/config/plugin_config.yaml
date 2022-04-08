@@ -1,6 +1,8 @@
 # name of the plugin file. (store in script/plugins)
 min_filter:
   enable: True
+  fill_nan: False
+  is_height_layer: True
   layer_name: "min_filter"
   is_sync: True                # sync with map aquiring.
   callback_fps: 5.0            # call this plugin with this fps. (if is_sync is false)
@@ -9,10 +11,22 @@ min_filter:
     dilation_size: 5
     iteration_n": 5
 smooth_filter:
-  enable: False
+  enable: True
+  fill_nan: False
+  is_height_layer: True
   layer_name: "smooth"
   is_sync: True                # sync with map aquiring.
   callback_fps: 5.0            # call this plugin with this fps. (if is_sync is false)
   create_service_call: False   # creates a ros service call to call.
   extra_params:
     input_layer_name: "min_filter"
+inpainting:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "inpaint"
+  is_sync: True                # sync with map aquiring.
+  callback_fps: 5.0            # call this plugin with this fps. (if is_sync is false)
+  create_service_call: False   # creates a ros service call to call.
+  extra_params:
+    method: "telea"            # telea or ns

@@ -21,7 +21,6 @@ class SmoothFilter(PluginBase):
 
     def __call__(self, elevation_map: cp.ndarray, layer_names: List[str],
             plugin_layers: cp.ndarray, plugin_layer_names: List[str])->cp.ndarray:
-        print('names ', plugin_layer_names)
         if self.input_layer_name in layer_names:
             idx = layer_names.index(self.input_layer_name)
             h = elevation_map[idx]
