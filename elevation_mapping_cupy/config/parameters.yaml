@@ -88,7 +88,7 @@ publishers:
   elevation_map_filter:
     layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound']
     basic_layers: ['min_filter']
-    fps: 0.1
+    fps: 5.0
 
 #  Initialization
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'

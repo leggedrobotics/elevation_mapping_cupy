@@ -342,8 +342,6 @@ class ElevationMap(object):
                 data[...] = cp.asnumpy(array)
 
     def get_map_with_name_ref(self, name, data):
-        # print('get map with name ref ', name)
-        # self.layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
         s = time.time()
         use_stream = True
         xp = cp
@@ -359,8 +357,10 @@ class ElevationMap(object):
                 m = self.get_time()
             elif name == "upper_bound":
                 m = self.get_upper_bound()
+                # print('upper_bound ', m)
             elif name == "is_upper_bound":
                 m = self.get_is_upper_bound()
+                # print('is_upper_bound ', m)
             elif name in self.plugin_manager.layer_names:
                 self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names)
                 m = self.plugin_manager.get_map_with_name(name)

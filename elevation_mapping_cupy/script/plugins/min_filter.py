@@ -61,7 +61,7 @@ class MinFilter(PluginBase):
                 U valid = mask[get_map_idx(i, 0)];
                 // newmap[get_map_idx(i, 0)] = h;
                 // newmask[get_map_idx(i, 0)] = valid;
-                if (valid < 0.8) {
+                if (valid < 0.5) {
                     U min_value = 1000000.0;
                     for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
                         for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
@@ -89,9 +89,13 @@ class MinFilter(PluginBase):
         for i in range(self.iteration_n):
             self.min_filter_kernel(elevation_map[0],
                                    elevation_map[2],
+                                   # self.min_filtered_mask,
                                    self.min_filtered,
                                    self.min_filtered_mask,
                                    size=(self.width * self.height))
+            # If there's no more mask, break
+            if (self.min_filtered_mask > 0.5).all():
+                break
         min_filtered = cp.where(self.min_filtered_mask > 0.5,
                                 self.min_filtered.copy(), cp.nan)
         return min_filtered

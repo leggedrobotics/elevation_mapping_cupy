@@ -34,7 +34,7 @@ class ElevationMappingWrapper {
                const double positionNoise, const double orientationNoise);
     void move_to(const Eigen::VectorXd& p);
     void clear();
-    void get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection);
+    // void get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection);
     void update_variance();
     void update_time();
     void get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames);

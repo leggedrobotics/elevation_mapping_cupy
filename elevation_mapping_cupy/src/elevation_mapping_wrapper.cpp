@@ -115,61 +115,61 @@ double ElevationMappingWrapper::get_additive_mean_error() {
   return additive_error;
 }
 
-void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection) {
-  RowMatrixXd elevation(map_n_, map_n_);
-  RowMatrixXd variance(map_n_, map_n_);
-  RowMatrixXd traversability(map_n_, map_n_);
-  RowMatrixXd min_filtered(map_n_, map_n_);
-  RowMatrixXd time_layer(map_n_, map_n_);
-  RowMatrixXd upper_bound(map_n_, map_n_);
-  RowMatrixXd is_upper_bound(map_n_, map_n_);
-  RowMatrixXd normal_x(map_n_, map_n_);
-  RowMatrixXd normal_y(map_n_, map_n_);
-  RowMatrixXd normal_z(map_n_, map_n_);
-
-  // selection
-  RowMatrixXd selection_matrix(1, selection.size());
-  for (int i=0; i<selection.size(); i++)
-    selection_matrix(0, i) = selection[i];
-
-  py::gil_scoped_acquire acquire;
-  map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(selection_matrix),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(variance),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(time_layer),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(upper_bound),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(is_upper_bound),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_z),
-                            enable_normal_
-                           );
-  maps.clear();
-  for (const int idx: selection) {
-    if (idx == 0)
-      maps.push_back(elevation);
-    if (idx == 1)
-      maps.push_back(variance);
-    if (idx == 2)
-      maps.push_back(traversability);
-    if (idx == 3)
-      maps.push_back(min_filtered);
-    if (idx == 4)
-      maps.push_back(time_layer);
-    if (idx == 5)
-      maps.push_back(upper_bound);
-    if (idx == 6)
-      maps.push_back(is_upper_bound);
-  }
-  if (enable_normal_) {
-    maps.push_back(normal_x);
-    maps.push_back(normal_y);
-    maps.push_back(normal_z);
-  }
-  return;
-}
+// void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection) {
+//   RowMatrixXd elevation(map_n_, map_n_);
+//   RowMatrixXd variance(map_n_, map_n_);
+//   RowMatrixXd traversability(map_n_, map_n_);
+//   RowMatrixXd min_filtered(map_n_, map_n_);
+//   RowMatrixXd time_layer(map_n_, map_n_);
+//   RowMatrixXd upper_bound(map_n_, map_n_);
+//   RowMatrixXd is_upper_bound(map_n_, map_n_);
+//   RowMatrixXd normal_x(map_n_, map_n_);
+//   RowMatrixXd normal_y(map_n_, map_n_);
+//   RowMatrixXd normal_z(map_n_, map_n_);
+// 
+//   // selection
+//   RowMatrixXd selection_matrix(1, selection.size());
+//   for (int i=0; i<selection.size(); i++)
+//     selection_matrix(0, i) = selection[i];
+// 
+//   py::gil_scoped_acquire acquire;
+//   map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(selection_matrix),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(variance),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(time_layer),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(upper_bound),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(is_upper_bound),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
+//                             static_cast<Eigen::Ref<RowMatrixXd>>(normal_z),
+//                             enable_normal_
+//                            );
+//   maps.clear();
+//   for (const int idx: selection) {
+//     if (idx == 0)
+//       maps.push_back(elevation);
+//     if (idx == 1)
+//       maps.push_back(variance);
+//     if (idx == 2)
+//       maps.push_back(traversability);
+//     if (idx == 3)
+//       maps.push_back(min_filtered);
+//     if (idx == 4)
+//       maps.push_back(time_layer);
+//     if (idx == 5)
+//       maps.push_back(upper_bound);
+//     if (idx == 6)
+//       maps.push_back(is_upper_bound);
+//   }
+//   if (enable_normal_) {
+//     maps.push_back(normal_x);
+//     maps.push_back(normal_y);
+//     maps.push_back(normal_z);
+//   }
+//   return;
+// }
 
 
 void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames) {
@@ -180,20 +180,20 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
       selection.push_back(0);
       basicLayerNames.push_back("elevation");
     }
-    if (layerName == "variance")
-      selection.push_back(1);
-    if (layerName == "traversability") {
-      selection.push_back(2);
-      basicLayerNames.push_back("traversability");
-    }
-    if (layerName == "min_filter")
-      selection.push_back(3);
-    if (layerName == "time")
-      selection.push_back(4);
-    if (layerName == "upper_bound")
-      selection.push_back(5);
-    if (layerName == "is_upper_bound")
-      selection.push_back(6);
+    // if (layerName == "variance")
+    //   selection.push_back(1);
+    // if (layerName == "traversability") {
+    //   selection.push_back(2);
+    //   basicLayerNames.push_back("traversability");
+    // }
+    // if (layerName == "min_filter")
+    //   selection.push_back(3);
+    // if (layerName == "time")
+    //   selection.push_back(4);
+    // if (layerName == "upper_bound")
+    //   selection.push_back(5);
+    // if (layerName == "is_upper_bound")
+    //   selection.push_back(6);
   }
   // if (enable_normal_) {
   //   layerNames.push_back("normal_x");

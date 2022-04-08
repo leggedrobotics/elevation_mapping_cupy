@@ -8,8 +8,8 @@ min_filter:
   callback_fps: 5.0            # call this plugin with this fps. (if is_sync is false)
   create_service_call: False   # creates a ros service call to call.
   extra_params:                # This params are passed to the plugin class on initialization.
-    dilation_size: 5
-    iteration_n": 5
+    dilation_size: 15 
+    iteration_n: 10 
 smooth_filter:
   enable: True
   fill_nan: False

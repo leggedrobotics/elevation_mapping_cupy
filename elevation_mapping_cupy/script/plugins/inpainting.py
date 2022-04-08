@@ -28,7 +28,7 @@ class Inpainting(PluginBase):
             self.method = cv.INPAINT_TELEA
 
     def __call__(self, elevation_map: cp.ndarray, layer_names: List[str],
-            plugin_layers: cp.ndarray, plugin_layer_names: List[str])->np.ndarray:
+            plugin_layers: cp.ndarray, plugin_layer_names: List[str])->cp.ndarray:
         mask = cp.asnumpy((elevation_map[2] < 0.5).astype('uint8'))
         h = elevation_map[0]
         h_max = float(h[mask < 1].max())
