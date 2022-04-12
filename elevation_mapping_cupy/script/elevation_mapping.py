@@ -315,8 +315,15 @@ class ElevationMap(object):
             else:
                 data[...] = cp.asnumpy(array)
 
+    def exists_layer(self, name):
+        if name in self.layer_names:
+            return True
+        elif name in self.plugin_manager.layer_names:
+            return True
+        else:
+            return False
+
     def get_map_with_name_ref(self, name, data):
-        s = time.time()
         use_stream = True
         xp = cp
         with self.map_lock:
@@ -331,10 +338,14 @@ class ElevationMap(object):
                 m = self.get_time()
             elif name == "upper_bound":
                 m = self.get_upper_bound()
-                # print('upper_bound ', m)
             elif name == "is_upper_bound":
                 m = self.get_is_upper_bound()
-                # print('is_upper_bound ', m)
+            elif name == "normal_x":
+                m = self.normal_map.copy()[0, 1:-1, 1:-1]
+            elif name == "normal_y":
+                m = self.normal_map.copy()[1, 1:-1, 1:-1]
+            elif name == "normal_z":
+                m = self.normal_map.copy()[2, 1:-1, 1:-1]
             elif name in self.plugin_manager.layer_names:
                 self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names)
                 m = self.plugin_manager.get_map_with_name(name)
@@ -342,7 +353,7 @@ class ElevationMap(object):
                 xp = self.xp_of_array(m)
                 m = self.process_map_for_publish(m, fill_nan=p.fill_nan, add_z=p.is_height_layer, xp=xp)
             else:
-                print("Layer {} is not in the map".format(name))
+                # print("Layer {} is not in the map".format(name))
                 return
         m = xp.flip(m, 0)
         m = xp.flip(m, 1)

@@ -170,36 +170,31 @@ double ElevationMappingWrapper::get_additive_mean_error() {
 //   }
 //   return;
 // }
+//
+//
+bool ElevationMappingWrapper::exists_layer(const std::string layerName) {
+  py::gil_scoped_acquire acquire;
+  return py::cast<bool>(map_.attr("exists_layer")(layerName));
+}
+
+void ElevationMappingWrapper::get_layer_data(const std::string layerName, RowMatrixXd& map) {
+  py::gil_scoped_acquire acquire;
+  map = RowMatrixXd(map_n_, map_n_);
+  map_.attr("get_map_with_name_ref")(
+      layerName,
+      static_cast<Eigen::Ref<RowMatrixXd>>(map));
+}
 
 
-void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames) {
+void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& requestLayerNames) {
   std::vector<std::string> basicLayerNames;
+  std::vector<std::string> layerNames = requestLayerNames;
   std::vector<int> selection;
   for (const auto& layerName: layerNames) {
     if (layerName == "elevation") {
-      selection.push_back(0);
       basicLayerNames.push_back("elevation");
     }
-    // if (layerName == "variance")
-    //   selection.push_back(1);
-    // if (layerName == "traversability") {
-    //   selection.push_back(2);
-    //   basicLayerNames.push_back("traversability");
-    // }
-    // if (layerName == "min_filter")
-    //   selection.push_back(3);
-    // if (layerName == "time")
-    //   selection.push_back(4);
-    // if (layerName == "upper_bound")
-    //   selection.push_back(5);
-    // if (layerName == "is_upper_bound")
-    //   selection.push_back(6);
   }
-  // if (enable_normal_) {
-  //   layerNames.push_back("normal_x");
-  //   layerNames.push_back("normal_y");
-  //   layerNames.push_back("normal_z");
-  // }
 
   RowMatrixXd pos(1, 3);
   py::gil_scoped_acquire acquire;
@@ -208,7 +203,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   grid_map::Length length(map_length_, map_length_);
   gridMap.setGeometry(length, resolution_, position);
   std::vector<Eigen::MatrixXd> maps;
-  // map_.attr("initialize_stream")();
+
   for (const auto& layerName: layerNames) {
     RowMatrixXd map(map_n_, map_n_);
     map_.attr("get_map_with_name_ref")(
@@ -216,24 +211,28 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
         static_cast<Eigen::Ref<RowMatrixXd>>(map));
     maps.push_back(map);
   }
-  // map_.attr("sync_stream")();
-  // get_maps(maps, selection);
-  // gridMap.add("elevation", maps[0].cast<float>());
-  // gridMap.add("traversability", maps[2].cast<float>());
-  // std::vector<std::string> layerNames = {"elevation", "traversability"};
+  if (enable_normal_color_) {
+    RowMatrixXd normal_x(map_n_, map_n_);
+    RowMatrixXd normal_y(map_n_, map_n_);
+    RowMatrixXd normal_z(map_n_, map_n_);
+    map_.attr("get_normal_ref")(
+        static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
+        static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
+        static_cast<Eigen::Ref<RowMatrixXd>>(normal_z));
+    maps.push_back(normal_x);
+    maps.push_back(normal_y);
+    maps.push_back(normal_z);
+    layerNames.push_back("normal_x");
+    layerNames.push_back("normal_y");
+    layerNames.push_back("normal_z");
+  }
   for(int i = 0; i < maps.size() ; ++i) {
     gridMap.add(layerNames[i], maps[i].cast<float>());
   }
-  // gridMap.setBasicLayers({"elevation", "traversability"});
   gridMap.setBasicLayers(basicLayerNames);
-  if (enable_normal_ && enable_normal_color_) {
+  if (enable_normal_color_) {
     addNormalColorLayer(gridMap);
   }
-  // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(map_n_, map_n_);
-  // gridMap.add("horizontal_variance_x", zero.cast<float>());
-  // gridMap.add("horizontal_variance_y", zero.cast<float>());
-  // gridMap.add("horizontal_variance_xy", zero.cast<float>());
-  // gridMap.add("time", zero.cast<float>());
 }
 
 

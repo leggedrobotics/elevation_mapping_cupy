@@ -52,7 +52,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
-  nh.param<bool>("enable_filtered_map_publishing", enableFilteredMapPublishing_, false);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
@@ -75,7 +74,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
 
     for (int32_t i = 0; i < layers.size(); ++i) {
       layers_list.push_back(static_cast<std::string>(layers[i]));
-      map_layers_all_.insert(static_cast<std::string>(layers[i]));
+      // map_layers_all_.insert(static_cast<std::string>(layers[i]));
     }
     for (int32_t i = 0; i < basic_layers.size(); ++i) 
       basic_layers_list.push_back(static_cast<std::string>(basic_layers[i]));
@@ -137,15 +136,28 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
 }
 
 
+// setup map publishers
 void ElevationMappingNode::setupMapPublishers() {
-  // setup map publishers
+  // Find the layers with highest fps.
+  float max_fps = -1;
   // create timers for each unique map frequencies
   for(auto fps : map_fps_unique_) {
     // which publisher to call in the timer callback
     std::vector<int> indices;
+    // if this fps is max, update the map layers.
+    if (fps >= max_fps) {
+      max_fps = fps;
+      map_layers_all_.clear();
+    }
     for(int i=0; i<map_fps_.size(); i++) {
-      if(map_fps_[i] == fps)
+      if(map_fps_[i] == fps) {
         indices.push_back(i);
+        // if this fps is max, add layers
+        if (fps >= max_fps) {
+          for (const auto layer: map_layers_[i])
+            map_layers_all_.insert(layer);
+        }
+      }
     }
     // callback funtion.
     // It publishes to specific topics.
@@ -161,7 +173,16 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
   grid_map_msgs::GridMap msg;
   std::vector<std::string> layers;
   for (const auto& layer: map_layers_[index]) {
-    if (gridMap_.exists(layer)) {
+    const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
+    if (is_layer_in_all && gridMap_.exists(layer)) {
+      layers.push_back(layer);
+    }
+    else if (map_.exists_layer(layer)) {
+      // if there are layers which is not in the syncing layer.
+      boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+      RowMatrixXd map_data;
+      map_.get_layer_data(layer, map_data);
+      gridMap_.add(layer, map_data.cast<float>());
       layers.push_back(layer);
     }
   }

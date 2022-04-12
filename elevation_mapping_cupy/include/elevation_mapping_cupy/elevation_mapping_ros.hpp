@@ -91,6 +91,7 @@ class ElevationMappingNode {
     std::vector<std::vector<std::string>> map_layers_;
     std::vector<std::vector<std::string>> map_basic_layers_;
     std::set<std::string> map_layers_all_;
+    std::set<std::string> map_layers_sync_;
     std::vector<double> map_fps_;
     std::set<double> map_fps_unique_;
     std::vector<ros::Timer> mapTimers_;
@@ -113,7 +114,6 @@ class ElevationMappingNode {
     bool enableNormalArrowPublishing_;
     bool enableDriftCorrectedTFPublishing_;
     bool useInitializerAtStart_;
-    bool enableFilteredMapPublishing_;
     double initializeTfGridSize_;
     int pointCloudProcessCounter_;
 };
