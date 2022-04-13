@@ -224,13 +224,13 @@ class ElevationMap(object):
         height_min = t[2] - self.param.overlap_clear_range_z
         height_max = t[2] + self.param.overlap_clear_range_z
         near_map = self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max]
-        clear_idx = cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
-        near_map[0] = cp.where(clear_idx, near_map[0], 0.0)
-        near_map[1] = cp.where(clear_idx, near_map[0], self.initial_variance)
-        near_map[2] = cp.where(clear_idx, near_map[0], 0.0)
-        clear_idx = cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
-        near_map[5] = cp.where(clear_idx, near_map[0], 0.0)
-        near_map[6] = cp.where(clear_idx, near_map[0], 0.0)
+        valid_idx = ~cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
+        near_map[0] = cp.where(valid_idx, near_map[0], 0.0)
+        near_map[1] = cp.where(valid_idx, near_map[1], self.initial_variance)
+        near_map[2] = cp.where(valid_idx, near_map[2], 0.0)
+        valid_idx = ~cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
+        near_map[5] = cp.where(valid_idx, near_map[5], 0.0)
+        near_map[6] = cp.where(valid_idx, near_map[6], 0.0)
         self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max] = near_map
 
     def get_additive_mean_error(self):
@@ -310,12 +310,12 @@ class ElevationMap(object):
 
     def copy_to_cpu(self, array, data, stream=None):
         if type(array) == np.ndarray:
-            data[...] = array
+            data[...] = array.astype(np.float32)
         elif type(array) == cp.ndarray:
             if stream is not None:
-                data[...] = cp.asnumpy(array, stream=stream)
+                data[...] = cp.asnumpy(array.astype(np.float32), stream=stream)
             else:
-                data[...] = cp.asnumpy(array)
+                data[...] = cp.asnumpy(array.astype(np.float32))
 
     def exists_layer(self, name):
         if name in self.layer_names:
@@ -366,30 +366,6 @@ class ElevationMap(object):
         self.copy_to_cpu(m, data, stream=stream)
         # print('t = ', time.time() - s)
 
-    # def get_maps(self, selection):
-    #     map_list = []
-    #     with self.map_lock:
-    #         if 0 in selection:
-    #             map_list.append(self.get_elevation())
-    #         if 1 in selection:
-    #             map_list.append(self.get_variance())
-    #         if 2 in selection:
-    #             map_list.append(self.get_traversability())
-    #         if 3 in selection:
-    #             map_list.append(self.get_min_filtered_map())
-    #         if 4 in selection:
-    #             map_list.append(self.get_time())
-    #         if 5 in selection:
-    #             map_list.append(self.get_upper_bound())
-    #         if 6 in selection:
-    #             map_list.append(self.get_is_upper_bound())
-    # 
-    #     maps = xp.stack(map_list, axis=0)
-    #     maps = xp.flip(maps, 1)
-    #     maps = xp.flip(maps, 2)
-    #     maps = xp.asnumpy(maps)
-    #     return maps
-
     def get_normal_maps(self):
         normal = self.normal_map.copy()
         normal_x = normal[0, 1:-1, 1:-1]
@@ -400,49 +376,6 @@ class ElevationMap(object):
         maps = xp.flip(maps, 2)
         maps = xp.asnumpy(maps)
         return maps
-
-    # def get_maps_ref(self,
-    #                  selection,  # list of numbers to get ex. [0, 1, 3]
-    #                  elevation_data,
-    #                  variance_data,
-    #                  traversability_data,
-    #                  min_filtered_data,
-    #                  time_data,
-    #                  upper_bound,
-    #                  is_upper_bound,
-    #                  normal_x_data, normal_y_data, normal_z_data, normal=False):
-    #     s = time.time()
-    #     maps = self.get_maps(selection)
-    #     idx = 0
-    #     # somehow elevation_data copy in non_blocking mode does not work.
-    #     if 0 in selection:
-    #         elevation_data[...] = xp.asnumpy(maps[idx])
-    #         idx += 1
-    #     self.stream = cp.cuda.Stream(non_blocking=True)
-    #     if 1 in selection:
-    #         variance_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-    #         idx += 1
-    #     if 2 in selection:
-    #         traversability_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-    #         idx += 1
-    #     if 3 in selection:
-    #         min_filtered_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-    #         idx += 1
-    #     if 4 in selection:
-    #         time_data[...] = xp.asnumpy(maps[idx], stream=self.stream)
-    #         idx += 1
-    #     if 5 in selection:
-    #         upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
-    #         idx += 1
-    #     if 6 in selection:
-    #         is_upper_bound[...] = xp.asnumpy(maps[idx], stream=self.stream)
-    #         idx += 1
-    #     if normal:
-    #         normal_maps = self.get_normal_maps()
-    #         normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=self.stream)
-    #         normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=self.stream)
-    #         normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=self.stream)
-    #     print('get maps ref t = ', time.time() - s)
 
     def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
         maps = self.get_normal_maps()
@@ -527,11 +460,15 @@ if __name__ == '__main__':
     param.load_weights('../config/weights.dat')
     # param.plugin_config_file = '../config/plugin_config.yaml'
     elevation = ElevationMap(param)
-    layers = ['elevation', 'variance', 'traversability']
-    data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2))
+    layers = ['elevation', 'variance', 'traversability', 'min_filter', 'smooth', 'inpaint']
+    data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
+    data1 = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
+    data2 = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
+    selection = [0, 1, 2]
     for i in range(500):
         elevation.input(points, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
+        # elevation.get_maps_ref(selection, data, data1, data2, data, data, data, data, data, data, data)
         for layer in layers:
             elevation.get_map_with_name_ref(layer, data)
         print(i)

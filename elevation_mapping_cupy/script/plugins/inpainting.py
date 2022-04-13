@@ -30,10 +30,13 @@ class Inpainting(PluginBase):
     def __call__(self, elevation_map: cp.ndarray, layer_names: List[str],
             plugin_layers: cp.ndarray, plugin_layer_names: List[str])->cp.ndarray:
         mask = cp.asnumpy((elevation_map[2] < 0.5).astype('uint8'))
-        h = elevation_map[0]
-        h_max = float(h[mask < 1].max())
-        h_min = float(h[mask < 1].min())
-        h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype('uint8')
-        dst = np.array(cv.inpaint(h, mask, 1, self.method))
-        h_inpainted = dst.astype(np.float32) * (h_max - h_min) / 255 + h_min
-        return cp.asarray(h_inpainted)
+        if (mask < 1).any():
+            h = elevation_map[0]
+            h_max = float(h[mask < 1].max())
+            h_min = float(h[mask < 1].min())
+            h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype('uint8')
+            dst = np.array(cv.inpaint(h, mask, 1, self.method))
+            h_inpainted = dst.astype(np.float32) * (h_max - h_min) / 255 + h_min
+            return cp.asarray(h_inpainted).astype(np.float64)
+        else:
+            return elevation_map[0]

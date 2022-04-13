@@ -23,6 +23,7 @@ namespace py = pybind11;
 namespace elevation_mapping_cupy{
 
 using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using RowMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 class ElevationMappingWrapper {
   public:
@@ -38,7 +39,7 @@ class ElevationMappingWrapper {
     void update_variance();
     void update_time();
     bool exists_layer(const std::string layerName);
-    void get_layer_data(const std::string layerName, RowMatrixXd& map);
+    void get_layer_data(const std::string layerName, RowMatrixXf& map);
     void get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames);
     void get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result, std::vector<Eigen::Vector2d> &untraversable_polygon);
     double get_additive_mean_error();
