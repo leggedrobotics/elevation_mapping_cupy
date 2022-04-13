@@ -21,6 +21,7 @@ The tested versions are CUDA10.2.89, cuDNN8.0.0.180
 ### Python dependencies
 The versions are the tested version on Jetson Xavier.
 Newer versions might also work.
+
 - [numpy==1.19.5](https://www.numpy.org/)
 - [scipy==1.5.4](https://www.scipy.org/)
 - [cupy==9.1.0](https://cupy.chainer.org/)
