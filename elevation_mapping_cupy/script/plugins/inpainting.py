@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2022, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 import cupy as cp
 from typing import List
 import cupyx.scipy.ndimage as ndimage

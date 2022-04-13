@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 #include <pybind11_catkin/pybind11/embed.h>
 #include <pybind11_catkin/pybind11/eigen.h>

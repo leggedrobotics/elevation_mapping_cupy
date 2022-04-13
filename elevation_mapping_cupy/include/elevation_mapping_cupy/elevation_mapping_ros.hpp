@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #include <pybind11_catkin/pybind11/embed.h> // everything needed for embedding
 #include <iostream>
 #include <Eigen/Dense>
