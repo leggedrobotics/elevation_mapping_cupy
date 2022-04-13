@@ -71,6 +71,7 @@ On jetson, pip3 builds the packages from source so it would take time.
 
 #### Traversability filter
 You can choose either pytorch, or chainer to run the CNN based traversability filter.
+
 - [torch](https://pytorch.org/)
 - [chainer](https://chainer.org/)
 
