@@ -12,7 +12,6 @@
 #include <grid_map_msgs/GridMap.h>
 #include <grid_map_msgs/GetGridMap.h>
 // PCL
-// #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -35,7 +34,6 @@ class ElevationMappingWrapper {
                const double positionNoise, const double orientationNoise);
     void move_to(const Eigen::VectorXd& p);
     void clear();
-    // void get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection);
     void update_variance();
     void update_time();
     bool exists_layer(const std::string layerName);

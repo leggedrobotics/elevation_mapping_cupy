@@ -1,9 +1,6 @@
 import os
 import numpy as np
-import scipy as nsp
-import scipy.ndimage
 import threading
-import time
 
 from traversability_filter import get_filter_chainer, get_filter_torch
 from parameter import Parameter
@@ -22,8 +19,6 @@ import cupy as cp
 import cupyx.scipy as csp
 import cupyx.scipy.ndimage
 
-import time
-
 xp = cp
 sp = csp
 pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
@@ -31,6 +26,9 @@ cp.cuda.set_allocator(pool.malloc)
 
 
 class ElevationMap(object):
+    """  
+    Core elevation mapping class.
+    """
     def __init__(self, param: Parameter):
         self.param = param
 
@@ -45,7 +43,8 @@ class ElevationMap(object):
         # layers: elevation, variance, is_valid, traversability, time, upper_bound, is_upper_bound
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
         self.layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
-        self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
+        # buffers
+        self.traversability_buffer = xp.full((self.cell_n, self.cell_n), xp.nan)
         self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
         # Initial variance
         self.initial_variance = param.initial_variance
@@ -90,6 +89,7 @@ class ElevationMap(object):
         position[0][:] = xp.asnumpy(self.center)
 
     def move(self, delta_position):
+        # Shift map using delta position.
         delta_position = xp.asarray(delta_position)
         delta_pixel = xp.round(delta_position[:2] / self.resolution)
         delta_position_xy = delta_pixel * self.resolution
@@ -99,6 +99,7 @@ class ElevationMap(object):
         self.shift_map_z(-delta_position[2])
 
     def move_to(self, position):
+        # Shift map to the center of robot.
         position = xp.asarray(position)
         delta = position - self.center
         delta_pixel = xp.around(delta[:2] / self.resolution)
@@ -121,17 +122,22 @@ class ElevationMap(object):
             # is valid (1 is valid 0 is not valid)
             self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
                                              cval=0)
+            # upper bound
             self.elevation_map[5] = shift_fn(self.elevation_map[5], shift_value,
                                              cval=0)
+            # is upper bound
             self.elevation_map[6] = shift_fn(self.elevation_map[6], shift_value,
                                              cval=0)
 
     def shift_map_z(self, delta_z):
         with self.map_lock:
+            # elevation
             self.elevation_map[0] += delta_z
+            # upper bound
             self.elevation_map[5] += delta_z
 
     def compile_kernels(self):
+        # Compile custom cuda kernels.
         self.new_map = cp.zeros((7, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
         self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n))
@@ -221,6 +227,7 @@ class ElevationMap(object):
         self.update_normal(self.traversability_input)
 
     def clear_overlap_map(self, t):
+        # Clear overlapping area around center
         height_min = t[2] - self.param.overlap_clear_range_z
         height_max = t[2] + self.param.overlap_clear_range_z
         near_map = self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max]
@@ -248,6 +255,7 @@ class ElevationMap(object):
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
 
     def input(self, raw_points, R, t, position_noise, orientation_noise):
+        # Update elevation map using point cloud input.
         raw_points = cp.asarray(raw_points)
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
         self.update_map_with_kernel(raw_points, cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
@@ -275,8 +283,8 @@ class ElevationMap(object):
     def get_traversability(self):
         traversability = cp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
                                   self.elevation_map[3].copy(), cp.nan)
-        self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
-        traversability = self.traversability_data[1:-1, 1:-1]
+        self.traversability_buffer[3:-3, 3: -3] = traversability[3:-3, 3:-3]
+        traversability = self.traversability_buffer[1:-1, 1:-1]
         return traversability
 
     def get_time(self):
@@ -293,14 +301,6 @@ class ElevationMap(object):
                                   self.elevation_map[6].copy(), cp.nan)
         is_upper_bound = is_upper_bound[1:-1, 1:-1]
         return is_upper_bound
-
-    def get_layer_index_with_name(self, name: str)->int:
-        try:
-            idx = self.layer_names.index(name)
-            return idx
-        except Exception as e:
-            print("Error with layer {}: {}".format(name, e))
-            return None
 
     def xp_of_array(self, array):
         if type(array) == cp.ndarray:
@@ -364,7 +364,6 @@ class ElevationMap(object):
         else:
             stream = None
         self.copy_to_cpu(m, data, stream=stream)
-        # print('t = ', time.time() - s)
 
     def get_normal_maps(self):
         normal = self.normal_map.copy()
@@ -458,17 +457,12 @@ if __name__ == '__main__':
     print(R, t)
     param = Parameter(use_chainer=False)
     param.load_weights('../config/weights.dat')
-    # param.plugin_config_file = '../config/plugin_config.yaml'
     elevation = ElevationMap(param)
     layers = ['elevation', 'variance', 'traversability', 'min_filter', 'smooth', 'inpaint']
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
-    data1 = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
-    data2 = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
-    selection = [0, 1, 2]
     for i in range(500):
         elevation.input(points, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
-        # elevation.get_maps_ref(selection, data, data1, data2, data, data, data, data, data, data, data)
         for layer in layers:
             elevation.get_map_with_name_ref(layer, data)
         print(i)

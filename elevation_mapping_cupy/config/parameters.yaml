@@ -50,11 +50,11 @@ enable_visibility_cleanup: true
 enable_drift_compensation: true
 enable_overlap_clearance: true
 enable_pointcloud_publishing: false
-enable_drift_corrected_TF_publishing: true
-enable_normal_color: false
+enable_drift_corrected_TF_publishing: false
+enable_normal_color: false                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
 
 #### Traversability filter ########
-use_chainer: false                               # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
+use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
 weight_file: 'config/weights.dat'               # Weight file for traversability filter
 
 #### Plugins ########
@@ -88,7 +88,7 @@ publishers:
     basic_layers: ['min_filter']
     fps: 1.0
 
-#  Initialization
+#### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
 initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
 initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
