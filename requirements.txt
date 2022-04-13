@@ -1,0 +1,6 @@
+###### Requirements without Version Specifiers ######`
+numpy
+scipy
+
+###### Requirements with Version Specifiers ######`
+shapely==1.7.1
