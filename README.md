@@ -9,26 +9,36 @@ Code are written in python and uses cupy for GPU calculation.
 ## Installation
 
 ### CUDA & cuDNN
-The tested versions are CUDA10.2.89, cuDNN8.0.0.180
+The tested versions are CUDA10.2, 11.6
 
 [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation)  
 [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux).
 
+Check how to install [here](doc/cuda-installation.md).
 
-#### On Jetson
-`CUDA` and `cuDNN` can be installed via apt. It comes with nvidia-jetpack. The tested version is jetpack 4.5 with L4T 32.5.0.
 
 ### Python dependencies
-The versions are the tested version on Jetson Xavier.
-Newer versions might also work.
-- [numpy==1.19.5](https://www.numpy.org/)
-- [scipy==1.5.4](https://www.scipy.org/)
-- [cupy==9.1.0](https://cupy.chainer.org/)
+You will need 
+
+- [cupy](https://cupy.chainer.org/)
+- [numpy](https://www.numpy.org/)
+- [scipy](https://www.scipy.org/)
 - [shapely==1.7.1](https://github.com/Toblerity/Shapely)
 
+For traversability filter, either of
+
+- [torch](https://pytorch.org/)
+- [chainer](https://chainer.org/)
+
+Optinally, opencv for inpainting filter.
+- [opencv-python](https://opencv.org/)
+
+Install `numpy`, `scipy`, `shapely`, with the following command.
+```bash
+pip3 install -r requirements.txt
+```
 #### Cupy
 cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. via pip3 could work)  
-On jetson, pip3 builds the packages from source so it would take time.
 > For CUDA 10.2
 > pip install cupy-cuda102
 > 
@@ -53,18 +63,6 @@ On jetson, pip3 builds the packages from source so it would take time.
 > For CUDA 11.6
 > pip install cupy-cuda116
 > 
-> For AMD ROCm 4.0
-> pip install cupy-rocm-4-0
-> 
-> For AMD ROCm 4.2
-> pip install cupy-rocm-4-2
-> 
-> For AMD ROCm 4.3
-> pip install cupy-rocm-4-3
-> 
-> For AMD ROCm 5.0
-> pip install cupy-rocm-5-0
->
 > (Install CuPy from source)
 > % pip install cupy
 
@@ -78,42 +76,52 @@ You can choose either pytorch, or chainer to run the CNN based traversability fi
 Pytorch uses ~2GB more GPU memory than Chainer, but runs a bit faster.  
 Use parameter `use_chainer` to select which backend to use.
 
+#### Opencv
+Install opencv (optionally)
+```bash
+pip3 install opencv-python
+```
+
+### ROS package dependencies
+
+- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
+- [grid_map](https://github.com/ANYbotics/grid_map)
+
+```bash
+sudo apt install ros-noetic-pybind11-catkin
+sudo apt install ros-noetic-grid-map-core ros-noetic-grid-map-msgs
+```
+
+## On Jetson
+#### CUDA CuDNN
+`CUDA` and `cuDNN` can be installed via apt. It comes with nvidia-jetpack. The tested version is jetpack 4.5 with L4T 32.5.0.
+
+#### python dependencies
 On jetson, you need the version for its CPU arch:
 ```bash
 wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 pip3 install Cython
 pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 ```
-
-To install others, run the following.
+Also, you need to install cupy with
 ```bash
-pip3 install -r requirements.txt
+pip3 install cupy
+```
+This builds the packages from source so it would take time.
+
+#### ROS dependencies
+- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
+- [grid_map](https://github.com/ANYbotics/grid_map)
+
+```bash
+sudo apt install ros-melodic-pybind11-catkin
+sudo apt install ros-melodic-grid-map-core ros-melodic-grid-map-msgs
 ```
 
 Also, on jetson you need fortran (should already be installed).
 ```bash
 sudo apt install gfortran
 ```
-### ROS package dependencies
-
-- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
-- [grid_map_msgs](https://github.com/ANYbotics/grid_map)
-
-```bash
-sudo apt install ros-noetic-pybind11-catkin
-sudo apt install ros-noetic-grid-map-msgs
-```
-
-#### On Jetson
-
-- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
-- [grid_map_msgs](https://github.com/ANYbotics/grid_map)
-
-```bash
-sudo apt install ros-melodic-pybind11-catkin
-```
-
-For interaction with ROS Noetic the recomended way is to compile grid map from source via the open source package or ANYmal Research.
 
 If the Jetson is set up with Jetpack 4.5 with ROS Melodic the following package is additionally required:
 
