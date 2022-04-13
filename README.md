@@ -31,6 +31,7 @@ For traversability filter, either of
 - [chainer](https://chainer.org/)
 
 Optinally, opencv for inpainting filter.
+
 - [opencv-python](https://opencv.org/)
 
 Install `numpy`, `scipy`, `shapely`, with the following command.
