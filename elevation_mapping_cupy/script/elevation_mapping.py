@@ -52,6 +52,12 @@ class ElevationMap(object):
         self.elevation_map[1] += self.initial_variance
         self.elevation_map[3] += 1.0
 
+        # overlap clearance
+        cell_range = int(self.param.overlap_clear_range_xy / self.resolution)
+        cell_range = np.clip(cell_range, 0, self.cell_n)
+        self.cell_min = self.cell_n // 2 - cell_range // 2
+        self.cell_max = self.cell_n // 2 + cell_range // 2
+
         # Initial mean_error
         self.mean_error = 0.0
         self.additive_mean_error = 0.0
@@ -215,21 +221,17 @@ class ElevationMap(object):
         self.update_normal(self.traversability_input)
 
     def clear_overlap_map(self, t):
-        cell_range = int(self.param.overlap_clear_range_xy / self.resolution)
-        cell_range = np.clip(cell_range, 0, self.cell_n)
-        cell_min = self.cell_n // 2 - cell_range // 2
-        cell_max = self.cell_n // 2 + cell_range // 2
         height_min = t[2] - self.param.overlap_clear_range_z
         height_max = t[2] + self.param.overlap_clear_range_z
-        near_map = self.elevation_map[:, cell_min:cell_max, cell_min:cell_max]
+        near_map = self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max]
         clear_idx = cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
-        near_map[0][clear_idx] = 0.0
-        near_map[1][clear_idx] = self.initial_variance
-        near_map[2][clear_idx] = 0.0
+        near_map[0] = cp.where(clear_idx, near_map[0], 0.0)
+        near_map[1] = cp.where(clear_idx, near_map[0], self.initial_variance)
+        near_map[2] = cp.where(clear_idx, near_map[0], 0.0)
         clear_idx = cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
-        near_map[5][clear_idx] = 0.0
-        near_map[6][clear_idx] = 0.0
-        self.elevation_map[:, cell_min:cell_max, cell_min:cell_max] = near_map
+        near_map[5] = cp.where(clear_idx, near_map[0], 0.0)
+        near_map[6] = cp.where(clear_idx, near_map[0], 0.0)
+        self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max] = near_map
 
     def get_additive_mean_error(self):
         return self.additive_mean_error
@@ -521,10 +523,15 @@ if __name__ == '__main__':
     R = xp.random.rand(3, 3)
     t = xp.random.rand(3)
     print(R, t)
-    param = Parameter()
+    param = Parameter(use_chainer=False)
     param.load_weights('../config/weights.dat')
+    # param.plugin_config_file = '../config/plugin_config.yaml'
     elevation = ElevationMap(param)
+    layers = ['elevation', 'variance', 'traversability']
+    data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2))
     for i in range(500):
         elevation.input(points, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
+        for layer in layers:
+            elevation.get_map_with_name_ref(layer, data)
         print(i)

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import pickle
 import numpy as np
+import os
 
 @dataclass
 class Parameter:
@@ -53,7 +54,7 @@ class Parameter:
     orientation_noise_thresh:float = 0.1
 
     plugin_config_file: str = "config/plugin_config.yaml"
-    package_dir: str = "~/catkin_ws/src/elevation_mapping_cupy/elevation_mapping_cupy"
+    package_dir: str = os.getenv("HOME") + "/catkin_ws/src/elevation_mapping_cupy/elevation_mapping_cupy"
 
     initial_variance:float = 10.0
     initialized_variance:float = 10.0

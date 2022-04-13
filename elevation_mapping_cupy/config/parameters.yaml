@@ -54,7 +54,7 @@ enable_drift_corrected_TF_publishing: true
 enable_normal_color: false
 
 #### Traversability filter ########
-use_chainer: true                               # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer.
+use_chainer: false                               # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
 weight_file: 'config/weights.dat'               # Weight file for traversability filter
 
 #### Plugins ########
