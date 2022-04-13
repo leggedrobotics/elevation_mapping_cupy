@@ -185,7 +185,6 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
 
                     // If point is close or is farther away than ray length, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    // if (d < 0.1 || d > ${max_ray_length}) {continue;}
                     if (d < 0.1 || !is_valid(x, y, z, t[0], t[1], t[2])) {continue;}
 
                     // If invalid, do upper bound check, then skip
@@ -197,16 +196,9 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       continue;
                     }
                     // If updated recently, skip
-                    // if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
                     if (non_updated_t < 0.5) {continue;}
 
-                    // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
-                    // if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.3) {
                     if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.05) {
-                        // map[get_map_idx(nidx, 1)] = 100;
-                        // map[get_map_idx(nidx, 2)] = 0;
-                        // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-
                         // If ray and norm is vertical, skip
                         U norm_x = norm_map[get_map_idx(nidx, 0)];
                         U norm_y = norm_map[get_map_idx(nidx, 1)];
