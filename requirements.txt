@@ -1,6 +1,8 @@
 ###### Requirements without Version Specifiers ######`
 numpy
 scipy
+dataclasses
+ruamel.yaml
 
 ###### Requirements with Version Specifiers ######`
 shapely==1.7.1
