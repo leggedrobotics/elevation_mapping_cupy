@@ -1,6 +1,6 @@
 #### Basic parameters ########
 resolution: 0.04                                # resolution in m.
-map_length: 12                                  # map's size in m.
+map_length: 8                                  # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
@@ -86,7 +86,7 @@ publishers:
   elevation_map_filter:
     layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound']
     basic_layers: ['min_filter']
-    fps: 1.0
+    fps: 3.0
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'

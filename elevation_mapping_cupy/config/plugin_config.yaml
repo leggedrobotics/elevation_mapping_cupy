@@ -7,8 +7,8 @@ min_filter:
   is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
   layer_name: "min_filter"                    # The layer name.
   extra_params:                               # This params are passed to the plugin class on initialization.
-    dilation_size: 15                         # The patch size to apply
-    iteration_n: 10                           # The number of iterations
+    dilation_size: 1                         # The patch size to apply
+    iteration_n: 30                           # The number of iterations
 # Apply smoothing.
 smooth_filter:                                
   enable: True
