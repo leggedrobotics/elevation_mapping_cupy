@@ -24,7 +24,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   orientationError_(0),
   positionAlpha_(0.1),
   orientationAlpha_(0.1),
-  enablePointCloudPublishing_(false)
+  enablePointCloudPublishing_(false),
+  isGridmapUpdated_(false)
 {
   nh_ = nh;
   map_.initialize(nh_);
@@ -174,6 +175,8 @@ void ElevationMappingNode::setupMapPublishers() {
 
 void ElevationMappingNode::publishMapOfIndex(int index) {
   // publish the map layers of index
+  if(!isGridmapUpdated_)
+    return;
   grid_map_msgs::GridMap msg;
   std::vector<std::string> layers;
   for (const auto& layer: map_layers_[index]) {
@@ -469,6 +472,7 @@ void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
   if (enableNormalArrowPublishing_) {
     publishNormalAsArrow(gridMap_);
   }
+  isGridmapUpdated_ = true;
 }
 
 bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,
