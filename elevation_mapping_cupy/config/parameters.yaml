@@ -80,11 +80,11 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
 publishers:
   elevation_map_raw:
     layers: ['elevation', 'traversability', 'variance']
-    basic_layers: ['traversability']
+    basic_layers: ['elevation', 'traversability']
     fps: 5.0
   elevation_map_recordable:
     layers: ['elevation', 'traversability']
-    basic_layers: ['traversability']
+    basic_layers: ['elevation', 'traversability']
     fps: 2.0
   elevation_map_filter:
     layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound']
