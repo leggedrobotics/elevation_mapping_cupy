@@ -285,7 +285,7 @@ class ElevationMap(object):
         return self.process_map_for_publish(self.elevation_map[1], fill_nan=False, add_z=False)
 
     def get_traversability(self):
-        traversability = cp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
+        traversability = cp.where((self.elevation_map[2] + self.elevation_map[6]) > 0.5,
                                   self.elevation_map[3].copy(), cp.nan)
         self.traversability_buffer[3:-3, 3: -3] = traversability[3:-3, 3:-3]
         traversability = self.traversability_buffer[1:-1, 1:-1]
@@ -295,14 +295,20 @@ class ElevationMap(object):
         return self.process_map_for_publish(self.elevation_map[4], fill_nan=False, add_z=False)
 
     def get_upper_bound(self):
-        upper_bound = cp.where(cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
-                               self.elevation_map[5].copy(), cp.nan)
+        if self.param.use_only_above_for_upper_bound:
+            valid = cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5)
+        else:
+            valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
+        upper_bound = cp.where(valid, self.elevation_map[5].copy(), cp.nan)
         upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
         return upper_bound
 
     def get_is_upper_bound(self):
-        is_upper_bound = cp.where(cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
-                                  self.elevation_map[6].copy(), cp.nan)
+        if self.param.use_only_above_for_upper_bound:
+            valid = cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5)
+        else:
+            valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
+        is_upper_bound = cp.where(valid, self.elevation_map[6].copy(), cp.nan)
         is_upper_bound = is_upper_bound[1:-1, 1:-1]
         return is_upper_bound
 

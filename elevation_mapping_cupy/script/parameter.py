@@ -53,6 +53,7 @@ class Parameter:
     enable_drift_compensation:bool = True
     enable_visibility_cleanup:bool = True
     enable_overlap_clearance:bool = True
+    use_only_above_for_upper_bound: bool = True
     use_chainer:bool = True
     position_noise_thresh:float = 0.1
     orientation_noise_thresh:float = 0.1

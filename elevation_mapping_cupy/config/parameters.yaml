@@ -57,6 +57,9 @@ enable_normal_color: false                      # If true, the map contains 'col
 use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
 weight_file: 'config/weights.dat'               # Weight file for traversability filter
 
+#### Upper bound ########
+use_only_above_for_upper_bound: false
+
 #### Plugins ########
 plugin_config_file: 'config/plugin_config.yaml'
 
