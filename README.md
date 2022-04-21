@@ -136,6 +136,19 @@ git clone git@github.com:ros/filters.git -b noetic-devel
 catkin build elevation_mapping_cupy
 ```
 
+#### Errors
+If you get error such as  
+```
+Make Error at /usr/share/cmake-3.16/Modules/FindPackageHandleStandardArgs.cmake:146 (message):
+  Could NOT find PythonInterp: Found unsuitable version "2.7.18", but
+  required is at least "3" (found /usr/bin/python)
+```
+
+Build with option.
+```bash
+catkin build elevation_mapping_cupy -DPYTHON_EXECUTABLE=$(which python3)
+```
+
 ### Run
 ```bash
 roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
