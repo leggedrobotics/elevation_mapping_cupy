@@ -34,7 +34,7 @@ Optinally, opencv for inpainting filter.
 
 - [opencv-python](https://opencv.org/)
 
-Install `numpy`, `scipy`, `shapely`, with the following command.
+Install `numpy`, `scipy`, `shapely`, `opencv-python` with the following command.
 ```bash
 pip3 install -r requirements.txt
 ```
@@ -78,7 +78,7 @@ Pytorch uses ~2GB more GPU memory than Chainer, but runs a bit faster.
 Use parameter `use_chainer` to select which backend to use.
 
 #### Opencv
-Install opencv (optionally)
+Install opencv (optionally. Only used in example inpainting plugin. If you disable this plugin, you don't need this.)
 ```bash
 pip3 install opencv-python
 ```
@@ -167,6 +167,16 @@ roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 ### Published Topics
 The topics are published as set in the rosparam.  
 You can specify which layers to publish in which fps.
+
+Under `publishers`, you can specify the `topic_name`, `layers` `basic_layers` and `fps`.
+```yaml
+publishers:
+  your_topic_name:
+    layers: ['list_of_layer_names', 'layer1', 'layer2']             # Choose from 'elevation', 'variance', 'traversability', 'time' + plugin layers
+    basic_layers: ['list of basic layers', 'layer1']                # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
+    fps: 5.0                                                        # Publish rate. Use smaller value than `map_acquire_fps`.
+```
+
 
 Example setting in `config/parameters.yaml`.
 
