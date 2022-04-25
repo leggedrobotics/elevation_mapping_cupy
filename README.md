@@ -39,7 +39,7 @@ Install `numpy`, `scipy`, `shapely`, with the following command.
 pip3 install -r requirements.txt
 ```
 #### Cupy
-cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. via pip3 could work)  
+cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. `pip install cupy` could work)  
 > For CUDA 10.2
 > pip install cupy-cuda102
 > 
