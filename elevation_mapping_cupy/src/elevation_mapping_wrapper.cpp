@@ -96,16 +96,16 @@ void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& p
   py::gil_scoped_acquire acquire;
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
-  map_.attr("input")(static_cast<Eigen::Ref<const RowMatrixXd>>(points),
-                     static_cast<Eigen::Ref<const RowMatrixXd>>(R),
-                     static_cast<Eigen::Ref<const Eigen::VectorXd>>(t),
+  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points),
+                     Eigen::Ref<const RowMatrixXd>(R),
+                     Eigen::Ref<const Eigen::VectorXd>(t),
                      positionNoise, orientationNoise);
 }
 
 
 void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
   py::gil_scoped_acquire acquire;
-  map_.attr("move_to")(static_cast<Eigen::Ref<const Eigen::VectorXd>>(p));
+  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p));
 }
 
 
@@ -130,7 +130,7 @@ void ElevationMappingWrapper::get_layer_data(const std::string layerName, RowMat
   map = RowMatrixXf(map_n_, map_n_);
   map_.attr("get_map_with_name_ref")(
       layerName,
-      static_cast<Eigen::Ref<RowMatrixXf>>(map));
+      Eigen::Ref<RowMatrixXf>(map));
 }
 
 
@@ -146,7 +146,7 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
 
   RowMatrixXd pos(1, 3);
   py::gil_scoped_acquire acquire;
-  map_.attr("get_position")(static_cast<Eigen::Ref<RowMatrixXd>>(pos));
+  map_.attr("get_position")(Eigen::Ref<RowMatrixXd>(pos));
   grid_map::Position position(pos(0, 0), pos(0, 1));
   grid_map::Length length(map_length_, map_length_);
   gridMap.setGeometry(length, resolution_, position);
@@ -156,26 +156,20 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
     RowMatrixXf map(map_n_, map_n_);
     map_.attr("get_map_with_name_ref")(
         layerName,
-        static_cast<Eigen::Ref<RowMatrixXf>>(map));
-    maps.push_back(map);
+        Eigen::Ref<RowMatrixXf>(map));
+    gridMap.add(layerName, map);
   }
   if (enable_normal_color_) {
     RowMatrixXf normal_x(map_n_, map_n_);
     RowMatrixXf normal_y(map_n_, map_n_);
     RowMatrixXf normal_z(map_n_, map_n_);
     map_.attr("get_normal_ref")(
-        static_cast<Eigen::Ref<RowMatrixXf>>(normal_x),
-        static_cast<Eigen::Ref<RowMatrixXf>>(normal_y),
-        static_cast<Eigen::Ref<RowMatrixXf>>(normal_z));
-    maps.push_back(normal_x);
-    maps.push_back(normal_y);
-    maps.push_back(normal_z);
-    layerNames.push_back("normal_x");
-    layerNames.push_back("normal_y");
-    layerNames.push_back("normal_z");
-  }
-  for(int i = 0; i < maps.size() ; ++i) {
-    gridMap.add(layerNames[i], maps[i].cast<float>());
+        Eigen::Ref<RowMatrixXf>(normal_x),
+        Eigen::Ref<RowMatrixXf>(normal_y),
+        Eigen::Ref<RowMatrixXf>(normal_z));
+    gridMap.add("normal_x", normal_x);
+    gridMap.add("normal_y", normal_y);
+    gridMap.add("normal_z", normal_z);
   }
   gridMap.setBasicLayers(basicLayerNames);
   if (enable_normal_color_) {
@@ -197,13 +191,13 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
   }
   py::gil_scoped_acquire acquire;
   const int untraversable_polygon_num = map_.attr("get_polygon_traversability")(
-      static_cast<Eigen::Ref<const RowMatrixXf>>(polygon_m),
-      static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<int>();
+      Eigen::Ref<const RowMatrixXf>(polygon_m),
+      Eigen::Ref<Eigen::VectorXd>(result)).cast<int>();
 
   untraversable_polygon.clear();
   if (untraversable_polygon_num > 0) {
     RowMatrixXf untraversable_polygon_m(untraversable_polygon_num, 2);
-    map_.attr("get_untraversable_polygon")(static_cast<Eigen::Ref<RowMatrixXf>>(untraversable_polygon_m));
+    map_.attr("get_untraversable_polygon")(Eigen::Ref<RowMatrixXf>(untraversable_polygon_m));
     for (int i = 0; i < untraversable_polygon_num; i++) {
       Eigen::Vector2d p;
       p.x() = untraversable_polygon_m(i, 0);
@@ -225,7 +219,7 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> 
     i++;
   }
   py::gil_scoped_acquire acquire;
-  map_.attr("initialize_map")(static_cast<Eigen::Ref<const RowMatrixXd>>(points_m), method);
+  map_.attr("initialize_map")(Eigen::Ref<const RowMatrixXd>(points_m), method);
   return;
 }
 

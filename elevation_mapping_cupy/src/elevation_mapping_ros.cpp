@@ -79,7 +79,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
 
     for (int32_t i = 0; i < layers.size(); ++i) {
       layers_list.push_back(static_cast<std::string>(layers[i]));
-      // map_layers_all_.insert(static_cast<std::string>(layers[i]));
     }
     for (int32_t i = 0; i < basic_layers.size(); ++i) 
       basic_layers_list.push_back(static_cast<std::string>(basic_layers[i]));
@@ -189,7 +188,7 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
       boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
       RowMatrixXf map_data;
       map_.get_layer_data(layer, map_data);
-      gridMap_.add(layer, map_data.cast<float>());
+      gridMap_.add(layer, map_data);
       layers.push_back(layer);
     }
   }
@@ -254,6 +253,8 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&)
     ROS_ERROR("%s", ex.what());
     return;
   }
+
+  // This is to check if the robot is moving. If the robot is not moving, drift compensation is disabled to avoid creating artifacts.
   Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   map_.move_to(position);
   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
@@ -303,7 +304,11 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
 
   bool isSuccess;
   grid_map::Index index;
-  grid_map::GridMap subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
+  grid_map::GridMap subMap;
+  {
+    boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+    subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
+  }
   const auto& length = subMap.getLength();
   if (requestedFrameId != mapFrameId_) {
     subMap = subMap.getTransformedMap(transformationOdomToMap, "elevation", requestedFrameId);
