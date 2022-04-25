@@ -20,5 +20,6 @@
     <depend>roscpp</depend>
     <depend>visualization_msgs</depend>
     <depend>sensor_msgs</depend>
+    <exec_depend>libvtk7-dev</exec_depend>  <!-- required for the buildserver -->
 
 </package>
