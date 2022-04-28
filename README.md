@@ -6,6 +6,32 @@ This is a ros package of elevation mapping on GPU.
 Code are written in python and uses cupy for GPU calculation.  
 ![screenshot](doc/main_repo.png)
 
+\* plane segmentation is coming soon.
+
+
+## Citing
+> Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
+> Elevation Mapping for Locomotion and Navigation using GPU  [arXiv](https://arxiv.org/abs/2204.12876)
+```
+@misc{https://doi.org/10.48550/arxiv.2204.12876,
+  doi = {10.48550/ARXIV.2204.12876},
+  
+  url = {https://arxiv.org/abs/2204.12876},
+  
+  author = {Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
+  
+  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
+  
+  title = {Elevation Mapping for Locomotion and Navigation using GPU},
+  
+  publisher = {arXiv},
+  
+  year = {2022},
+  
+  copyright = {arXiv.org perpetual, non-exclusive license}
+}
+```
+
 ## Installation
 
 ### CUDA & cuDNN
