@@ -40,8 +40,8 @@ class ElevationMappingWrapper {
     void clear();
     void update_variance();
     void update_time();
-    bool exists_layer(const std::string layerName);
-    void get_layer_data(const std::string layerName, RowMatrixXf& map);
+    bool exists_layer(const std::string& layerName);
+    void get_layer_data(const std::string& layerName, RowMatrixXf& map);
     void get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames);
     void get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result, std::vector<Eigen::Vector2d> &untraversable_polygon);
     double get_additive_mean_error();

@@ -111,12 +111,12 @@ double ElevationMappingWrapper::get_additive_mean_error() {
   return additive_error;
 }
 
-bool ElevationMappingWrapper::exists_layer(const std::string layerName) {
+bool ElevationMappingWrapper::exists_layer(const std::string& layerName) {
   py::gil_scoped_acquire acquire;
   return py::cast<bool>(map_.attr("exists_layer")(layerName));
 }
 
-void ElevationMappingWrapper::get_layer_data(const std::string layerName, RowMatrixXf& map) {
+void ElevationMappingWrapper::get_layer_data(const std::string& layerName, RowMatrixXf& map) {
   py::gil_scoped_acquire acquire;
   map = RowMatrixXf(map_n_, map_n_);
   map_.attr("get_map_with_name_ref")(
