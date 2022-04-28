@@ -5,6 +5,7 @@
 import os
 import numpy as np
 import threading
+import subprocess
 
 from traversability_filter import get_filter_chainer, get_filter_torch
 from parameter import Parameter
@@ -67,6 +68,9 @@ class ElevationMap(object):
 
         self.compile_kernels()
 
+        weight_file = subprocess.getoutput("echo \"" + param.weight_file + "\"")
+        param.load_weights(weight_file)
+
         if param.use_chainer:
             self.traversability_filter = get_filter_chainer(param.w1, param.w2, param.w3, param.w_out)
         else:
@@ -75,7 +79,7 @@ class ElevationMap(object):
 
         # Plugins
         self.plugin_manager = PluginManger(cell_n=self.cell_n)
-        plugin_config_file = os.path.join(param.package_dir, param.plugin_config_file)
+        plugin_config_file = subprocess.getoutput("echo \"" + param.plugin_config_file + "\"")
         self.plugin_manager.load_plugin_settings(plugin_config_file)
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,

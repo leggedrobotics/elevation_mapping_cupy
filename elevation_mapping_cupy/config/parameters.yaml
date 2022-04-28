@@ -55,13 +55,13 @@ enable_normal_color: false                      # If true, the map contains 'col
 
 #### Traversability filter ########
 use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
-weight_file: 'config/weights.dat'               # Weight file for traversability filter
+weight_file: '$(rospack find elevation_mapping_cupy)/config/weights.dat'               # Weight file for traversability filter
 
 #### Upper bound ########
 use_only_above_for_upper_bound: false
 
 #### Plugins ########
-plugin_config_file: 'config/plugin_config.yaml'
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/plugin_config.yaml'
 
 #### Subscribers ########
 pointcloud_topics: ['/depth_camera_front/depth/color/points',
@@ -96,5 +96,5 @@ initialize_method: 'linear'                                         # Choose one
 initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
 initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
 dilation_size_initialize: 5                                         # dilation size after the init.
-initialize_tf_grid_size: 1.0                                        # This is not used if number of tf is more than 3.
+initialize_tf_grid_size: 0.4                                        # This is not used if number of tf is more than 3.
 use_initializer_at_start: true                                      # Use initializer when the node starts.
