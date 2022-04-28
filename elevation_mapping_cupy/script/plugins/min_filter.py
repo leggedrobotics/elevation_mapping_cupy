@@ -63,8 +63,6 @@ class MinFilter(PluginBase):
                 string.Template('''
                 U h = map[get_map_idx(i, 0)];
                 U valid = mask[get_map_idx(i, 0)];
-                // newmap[get_map_idx(i, 0)] = h;
-                // newmask[get_map_idx(i, 0)] = valid;
                 if (valid < 0.5) {
                     U min_value = 1000000.0;
                     for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
