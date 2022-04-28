@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+  <!-- Start position of waffle robot in scene. -->
+  <arg name="x_pos" default="-2.0" doc="Starting x coordinate of the robot in the simulation scene. "/>
+  <arg name="y_pos" default="0.0"  doc="Starting y coordinate of the robot in the simulation scene. "/>
+  <arg name="z_pos" default="0.0"  doc="Starting z coordinate of the robot in the simulation scene. "/>
+
+  <!-- Start gazebo server with turtlebot3_house scene. -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!-- Documentation taken from http://gazebosim.org/tutorials?tut=ros_roslaunch-->
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_world.world"/>
+    <arg name="paused" value="false"/> <!--S tart Gazebo in a paused state-->
+    <arg name="use_sim_time" value="true"/> <!-- Tells ROS nodes asking for time to get the Gazebo-published simulation time, published over the ROS topic /clock-->
+    <arg name="gui" value="true"/> <!-- Launch the user interface window of Gazebo-->
+    <arg name="headless" value="false"/> <!-- Enable gazebo state log recording-->
+    <arg name="debug" value="false"/> <!-- Start gzserver (Gazebo Server) in debug mode using gdb-->
+  </include>
+
+  <!-- Load robot_description param for tf, rviz and gazebo spawn. -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_waffle.urdf.xacro"/>
+
+  <!-- Spawn turtlebot into gazebo based on robot_description. -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model turtlebot3 -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description"/>
+
+  <!-- Publish turtlebot3 tf's. -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="waffle_state_publisher"/>
+
+  <!-- Launch elevation mapping node. -->
+  <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen">
+    <rosparam command="load" file="$(find elevation_mapping_cupy)/config/parameters.yaml" />
+    <rosparam>
+      map_frame: odom
+      base_frame: base_footprint
+      pointcloud_topics: ["/camera/depth/points"]
+      initialize_frame_id: ['base_footprint']
+      initialize_tf_offset: [0.0]
+    </rosparam>
+  </node>
+
+  <!-- Launch RViz with the demo configuration. -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/turtle_example.rviz"/>
+
+</launch>
