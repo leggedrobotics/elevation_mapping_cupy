@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 #include <pybind11_catkin/pybind11/embed.h>
 #include <pybind11_catkin/pybind11/eigen.h>
@@ -10,6 +14,7 @@
 
 namespace elevation_mapping_cupy{
 using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using RowMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 ElevationMappingWrapper::ElevationMappingWrapper() {
 }
@@ -32,143 +37,49 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   map_ = elevation_mapping.attr("ElevationMap")(param_);
 }
 
+/*  
+ *  Load ros parameters into Parameter class.
+ *  Search for the same name within the name space.
+ */
 void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
-  bool enable_edge_sharpen, enable_drift_compensation, enable_visibility_cleanup, enable_overlap_clearance;
-  float resolution, map_length, sensor_noise_factor, mahalanobis_thresh, outlier_variance, drift_compensation_variance_inlier, max_drift, drift_compensation_alpha;
-  float time_variance, initial_variance, traversability_inlier, position_noise_thresh, cleanup_cos_thresh, max_variance, time_interval,
-        orientation_noise_thresh, max_ray_length, cleanup_step, min_valid_distance, max_height_range, safe_thresh, safe_min_thresh, overlap_clear_range_xy, overlap_clear_range_z, ramped_height_range_a, ramped_height_range_b, ramped_height_range_c;
-  int dilation_size, dilation_size_initialize, wall_num_thresh, min_height_drift_cnt, max_unsafe_n, min_filter_size, min_filter_iteration;
-  std::string gather_mode, weight_file;
+  // Get all parameters names and types.
+  py::list paramNames = param_.attr("get_names")();
+  py::list paramTypes = param_.attr("get_types")();
   py::gil_scoped_acquire acquire;
-  nh.param<bool>("enable_edge_sharpen", enable_edge_sharpen, true);
-  param_.attr("set_enable_edge_sharpen")(enable_edge_sharpen);
 
-  nh.param<bool>("enable_drift_compensation", enable_drift_compensation, true);
-  param_.attr("set_enable_drift_compensation")(enable_drift_compensation);
+  // Try to find the parameter in the ros parameter server.
+  // If there was a parameter, set it to the Parameter variable.
+  for (int i = 0; i < paramNames.size(); i++) {
+    std::string type = py::cast<std::string>(paramTypes[i]);
+    std::string name = py::cast<std::string>(paramNames[i]);
+    if (type == "float") {
+      float param;
+      if (nh.getParam(name, param))
+        param_.attr("set_value")(name, param);
+    }
+    else if (type == "str") {
+      std::string param;
+      if (nh.getParam(name, param))
+        param_.attr("set_value")(name, param);
+    }
+    else if (type == "bool") {
+      bool param;
+      if (nh.getParam(name, param))
+        param_.attr("set_value")(name, param);
+    }
+    else if (type == "int") {
+      int param;
+      if (nh.getParam(name, param))
+        param_.attr("set_value")(name, param);
+    }
+  }
 
-  nh.param<bool>("enable_visibility_cleanup", enable_visibility_cleanup, true);
-  param_.attr("set_enable_visibility_cleanup")(enable_visibility_cleanup);
+  resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
+  map_length_ = py::cast<float>(param_.attr("get_value")("map_length"));
+  map_n_ = static_cast<int>(round(map_length_ / resolution_));
 
   nh.param<bool>("enable_normal", enable_normal_, false);
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);
-
-  nh.param<bool>("enable_overlap_clearance", enable_overlap_clearance, true);
-  param_.attr("set_enable_overlap_clearance")(enable_overlap_clearance);
-
-  nh.param<float>("resolution", resolution, 0.02);
-  param_.attr("set_resolution")(resolution);
-
-  nh.param<float>("map_length", map_length, 5.0);
-  param_.attr("set_map_length")(map_length);
-
-  nh.param<float>("sensor_noise_factor", sensor_noise_factor, 0.05);
-  param_.attr("set_sensor_noise_factor")(sensor_noise_factor);
-
-  nh.param<float>("mahalanobis_thresh", mahalanobis_thresh, 2.0);
-  param_.attr("set_mahalanobis_thresh")(mahalanobis_thresh);
-
-  nh.param<float>("outlier_variance", outlier_variance, 0.01);
-  param_.attr("set_outlier_variance")(outlier_variance);
-
-  nh.param<float>("max_variance", max_variance, 10.0);
-  param_.attr("set_max_variance")(max_variance);
-
-  nh.param<float>("drift_compensation_variance_inlier", drift_compensation_variance_inlier, 0.1);
-  param_.attr("set_drift_compensation_variance_inlier")(drift_compensation_variance_inlier);
-
-  nh.param<float>("max_drift", max_drift, 0.1);
-  param_.attr("set_max_drift")(max_drift);
-
-  nh.param<float>("drift_compensation_alpha", drift_compensation_alpha, 1.0);
-  param_.attr("set_drift_compensation_alpha")(drift_compensation_alpha);
-
-  nh.param<float>("time_variance", time_variance, 0.01);
-  param_.attr("set_time_variance")(time_variance);
-
-  nh.param<float>("time_interval", time_interval, 0.1);
-  param_.attr("set_time_interval")(time_interval);
-
-  nh.param<float>("initial_variance", initial_variance, 10.0);
-  param_.attr("set_initial_variance")(initial_variance);
-
-  nh.param<float>("traversability_inlier", traversability_inlier, 0.1);
-  param_.attr("set_traversability_inlier")(traversability_inlier);
-
-  nh.param<float>("position_noise_thresh", position_noise_thresh, 0.1);
-  param_.attr("set_position_noise_thresh")(position_noise_thresh);
-
-  nh.param<float>("orientation_noise_thresh", orientation_noise_thresh, 0.1);
-  param_.attr("set_orientation_noise_thresh")(orientation_noise_thresh);
-
-  nh.param<float>("max_ray_length", max_ray_length, 2.0);
-  param_.attr("set_max_ray_length")(max_ray_length);
-
-  nh.param<float>("cleanup_step", cleanup_step, 0.01);
-  param_.attr("set_cleanup_step")(cleanup_step);
-
-  nh.param<float>("cleanup_cos_thresh", cleanup_cos_thresh, 0.5);
-  param_.attr("set_cleanup_cos_thresh")(cleanup_cos_thresh);
-
-  nh.param<float>("min_valid_distance", min_valid_distance, 0.5);
-  param_.attr("set_min_valid_distance")(min_valid_distance);
-
-  nh.param<float>("max_height_range", max_height_range, 1.0);
-  param_.attr("set_max_height_range")(max_height_range);
-
-  nh.param<float>("safe_min_thresh", safe_min_thresh, 0.5);
-  param_.attr("set_safe_min_thresh")(safe_min_thresh);
-
-  nh.param<float>("safe_thresh", safe_thresh, 0.5);
-  param_.attr("set_safe_thresh")(safe_thresh);
-
-  nh.param<float>("overlap_clear_range_xy", overlap_clear_range_xy, 4.0);
-  param_.attr("set_overlap_clear_range_xy")(overlap_clear_range_xy);
-
-  nh.param<float>("overlap_clear_range_z", overlap_clear_range_z, 2.0);
-  param_.attr("set_overlap_clear_range_z")(overlap_clear_range_z);
-
-  nh.param<float>("ramped_height_range_a", ramped_height_range_a, 0.3);
-  param_.attr("set_ramped_height_range_a")(ramped_height_range_a);
-
-  nh.param<float>("ramped_height_range_b", ramped_height_range_b, 1.0);
-  param_.attr("set_ramped_height_range_b")(ramped_height_range_b);
-
-  nh.param<float>("ramped_height_range_c", ramped_height_range_c, 0.2);
-  param_.attr("set_ramped_height_range_c")(ramped_height_range_c);
-
-  nh.param<int>("dilation_size", dilation_size, 2);
-  param_.attr("set_dilation_size")(dilation_size);
-
-  nh.param<int>("dilation_size_initialize", dilation_size_initialize, 10);
-  param_.attr("set_dilation_size_initialize")(dilation_size_initialize);
-
-  nh.param<int>("wall_num_thresh", wall_num_thresh, 100);
-  param_.attr("set_wall_num_thresh")(wall_num_thresh);
-
-  nh.param<int>("min_height_drift_cnt", min_height_drift_cnt, 100);
-  param_.attr("set_min_height_drift_cnt")(min_height_drift_cnt);
-
-  nh.param<int>("max_unsafe_n", max_unsafe_n, 20);
-  param_.attr("set_max_unsafe_n")(max_unsafe_n);
-
-  nh.param<int>("min_filter_size", min_filter_size, 5);
-  param_.attr("set_min_filter_size")(min_filter_size);
-
-  nh.param<int>("min_filter_iteration", min_filter_iteration, 3);
-  param_.attr("set_min_filter_iteration")(min_filter_iteration);
-
-  nh.param<std::string>("gather_mode", gather_mode, "mean");
-  param_.attr("set_gather_mode")(gather_mode);
-
-  nh.param<std::string>("weight_file", weight_file, "config/weights.dat");
-  std::string path = ros::package::getPath("elevation_mapping_cupy");
-
-  weight_file = path + "/" + weight_file;
-  param_.attr("load_weights")(weight_file);
-
-  resolution_ = resolution;
-  map_length_ = map_length;
-  map_n_ = static_cast<int>(round(map_length_ / resolution));
 }
 
 
@@ -176,16 +87,16 @@ void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& p
   py::gil_scoped_acquire acquire;
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
-  map_.attr("input")(static_cast<Eigen::Ref<const RowMatrixXd>>(points),
-                     static_cast<Eigen::Ref<const RowMatrixXd>>(R),
-                     static_cast<Eigen::Ref<const Eigen::VectorXd>>(t),
+  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points),
+                     Eigen::Ref<const RowMatrixXd>(R),
+                     Eigen::Ref<const Eigen::VectorXd>(t),
                      positionNoise, orientationNoise);
 }
 
 
 void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
   py::gil_scoped_acquire acquire;
-  map_.attr("move_to")(static_cast<Eigen::Ref<const Eigen::VectorXd>>(p));
+  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p));
 }
 
 
@@ -200,122 +111,67 @@ double ElevationMappingWrapper::get_additive_mean_error() {
   return additive_error;
 }
 
-void ElevationMappingWrapper::get_maps(std::vector<Eigen::MatrixXd>& maps, const std::vector<int>& selection) {
-  RowMatrixXd elevation(map_n_, map_n_);
-  RowMatrixXd variance(map_n_, map_n_);
-  RowMatrixXd traversability(map_n_, map_n_);
-  RowMatrixXd min_filtered(map_n_, map_n_);
-  RowMatrixXd time_layer(map_n_, map_n_);
-  RowMatrixXd upper_bound(map_n_, map_n_);
-  RowMatrixXd is_upper_bound(map_n_, map_n_);
-  RowMatrixXd normal_x(map_n_, map_n_);
-  RowMatrixXd normal_y(map_n_, map_n_);
-  RowMatrixXd normal_z(map_n_, map_n_);
-
-  // selection
-  RowMatrixXd selection_matrix(1, selection.size());
-  for (int i=0; i<selection.size(); i++)
-    selection_matrix(0, i) = selection[i];
-
+bool ElevationMappingWrapper::exists_layer(const std::string& layerName) {
   py::gil_scoped_acquire acquire;
-  map_.attr("get_maps_ref")(static_cast<Eigen::Ref<RowMatrixXd>>(selection_matrix),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(elevation),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(variance),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(traversability),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(min_filtered),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(time_layer),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(upper_bound),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(is_upper_bound),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_x),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_y),
-                            static_cast<Eigen::Ref<RowMatrixXd>>(normal_z),
-                            enable_normal_
-                           );
-  maps.clear();
-  for (const int idx: selection) {
-    if (idx == 0)
-      maps.push_back(elevation);
-    if (idx == 1)
-      maps.push_back(variance);
-    if (idx == 2)
-      maps.push_back(traversability);
-    if (idx == 3)
-      maps.push_back(min_filtered);
-    if (idx == 4)
-      maps.push_back(time_layer);
-    if (idx == 5)
-      maps.push_back(upper_bound);
-    if (idx == 6)
-      maps.push_back(is_upper_bound);
-  }
-  if (enable_normal_) {
-    maps.push_back(normal_x);
-    maps.push_back(normal_y);
-    maps.push_back(normal_z);
-  }
-  return;
+  return py::cast<bool>(map_.attr("exists_layer")(layerName));
+}
+
+void ElevationMappingWrapper::get_layer_data(const std::string& layerName, RowMatrixXf& map) {
+  py::gil_scoped_acquire acquire;
+  map = RowMatrixXf(map_n_, map_n_);
+  map_.attr("get_map_with_name_ref")(
+      layerName,
+      Eigen::Ref<RowMatrixXf>(map));
 }
 
 
-void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& layerNames) {
+void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& requestLayerNames) {
   std::vector<std::string> basicLayerNames;
+  std::vector<std::string> layerNames = requestLayerNames;
   std::vector<int> selection;
   for (const auto& layerName: layerNames) {
     if (layerName == "elevation") {
-      selection.push_back(0);
       basicLayerNames.push_back("elevation");
     }
-    if (layerName == "variance")
-      selection.push_back(1);
-    if (layerName == "traversability") {
-      selection.push_back(2);
-      basicLayerNames.push_back("traversability");
-    }
-    if (layerName == "min_filtered")
-      selection.push_back(3);
-    if (layerName == "time_since_update")
-      selection.push_back(4);
-    if (layerName == "upper_bound")
-      selection.push_back(5);
-    if (layerName == "is_upper_bound")
-      selection.push_back(6);
   }
-  // if (enable_normal_) {
-  //   layerNames.push_back("normal_x");
-  //   layerNames.push_back("normal_y");
-  //   layerNames.push_back("normal_z");
-  // }
 
   RowMatrixXd pos(1, 3);
   py::gil_scoped_acquire acquire;
-  map_.attr("get_position")(static_cast<Eigen::Ref<RowMatrixXd>>(pos));
+  map_.attr("get_position")(Eigen::Ref<RowMatrixXd>(pos));
   grid_map::Position position(pos(0, 0), pos(0, 1));
   grid_map::Length length(map_length_, map_length_);
   gridMap.setGeometry(length, resolution_, position);
-  std::vector<Eigen::MatrixXd> maps;
-  get_maps(maps, selection);
-  // gridMap.add("elevation", maps[0].cast<float>());
-  // gridMap.add("traversability", maps[2].cast<float>());
-  // std::vector<std::string> layerNames = {"elevation", "traversability"};
-  for(int i = 0; i < maps.size() ; ++i) {
-    gridMap.add(layerNames[i], maps[i].cast<float>());
+  std::vector<Eigen::MatrixXf> maps;
+
+  for (const auto& layerName: layerNames) {
+    RowMatrixXf map(map_n_, map_n_);
+    map_.attr("get_map_with_name_ref")(
+        layerName,
+        Eigen::Ref<RowMatrixXf>(map));
+    gridMap.add(layerName, map);
   }
-  // gridMap.setBasicLayers({"elevation", "traversability"});
+  if (enable_normal_color_) {
+    RowMatrixXf normal_x(map_n_, map_n_);
+    RowMatrixXf normal_y(map_n_, map_n_);
+    RowMatrixXf normal_z(map_n_, map_n_);
+    map_.attr("get_normal_ref")(
+        Eigen::Ref<RowMatrixXf>(normal_x),
+        Eigen::Ref<RowMatrixXf>(normal_y),
+        Eigen::Ref<RowMatrixXf>(normal_z));
+    gridMap.add("normal_x", normal_x);
+    gridMap.add("normal_y", normal_y);
+    gridMap.add("normal_z", normal_z);
+  }
   gridMap.setBasicLayers(basicLayerNames);
-  if (enable_normal_ && enable_normal_color_) {
+  if (enable_normal_color_) {
     addNormalColorLayer(gridMap);
   }
-  // Eigen::MatrixXd zero = Eigen::MatrixXd::Zero(map_n_, map_n_);
-  // gridMap.add("horizontal_variance_x", zero.cast<float>());
-  // gridMap.add("horizontal_variance_y", zero.cast<float>());
-  // gridMap.add("horizontal_variance_xy", zero.cast<float>());
-  // gridMap.add("time", zero.cast<float>());
 }
 
 
 void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon, Eigen::Vector3d& result,
                                                            std::vector<Eigen::Vector2d> &untraversable_polygon) {
-  RowMatrixXd polygon_m(polygon.size(), 2);
+  RowMatrixXf polygon_m(polygon.size(), 2);
   if (polygon.size() < 3)
     return;
   int i = 0;
@@ -326,13 +182,13 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
   }
   py::gil_scoped_acquire acquire;
   const int untraversable_polygon_num = map_.attr("get_polygon_traversability")(
-      static_cast<Eigen::Ref<const RowMatrixXd>>(polygon_m),
-      static_cast<Eigen::Ref<Eigen::VectorXd>>(result)).cast<int>();
+      Eigen::Ref<const RowMatrixXf>(polygon_m),
+      Eigen::Ref<Eigen::VectorXd>(result)).cast<int>();
 
   untraversable_polygon.clear();
   if (untraversable_polygon_num > 0) {
-    RowMatrixXd untraversable_polygon_m(untraversable_polygon_num, 2);
-    map_.attr("get_untraversable_polygon")(static_cast<Eigen::Ref<RowMatrixXd>>(untraversable_polygon_m));
+    RowMatrixXf untraversable_polygon_m(untraversable_polygon_num, 2);
+    map_.attr("get_untraversable_polygon")(Eigen::Ref<RowMatrixXf>(untraversable_polygon_m));
     for (int i = 0; i < untraversable_polygon_num; i++) {
       Eigen::Vector2d p;
       p.x() = untraversable_polygon_m(i, 0);
@@ -354,7 +210,7 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> 
     i++;
   }
   py::gil_scoped_acquire acquire;
-  map_.attr("initialize_map")(static_cast<Eigen::Ref<const RowMatrixXd>>(points_m), method);
+  map_.attr("initialize_map")(Eigen::Ref<const RowMatrixXd>(points_m), method);
   return;
 }
 

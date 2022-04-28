@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
 #include <pybind11_catkin/pybind11/embed.h> 
 #include <pybind11_catkin/pybind11/eigen.h>
@@ -20,7 +24,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   orientationError_(0),
   positionAlpha_(0.1),
   orientationAlpha_(0.1),
-  enablePointCloudPublishing_(false)
+  enablePointCloudPublishing_(false),
+  isGridmapUpdated_(false)
 {
   nh_ = nh;
   map_.initialize(nh_);
@@ -52,7 +57,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
-  nh.param<bool>("enable_filtered_map_publishing", enableFilteredMapPublishing_, false);
   for (const auto& pointcloud_topic: pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
@@ -75,7 +79,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
 
     for (int32_t i = 0; i < layers.size(); ++i) {
       layers_list.push_back(static_cast<std::string>(layers[i]));
-      map_layers_all_.insert(static_cast<std::string>(layers[i]));
     }
     for (int32_t i = 0; i < basic_layers.size(); ++i) 
       basic_layers_list.push_back(static_cast<std::string>(basic_layers[i]));
@@ -137,15 +140,28 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
 }
 
 
+// setup map publishers
 void ElevationMappingNode::setupMapPublishers() {
-  // setup map publishers
+  // Find the layers with highest fps.
+  float max_fps = -1;
   // create timers for each unique map frequencies
   for(auto fps : map_fps_unique_) {
     // which publisher to call in the timer callback
     std::vector<int> indices;
+    // if this fps is max, update the map layers.
+    if (fps >= max_fps) {
+      max_fps = fps;
+      map_layers_all_.clear();
+    }
     for(int i=0; i<map_fps_.size(); i++) {
-      if(map_fps_[i] == fps)
+      if(map_fps_[i] == fps) {
         indices.push_back(i);
+        // if this fps is max, add layers
+        if (fps >= max_fps) {
+          for (const auto layer: map_layers_[i])
+            map_layers_all_.insert(layer);
+        }
+      }
     }
     // callback funtion.
     // It publishes to specific topics.
@@ -158,10 +174,21 @@ void ElevationMappingNode::setupMapPublishers() {
 
 void ElevationMappingNode::publishMapOfIndex(int index) {
   // publish the map layers of index
+  if(!isGridmapUpdated_)
+    return;
   grid_map_msgs::GridMap msg;
   std::vector<std::string> layers;
   for (const auto& layer: map_layers_[index]) {
-    if (gridMap_.exists(layer)) {
+    const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
+    if (is_layer_in_all && gridMap_.exists(layer)) {
+      layers.push_back(layer);
+    }
+    else if (map_.exists_layer(layer)) {
+      // if there are layers which is not in the syncing layer.
+      boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+      RowMatrixXf map_data;
+      map_.get_layer_data(layer, map_data);
+      gridMap_.add(layer, map_data);
       layers.push_back(layer);
     }
   }
@@ -226,6 +253,8 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&)
     ROS_ERROR("%s", ex.what());
     return;
   }
+
+  // This is to check if the robot is moving. If the robot is not moving, drift compensation is disabled to avoid creating artifacts.
   Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   map_.move_to(position);
   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
@@ -275,7 +304,11 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
 
   bool isSuccess;
   grid_map::Index index;
-  grid_map::GridMap subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
+  grid_map::GridMap subMap;
+  {
+    boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+    subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
+  }
   const auto& length = subMap.getLength();
   if (requestedFrameId != mapFrameId_) {
     subMap = subMap.getTransformedMap(transformationOdomToMap, "elevation", requestedFrameId);
@@ -444,6 +477,7 @@ void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
   if (enableNormalArrowPublishing_) {
     publishNormalAsArrow(gridMap_);
   }
+  isGridmapUpdated_ = true;
 }
 
 bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,

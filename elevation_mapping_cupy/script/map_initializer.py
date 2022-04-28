@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2022, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 from scipy.interpolate import griddata
 import numpy as np
 import cupy as cp

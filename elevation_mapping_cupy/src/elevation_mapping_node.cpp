@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 // Grid Map

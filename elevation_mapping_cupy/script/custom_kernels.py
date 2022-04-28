@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2022, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 import cupy as cp
 import string
 
@@ -185,7 +189,6 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
 
                     // If point is close or is farther away than ray length, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    // if (d < 0.1 || d > ${max_ray_length}) {continue;}
                     if (d < 0.1 || !is_valid(x, y, z, t[0], t[1], t[2])) {continue;}
 
                     // If invalid, do upper bound check, then skip
@@ -197,16 +200,9 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                       continue;
                     }
                     // If updated recently, skip
-                    // if (non_updated_t < 1.0 && nmap_trav > 0.6) {continue;}
                     if (non_updated_t < 0.5) {continue;}
 
-                    // if (nmap_h > nz + nmap_v * 3 && d > 0.1) {
-                    // if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.3) {
                     if (nmap_h > nz + 0.01 - min(nmap_v, 1.0) * 0.05) {
-                        // map[get_map_idx(nidx, 1)] = 100;
-                        // map[get_map_idx(nidx, 2)] = 0;
-                        // atomicAdd(&map[get_map_idx(idx, 1)], ${outlier_variance});
-
                         // If ray and norm is vertical, skip
                         U norm_x = norm_map[get_map_idx(nidx, 0)];
                         U norm_y = norm_map[get_map_idx(nidx, 1)];
@@ -385,63 +381,6 @@ def dilation_filter_kernel(width, height, dilation_size):
             ''').substitute(dilation_size=dilation_size),
             name='dilation_filter_kernel')
     return dilation_filter_kernel
-
-
-def min_filter_kernel(width, height, dilation_size):
-    min_filter_kernel = cp.ElementwiseKernel(
-            in_params='raw U map, raw U mask',
-            out_params='raw U newmap, raw U newmask',
-            preamble=\
-            string.Template('''
-            __device__ int get_map_idx(int idx, int layer_n) {
-                const int layer = ${width} * ${height};
-                return layer * layer_n + idx;
-            }
-
-            __device__ int get_relative_map_idx(int idx, int dx, int dy, int layer_n) {
-                const int layer = ${width} * ${height};
-                const int relative_idx = idx + ${width} * dy + dx;
-                return layer * layer_n + relative_idx;
-            }
-            __device__ bool is_inside(int idx) {
-                int idx_x = idx / ${width};
-                int idx_y = idx % ${width};
-                if (idx_x <= 0 || idx_x >= ${width} - 1) {
-                    return false;
-                }
-                if (idx_y <= 0 || idx_y >= ${height} - 1) {
-                    return false;
-                }
-                return true;
-            }
-            ''').substitute(width=width, height=height),
-            operation=\
-            string.Template('''
-            U h = map[get_map_idx(i, 0)];
-            U valid = mask[get_map_idx(i, 0)];
-            newmap[get_map_idx(i, 0)] = h;
-            newmask[get_map_idx(i, 0)] = valid;
-            if (valid < 0.8) {
-                U min_value = 1000000.0;
-                for (int dy = -${dilation_size}; dy <= ${dilation_size}; dy++) {
-                    for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
-                        int idx = get_relative_map_idx(i, dx, dy, 0);
-                        if (!is_inside(idx)) {continue;}
-                        U valid = mask[idx];
-                        U value = map[idx];
-                        if(valid > 0.5 && value < min_value) {
-                            min_value = value;
-                        }
-                    }
-                }
-                if (min_value < 1000000 - 1) {
-                    newmap[get_map_idx(i, 0)] = min_value;
-                    newmask[get_map_idx(i, 0)] = 0.6;
-                }
-            }
-            ''').substitute(dilation_size=dilation_size),
-            name='min_filter_kernel')
-    return min_filter_kernel
 
 
 def normal_filter_kernel(width, height, resolution):

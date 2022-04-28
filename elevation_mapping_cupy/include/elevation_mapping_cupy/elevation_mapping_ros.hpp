@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 #include <pybind11_catkin/pybind11/embed.h> // everything needed for embedding
 #include <iostream>
 #include <Eigen/Dense>
@@ -91,6 +95,7 @@ class ElevationMappingNode {
     std::vector<std::vector<std::string>> map_layers_;
     std::vector<std::vector<std::string>> map_basic_layers_;
     std::set<std::string> map_layers_all_;
+    std::set<std::string> map_layers_sync_;
     std::vector<double> map_fps_;
     std::set<double> map_fps_unique_;
     std::vector<ros::Timer> mapTimers_;
@@ -113,7 +118,7 @@ class ElevationMappingNode {
     bool enableNormalArrowPublishing_;
     bool enableDriftCorrectedTFPublishing_;
     bool useInitializerAtStart_;
-    bool enableFilteredMapPublishing_;
+    bool isGridmapUpdated_;
     double initializeTfGridSize_;
     int pointCloudProcessCounter_;
 };

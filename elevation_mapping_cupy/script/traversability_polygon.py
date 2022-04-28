@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2022, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 import numpy as np
 import cupy as cp
 from shapely.geometry import Polygon, MultiPoint
@@ -16,20 +20,11 @@ def get_masked_traversability(map_array, mask):
 
 
 def is_traversable(masked_untraversability, thresh, min_thresh, max_over_n):
-    # print(masked_untraversability)
-    # traversability_map = cp.where(masked_traversability == 0,
-    #                               cp.nan,
-    #                               masked_traversability)
     untraversable_thresh = 1 - thresh
     max_thresh = 1 - min_thresh
     over_thresh = cp.where(masked_untraversability > untraversable_thresh, 1, 0)
-    # print(traversability_map)
-    # print('over_thresh', over_thresh.sum())
-    # print('over_thresh ', over_thresh.sum())
     polygon = calculate_untraversable_polygon(over_thresh)
     max_untraversability = masked_untraversability.max()
-    # print('max_untraversability ', max_untraversability)
-    # print('mean', masked_traversability.mean())
     if over_thresh.sum() > max_over_n:
         is_safe = False
     elif max_untraversability > max_thresh:
@@ -49,13 +44,9 @@ def calculate_area(polygon):
 
 
 def calculate_untraversable_polygon(over_thresh):
-    # under_thresh = cp.where(under_thresh == 0, 1, under_thresh)
-    # print(over_thresh.sum())
     x, y = cp.where(over_thresh > 0.5)
     points = cp.stack([x, y]).T
-    # now = time.time()
     convex_hull = MultiPoint(points).convex_hull
-    # print('convex_hull took ', time.time() - now)
     if convex_hull.is_empty or convex_hull.geom_type == "Point" or convex_hull.geom_type == "LineString":
         return None
     else:

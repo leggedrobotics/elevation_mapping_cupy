@@ -1,26 +1,28 @@
+#
+# Copyright (c) 2022, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
+import os
 import numpy as np
-import scipy as nsp
-import scipy.ndimage
 import threading
+import subprocess
 
-from traversability_filter import TraversabilityFilter
+from traversability_filter import get_filter_chainer, get_filter_torch
 from parameter import Parameter
 from custom_kernels import add_points_kernel
 from custom_kernels import error_counting_kernel
 from custom_kernels import average_map_kernel
 from custom_kernels import dilation_filter_kernel
-from custom_kernels import min_filter_kernel
 from custom_kernels import normal_filter_kernel
 from custom_kernels import polygon_mask_kernel
 from map_initializer import MapInitializer
+from plugins.plugin_manager import PluginManger
 
 from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
 
 import cupy as cp
 import cupyx.scipy as csp
 import cupyx.scipy.ndimage
-
-import time
 
 xp = cp
 sp = csp
@@ -29,64 +31,36 @@ cp.cuda.set_allocator(pool.malloc)
 
 
 class ElevationMap(object):
-    def __init__(self, param):
+    """  
+    Core elevation mapping class.
+    """
+    def __init__(self, param: Parameter):
+        self.param = param
+
         self.resolution = param.resolution
         self.center = xp.array([0, 0, 0], dtype=float)
         self.map_length = param.map_length
         # +2 is a border for outside map
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
 
-        # 'mean' or 'max'
-        self.gather_mode = param.gather_mode
-
-        self.sensor_noise_factor = param.sensor_noise_factor
-        self.mahalanobis_thresh = param.mahalanobis_thresh
-        self.outlier_variance = param.outlier_variance
-        self.drift_compensation_variance_inlier = param.drift_compensation_variance_inlier
-        self.time_variance = param.time_variance
-        self.drift_compensation_alpha = param.drift_compensation_alpha
-
-        self.max_variance = param.max_variance
-        self.dilation_size = param.dilation_size
-        self.dilation_size_initialize = param.dilation_size_initialize
-        self.traversability_inlier = param.traversability_inlier
-        self.wall_num_thresh = param.wall_num_thresh
-        self.min_height_drift_cnt = param.min_height_drift_cnt
-        self.max_ray_length = param.max_ray_length
-        self.cleanup_step = param.cleanup_step
-        self.cleanup_cos_thresh = param.cleanup_cos_thresh
-
-        self.enable_edge_sharpen = param.enable_edge_sharpen
-        self.enable_visibility_cleanup = param.enable_visibility_cleanup
-        self.enable_drift_compensation = param.enable_drift_compensation
-        self.position_noise_thresh = param.position_noise_thresh
-        self.orientation_noise_thresh = param.orientation_noise_thresh
-        self.min_valid_distance = param.min_valid_distance
-        self.max_height_range = param.max_height_range
-        self.ramped_height_range_a = param.ramped_height_range_a
-        self.ramped_height_range_b = param.ramped_height_range_b
-        self.ramped_height_range_c = param.ramped_height_range_c
-        self.safe_thresh = param.safe_thresh
-        self.safe_min_thresh = param.safe_min_thresh
-        self.max_unsafe_n = param.max_unsafe_n
-        self.min_filter_size = param.min_filter_size
-        self.min_filter_iteration = param.min_filter_iteration
-        self.time_interval = param.time_interval
-        self.max_drift = param.max_drift
-        self.overlap_clear_range_xy = param.overlap_clear_range_xy
-        self.overlap_clear_range_z = param.overlap_clear_range_z
-        self.enable_overlap_clearance = param.enable_overlap_clearance
-
         self.map_lock = threading.Lock()
 
         # layers: elevation, variance, is_valid, traversability, time, upper_bound, is_upper_bound
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
-        self.traversability_data = xp.full((self.cell_n, self.cell_n), xp.nan)
+        self.layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
+        # buffers
+        self.traversability_buffer = xp.full((self.cell_n, self.cell_n), xp.nan)
         self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
         self.elevation_map[3] += 1.0
+
+        # overlap clearance
+        cell_range = int(self.param.overlap_clear_range_xy / self.resolution)
+        cell_range = np.clip(cell_range, 0, self.cell_n)
+        self.cell_min = self.cell_n // 2 - cell_range // 2
+        self.cell_max = self.cell_n // 2 + cell_range // 2
 
         # Initial mean_error
         self.mean_error = 0.0
@@ -94,11 +68,19 @@ class ElevationMap(object):
 
         self.compile_kernels()
 
-        self.traversability_filter = TraversabilityFilter(param.w1,
-                                                          param.w2,
-                                                          param.w3,
-                                                          param.w_out).cuda()
+        weight_file = subprocess.getoutput("echo \"" + param.weight_file + "\"")
+        param.load_weights(weight_file)
+
+        if param.use_chainer:
+            self.traversability_filter = get_filter_chainer(param.w1, param.w2, param.w3, param.w_out)
+        else:
+            self.traversability_filter = get_filter_torch(param.w1, param.w2, param.w3, param.w_out)
         self.untraversable_polygon = xp.zeros((1, 2))
+
+        # Plugins
+        self.plugin_manager = PluginManger(cell_n=self.cell_n)
+        plugin_config_file = subprocess.getoutput("echo \"" + param.plugin_config_file + "\"")
+        self.plugin_manager.load_plugin_settings(plugin_config_file)
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
                                               xp=cp, method='points')
@@ -115,6 +97,7 @@ class ElevationMap(object):
         position[0][:] = xp.asnumpy(self.center)
 
     def move(self, delta_position):
+        # Shift map using delta position.
         delta_position = xp.asarray(delta_position)
         delta_pixel = xp.round(delta_position[:2] / self.resolution)
         delta_position_xy = delta_pixel * self.resolution
@@ -124,6 +107,7 @@ class ElevationMap(object):
         self.shift_map_z(-delta_position[2])
 
     def move_to(self, position):
+        # Shift map to the center of robot.
         position = xp.asarray(position)
         delta = position - self.center
         delta_pixel = xp.around(delta[:2] / self.resolution)
@@ -146,17 +130,22 @@ class ElevationMap(object):
             # is valid (1 is valid 0 is not valid)
             self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
                                              cval=0)
+            # upper bound
             self.elevation_map[5] = shift_fn(self.elevation_map[5], shift_value,
                                              cval=0)
+            # is upper bound
             self.elevation_map[6] = shift_fn(self.elevation_map[6], shift_value,
                                              cval=0)
 
     def shift_map_z(self, delta_z):
         with self.map_lock:
+            # elevation
             self.elevation_map[0] += delta_z
+            # upper bound
             self.elevation_map[5] += delta_z
 
     def compile_kernels(self):
+        # Compile custom cuda kernels.
         self.new_map = cp.zeros((7, self.cell_n, self.cell_n))
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
         self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n))
@@ -166,39 +155,38 @@ class ElevationMap(object):
         self.add_points_kernel = add_points_kernel(self.resolution,
                                                    self.cell_n,
                                                    self.cell_n,
-                                                   self.sensor_noise_factor,
-                                                   self.mahalanobis_thresh,
-                                                   self.outlier_variance,
-                                                   self.wall_num_thresh,
-                                                   self.max_ray_length,
-                                                   self.cleanup_step,
-                                                   self.min_valid_distance,
-                                                   self.max_height_range,
-                                                   self.cleanup_cos_thresh,
-                                                   self.ramped_height_range_a,
-                                                   self.ramped_height_range_b,
-                                                   self.ramped_height_range_c,
-                                                   self.enable_edge_sharpen,
-                                                   self.enable_visibility_cleanup)
+                                                   self.param.sensor_noise_factor,
+                                                   self.param.mahalanobis_thresh,
+                                                   self.param.outlier_variance,
+                                                   self.param.wall_num_thresh,
+                                                   self.param.max_ray_length,
+                                                   self.param.cleanup_step,
+                                                   self.param.min_valid_distance,
+                                                   self.param.max_height_range,
+                                                   self.param.cleanup_cos_thresh,
+                                                   self.param.ramped_height_range_a,
+                                                   self.param.ramped_height_range_b,
+                                                   self.param.ramped_height_range_c,
+                                                   self.param.enable_edge_sharpen,
+                                                   self.param.enable_visibility_cleanup)
         self.error_counting_kernel = error_counting_kernel(self.resolution,
                                                            self.cell_n,
                                                            self.cell_n,
-                                                           self.sensor_noise_factor,
-                                                           self.mahalanobis_thresh,
-                                                           self.drift_compensation_variance_inlier,
-                                                           self.traversability_inlier,
-                                                           self.min_valid_distance,
-                                                           self.max_height_range,
-                                                           self.ramped_height_range_a,
-                                                           self.ramped_height_range_b,
-                                                           self.ramped_height_range_c,
+                                                           self.param.sensor_noise_factor,
+                                                           self.param.mahalanobis_thresh,
+                                                           self.param.drift_compensation_variance_inlier,
+                                                           self.param.traversability_inlier,
+                                                           self.param.min_valid_distance,
+                                                           self.param.max_height_range,
+                                                           self.param.ramped_height_range_a,
+                                                           self.param.ramped_height_range_b,
+                                                           self.param.ramped_height_range_c,
                                                            )
         self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
-                                                     self.max_variance, self.initial_variance)
+                                                     self.param.max_variance, self.initial_variance)
 
-        self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size)
-        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.dilation_size_initialize)
-        self.min_filter_kernel = min_filter_kernel(self.cell_n, self.cell_n, self.min_filter_size)
+        self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size)
+        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size_initialize)
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
@@ -207,31 +195,29 @@ class ElevationMap(object):
 
     def update_map_with_kernel(self, points, R, t, position_noise, orientation_noise):
         self.new_map *= 0.0
-        error = xp.array([0.0], dtype=xp.float32)
-        error_cnt = xp.array([0], dtype=xp.float32)
+        error = cp.array([0.0], dtype=cp.float32)
+        error_cnt = cp.array([0], dtype=cp.float32)
         with self.map_lock:
             self.shift_translation_to_map_center(t)
             self.error_counting_kernel(self.elevation_map, points,
                                        cp.array([0.]), cp.array([0.]), R, t,
                                        self.new_map, error, error_cnt,
                                        size=(points.shape[0]))
-            if (self.enable_drift_compensation
-                    and error_cnt > self.min_height_drift_cnt
-                    and (position_noise > self.position_noise_thresh
-                         or orientation_noise > self.orientation_noise_thresh)):
+            if (self.param.enable_drift_compensation
+                    and error_cnt > self.param.min_height_drift_cnt
+                    and (position_noise > self.param.position_noise_thresh
+                         or orientation_noise > self.param.orientation_noise_thresh)):
                 self.mean_error = error / error_cnt
                 self.additive_mean_error += self.mean_error
-                if np.abs(self.mean_error) < self.max_drift:
-                    self.elevation_map[0] += self.mean_error * self.drift_compensation_alpha
+                if np.abs(self.mean_error) < self.param.max_drift:
+                    self.elevation_map[0] += self.mean_error * self.param.drift_compensation_alpha
             self.add_points_kernel(points, cp.array([0.]), cp.array([0.]), R, t, self.normal_map,
                                    self.elevation_map, self.new_map,
                                    size=(points.shape[0]))
             self.average_map_kernel(self.new_map, self.elevation_map,
                                     size=(self.cell_n * self.cell_n))
 
-            # self.update_upper_bound_with_valid_elevation()
-
-            if self.enable_overlap_clearance:
+            if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
 
             # dilation before traversability_filter
@@ -249,110 +235,149 @@ class ElevationMap(object):
         self.update_normal(self.traversability_input)
 
     def clear_overlap_map(self, t):
-        cell_range = int(self.overlap_clear_range_xy / self.resolution)
-        cell_range = np.clip(cell_range, 0, self.cell_n)
-        cell_min = self.cell_n // 2 - cell_range // 2
-        cell_max = self.cell_n // 2 + cell_range // 2
-        height_min = t[2] - self.overlap_clear_range_z
-        height_max = t[2] + self.overlap_clear_range_z
-        near_map = self.elevation_map[:, cell_min:cell_max, cell_min:cell_max]
-        clear_idx = cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
-        near_map[0][clear_idx] = 0.0
-        near_map[1][clear_idx] = self.initial_variance
-        near_map[2][clear_idx] = 0.0
-        clear_idx = cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
-        near_map[5][clear_idx] = 0.0
-        near_map[6][clear_idx] = 0.0
-        self.elevation_map[:, cell_min:cell_max, cell_min:cell_max] = near_map
+        # Clear overlapping area around center
+        height_min = t[2] - self.param.overlap_clear_range_z
+        height_max = t[2] + self.param.overlap_clear_range_z
+        near_map = self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max]
+        valid_idx = ~cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
+        near_map[0] = cp.where(valid_idx, near_map[0], 0.0)
+        near_map[1] = cp.where(valid_idx, near_map[1], self.initial_variance)
+        near_map[2] = cp.where(valid_idx, near_map[2], 0.0)
+        valid_idx = ~cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
+        near_map[5] = cp.where(valid_idx, near_map[5], 0.0)
+        near_map[6] = cp.where(valid_idx, near_map[6], 0.0)
+        self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max] = near_map
 
     def get_additive_mean_error(self):
         return self.additive_mean_error
 
     def update_variance(self):
-        self.elevation_map[1] += self.time_variance * self.elevation_map[2]
+        self.elevation_map[1] += self.param.time_variance * self.elevation_map[2]
 
     def update_time(self):
-        self.elevation_map[4] += self.time_interval
+        self.elevation_map[4] += self.param.time_interval
 
     def update_upper_bound_with_valid_elevation(self):
         mask = self.elevation_map[2] > 0.5
-        self.elevation_map[5] = xp.where(mask, self.elevation_map[0], self.elevation_map[5])
-        self.elevation_map[6] = xp.where(mask, 0.0, self.elevation_map[6])
+        self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
+        self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
 
     def input(self, raw_points, R, t, position_noise, orientation_noise):
-        raw_points = xp.asarray(raw_points)
-        raw_points = raw_points[~xp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points, xp.asarray(R), xp.asarray(t), position_noise, orientation_noise)
-
-    def get_min_filtered(self):
-        self.min_filtered *= 0.0
-        self.min_filtered_mask *= 0.0
-        # print('self.min_filtered ', self.min_filtered)
-        self.min_filter_kernel(self.elevation_map[0],
-                               self.elevation_map[2],
-                               self.min_filtered,
-                               self.min_filtered_mask,
-                               size=(self.cell_n * self.cell_n))
-        if self.min_filter_iteration > 1:
-            for i in range(self.min_filter_iteration - 1):
-                self.min_filter_kernel(self.min_filtered,
-                                       self.min_filtered_mask,
-                                       self.min_filtered,
-                                       self.min_filtered_mask,
-                                       size=(self.cell_n * self.cell_n))
-        min_filtered = xp.where(self.min_filtered_mask > 0.5,
-                                self.min_filtered.copy(), xp.nan)
-        return min_filtered
+        # Update elevation map using point cloud input.
+        raw_points = cp.asarray(raw_points)
+        raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
+        self.update_map_with_kernel(raw_points, cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
 
     def update_normal(self, dilated_map):
         with self.map_lock:
             self.normal_map *= 0.0
             self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
 
-    def get_maps(self, selection):
-        map_list = []
-        with self.map_lock:
-            if 0 in selection:
-                elevation = xp.where(self.elevation_map[2] > 0.5,
-                                     self.elevation_map[0].copy(), xp.nan)
-                elevation = elevation[1:-1, 1:-1] + self.center[2]
-                map_list.append(elevation)
-            if 1 in selection:
-                variance = self.elevation_map[1].copy()
-                variance = variance[1:-1, 1:-1]
-                map_list.append(variance)
-            if 2 in selection:
-                traversability = xp.where((self.elevation_map[2]+self.elevation_map[6]) > 0.5,
-                                          self.elevation_map[3].copy(), xp.nan)
-                self.traversability_data[3:-3, 3: -3] = traversability[3:-3, 3:-3]
-                traversability = self.traversability_data[1:-1, 1:-1]
-                map_list.append(traversability)
-            if 3 in selection:
-                min_filtered = self.get_min_filtered()
-                min_filtered = min_filtered[1:-1, 1:-1] + self.center[2]
-                map_list.append(min_filtered)
-            if 4 in selection:
-                time_layer = self.elevation_map[4].copy()
-                time_layer = time_layer[1:-1, 1:-1]
-                map_list.append(time_layer)
-            if 5 in selection:
-                upper_bound = xp.where(xp.logical_or(xp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
-                                       self.elevation_map[5].copy(), xp.nan)
-                upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
-                map_list.append(upper_bound)
-            if 6 in selection:
-                is_upper_bound = xp.where(xp.logical_or(xp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5),
-                                          self.elevation_map[6].copy(), xp.nan)
-                is_upper_bound = is_upper_bound[1:-1, 1:-1]
-                map_list.append(is_upper_bound)
+    def process_map_for_publish(self, input_map, fill_nan=False, add_z=False, xp=cp):
+        m = input_map.copy()
+        if fill_nan:
+            m = xp.where(self.elevation_map[2] > 0.5,
+                    m, xp.nan)
+        if add_z:
+            m = m + self.center[2]
+        return m[1:-1, 1:-1]
 
-        # maps = xp.stack([elevation, variance, traversability, min_filtered, time_layer], axis=0)
-        maps = xp.stack(map_list, axis=0)
-        # maps = xp.transpose(maps, axes=(0, 2, 1))
-        maps = xp.flip(maps, 1)
-        maps = xp.flip(maps, 2)
-        maps = xp.asnumpy(maps)
-        return maps
+    def get_elevation(self):
+        return self.process_map_for_publish(self.elevation_map[0], fill_nan=True, add_z=True)
+
+    def get_variance(self):
+        return self.process_map_for_publish(self.elevation_map[1], fill_nan=False, add_z=False)
+
+    def get_traversability(self):
+        traversability = cp.where((self.elevation_map[2] + self.elevation_map[6]) > 0.5,
+                                  self.elevation_map[3].copy(), cp.nan)
+        self.traversability_buffer[3:-3, 3: -3] = traversability[3:-3, 3:-3]
+        traversability = self.traversability_buffer[1:-1, 1:-1]
+        return traversability
+
+    def get_time(self):
+        return self.process_map_for_publish(self.elevation_map[4], fill_nan=False, add_z=False)
+
+    def get_upper_bound(self):
+        if self.param.use_only_above_for_upper_bound:
+            valid = cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5)
+        else:
+            valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
+        upper_bound = cp.where(valid, self.elevation_map[5].copy(), cp.nan)
+        upper_bound = upper_bound[1:-1, 1:-1] + self.center[2]
+        return upper_bound
+
+    def get_is_upper_bound(self):
+        if self.param.use_only_above_for_upper_bound:
+            valid = cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5)
+        else:
+            valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
+        is_upper_bound = cp.where(valid, self.elevation_map[6].copy(), cp.nan)
+        is_upper_bound = is_upper_bound[1:-1, 1:-1]
+        return is_upper_bound
+
+    def xp_of_array(self, array):
+        if type(array) == cp.ndarray:
+            return cp
+        elif type(array) == np.ndarray:
+            return np
+
+    def copy_to_cpu(self, array, data, stream=None):
+        if type(array) == np.ndarray:
+            data[...] = array.astype(np.float32)
+        elif type(array) == cp.ndarray:
+            if stream is not None:
+                data[...] = cp.asnumpy(array.astype(np.float32), stream=stream)
+            else:
+                data[...] = cp.asnumpy(array.astype(np.float32))
+
+    def exists_layer(self, name):
+        if name in self.layer_names:
+            return True
+        elif name in self.plugin_manager.layer_names:
+            return True
+        else:
+            return False
+
+    def get_map_with_name_ref(self, name, data):
+        use_stream = True
+        xp = cp
+        with self.map_lock:
+            if name == "elevation":
+                m = self.get_elevation()
+                use_stream = False
+            elif name == "variance":
+                m = self.get_variance()
+            elif name == "traversability":
+                m = self.get_traversability()
+            elif name == "time":
+                m = self.get_time()
+            elif name == "upper_bound":
+                m = self.get_upper_bound()
+            elif name == "is_upper_bound":
+                m = self.get_is_upper_bound()
+            elif name == "normal_x":
+                m = self.normal_map.copy()[0, 1:-1, 1:-1]
+            elif name == "normal_y":
+                m = self.normal_map.copy()[1, 1:-1, 1:-1]
+            elif name == "normal_z":
+                m = self.normal_map.copy()[2, 1:-1, 1:-1]
+            elif name in self.plugin_manager.layer_names:
+                self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names)
+                m = self.plugin_manager.get_map_with_name(name)
+                p = self.plugin_manager.get_param_with_name(name)
+                xp = self.xp_of_array(m)
+                m = self.process_map_for_publish(m, fill_nan=p.fill_nan, add_z=p.is_height_layer, xp=xp)
+            else:
+                # print("Layer {} is not in the map".format(name))
+                return
+        m = xp.flip(m, 0)
+        m = xp.flip(m, 1)
+        if use_stream:
+            stream = cp.cuda.Stream(non_blocking=False)
+        else:
+            stream = None
+        self.copy_to_cpu(m, data, stream=stream)
 
     def get_normal_maps(self):
         normal = self.normal_map.copy()
@@ -365,53 +390,12 @@ class ElevationMap(object):
         maps = xp.asnumpy(maps)
         return maps
 
-    def get_maps_ref(self,
-                     selection,  # list of numbers to get ex. [0, 1, 3]
-                     elevation_data,
-                     variance_data,
-                     traversability_data,
-                     min_filtered_data,
-                     time_data,
-                     upper_bound,
-                     is_upper_bound,
-                     normal_x_data, normal_y_data, normal_z_data, normal=False):
-        maps = self.get_maps(selection)
-        idx = 0
-        # somehow elevation_data copy in non_blocking mode does not work.
-        if 0 in selection:
-            elevation_data[...] = xp.asnumpy(maps[idx])
-            idx += 1
-        stream = cp.cuda.Stream(non_blocking=True)
-        if 1 in selection:
-            variance_data[...] = xp.asnumpy(maps[idx], stream=stream)
-            idx += 1
-        if 2 in selection:
-            traversability_data[...] = xp.asnumpy(maps[idx], stream=stream)
-            idx += 1
-        if 3 in selection:
-            min_filtered_data[...] = xp.asnumpy(maps[idx], stream=stream)
-            idx += 1
-        if 4 in selection:
-            time_data[...] = xp.asnumpy(maps[idx], stream=stream)
-            idx += 1
-        if 5 in selection:
-            upper_bound[...] = xp.asnumpy(maps[idx], stream=stream)
-            idx += 1
-        if 6 in selection:
-            is_upper_bound[...] = xp.asnumpy(maps[idx], stream=stream)
-            idx += 1
-        if normal:
-            normal_maps = self.get_normal_maps()
-            normal_x_data[...] = xp.asnumpy(normal_maps[0], stream=stream)
-            normal_y_data[...] = xp.asnumpy(normal_maps[1], stream=stream)
-            normal_z_data[...] = xp.asnumpy(normal_maps[2], stream=stream)
-
     def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
         maps = self.get_normal_maps()
-        stream = cp.cuda.Stream(non_blocking=True)
-        normal_x_data[...] = xp.asnumpy(maps[0], stream=stream)
-        normal_y_data[...] = xp.asnumpy(maps[1], stream=stream)
-        normal_z_data[...] = xp.asnumpy(maps[2], stream=stream)
+        self.stream = cp.cuda.Stream(non_blocking=True)
+        normal_x_data[...] = xp.asnumpy(maps[0], stream=self.stream)
+        normal_y_data[...] = xp.asnumpy(maps[1], stream=self.stream)
+        normal_z_data[...] = xp.asnumpy(maps[2], stream=self.stream)
 
     def get_polygon_traversability(self, polygon, result):
         polygon = xp.asarray(polygon)
@@ -435,20 +419,16 @@ class ElevationMap(object):
         else:
             t = 0.0
         is_safe, un_polygon = is_traversable(masked,
-                                             self.safe_thresh,
-                                             self.safe_min_thresh,
-                                             self.max_unsafe_n)
-        # print(untraversable_polygon)
+                                             self.param.safe_thresh,
+                                             self.param.safe_min_thresh,
+                                             self.param.max_unsafe_n)
         untraversable_polygon_num = 0
         if un_polygon is not None:
             un_polygon = transform_to_map_position(un_polygon,
                                                    self.center[:2],
                                                    self.cell_n,
                                                    self.resolution)
-            # print(un_polygon)
             untraversable_polygon_num = un_polygon.shape[0]
-            # print(untraversable_polygon_num)
-        # print(untraversable_polygon)
         if clipped_area < 0.001:
             is_safe = False
             print('requested polygon is outside of the map')
@@ -457,7 +437,6 @@ class ElevationMap(object):
         return untraversable_polygon_num
 
     def get_untraversable_polygon(self, untraversable_polygon):
-        # print(self.untraversable_polygon)
         untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
 
     def initialize_map(self, points, method='cubic'):
@@ -471,7 +450,7 @@ class ElevationMap(object):
             points[:, :2] = indices.astype(points.dtype)
             points[:, 2] -= self.center[2]
             self.map_initializer(self.elevation_map, points, method)
-            if self.dilation_size_initialize > 0:
+            if self.param.dilation_size_initialize > 0:
                 for i in range(2):
                     self.dilation_filter_kernel_initializer(self.elevation_map[0],
                                                             self.elevation_map[2],
@@ -490,10 +469,14 @@ if __name__ == '__main__':
     R = xp.random.rand(3, 3)
     t = xp.random.rand(3)
     print(R, t)
-    param = Parameter()
+    param = Parameter(use_chainer=False)
     param.load_weights('../config/weights.dat')
     elevation = ElevationMap(param)
-    for i in range(200):
+    layers = ['elevation', 'variance', 'traversability', 'min_filter', 'smooth', 'inpaint']
+    data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
+    for i in range(500):
         elevation.input(points, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
+        for layer in layers:
+            elevation.get_map_with_name_ref(layer, data)
         print(i)
