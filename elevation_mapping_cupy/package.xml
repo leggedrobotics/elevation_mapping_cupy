@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>elevation_mapping_cupy</name>
-  <version>0.0.0</version>
+  <version>0.5.0</version>
   <description>The elevation mapping by cupy</description>
 
   <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
