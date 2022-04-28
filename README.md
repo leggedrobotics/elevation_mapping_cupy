@@ -69,19 +69,14 @@ cupy can be installed with specific CUDA versions. (On jetson, only "from source
 
 
 #### Traversability filter
-You can choose either pytorch, or chainer to run the CNN based traversability filter.
+You can choose either pytorch, or chainer to run the CNN based traversability filter.  
+Install by following the official documents.
 
 - [torch](https://pytorch.org/)
 - [chainer](https://chainer.org/)
 
 Pytorch uses ~2GB more GPU memory than Chainer, but runs a bit faster.  
 Use parameter `use_chainer` to select which backend to use.
-
-#### Opencv
-Install opencv (optionally. Only used in example inpainting plugin. If you disable this plugin, you don't need this.)
-```bash
-pip3 install opencv-python
-```
 
 ### ROS package dependencies
 
@@ -150,9 +145,29 @@ catkin build elevation_mapping_cupy -DPYTHON_EXECUTABLE=$(which python3)
 ```
 
 ### Run
+Basic usage.
 ```bash
 roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 ```
+
+### Run TurtleBot example
+First, install turtlebot simulation.
+```bash
+sudo apt install ros-noetic-turtlebot3*
+```
+Then, you can run the example.
+```bash
+roslaunch elevation_mapping_cupy turtlesim_example.launch
+```
+To control the robot with a keyboard, a new terminal window needs to be opened.  
+Then run
+```bash
+export TURTLEBOT3_MODEL=waffle
+roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+```
+Velocity inputs can be sent to the robot by pressing the keys `a`, `w`, `d`, `x`. To stop the robot completely, press `s`.
+
+
 ### Subscribed Topics
 
 * topics specified in **`pointcloud_topics`** in **`parameters.yaml`** ([sensor_msgs/PointCloud2])
