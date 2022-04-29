@@ -15,15 +15,6 @@ namespace grid_map {
 namespace smoothing {
 
 /**
- * @brief Smoothing based on PCA. In-place operation (layerIn = layerOut) is supported.
- * @param map               grid map
- * @param layerIn           reference layer (filter is applied wrt this layer)
- * @param layerOut          output layer (filtered map is written into this layer)
- * @param sigma             energy threshold that needs to be preserved
- */
-void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double sigma = 0.999);
-
-/**
  * @brief Sequential median filter (open-cv function). In-place operation (layerIn = layerOut) is supported.
  * @param map               grid map
  * @param layerIn           reference layer (filter is applied wrt this layer)

@@ -17,58 +17,8 @@
 #include <opencv2/photo.hpp>
 #include <opencv2/xphoto/bm3d_image_denoising.hpp>
 
-// message logger.
-#include <message_logger/message_logger.hpp>
-
 namespace grid_map {
 namespace smoothing {
-
-void pca(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, double sigma) {
-  // https://en.wikipedia.org/wiki/Principal_component_analysis
-
-  // Create new layer if missing.
-  if (!map.exists(layerOut)) {
-    map.add(layerOut);
-  }
-
-  // Normalize columns (to have zero mean).
-  const grid_map::Matrix& H_in = map.get(layerIn);
-  grid_map::Matrix colMean;
-  colMean.resize(H_in.cols(), H_in.rows());
-
-  for (auto colId = 0; colId < H_in.cols(); ++colId) {
-    colMean.col(colId).setConstant(H_in.col(colId).sum() / float(H_in.rows()));
-  }
-
-  // Singular value decomposition: H = U*S*V'
-  Eigen::JacobiSVD<grid_map::Matrix> svd(H_in - colMean, Eigen::ComputeThinU | Eigen::ComputeThinV);
-  const Eigen::VectorXf& s = svd.singularValues();
-
-  // Determine number of relevant entries.
-  const double thresholdEnergy = sigma * s.squaredNorm();
-  auto numSingValues = 0U;
-  double addedEnergy = 0.0;
-  for (auto id = 0U; id < s.size(); ++id) {
-    if (std::isnan(s(id))) {
-      MELO_WARN_STREAM("Detected NaN singular value.")
-      return;
-    }
-
-    // Add singular value.
-    addedEnergy += s(id) * s(id);
-    ++numSingValues;
-
-    // Check if we have summed up enough energy.
-    if (addedEnergy >= thresholdEnergy) {
-      break;
-    }
-  }
-
-  // Reject singular values smaller than threshold and compose.
-  const grid_map::Matrix& U = svd.matrixU();
-  const grid_map::Matrix& V = svd.matrixV();
-  map.get(layerOut) = U.leftCols(numSingValues) * s.head(numSingValues).asDiagonal() * V.leftCols(numSingValues).transpose() + colMean;
-}
 
 void median(grid_map::GridMap& map, const std::string& layerIn, const std::string& layerOut, int kernelSize, int deltaKernelSize,
             int numberOfRepeats) {

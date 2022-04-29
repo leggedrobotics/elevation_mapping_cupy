@@ -9,7 +9,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CATKIN_PACKAGE_DEPENDENCIES
   grid_map_cv
   grid_map_core
-  message_logger
 )
 
 find_package(catkin REQUIRED 
