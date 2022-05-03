@@ -186,23 +186,32 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
   std::vector<std::string> layers;
   for (const auto& layer : map_layers_[index]) {
     const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
-    if (is_layer_in_all && gridMap_.exists(layer)) {
+    bool layerExistsInMap{false};
+    {
+      std::lock_guard<std::mutex> lock(mapMutex_);
+      layerExistsInMap = gridMap_.exists(layer);
+    }
+
+    if (is_layer_in_all && layerExistsInMap) {
       layers.push_back(layer);
     } else if (map_.exists_layer(layer)) {
       // if there are layers which is not in the syncing layer.
-      boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
       ElevationMappingWrapper::RowMatrixXf map_data;
       map_.get_layer_data(layer, map_data);
-      gridMap_.add(layer, map_data);
       layers.push_back(layer);
+      std::lock_guard<std::mutex> lock(mapMutex_);
+      gridMap_.add(layer, map_data);
     }
   }
   if (layers.empty()) {
     return;
   }
-  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-  grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
-  scopedLockForGridMap.unlock();
+
+  {
+    std::lock_guard<std::mutex> lock(mapMutex_);
+    grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
+  }
+
   msg.basic_layers = map_basic_layers_[index];
   mapPubs_[index].publish(msg);
 }
@@ -268,9 +277,9 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
   }
 }
 
-void ElevationMappingNode::publishAsPointCloud() {
+void ElevationMappingNode::publishAsPointCloud(const grid_map::GridMap& map) {
   sensor_msgs::PointCloud2 msg;
-  grid_map::GridMapRosConverter::toPointCloud(gridMap_, "elevation", msg);
+  grid_map::GridMapRosConverter::toPointCloud(map, "elevation", msg);
   pointPub_.publish(msg);
 }
 
@@ -302,7 +311,7 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
   grid_map::Index index;
   grid_map::GridMap subMap;
   {
-    boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+    std::lock_guard<std::mutex> lock(mapMutex_);
     subMap = gridMap_.getSubmap(requestedSubmapPosition, requestedSubmapLength, index, isSuccess);
   }
   const auto& length = subMap.getLength();
@@ -453,14 +462,14 @@ void ElevationMappingNode::publishStatistics(const ros::TimerEvent&) {
 
 void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
   std::vector<std::string> layers(map_layers_all_.begin(), map_layers_all_.end());
-  boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
+  std::lock_guard<std::mutex> lock(mapMutex_);
   map_.get_grid_map(gridMap_, layers);
   gridMap_.setTimestamp(ros::Time::now().toNSec());
   alivePub_.publish(std_msgs::Empty());
 
   // Mostly debug purpose
   if (enablePointCloudPublishing_) {
-    publishAsPointCloud();
+    publishAsPointCloud(gridMap_);
   }
   if (enableNormalArrowPublishing_) {
     publishNormalAsArrow(gridMap_);

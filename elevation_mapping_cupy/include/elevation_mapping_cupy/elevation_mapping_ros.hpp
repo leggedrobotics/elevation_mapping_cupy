@@ -7,9 +7,7 @@
 
 // STL
 #include <iostream>
-
-// Boost
-#include <boost/thread/recursive_mutex.hpp>
+#include <mutex>
 
 // Eigen
 #include <Eigen/Dense>
@@ -55,7 +53,7 @@ class ElevationMappingNode {
   void readParameters();
   void setupMapPublishers();
   void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
-  void publishAsPointCloud();
+  void publishAsPointCloud(const grid_map::GridMap& map);
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
   bool initializeMap(elevation_map_msgs::Initialize::Request& request, elevation_map_msgs::Initialize::Response& response);
@@ -97,7 +95,6 @@ class ElevationMappingNode {
   std::string mapFrameId_;
   std::string correctedMapFrameId_;
   std::string baseFrameId_;
-  grid_map::GridMap gridMap_;
 
   // map topics info
   std::vector<std::vector<std::string>> map_topics_;
@@ -116,7 +113,9 @@ class ElevationMappingNode {
   Eigen::Vector3d lowpassPosition_;
   Eigen::Vector4d lowpassOrientation_;
 
-  boost::recursive_mutex mapMutex_;
+  std::mutex mapMutex_;  // protects gridMap_
+  grid_map::GridMap gridMap_;
+  std::atomic_bool isGridmapUpdated_;  // needs to be atomic (read is protected by mapMutex_)
 
   double positionError_;
   double orientationError_;
@@ -127,7 +126,6 @@ class ElevationMappingNode {
   bool enableNormalArrowPublishing_;
   bool enableDriftCorrectedTFPublishing_;
   bool useInitializerAtStart_;
-  bool isGridmapUpdated_;
   double initializeTfGridSize_;
   int pointCloudProcessCounter_;
 };
