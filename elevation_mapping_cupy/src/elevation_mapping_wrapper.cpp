@@ -2,22 +2,21 @@
 // Copyright (c) 2022, Takahiro Miki. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
+
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
-#include <pybind11_catkin/pybind11/embed.h>
+
+// Pybind
 #include <pybind11_catkin/pybind11/eigen.h>
-#include <iostream>
-#include <Eigen/Dense>
+
+// PCL
 #include <pcl/common/projection_matrix.h>
-#include <tf_conversions/tf_eigen.h>
+
+// ROS
 #include <ros/package.h>
-#include <grid_map_core/grid_map_core.hpp>
 
-namespace elevation_mapping_cupy{
-using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-using RowMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+namespace elevation_mapping_cupy {
 
-ElevationMappingWrapper::ElevationMappingWrapper() {
-}
+ElevationMappingWrapper::ElevationMappingWrapper() {}
 
 void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   // Add the elevation_mapping_cupy path to sys.path
@@ -37,7 +36,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   map_ = elevation_mapping.attr("ElevationMap")(param_);
 }
 
-/*  
+/**
  *  Load ros parameters into Parameter class.
  *  Search for the same name within the name space.
  */
@@ -54,23 +53,24 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
     std::string name = py::cast<std::string>(paramNames[i]);
     if (type == "float") {
       float param;
-      if (nh.getParam(name, param))
+      if (nh.getParam(name, param)) {
         param_.attr("set_value")(name, param);
-    }
-    else if (type == "str") {
+      }
+    } else if (type == "str") {
       std::string param;
-      if (nh.getParam(name, param))
+      if (nh.getParam(name, param)) {
         param_.attr("set_value")(name, param);
-    }
-    else if (type == "bool") {
+      }
+    } else if (type == "bool") {
       bool param;
-      if (nh.getParam(name, param))
+      if (nh.getParam(name, param)) {
         param_.attr("set_value")(name, param);
-    }
-    else if (type == "int") {
+      }
+    } else if (type == "int") {
       int param;
-      if (nh.getParam(name, param))
+      if (nh.getParam(name, param)) {
         param_.attr("set_value")(name, param);
+      }
     }
   }
 
@@ -82,23 +82,19 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);
 }
 
-
-void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t, const double positionNoise, const double orientationNoise) {
+void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
+                                    const double positionNoise, const double orientationNoise) {
   py::gil_scoped_acquire acquire;
   RowMatrixXd points;
   pointCloudToMatrix(pointCloud, points);
-  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points),
-                     Eigen::Ref<const RowMatrixXd>(R),
-                     Eigen::Ref<const Eigen::VectorXd>(t),
+  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points), Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
                      positionNoise, orientationNoise);
 }
-
 
 void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
   py::gil_scoped_acquire acquire;
   map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p));
 }
-
 
 void ElevationMappingWrapper::clear() {
   py::gil_scoped_acquire acquire;
@@ -107,8 +103,7 @@ void ElevationMappingWrapper::clear() {
 
 double ElevationMappingWrapper::get_additive_mean_error() {
   py::gil_scoped_acquire acquire;
-  double additive_error = map_.attr("get_additive_mean_error")().cast<double>();
-  return additive_error;
+  return map_.attr("get_additive_mean_error")().cast<double>();
 }
 
 bool ElevationMappingWrapper::exists_layer(const std::string& layerName) {
@@ -119,17 +114,14 @@ bool ElevationMappingWrapper::exists_layer(const std::string& layerName) {
 void ElevationMappingWrapper::get_layer_data(const std::string& layerName, RowMatrixXf& map) {
   py::gil_scoped_acquire acquire;
   map = RowMatrixXf(map_n_, map_n_);
-  map_.attr("get_map_with_name_ref")(
-      layerName,
-      Eigen::Ref<RowMatrixXf>(map));
+  map_.attr("get_map_with_name_ref")(layerName, Eigen::Ref<RowMatrixXf>(map));
 }
-
 
 void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std::vector<std::string>& requestLayerNames) {
   std::vector<std::string> basicLayerNames;
   std::vector<std::string> layerNames = requestLayerNames;
   std::vector<int> selection;
-  for (const auto& layerName: layerNames) {
+  for (const auto& layerName : layerNames) {
     if (layerName == "elevation") {
       basicLayerNames.push_back("elevation");
     }
@@ -143,21 +135,16 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   gridMap.setGeometry(length, resolution_, position);
   std::vector<Eigen::MatrixXf> maps;
 
-  for (const auto& layerName: layerNames) {
+  for (const auto& layerName : layerNames) {
     RowMatrixXf map(map_n_, map_n_);
-    map_.attr("get_map_with_name_ref")(
-        layerName,
-        Eigen::Ref<RowMatrixXf>(map));
+    map_.attr("get_map_with_name_ref")(layerName, Eigen::Ref<RowMatrixXf>(map));
     gridMap.add(layerName, map);
   }
   if (enable_normal_color_) {
     RowMatrixXf normal_x(map_n_, map_n_);
     RowMatrixXf normal_y(map_n_, map_n_);
     RowMatrixXf normal_z(map_n_, map_n_);
-    map_.attr("get_normal_ref")(
-        Eigen::Ref<RowMatrixXf>(normal_x),
-        Eigen::Ref<RowMatrixXf>(normal_y),
-        Eigen::Ref<RowMatrixXf>(normal_z));
+    map_.attr("get_normal_ref")(Eigen::Ref<RowMatrixXf>(normal_x), Eigen::Ref<RowMatrixXf>(normal_y), Eigen::Ref<RowMatrixXf>(normal_z));
     gridMap.add("normal_x", normal_x);
     gridMap.add("normal_y", normal_y);
     gridMap.add("normal_z", normal_z);
@@ -168,42 +155,39 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   }
 }
 
-
-void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d> &polygon, Eigen::Vector3d& result,
-                                                           std::vector<Eigen::Vector2d> &untraversable_polygon) {
-  RowMatrixXf polygon_m(polygon.size(), 2);
-  if (polygon.size() < 3)
+void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vector2d>& polygon, Eigen::Vector3d& result,
+                                                         std::vector<Eigen::Vector2d>& untraversable_polygon) {
+  if (polygon.size() < 3) {
     return;
+  }
+  RowMatrixXf polygon_m(polygon.size(), 2);
   int i = 0;
-  for (auto& p: polygon) {
+  for (auto& p : polygon) {
     polygon_m(i, 0) = p.x();
     polygon_m(i, 1) = p.y();
     i++;
   }
   py::gil_scoped_acquire acquire;
-  const int untraversable_polygon_num = map_.attr("get_polygon_traversability")(
-      Eigen::Ref<const RowMatrixXf>(polygon_m),
-      Eigen::Ref<Eigen::VectorXd>(result)).cast<int>();
+  const int untraversable_polygon_num =
+      map_.attr("get_polygon_traversability")(Eigen::Ref<const RowMatrixXf>(polygon_m), Eigen::Ref<Eigen::VectorXd>(result)).cast<int>();
 
   untraversable_polygon.clear();
   if (untraversable_polygon_num > 0) {
     RowMatrixXf untraversable_polygon_m(untraversable_polygon_num, 2);
     map_.attr("get_untraversable_polygon")(Eigen::Ref<RowMatrixXf>(untraversable_polygon_m));
-    for (int i = 0; i < untraversable_polygon_num; i++) {
+    for (int j = 0; j < untraversable_polygon_num; i++) {
       Eigen::Vector2d p;
-      p.x() = untraversable_polygon_m(i, 0);
-      p.y() = untraversable_polygon_m(i, 1);
+      p.x() = untraversable_polygon_m(j, 0);
+      p.y() = untraversable_polygon_m(j, 1);
       untraversable_polygon.push_back(p);
     }
   }
-
-  return;
 }
 
-void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> &points, std::string method) {
+void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d>& points, std::string method) {
   RowMatrixXd points_m(points.size(), 3);
   int i = 0;
-  for (auto& p: points) {
+  for (auto& p : points) {
     points_m(i, 0) = p.x();
     points_m(i, 1) = p.y();
     points_m(i, 2) = p.z();
@@ -211,13 +195,9 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d> 
   }
   py::gil_scoped_acquire acquire;
   map_.attr("initialize_map")(Eigen::Ref<const RowMatrixXd>(points_m), method);
-  return;
 }
 
-
-void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud,
-                                                 RowMatrixXd& points)
-{
+void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points) {
   points = RowMatrixXd(pointCloud->size(), 3);
   for (unsigned int i = 0; i < pointCloud->size(); ++i) {
     const auto& point = pointCloud->points[i];
@@ -225,11 +205,9 @@ void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::Poin
     points(i, 1) = static_cast<double>(point.y);
     points(i, 2) = static_cast<double>(point.z);
   }
-  return;
 }
 
-void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map)
-{
+void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map) {
   const auto& normalX = map["normal_x"];
   const auto& normalY = map["normal_y"];
   const auto& normalZ = map["normal_z"];
@@ -243,25 +221,20 @@ void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map)
 
   // For each cell in map.
   for (size_t i = 0; i < color.size(); ++i) {
-    const Eigen::Vector3f colorVector((normalX(i) + 1.0) / 2.0,
-                                      (normalY(i) + 1.0) / 2.0,
-                                      (normalZ(i)));
+    const Eigen::Vector3f colorVector((normalX(i) + 1.0) / 2.0, (normalY(i) + 1.0) / 2.0, (normalZ(i)));
     Eigen::Vector3i intColorVector = (colorVector * 255.0).cast<int>();
     grid_map::colorVectorToValue(intColorVector, color(i));
   }
-  return;
 }
 
 void ElevationMappingWrapper::update_variance() {
   py::gil_scoped_acquire acquire;
   map_.attr("update_variance")();
-  return;
 }
 
 void ElevationMappingWrapper::update_time() {
   py::gil_scoped_acquire acquire;
   map_.attr("update_time")();
-  return;
 }
 
-}
+}  // namespace elevation_mapping_cupy
