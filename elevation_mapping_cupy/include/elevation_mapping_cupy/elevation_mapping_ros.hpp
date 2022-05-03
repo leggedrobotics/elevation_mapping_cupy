@@ -115,7 +115,7 @@ class ElevationMappingNode {
 
   std::mutex mapMutex_;  // protects gridMap_
   grid_map::GridMap gridMap_;
-  std::atomic_bool isGridmapUpdated_;  // needs to be atomic (read is protected by mapMutex_)
+  std::atomic_bool isGridmapUpdated_;  // needs to be atomic (read is not protected by mapMutex_)
 
   double positionError_;
   double orientationError_;
