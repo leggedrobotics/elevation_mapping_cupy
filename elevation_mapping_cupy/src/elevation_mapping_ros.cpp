@@ -184,31 +184,26 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
   }
   grid_map_msgs::GridMap msg;
   std::vector<std::string> layers;
-  for (const auto& layer : map_layers_[index]) {
-    const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
-    bool layerExistsInMap{false};
-    {
-      std::lock_guard<std::mutex> lock(mapMutex_);
-      layerExistsInMap = gridMap_.exists(layer);
-    }
 
-    if (is_layer_in_all && layerExistsInMap) {
-      layers.push_back(layer);
-    } else if (map_.exists_layer(layer)) {
-      // if there are layers which is not in the syncing layer.
-      ElevationMappingWrapper::RowMatrixXf map_data;
-      map_.get_layer_data(layer, map_data);
-      layers.push_back(layer);
-      std::lock_guard<std::mutex> lock(mapMutex_);
-      gridMap_.add(layer, map_data);
-    }
-  }
-  if (layers.empty()) {
-    return;
-  }
-
-  {
+  {  // need continuous lock between adding layers and converting to message. Otherwise updateGridmap can reset the data not in
+     // map_layers_all_
     std::lock_guard<std::mutex> lock(mapMutex_);
+    for (const auto& layer : map_layers_[index]) {
+      const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
+      if (is_layer_in_all && gridMap_.exists(layer)) {
+        layers.push_back(layer);
+      } else if (map_.exists_layer(layer)) {
+        // if there are layers which is not in the syncing layer.
+        ElevationMappingWrapper::RowMatrixXf map_data;
+        map_.get_layer_data(layer, map_data);
+        gridMap_.add(layer, map_data);
+        layers.push_back(layer);
+      }
+    }
+    if (layers.empty()) {
+      return;
+    }
+
     grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
   }
 
