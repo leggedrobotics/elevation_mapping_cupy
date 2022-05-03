@@ -191,7 +191,7 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
     } else if (map_.exists_layer(layer)) {
       // if there are layers which is not in the syncing layer.
       boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-      RowMatrixXf map_data;
+      ElevationMappingWrapper::RowMatrixXf map_data;
       map_.get_layer_data(layer, map_data);
       gridMap_.add(layer, map_data);
       layers.push_back(layer);
