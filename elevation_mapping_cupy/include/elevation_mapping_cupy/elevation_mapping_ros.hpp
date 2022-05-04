@@ -53,7 +53,7 @@ class ElevationMappingNode {
   void readParameters();
   void setupMapPublishers();
   void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
-  void publishAsPointCloud(const grid_map::GridMap& map);
+  void publishAsPointCloud(const grid_map::GridMap& map) const;
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
   bool initializeMap(elevation_map_msgs::Initialize::Request& request, elevation_map_msgs::Initialize::Response& response);
@@ -64,16 +64,17 @@ class ElevationMappingNode {
   void updateVariance(const ros::TimerEvent&);
   void updateTime(const ros::TimerEvent&);
   void updateGridMap(const ros::TimerEvent&);
-  void publishNormalAsArrow(const grid_map::GridMap& map);
+  void publishNormalAsArrow(const grid_map::GridMap& map) const;
   void initializeWithTF();
   void publishMapToOdom(double error);
   void publishStatistics(const ros::TimerEvent&);
   void publishMapOfIndex(int index);
 
-  visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id);
+  visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) const;
   ros::NodeHandle nh_;
   std::vector<ros::Subscriber> pointcloudSubs_;
   std::vector<ros::Publisher> mapPubs_;
+  tf::TransformBroadcaster tfBroadcaster_;
   ros::Publisher alivePub_;
   ros::Publisher pointPub_;
   ros::Publisher normalPub_;
@@ -117,17 +118,20 @@ class ElevationMappingNode {
   grid_map::GridMap gridMap_;
   std::atomic_bool isGridmapUpdated_;  // needs to be atomic (read is not protected by mapMutex_)
 
+  std::mutex errorMutex_; // protects positionError_, and orientationError_
   double positionError_;
   double orientationError_;
+
   double positionAlpha_;
   double orientationAlpha_;
+
   double recordableFps_;
-  bool enablePointCloudPublishing_;
+  std::atomic_bool enablePointCloudPublishing_;
   bool enableNormalArrowPublishing_;
   bool enableDriftCorrectedTFPublishing_;
   bool useInitializerAtStart_;
   double initializeTfGridSize_;
-  int pointCloudProcessCounter_;
+  std::atomic_int pointCloudProcessCounter_;
 };
 
 }  // namespace elevation_mapping_cupy

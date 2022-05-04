@@ -36,6 +36,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   std::vector<std::string> pointcloud_topics;
   std::vector<std::string> map_topics;
   double recordableFps, updateVarianceFps, timeInterval, updatePoseFps, updateGridMapFps, publishStatisticsFps;
+  bool enablePointCloudPublishing(false);
 
   nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
   nh.getParam("publishers", publishers);
@@ -55,10 +56,13 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
   nh.param<double>("map_acquire_fps", updateGridMapFps, 5.0);
   nh.param<double>("publish_statistics_fps", publishStatisticsFps, 1.0);
-  nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing_, false);
+  nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing, false);
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
+
+  enablePointCloudPublishing_ = enablePointCloudPublishing;
+
   for (const auto& pointcloud_topic : pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
@@ -230,7 +234,16 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
     ROS_ERROR("%s", ex.what());
     return;
   }
-  map_.input(pointCloud, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError_, orientationError_);
+
+  double positionError{0.0};
+  double orientationError{0.0};
+  {
+    std::lock_guard<std::mutex> lock(errorMutex_);
+    positionError = positionError_;
+    orientationError = orientationError_;
+  }
+
+  map_.input(pointCloud, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError, orientationError);
 
   if (enableDriftCorrectedTFPublishing_) {
     publishMapToOdom(map_.get_additive_mean_error());
@@ -238,8 +251,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()),
                      (ros::Time::now() - start).toSec());
-  ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
-  ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
+  ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError);
+  ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError);
   // This is used for publishing as statistics.
   pointCloudProcessCounter_++;
 }
@@ -263,8 +276,12 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
                               transformTf.getRotation().w());
   lowpassPosition_ = positionAlpha_ * position3 + (1 - positionAlpha_) * lowpassPosition_;
   lowpassOrientation_ = orientationAlpha_ * orientation + (1 - orientationAlpha_) * lowpassOrientation_;
-  positionError_ = (position3 - lowpassPosition_).norm();
-  orientationError_ = (orientation - lowpassOrientation_).norm();
+  {
+    std::lock_guard<std::mutex> lock(errorMutex_);
+    positionError_ = (position3 - lowpassPosition_).norm();
+    orientationError_ = (orientation - lowpassOrientation_).norm();
+  }
+
   if (useInitializerAtStart_) {
     ROS_INFO("Clearing map with initializer.");
     initializeWithTF();
@@ -272,7 +289,7 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
   }
 }
 
-void ElevationMappingNode::publishAsPointCloud(const grid_map::GridMap& map) {
+void ElevationMappingNode::publishAsPointCloud(const grid_map::GridMap& map) const {
   sensor_msgs::PointCloud2 msg;
   grid_map::GridMapRosConverter::toPointCloud(map, "elevation", msg);
   pointPub_.publish(msg);
@@ -519,7 +536,7 @@ bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request
   return true;
 }
 
-void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) {
+void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) const {
   auto startTime = ros::Time::now();
 
   const auto& normalX = map["normal_x"];
@@ -549,7 +566,7 @@ void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) {
 }
 
 visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end,
-                                                                     const int id) {
+                                                                     const int id) const {
   visualization_msgs::Marker marker;
   marker.header.frame_id = mapFrameId_;
   marker.header.stamp = ros::Time::now();
@@ -580,13 +597,12 @@ visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen
 }
 
 void ElevationMappingNode::publishMapToOdom(double error) {
-  static tf::TransformBroadcaster br;
   tf::Transform transform;
   transform.setOrigin(tf::Vector3(0.0, 0.0, error));
   tf::Quaternion q;
   q.setRPY(0, 0, 0);
   transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), mapFrameId_, correctedMapFrameId_));
+  tfBroadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), mapFrameId_, correctedMapFrameId_));
 }
 
 }  // namespace elevation_mapping_cupy
