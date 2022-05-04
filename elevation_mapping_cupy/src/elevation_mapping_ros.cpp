@@ -2,31 +2,33 @@
 // Copyright (c) 2022, Takahiro Miki. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
+
 #include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
-#include <pybind11_catkin/pybind11/embed.h> 
+
+// Pybind
 #include <pybind11_catkin/pybind11/eigen.h>
-#include <iostream>
-#include <Eigen/Dense>
-#include <pcl/common/projection_matrix.h>
-#include <tf_conversions/tf_eigen.h>
-#include <ros/package.h>
+
+// ROS
 #include <geometry_msgs/Point32.h>
-#include <elevation_map_msgs/CheckSafety.h>
+#include <ros/package.h>
+#include <tf_conversions/tf_eigen.h>
+
+// PCL
+#include <pcl/common/projection_matrix.h>
+
 #include <elevation_map_msgs/Statistics.h>
 
-namespace elevation_mapping_cupy{
+namespace elevation_mapping_cupy {
 
-
-ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
-  lowpassPosition_(0, 0, 0),
-  lowpassOrientation_(0, 0, 0, 1),
-  positionError_(0),
-  orientationError_(0),
-  positionAlpha_(0.1),
-  orientationAlpha_(0.1),
-  enablePointCloudPublishing_(false),
-  isGridmapUpdated_(false)
-{
+ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
+    : lowpassPosition_(0, 0, 0),
+      lowpassOrientation_(0, 0, 0, 1),
+      positionError_(0),
+      orientationError_(0),
+      positionAlpha_(0.1),
+      orientationAlpha_(0.1),
+      enablePointCloudPublishing_(false),
+      isGridmapUpdated_(false) {
   nh_ = nh;
   map_.initialize(nh_);
   std::string pose_topic, map_frame;
@@ -57,14 +59,13 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
-  for (const auto& pointcloud_topic: pointcloud_topics) {
+  for (const auto& pointcloud_topic : pointcloud_topics) {
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
 
   // register map publishers
-  for(auto itr = publishers.begin(); itr != publishers.end(); ++itr)
-  {
+  for (auto itr = publishers.begin(); itr != publishers.end(); ++itr) {
     // parse params
     std::string topic_name = itr->first;
     std::vector<std::string> layers_list;
@@ -74,14 +75,19 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
     double fps = itr->second["fps"];
 
     if (fps > updateGridMapFps) {
-      ROS_WARN("[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f fps.", topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
+      ROS_WARN(
+          "[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f "
+          "fps.",
+          topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
     }
 
     for (int32_t i = 0; i < layers.size(); ++i) {
       layers_list.push_back(static_cast<std::string>(layers[i]));
     }
-    for (int32_t i = 0; i < basic_layers.size(); ++i) 
+
+    for (int32_t i = 0; i < basic_layers.size(); ++i) {
       basic_layers_list.push_back(static_cast<std::string>(basic_layers[i]));
+    }
 
     // make publishers
     ros::Publisher pub = nh_.advertise<grid_map_msgs::GridMap>(topic_name, 1);
@@ -106,46 +112,41 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh) :
   rawSubmapService_ = nh_.advertiseService("get_raw_submap", &ElevationMappingNode::getSubmap, this);
   clearMapService_ = nh_.advertiseService("clear_map", &ElevationMappingNode::clearMap, this);
   initializeMapService_ = nh_.advertiseService("initialize", &ElevationMappingNode::initializeMap, this);
-  clearMapWithInitializerService_ = nh_.advertiseService("clear_map_with_initializer", &ElevationMappingNode::clearMapWithInitializer, this);
+  clearMapWithInitializerService_ =
+      nh_.advertiseService("clear_map_with_initializer", &ElevationMappingNode::clearMapWithInitializer, this);
   setPublishPointService_ = nh_.advertiseService("set_publish_points", &ElevationMappingNode::setPublishPoint, this);
   checkSafetyService_ = nh_.advertiseService("check_safety", &ElevationMappingNode::checkSafety, this);
 
   if (updateVarianceFps > 0) {
     double duration = 1.0 / (updateVarianceFps + 0.00001);
-    updateVarianceTimer_ = nh_.createTimer(ros::Duration(duration),
-                                           &ElevationMappingNode::updateVariance, this, false, true);
+    updateVarianceTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updateVariance, this, false, true);
   }
   if (timeInterval > 0) {
     double duration = timeInterval;
-    updateTimeTimer_ = nh_.createTimer(ros::Duration(duration),
-                                       &ElevationMappingNode::updateTime, this, false, true);
+    updateTimeTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updateTime, this, false, true);
   }
   if (updatePoseFps > 0) {
     double duration = 1.0 / (updatePoseFps + 0.00001);
-    updatePoseTimer_ = nh_.createTimer(ros::Duration(duration),
-                                       &ElevationMappingNode::updatePose, this, false, true);
+    updatePoseTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updatePose, this, false, true);
   }
   if (updateGridMapFps > 0) {
     double duration = 1.0 / (updateGridMapFps + 0.00001);
-    updateGridMapTimer_ = nh_.createTimer(ros::Duration(duration),
-                                          &ElevationMappingNode::updateGridMap, this, false, true);
+    updateGridMapTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updateGridMap, this, false, true);
   }
   if (publishStatisticsFps > 0) {
     double duration = 1.0 / (publishStatisticsFps + 0.00001);
-    publishStatisticsTimer_ = nh_.createTimer(ros::Duration(duration),
-                                              &ElevationMappingNode::publishStatistics, this, false, true);
+    publishStatisticsTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::publishStatistics, this, false, true);
   }
   lastStatisticsPublishedTime_ = ros::Time::now();
   ROS_INFO("[ElevationMappingCupy] finish initialization");
 }
-
 
 // setup map publishers
 void ElevationMappingNode::setupMapPublishers() {
   // Find the layers with highest fps.
   float max_fps = -1;
   // create timers for each unique map frequencies
-  for(auto fps : map_fps_unique_) {
+  for (auto fps : map_fps_unique_) {
     // which publisher to call in the timer callback
     std::vector<int> indices;
     // if this fps is max, update the map layers.
@@ -153,58 +154,60 @@ void ElevationMappingNode::setupMapPublishers() {
       max_fps = fps;
       map_layers_all_.clear();
     }
-    for(int i=0; i<map_fps_.size(); i++) {
-      if(map_fps_[i] == fps) {
+    for (int i = 0; i < map_fps_.size(); i++) {
+      if (map_fps_[i] == fps) {
         indices.push_back(i);
         // if this fps is max, add layers
         if (fps >= max_fps) {
-          for (const auto layer: map_layers_[i])
+          for (const auto layer : map_layers_[i]) {
             map_layers_all_.insert(layer);
+          }
         }
       }
     }
     // callback funtion.
     // It publishes to specific topics.
-    auto cb = [this, indices](const ros::TimerEvent&) { for(int i:indices) { publishMapOfIndex(i); } };
+    auto cb = [this, indices](const ros::TimerEvent&) {
+      for (int i : indices) {
+        publishMapOfIndex(i);
+      }
+    };
     double duration = 1.0 / (fps + 0.00001);
     mapTimers_.push_back(nh_.createTimer(ros::Duration(duration), cb));
   }
 }
 
-
 void ElevationMappingNode::publishMapOfIndex(int index) {
   // publish the map layers of index
-  if(!isGridmapUpdated_)
+  if (!isGridmapUpdated_) {
     return;
+  }
   grid_map_msgs::GridMap msg;
   std::vector<std::string> layers;
-  for (const auto& layer: map_layers_[index]) {
+  for (const auto& layer : map_layers_[index]) {
     const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
     if (is_layer_in_all && gridMap_.exists(layer)) {
       layers.push_back(layer);
-    }
-    else if (map_.exists_layer(layer)) {
+    } else if (map_.exists_layer(layer)) {
       // if there are layers which is not in the syncing layer.
       boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
-      RowMatrixXf map_data;
+      ElevationMappingWrapper::RowMatrixXf map_data;
       map_.get_layer_data(layer, map_data);
       gridMap_.add(layer, map_data);
       layers.push_back(layer);
     }
   }
-  if (layers.size() == 0) 
+  if (layers.empty()) {
     return;
+  }
   boost::recursive_mutex::scoped_lock scopedLockForGridMap(mapMutex_);
   grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
   scopedLockForGridMap.unlock();
   msg.basic_layers = map_basic_layers_[index];
   mapPubs_[index].publish(msg);
-  return;
 }
 
-
-void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud)
-{
+void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud) {
   auto start = ros::Time::now();
   pcl::PCLPointCloud2 pcl_pc;
   pcl_conversions::toPCL(cloud, pcl_pc);
@@ -219,37 +222,31 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
     transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
     transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
     poseTFToEigen(transformTf, transformationSensorToMap);
-  }
-  catch (tf::TransformException &ex) {
+  } catch (tf::TransformException& ex) {
     ROS_ERROR("%s", ex.what());
     return;
   }
-  map_.input(pointCloud,
-             transformationSensorToMap.rotation(),
-             transformationSensorToMap.translation(),
-             positionError_,
-             orientationError_);
-  
+  map_.input(pointCloud, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError_, orientationError_);
+
   if (enableDriftCorrectedTFPublishing_) {
     publishMapToOdom(map_.get_additive_mean_error());
   }
 
-  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()), (ros::Time::now() - start).toSec());
+  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()),
+                     (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError_);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError_);
   // This is used for publishing as statistics.
   pointCloudProcessCounter_++;
 }
 
-void ElevationMappingNode::updatePose(const ros::TimerEvent&)
-{
+void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
   tf::StampedTransform transformTf;
   const auto& timeStamp = ros::Time::now();
   try {
     transformListener_.waitForTransform(mapFrameId_, baseFrameId_, timeStamp, ros::Duration(1.0));
     transformListener_.lookupTransform(mapFrameId_, baseFrameId_, timeStamp, transformTf);
-  }
-  catch (tf::TransformException &ex) {
+  } catch (tf::TransformException& ex) {
     ROS_ERROR("%s", ex.what());
     return;
   }
@@ -258,8 +255,8 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&)
   Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   map_.move_to(position);
   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
-  Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(),
-                              transformTf.getRotation().z(), transformTf.getRotation().w());
+  Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(), transformTf.getRotation().z(),
+                              transformTf.getRotation().w());
   lowpassPosition_ = positionAlpha_ * position3 + (1 - positionAlpha_) * lowpassPosition_;
   lowpassOrientation_ = orientationAlpha_ * orientation + (1 - orientationAlpha_) * lowpassOrientation_;
   positionError_ = (position3 - lowpassPosition_).norm();
@@ -277,8 +274,7 @@ void ElevationMappingNode::publishAsPointCloud() {
   pointPub_.publish(msg);
 }
 
-bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response)
-{
+bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response) {
   std::string requestedFrameId = request.frame_id;
   Eigen::Isometry3d transformationOdomToMap;
   grid_map::Position requestedSubmapPosition(request.position_x, request.position_y);
@@ -289,8 +285,7 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
       transformListener_.waitForTransform(requestedFrameId, mapFrameId_, timeStamp, ros::Duration(1.0));
       transformListener_.lookupTransform(requestedFrameId, mapFrameId_, timeStamp, transformTf);
       tf::poseTFToEigen(transformTf, transformationOdomToMap);
-    }
-    catch (tf::TransformException &ex) {
+    } catch (tf::TransformException& ex) {
       ROS_ERROR("%s", ex.what());
       return false;
     }
@@ -300,7 +295,8 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
     requestedSubmapPosition.y() = mapP.y();
   }
   grid_map::Length requestedSubmapLength(request.length_x, request.length_y);
-  ROS_DEBUG("Elevation submap request: Position x=%f, y=%f, Length x=%f, y=%f.", requestedSubmapPosition.x(), requestedSubmapPosition.y(), requestedSubmapLength(0), requestedSubmapLength(1));
+  ROS_DEBUG("Elevation submap request: Position x=%f, y=%f, Length x=%f, y=%f.", requestedSubmapPosition.x(), requestedSubmapPosition.y(),
+            requestedSubmapLength(0), requestedSubmapLength(1));
 
   bool isSuccess;
   grid_map::Index index;
@@ -316,8 +312,7 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
 
   if (request.layers.empty()) {
     grid_map::GridMapRosConverter::toMessage(subMap, response.map);
-  }
-  else {
+  } else {
     std::vector<std::string> layers;
     for (const auto& layer : request.layers) {
       layers.push_back(layer);
@@ -327,15 +322,13 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
   return isSuccess;
 }
 
-bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
-{
+bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
   ROS_INFO("Clearing map.");
   map_.clear();
   return true;
 }
 
-bool ElevationMappingNode::clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
-{
+bool ElevationMappingNode::clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
   ROS_INFO("Clearing map with initializer.");
   map_.clear();
   initializeWithTF();
@@ -343,45 +336,43 @@ bool ElevationMappingNode::clearMapWithInitializer(std_srvs::Empty::Request& req
 }
 
 void ElevationMappingNode::initializeWithTF() {
-    std::vector<Eigen::Vector3d> points;
-    const auto& timeStamp = ros::Time::now();
-    int i = 0;
-    Eigen::Vector3d p;
-    for (const auto& frame_id: initialize_frame_id_) {
-      // Get tf from map frame to tf frame
-      Eigen::Affine3d transformationBaseToMap;
-      tf::StampedTransform transformTf;
-      try {
-        transformListener_.waitForTransform(mapFrameId_, frame_id, timeStamp, ros::Duration(1.0));
-        transformListener_.lookupTransform(mapFrameId_, frame_id, timeStamp, transformTf);
-        poseTFToEigen(transformTf, transformationBaseToMap);
-      }
-      catch (tf::TransformException &ex) {
-        ROS_ERROR("%s", ex.what());
-        return;
-      }
-      p = transformationBaseToMap.translation();
-      p.z() += initialize_tf_offset_[i];
-      points.push_back(p);
-      i++;
+  std::vector<Eigen::Vector3d> points;
+  const auto& timeStamp = ros::Time::now();
+  int i = 0;
+  Eigen::Vector3d p;
+  for (const auto& frame_id : initialize_frame_id_) {
+    // Get tf from map frame to tf frame
+    Eigen::Affine3d transformationBaseToMap;
+    tf::StampedTransform transformTf;
+    try {
+      transformListener_.waitForTransform(mapFrameId_, frame_id, timeStamp, ros::Duration(1.0));
+      transformListener_.lookupTransform(mapFrameId_, frame_id, timeStamp, transformTf);
+      poseTFToEigen(transformTf, transformationBaseToMap);
+    } catch (tf::TransformException& ex) {
+      ROS_ERROR("%s", ex.what());
+      return;
     }
-    if (points.size() > 0 && points.size() < 3) {
-      points.push_back(p + Eigen::Vector3d(initializeTfGridSize_, initializeTfGridSize_, 0));
-      points.push_back(p + Eigen::Vector3d(-initializeTfGridSize_, initializeTfGridSize_, 0));
-      points.push_back(p + Eigen::Vector3d(initializeTfGridSize_, -initializeTfGridSize_, 0));
-      points.push_back(p + Eigen::Vector3d(-initializeTfGridSize_, -initializeTfGridSize_, 0));
-    }
-    ROS_INFO_STREAM("Initializing map with points using " << initializeMethod_);
-    map_.initializeWithPoints(points, initializeMethod_);
+    p = transformationBaseToMap.translation();
+    p.z() += initialize_tf_offset_[i];
+    points.push_back(p);
+    i++;
+  }
+  if (!points.empty() && points.size() < 3) {
+    points.emplace_back(p + Eigen::Vector3d(initializeTfGridSize_, initializeTfGridSize_, 0));
+    points.emplace_back(p + Eigen::Vector3d(-initializeTfGridSize_, initializeTfGridSize_, 0));
+    points.emplace_back(p + Eigen::Vector3d(initializeTfGridSize_, -initializeTfGridSize_, 0));
+    points.emplace_back(p + Eigen::Vector3d(-initializeTfGridSize_, -initializeTfGridSize_, 0));
+  }
+  ROS_INFO_STREAM("Initializing map with points using " << initializeMethod_);
+  map_.initializeWithPoints(points, initializeMethod_);
 }
-
 
 bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request& request,
                                        elevation_map_msgs::CheckSafety::Response& response) {
-
-  for (const auto& polygonstamped: request.polygons) {
-    if (polygonstamped.polygon.points.size() == 0)
+  for (const auto& polygonstamped : request.polygons) {
+    if (polygonstamped.polygon.points.empty()) {
       continue;
+    }
     std::vector<Eigen::Vector2d> polygon;
     std::vector<Eigen::Vector2d> untraversable_polygon;
     Eigen::Vector3d result;
@@ -389,7 +380,6 @@ bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request&
     const auto& polygonFrameId = polygonstamped.header.frame_id;
     const auto& timeStamp = polygonstamped.header.stamp;
     double polygon_z = polygonstamped.polygon.points[0].z;
-
 
     // Get tf from map frame to polygon frame
     if (mapFrameId_ != polygonFrameId) {
@@ -399,20 +389,18 @@ bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request&
         transformListener_.waitForTransform(mapFrameId_, polygonFrameId, timeStamp, ros::Duration(1.0));
         transformListener_.lookupTransform(mapFrameId_, polygonFrameId, timeStamp, transformTf);
         poseTFToEigen(transformTf, transformationBaseToMap);
-      }
-      catch (tf::TransformException &ex) {
+      } catch (tf::TransformException& ex) {
         ROS_ERROR("%s", ex.what());
         return false;
       }
-      for (const auto& p: polygonstamped.polygon.points) {
+      for (const auto& p : polygonstamped.polygon.points) {
         const auto& pvector = Eigen::Vector3d(p.x, p.y, p.z);
         const auto transformed_p = transformationBaseToMap * pvector;
-        polygon.push_back(Eigen::Vector2d(transformed_p.x(), transformed_p.y()));
+        polygon.emplace_back(Eigen::Vector2d(transformed_p.x(), transformed_p.y()));
       }
-    }
-    else {
-      for (const auto& p: polygonstamped.polygon.points) {
-        polygon.push_back(Eigen::Vector2d(p.x, p.y));
+    } else {
+      for (const auto& p : polygonstamped.polygon.points) {
+        polygon.emplace_back(Eigen::Vector2d(p.x, p.y));
       }
     }
 
@@ -421,11 +409,11 @@ bool ElevationMappingNode::checkSafety(elevation_map_msgs::CheckSafety::Request&
     geometry_msgs::PolygonStamped untraversable_polygonstamped;
     untraversable_polygonstamped.header.stamp = ros::Time::now();
     untraversable_polygonstamped.header.frame_id = mapFrameId_;
-    for (const auto& p: untraversable_polygon) {
+    for (const auto& p : untraversable_polygon) {
       geometry_msgs::Point32 point;
-      point.x = p.x();
-      point.y = p.y();
-      point.z = polygon_z;
+      point.x = static_cast<float>(p.x());
+      point.y = static_cast<float>(p.y());
+      point.z = static_cast<float>(polygon_z);
       untraversable_polygonstamped.polygon.points.push_back(point);
     }
     // traversability_result;
@@ -442,7 +430,6 @@ bool ElevationMappingNode::setPublishPoint(std_srvs::SetBool::Request& request, 
   return true;
 }
 
-
 void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
   map_.update_variance();
 }
@@ -457,8 +444,9 @@ void ElevationMappingNode::publishStatistics(const ros::TimerEvent&) {
   lastStatisticsPublishedTime_ = now;
   elevation_map_msgs::Statistics msg;
   msg.header.stamp = now;
-  if (dt > 0.0)
-    msg.pointcloud_process_fps = (double)pointCloudProcessCounter_ / dt;
+  if (dt > 0.0) {
+    msg.pointcloud_process_fps = pointCloudProcessCounter_ / dt;
+  }
   pointCloudProcessCounter_ = 0;
   statisticsPub_.publish(msg);
 }
@@ -482,11 +470,10 @@ void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
 
 bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request& request,
                                          elevation_map_msgs::Initialize::Response& response) {
-
   // If initialize method is points
   if (request.type == request.POINTS) {
     std::vector<Eigen::Vector3d> points;
-    for (const auto& point: request.points) {
+    for (const auto& point : request.points) {
       const auto& pointFrameId = point.header.frame_id;
       const auto& timeStamp = point.header.stamp;
       const auto& pvector = Eigen::Vector3d(point.point.x, point.point.y, point.point.z);
@@ -499,20 +486,18 @@ bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request
           transformListener_.waitForTransform(mapFrameId_, pointFrameId, timeStamp, ros::Duration(1.0));
           transformListener_.lookupTransform(mapFrameId_, pointFrameId, timeStamp, transformTf);
           poseTFToEigen(transformTf, transformationBaseToMap);
-        }
-        catch (tf::TransformException &ex) {
+        } catch (tf::TransformException& ex) {
           ROS_ERROR("%s", ex.what());
           return false;
         }
         const auto transformed_p = transformationBaseToMap * pvector;
         points.push_back(transformed_p);
-        }
-      else {
+      } else {
         points.push_back(pvector);
       }
     }
     std::string method;
-    switch (request.method){
+    switch (request.method) {
       case request.NEAREST:
         method = "nearest";
         break;
@@ -531,34 +516,36 @@ bool ElevationMappingNode::initializeMap(elevation_map_msgs::Initialize::Request
 }
 
 void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) {
-  auto start = ros::Time::now();
+  auto startTime = ros::Time::now();
 
-  auto& normalX = map["normal_x"];
-  auto& normalY = map["normal_y"];
-  auto& normalZ = map["normal_z"];
+  const auto& normalX = map["normal_x"];
+  const auto& normalY = map["normal_y"];
+  const auto& normalZ = map["normal_z"];
   double scale = 0.1;
-  
+
   visualization_msgs::MarkerArray markerArray;
   // For each cell in map.
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
-    const int i = iterator.getLinearIndex();
     if (!map.isValid(*iterator, "elevation")) {
-      continue;}
+      continue;
+    }
     grid_map::Position3 p;
     map.getPosition3("elevation", *iterator, p);
-    Eigen::Vector3d start = (Eigen::Vector3d)p;
+    Eigen::Vector3d start = p;
+    const auto i = iterator.getLinearIndex();
     Eigen::Vector3d normal(normalX(i), normalY(i), normalZ(i));
     Eigen::Vector3d end = start + normal * scale;
     if (normal.norm() < 0.1) {
-      continue;}
+      continue;
+    }
     markerArray.markers.push_back(vectorToArrowMarker(start, end, i));
   }
   normalPub_.publish(markerArray);
-  ROS_INFO_THROTTLE(1.0, "publish as normal in %f sec.", (ros::Time::now() - start).toSec());
-  return;
+  ROS_INFO_THROTTLE(1.0, "publish as normal in %f sec.", (ros::Time::now() - startTime).toSec());
 }
 
-visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) {
+visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end,
+                                                                     const int id) {
   visualization_msgs::Marker marker;
   marker.header.frame_id = mapFrameId_;
   marker.header.stamp = ros::Time::now();
@@ -580,7 +567,7 @@ visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen
   marker.scale.x = 0.01;
   marker.scale.y = 0.01;
   marker.scale.z = 0.01;
-  marker.color.a = 1.0; // Don't forget to set the alpha!
+  marker.color.a = 1.0;  // Don't forget to set the alpha!
   marker.color.r = 0.0;
   marker.color.g = 1.0;
   marker.color.b = 0.0;
@@ -588,15 +575,14 @@ visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen
   return marker;
 }
 
-void ElevationMappingNode::publishMapToOdom(double error)
-{
+void ElevationMappingNode::publishMapToOdom(double error) {
   static tf::TransformBroadcaster br;
   tf::Transform transform;
-  transform.setOrigin( tf::Vector3(0.0, 0.0, error) );
+  transform.setOrigin(tf::Vector3(0.0, 0.0, error));
   tf::Quaternion q;
   q.setRPY(0, 0, 0);
   transform.setRotation(q);
   br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), mapFrameId_, correctedMapFrameId_));
 }
 
-}
+}  // namespace elevation_mapping_cupy
