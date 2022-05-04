@@ -36,7 +36,9 @@ void GridMapPreprocessing::denoise(grid_map::GridMap& gridMap, const std::string
 }
 
 void GridMapPreprocessing::changeResolution(grid_map::GridMap& gridMap, const std::string& layer) const {
-  if (parameters_.resolution > 0.0 && gridMap.getResolution() != parameters_.resolution) {
+  bool hasSameResolution = std::abs(gridMap.getResolution() - parameters_.resolution) < 1e-6;
+
+  if (parameters_.resolution > 0.0 && !hasSameResolution) {
     // Original map info
     const auto oldPosition = gridMap.getPosition();
     const auto oldSize = gridMap.getSize();
