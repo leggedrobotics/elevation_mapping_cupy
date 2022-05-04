@@ -16,9 +16,16 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
         __device__ float16 round(float16 x) {
             return (int)x + (int)(2 * (x - (int)x));
         }
-        __device__ int get_xy_idx(float16 x, float16 center) {
+        __device__ int get_x_idx(float16 x, float16 center) {
             const float resolution = ${resolution};
-            int i = round((x - center) / resolution);
+            const float width = ${width};
+            int i = round((x - center) / resolution + (width - 1.0) / 2);
+            return i;
+        }
+        __device__ int get_y_idx(float16 y, float16 center) {
+            const float resolution = ${resolution};
+            const float height = ${height};
+            int i = round((y - center) / resolution + (height - 1.0) / 2);
             return i;
         }
         __device__ bool is_inside(int idx) {
@@ -33,8 +40,8 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
             return true;
         }
         __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
-            int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
-            int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
+            int idx_x = clamp(get_x_idx(x, center_x), 0, ${width} - 1);
+            int idx_y = clamp(get_y_idx(y, center_y), 0, ${height} - 1);
             return ${width} * idx_x + idx_y;
         }
         __device__ int get_map_idx(int idx, int layer_n) {
@@ -515,14 +522,21 @@ def polygon_mask_kernel(width, height, resolution):
             __device__ float16 round(float16 x) {
                 return (int)x + (int)(2 * (x - (int)x));
             }
-            __device__ int get_xy_idx(float16 x, float16 center) {
+            __device__ int get_x_idx(float16 x, float16 center) {
                 const float resolution = ${resolution};
-                int i = round((x - center) / resolution);
+                const float width = ${width};
+                int i = round((x - center) / resolution + width / 2);
+                return i;
+            }
+            __device__ int get_y_idx(float16 y, float16 center) {
+                const float resolution = ${resolution};
+                const float height = ${height};
+                int i = round((y - center) / resolution + height / 2);
                 return i;
             }
             __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
-                int idx_x = clamp(get_xy_idx(x, center_x) + ${width} / 2, 0, ${width} - 1);
-                int idx_y = clamp(get_xy_idx(y, center_y) + ${height} / 2, 0, ${height} - 1);
+                int idx_x = clamp(get_x_idx(x, center_x), 0, ${width} - 1);
+                int idx_y = clamp(get_y_idx(y, center_y), 0, ${height} - 1);
                 return ${width} * idx_x + idx_y;
             }
 
