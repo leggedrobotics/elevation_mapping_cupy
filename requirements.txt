@@ -6,4 +6,4 @@ ruamel.yaml
 opencv-python
 
 ###### Requirements with Version Specifiers ######`
-shapely==1.7.1
+shapely==1.7a1
