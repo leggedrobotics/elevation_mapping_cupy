@@ -77,6 +77,7 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
   map_length_ = py::cast<float>(param_.attr("get_value")("map_length"));
   map_n_ = static_cast<int>(round(map_length_ / resolution_));
+  map_length_ = resolution_ * map_n_;  // get true length after rounding
 
   nh.param<bool>("enable_normal", enable_normal_, false);
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);

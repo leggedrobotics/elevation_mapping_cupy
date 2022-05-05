@@ -13,19 +13,16 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
 
             return max(min(x, max_x), min_x);
         }
-        __device__ float16 round(float16 x) {
-            return (int)x + (int)(2 * (x - (int)x));
-        }
         __device__ int get_x_idx(float16 x, float16 center) {
             const float resolution = ${resolution};
             const float width = ${width};
-            int i = round((x - center) / resolution + (width - 1.0) / 2);
+            int i = (x - center) / resolution + 0.5 * width;
             return i;
         }
         __device__ int get_y_idx(float16 y, float16 center) {
             const float resolution = ${resolution};
             const float height = ${height};
-            int i = round((y - center) / resolution + (height - 1.0) / 2);
+            int i = (y - center) / resolution + 0.5 * height;
             return i;
         }
         __device__ bool is_inside(int idx) {
@@ -525,13 +522,13 @@ def polygon_mask_kernel(width, height, resolution):
             __device__ int get_x_idx(float16 x, float16 center) {
                 const float resolution = ${resolution};
                 const float width = ${width};
-                int i = round((x - center) / resolution + width / 2);
+                int i = (x - center) / resolution + 0.5 * width;
                 return i;
             }
             __device__ int get_y_idx(float16 y, float16 center) {
                 const float resolution = ${resolution};
                 const float height = ${height};
-                int i = round((y - center) / resolution + height / 2);
+                int i = (y - center) / resolution + 0.5 * height;
                 return i;
             }
             __device__ int get_idx(float16 x, float16 y, float16 center_x, float16 center_y) {
