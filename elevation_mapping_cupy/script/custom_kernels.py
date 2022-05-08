@@ -6,9 +6,19 @@ import cupy as cp
 import string
 
 
-def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range,
-              ramped_height_range_a, ramped_height_range_b, ramped_height_range_c):
-    util_preamble = string.Template('''
+def map_utils(
+    resolution,
+    width,
+    height,
+    sensor_noise_factor,
+    min_valid_distance,
+    max_height_range,
+    ramped_height_range_a,
+    ramped_height_range_b,
+    ramped_height_range_c,
+):
+    util_preamble = string.Template(
+        """
         __device__ float16 clamp(float16 x, float16 min_x, float16 max_x) {
 
             return max(min(x, max_x), min_x);
@@ -97,32 +107,57 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
             return product;
        }
 
-        ''').substitute(resolution=resolution, width=width, height=height,
-                        sensor_noise_factor=sensor_noise_factor,
-                        min_valid_distance=min_valid_distance,
-                        max_height_range=max_height_range,
-                        ramped_height_range_a=ramped_height_range_a,
-                        ramped_height_range_b=ramped_height_range_b,
-                        ramped_height_range_c=ramped_height_range_c,
-                        )
+        """
+    ).substitute(
+        resolution=resolution,
+        width=width,
+        height=height,
+        sensor_noise_factor=sensor_noise_factor,
+        min_valid_distance=min_valid_distance,
+        max_height_range=max_height_range,
+        ramped_height_range_a=ramped_height_range_a,
+        ramped_height_range_b=ramped_height_range_b,
+        ramped_height_range_c=ramped_height_range_c,
+    )
     return util_preamble
 
 
-def add_points_kernel(resolution, width, height, sensor_noise_factor,
-                      mahalanobis_thresh, outlier_variance, wall_num_thresh,
-                      max_ray_length, cleanup_step, min_valid_distance,
-                      max_height_range, cleanup_cos_thresh,
-                      ramped_height_range_a, ramped_height_range_b, ramped_height_range_c,
-                      enable_edge_shaped=True, enable_visibility_cleanup=True):
+def add_points_kernel(
+    resolution,
+    width,
+    height,
+    sensor_noise_factor,
+    mahalanobis_thresh,
+    outlier_variance,
+    wall_num_thresh,
+    max_ray_length,
+    cleanup_step,
+    min_valid_distance,
+    max_height_range,
+    cleanup_cos_thresh,
+    ramped_height_range_a,
+    ramped_height_range_b,
+    ramped_height_range_c,
+    enable_edge_shaped=True,
+    enable_visibility_cleanup=True,
+):
 
     add_points_kernel = cp.ElementwiseKernel(
-            in_params='raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map',
-            out_params='raw U map, raw T newmap',
-            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range,
-                               ramped_height_range_a, ramped_height_range_b, ramped_height_range_c),
-            operation=\
-            string.Template(
-            '''
+        in_params="raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
+        out_params="raw U map, raw T newmap",
+        preamble=map_utils(
+            resolution,
+            width,
+            height,
+            sensor_noise_factor,
+            min_valid_distance,
+            max_height_range,
+            ramped_height_range_a,
+            ramped_height_range_b,
+            ramped_height_range_c,
+        ),
+        operation=string.Template(
+            """
             U rx = p[i * 3];
             U ry = p[i * 3 + 1];
             U rz = p[i * 3 + 2];
@@ -223,33 +258,54 @@ def add_points_kernel(resolution, width, height, sensor_noise_factor,
                     }
                 }
             }
-            ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
-                            outlier_variance=outlier_variance,
-                            wall_num_thresh=wall_num_thresh,
-                            ray_step=resolution / 2**0.5,
-                            max_ray_length=max_ray_length,
-                            cleanup_step=cleanup_step,
-                            cleanup_cos_thresh=cleanup_cos_thresh,
-                            enable_edge_shaped=int(enable_edge_shaped),
-                            enable_visibility_cleanup=int(enable_visibility_cleanup)),
-            name='add_points_kernel')
+            """
+        ).substitute(
+            mahalanobis_thresh=mahalanobis_thresh,
+            outlier_variance=outlier_variance,
+            wall_num_thresh=wall_num_thresh,
+            ray_step=resolution / 2**0.5,
+            max_ray_length=max_ray_length,
+            cleanup_step=cleanup_step,
+            cleanup_cos_thresh=cleanup_cos_thresh,
+            enable_edge_shaped=int(enable_edge_shaped),
+            enable_visibility_cleanup=int(enable_visibility_cleanup),
+        ),
+        name="add_points_kernel",
+    )
     return add_points_kernel
 
 
-def error_counting_kernel(resolution, width, height, sensor_noise_factor,
-                          mahalanobis_thresh, outlier_variance,
-                          traversability_inlier, min_valid_distance, max_height_range,
-                          ramped_height_range_a, ramped_height_range_b, ramped_height_range_c,
-                          ):
+def error_counting_kernel(
+    resolution,
+    width,
+    height,
+    sensor_noise_factor,
+    mahalanobis_thresh,
+    outlier_variance,
+    traversability_inlier,
+    min_valid_distance,
+    max_height_range,
+    ramped_height_range_a,
+    ramped_height_range_b,
+    ramped_height_range_c,
+):
 
     error_counting_kernel = cp.ElementwiseKernel(
-            in_params='raw U map, raw U p, raw U center_x, raw U center_y, raw U R, raw U t',
-            out_params='raw U newmap, raw T error, raw T error_cnt',
-            preamble=map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance, max_height_range,
-                               ramped_height_range_a, ramped_height_range_b, ramped_height_range_c),
-            operation=\
-            string.Template(
-            '''
+        in_params="raw U map, raw U p, raw U center_x, raw U center_y, raw U R, raw U t",
+        out_params="raw U newmap, raw T error, raw T error_cnt",
+        preamble=map_utils(
+            resolution,
+            width,
+            height,
+            sensor_noise_factor,
+            min_valid_distance,
+            max_height_range,
+            ramped_height_range_a,
+            ramped_height_range_b,
+            ramped_height_range_c,
+        ),
+        operation=string.Template(
+            """
             U rx = p[i * 3];
             U ry = p[i * 3 + 1];
             U rz = p[i * 3 + 2];
@@ -277,26 +333,31 @@ def error_counting_kernel(resolution, width, height, sensor_noise_factor,
                 atomicAdd(&newmap[get_map_idx(idx, 3)], 1.0);
             }
             atomicAdd(&newmap[get_map_idx(idx, 4)], 1.0);
-            ''').substitute(mahalanobis_thresh=mahalanobis_thresh,
-                            outlier_variance=outlier_variance,
-                            traversability_inlier=traversability_inlier),
-            name='error_counting_kernel')
+            """
+        ).substitute(
+            mahalanobis_thresh=mahalanobis_thresh,
+            outlier_variance=outlier_variance,
+            traversability_inlier=traversability_inlier,
+        ),
+        name="error_counting_kernel",
+    )
     return error_counting_kernel
 
 
 def average_map_kernel(width, height, max_variance, initial_variance):
     average_map_kernel = cp.ElementwiseKernel(
-            in_params='raw U newmap',
-            out_params='raw U map',
-            preamble=\
-            string.Template('''
+        in_params="raw U newmap",
+        out_params="raw U map",
+        preamble=string.Template(
+            """
             __device__ int get_map_idx(int idx, int layer_n) {
                 const int layer = ${width} * ${height};
                 return layer * layer_n + idx;
             }
-            ''').substitute(width=width, height=height),
-            operation=\
-            string.Template('''
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
             U h = map[get_map_idx(i, 0)];
             U v = map[get_map_idx(i, 1)];
             U valid = map[get_map_idx(i, 2)];
@@ -320,18 +381,19 @@ def average_map_kernel(width, height, max_variance, initial_variance):
                 map[get_map_idx(i, 1)] = ${initial_variance};
                 map[get_map_idx(i, 2)] = 0;
             }
-            ''').substitute(max_variance=max_variance,
-                            initial_variance=initial_variance),
-            name='average_map_kernel')
+            """
+        ).substitute(max_variance=max_variance, initial_variance=initial_variance),
+        name="average_map_kernel",
+    )
     return average_map_kernel
 
 
 def dilation_filter_kernel(width, height, dilation_size):
     dilation_filter_kernel = cp.ElementwiseKernel(
-            in_params='raw U map, raw U mask',
-            out_params='raw U newmap, raw U newmask',
-            preamble=\
-            string.Template('''
+        in_params="raw U map, raw U mask",
+        out_params="raw U newmap, raw U newmask",
+        preamble=string.Template(
+            """
             __device__ int get_map_idx(int idx, int layer_n) {
                 const int layer = ${width} * ${height};
                 return layer * layer_n + idx;
@@ -353,9 +415,10 @@ def dilation_filter_kernel(width, height, dilation_size):
                 }
                 return true;
             }
-            ''').substitute(width=width, height=height),
-            operation=\
-            string.Template('''
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
             U h = map[get_map_idx(i, 0)];
             U valid = mask[get_map_idx(i, 0)];
             newmap[get_map_idx(i, 0)] = h;
@@ -378,17 +441,19 @@ def dilation_filter_kernel(width, height, dilation_size):
                     newmask[get_map_idx(i, 0)] = 1.0;
                 }
             }
-            ''').substitute(dilation_size=dilation_size),
-            name='dilation_filter_kernel')
+            """
+        ).substitute(dilation_size=dilation_size),
+        name="dilation_filter_kernel",
+    )
     return dilation_filter_kernel
 
 
 def normal_filter_kernel(width, height, resolution):
     normal_filter_kernel = cp.ElementwiseKernel(
-            in_params='raw U map, raw U mask',
-            out_params='raw U newmap',
-            preamble=\
-            string.Template('''
+        in_params="raw U map, raw U mask",
+        out_params="raw U newmap",
+        preamble=string.Template(
+            """
             __device__ int get_map_idx(int idx, int layer_n) {
                 const int layer = ${width} * ${height};
                 return layer * layer_n + idx;
@@ -413,9 +478,10 @@ def normal_filter_kernel(width, height, resolution):
             __device__ float resolution() {
                 return ${resolution};
             }
-            ''').substitute(width=width, height=height, resolution=resolution),
-            operation=\
-            string.Template('''
+            """
+        ).substitute(width=width, height=height, resolution=resolution),
+        operation=string.Template(
+            """
             U h = map[get_map_idx(i, 0)];
             U valid = mask[get_map_idx(i, 0)];
             if (valid > 0.5) {
@@ -432,17 +498,19 @@ def normal_filter_kernel(width, height, resolution):
                 newmap[get_map_idx(i, 1)] = ny / norm;
                 newmap[get_map_idx(i, 2)] = nz / norm;
             }
-            ''').substitute(),
-            name='normal_filter_kernel')
+            """
+        ).substitute(),
+        name="normal_filter_kernel",
+    )
     return normal_filter_kernel
 
 
 def polygon_mask_kernel(width, height, resolution):
     polygon_mask_kernel = cp.ElementwiseKernel(
-            in_params='raw U polygon, raw U center_x, raw U center_y, raw int16 polygon_n, raw U polygon_bbox',
-            out_params='raw U mask',
-            preamble=\
-            string.Template('''
+        in_params="raw U polygon, raw U center_x, raw U center_y, raw int16 polygon_n, raw U polygon_bbox",
+        out_params="raw U mask",
+        preamble=string.Template(
+            """
             __device__ struct Point
             {
                 int x;
@@ -533,9 +601,10 @@ def polygon_mask_kernel(width, height, resolution):
                 return ${width} * idx_x + idx_y;
             }
 
-            ''').substitute(width=width, height=height, resolution=resolution),
-            operation=\
-            string.Template('''
+            """
+        ).substitute(width=width, height=height, resolution=resolution),
+        operation=string.Template(
+            """
             // Point p = {get_idx_x(i, center_x[0]), get_idx_y(i, center_y[0])};
             Point p = {get_idx_x(i), get_idx_y(i)};
             Point extreme = {100000, p.y};
@@ -577,19 +646,24 @@ def polygon_mask_kernel(width, height, resolution):
                 if (intersect_cnt % 2 == 0) { mask[i] = 0; }
                 else { mask[i] = 1; }
             }
-            ''').substitute(a=1),
-            name='polygon_mask_kernel')
+            """
+        ).substitute(a=1),
+        name="polygon_mask_kernel",
+    )
     return polygon_mask_kernel
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     for i in range(10):
         import random
+
         a = cp.zeros((100, 100))
         n = random.randint(3, 5)
 
         # polygon = cp.array([[-1, -1], [3, 4], [2, 4], [1, 3]], dtype=float)
-        polygon = cp.array([[(random.random() - 0.5) * 10, (random.random() - 0.5) * 10] for i in range(n)], dtype=float)
+        polygon = cp.array(
+            [[(random.random() - 0.5) * 10, (random.random() - 0.5) * 10] for i in range(n)], dtype=float
+        )
         print(polygon)
         polygon_min = polygon.min(axis=0)
         polygon_max = polygon.max(axis=0)
@@ -599,10 +673,12 @@ if __name__ == '__main__':
         # polygon_bbox = cp.array([-5, -5, 5, 5], dtype=float)
         polygon_mask = polygon_mask_kernel(100, 100, 0.1)
         import time
+
         start = time.time()
-        polygon_mask(polygon, 0.0, 0.0, polygon_n, polygon_bbox, a, size=(100*100))
+        polygon_mask(polygon, 0.0, 0.0, polygon_n, polygon_bbox, a, size=(100 * 100))
         print(time.time() - start)
         import pylab as plt
+
         print(a)
         plt.imshow(cp.asnumpy(a))
         plt.show()

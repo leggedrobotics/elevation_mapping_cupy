@@ -10,7 +10,7 @@ from .plugin_manager import PluginBase
 
 
 class MinFilter(PluginBase):
-    """  This is a filter to fill in invalid cells with minimum values around.
+    """This is a filter to fill in invalid cells with minimum values around.
 
     ...
 
@@ -25,7 +25,8 @@ class MinFilter(PluginBase):
     iteration_n: int
         The number of iteration to repeat the same filter.
     """
-    def __init__(self, cell_n:int=100, dilation_size:int=5, iteration_n:int=5, **kwargs):
+
+    def __init__(self, cell_n: int = 100, dilation_size: int = 5, iteration_n: int = 5, **kwargs):
         super().__init__()
         self.iteration_n = iteration_n
         self.width = cell_n
@@ -33,10 +34,10 @@ class MinFilter(PluginBase):
         self.min_filtered = cp.zeros((self.width, self.height))
         self.min_filtered_mask = cp.zeros((self.width, self.height))
         self.min_filter_kernel = cp.ElementwiseKernel(
-                in_params='raw U map, raw U mask',
-                out_params='raw U newmap, raw U newmask',
-                preamble=\
-                string.Template('''
+            in_params="raw U map, raw U mask",
+            out_params="raw U newmap, raw U newmask",
+            preamble=string.Template(
+                """
                 __device__ int get_map_idx(int idx, int layer_n) {
                     const int layer = ${width} * ${height};
                     return layer * layer_n + idx;
@@ -58,9 +59,10 @@ class MinFilter(PluginBase):
                     }
                     return true;
                 }
-                ''').substitute(width=self.width, height=self.height),
-                operation=\
-                string.Template('''
+                """
+            ).substitute(width=self.width, height=self.height),
+            operation=string.Template(
+                """
                 U h = map[get_map_idx(i, 0)];
                 U valid = mask[get_map_idx(i, 0)];
                 if (valid < 0.5) {
@@ -81,22 +83,30 @@ class MinFilter(PluginBase):
                         newmask[get_map_idx(i, 0)] = 0.6;
                     }
                 }
-                ''').substitute(dilation_size=dilation_size),
-                name='min_filter_kernel')
+                """
+            ).substitute(dilation_size=dilation_size),
+            name="min_filter_kernel",
+        )
 
-    def __call__(self, elevation_map: cp.ndarray, layer_names: List[str],
-            plugin_layers: cp.ndarray, plugin_layer_names: List[str])->cp.ndarray:
+    def __call__(
+        self,
+        elevation_map: cp.ndarray,
+        layer_names: List[str],
+        plugin_layers: cp.ndarray,
+        plugin_layer_names: List[str],
+    ) -> cp.ndarray:
         self.min_filtered = elevation_map[0].copy()
         self.min_filtered_mask = elevation_map[2].copy()
         for i in range(self.iteration_n):
-            self.min_filter_kernel(elevation_map[0],
-                                   elevation_map[2],
-                                   self.min_filtered,
-                                   self.min_filtered_mask,
-                                   size=(self.width * self.height))
+            self.min_filter_kernel(
+                elevation_map[0],
+                elevation_map[2],
+                self.min_filtered,
+                self.min_filtered_mask,
+                size=(self.width * self.height),
+            )
             # If there's no more mask, break
             if (self.min_filtered_mask > 0.5).all():
                 break
-        min_filtered = cp.where(self.min_filtered_mask > 0.5,
-                                self.min_filtered.copy(), cp.nan)
+        min_filtered = cp.where(self.min_filtered_mask > 0.5, self.min_filtered.copy(), cp.nan)
         return min_filtered

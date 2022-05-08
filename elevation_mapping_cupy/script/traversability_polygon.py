@@ -39,7 +39,7 @@ def calculate_area(polygon):
     for i in range(len(polygon)):
         p1 = polygon[i - 1]
         p2 = polygon[i]
-        area += (p1[0] * p2[1] - p1[1] * p2[0]) / 2.
+        area += (p1[0] * p2[1] - p1[1] * p2[0]) / 2.0
     return abs(area)
 
 
@@ -54,7 +54,7 @@ def calculate_untraversable_polygon(over_thresh):
 
 
 def transform_to_map_position(polygon, center, cell_n, resolution):
-    polygon = center.reshape(1, 2) + (polygon - cell_n / 2.) * resolution
+    polygon = center.reshape(1, 2) + (polygon - cell_n / 2.0) * resolution
     return polygon
 
 
@@ -63,8 +63,7 @@ def transform_to_map_index(points, center, cell_n, resolution):
     return indices
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     polygon = [[0, 0], [2, 0], [0, 2]]
     print(calculate_area(polygon))
 
