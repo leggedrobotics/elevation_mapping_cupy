@@ -14,15 +14,11 @@ def map_utils(resolution, width, height, sensor_noise_factor, min_valid_distance
             return max(min(x, max_x), min_x);
         }
         __device__ int get_x_idx(float16 x, float16 center) {
-            const float resolution = ${resolution};
-            const float width = ${width};
-            int i = (x - center) / resolution + 0.5 * width;
+            int i = (x - center) / ${resolution} + 0.5 * ${width};
             return i;
         }
         __device__ int get_y_idx(float16 y, float16 center) {
-            const float resolution = ${resolution};
-            const float height = ${height};
-            int i = (y - center) / resolution + 0.5 * height;
+            int i = (y - center) / ${resolution} + 0.5 * ${height};
             return i;
         }
         __device__ bool is_inside(int idx) {
