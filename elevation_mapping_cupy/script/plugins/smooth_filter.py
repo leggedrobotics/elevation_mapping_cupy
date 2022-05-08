@@ -10,7 +10,7 @@ from .plugin_manager import PluginBase
 
 
 class SmoothFilter(PluginBase):
-    """  This is a filter to smoothen
+    """This is a filter to smoothen
 
     ...
 
@@ -19,12 +19,18 @@ class SmoothFilter(PluginBase):
     cell_n: int
         width and height of the elevation map.
     """
-    def __init__(self, cell_n:int=100, input_layer_name:str="elevation", **kwargs):
+
+    def __init__(self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs):
         super().__init__()
         self.input_layer_name = input_layer_name
 
-    def __call__(self, elevation_map: cp.ndarray, layer_names: List[str],
-            plugin_layers: cp.ndarray, plugin_layer_names: List[str])->cp.ndarray:
+    def __call__(
+        self,
+        elevation_map: cp.ndarray,
+        layer_names: List[str],
+        plugin_layers: cp.ndarray,
+        plugin_layer_names: List[str],
+    ) -> cp.ndarray:
         if self.input_layer_name in layer_names:
             idx = layer_names.index(self.input_layer_name)
             h = elevation_map[idx]

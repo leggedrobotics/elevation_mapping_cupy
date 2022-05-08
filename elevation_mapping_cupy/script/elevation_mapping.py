@@ -18,7 +18,13 @@ from custom_kernels import polygon_mask_kernel
 from map_initializer import MapInitializer
 from plugins.plugin_manager import PluginManger
 
-from traversability_polygon import get_masked_traversability, is_traversable, calculate_area, transform_to_map_position, transform_to_map_index
+from traversability_polygon import (
+    get_masked_traversability,
+    is_traversable,
+    calculate_area,
+    transform_to_map_position,
+    transform_to_map_index,
+)
 
 import cupy as cp
 import cupyx.scipy as csp
@@ -31,9 +37,10 @@ cp.cuda.set_allocator(pool.malloc)
 
 
 class ElevationMap(object):
-    """  
+    """
     Core elevation mapping class.
     """
+
     def __init__(self, param: Parameter):
         self.param = param
 
@@ -47,7 +54,15 @@ class ElevationMap(object):
 
         # layers: elevation, variance, is_valid, traversability, time, upper_bound, is_upper_bound
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
-        self.layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
+        self.layer_names = [
+            "elevation",
+            "variance",
+            "is_valid",
+            "traversability",
+            "time",
+            "upper_bound",
+            "is_upper_bound",
+        ]
         # buffers
         self.traversability_buffer = xp.full((self.cell_n, self.cell_n), xp.nan)
         self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
@@ -68,7 +83,7 @@ class ElevationMap(object):
 
         self.compile_kernels()
 
-        weight_file = subprocess.getoutput("echo \"" + param.weight_file + "\"")
+        weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
         param.load_weights(weight_file)
 
         if param.use_chainer:
@@ -79,11 +94,10 @@ class ElevationMap(object):
 
         # Plugins
         self.plugin_manager = PluginManger(cell_n=self.cell_n)
-        plugin_config_file = subprocess.getoutput("echo \"" + param.plugin_config_file + "\"")
+        plugin_config_file = subprocess.getoutput('echo "' + param.plugin_config_file + '"')
         self.plugin_manager.load_plugin_settings(plugin_config_file)
 
-        self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance,
-                                              xp=cp, method='points')
+        self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance, xp=cp, method="points")
 
     def clear(self):
         with self.map_lock:
@@ -122,20 +136,15 @@ class ElevationMap(object):
         shift_fn = sp.ndimage.interpolation.shift
         with self.map_lock:
             # elevation
-            self.elevation_map[0] = shift_fn(self.elevation_map[0], shift_value,
-                                             cval=0.0)
+            self.elevation_map[0] = shift_fn(self.elevation_map[0], shift_value, cval=0.0)
             # variance
-            self.elevation_map[1] = shift_fn(self.elevation_map[1], shift_value,
-                                             cval=self.initial_variance)
+            self.elevation_map[1] = shift_fn(self.elevation_map[1], shift_value, cval=self.initial_variance)
             # is valid (1 is valid 0 is not valid)
-            self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value,
-                                             cval=0)
+            self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value, cval=0)
             # upper bound
-            self.elevation_map[5] = shift_fn(self.elevation_map[5], shift_value,
-                                             cval=0)
+            self.elevation_map[5] = shift_fn(self.elevation_map[5], shift_value, cval=0)
             # is upper bound
-            self.elevation_map[6] = shift_fn(self.elevation_map[6], shift_value,
-                                             cval=0)
+            self.elevation_map[6] = shift_fn(self.elevation_map[6], shift_value, cval=0)
 
     def shift_map_z(self, delta_z):
         with self.map_lock:
@@ -152,41 +161,47 @@ class ElevationMap(object):
         self.min_filtered = cp.zeros((self.cell_n, self.cell_n))
         self.min_filtered_mask = cp.zeros((self.cell_n, self.cell_n))
         self.mask = cp.zeros((self.cell_n, self.cell_n))
-        self.add_points_kernel = add_points_kernel(self.resolution,
-                                                   self.cell_n,
-                                                   self.cell_n,
-                                                   self.param.sensor_noise_factor,
-                                                   self.param.mahalanobis_thresh,
-                                                   self.param.outlier_variance,
-                                                   self.param.wall_num_thresh,
-                                                   self.param.max_ray_length,
-                                                   self.param.cleanup_step,
-                                                   self.param.min_valid_distance,
-                                                   self.param.max_height_range,
-                                                   self.param.cleanup_cos_thresh,
-                                                   self.param.ramped_height_range_a,
-                                                   self.param.ramped_height_range_b,
-                                                   self.param.ramped_height_range_c,
-                                                   self.param.enable_edge_sharpen,
-                                                   self.param.enable_visibility_cleanup)
-        self.error_counting_kernel = error_counting_kernel(self.resolution,
-                                                           self.cell_n,
-                                                           self.cell_n,
-                                                           self.param.sensor_noise_factor,
-                                                           self.param.mahalanobis_thresh,
-                                                           self.param.drift_compensation_variance_inlier,
-                                                           self.param.traversability_inlier,
-                                                           self.param.min_valid_distance,
-                                                           self.param.max_height_range,
-                                                           self.param.ramped_height_range_a,
-                                                           self.param.ramped_height_range_b,
-                                                           self.param.ramped_height_range_c,
-                                                           )
-        self.average_map_kernel = average_map_kernel(self.cell_n, self.cell_n,
-                                                     self.param.max_variance, self.initial_variance)
+        self.add_points_kernel = add_points_kernel(
+            self.resolution,
+            self.cell_n,
+            self.cell_n,
+            self.param.sensor_noise_factor,
+            self.param.mahalanobis_thresh,
+            self.param.outlier_variance,
+            self.param.wall_num_thresh,
+            self.param.max_ray_length,
+            self.param.cleanup_step,
+            self.param.min_valid_distance,
+            self.param.max_height_range,
+            self.param.cleanup_cos_thresh,
+            self.param.ramped_height_range_a,
+            self.param.ramped_height_range_b,
+            self.param.ramped_height_range_c,
+            self.param.enable_edge_sharpen,
+            self.param.enable_visibility_cleanup,
+        )
+        self.error_counting_kernel = error_counting_kernel(
+            self.resolution,
+            self.cell_n,
+            self.cell_n,
+            self.param.sensor_noise_factor,
+            self.param.mahalanobis_thresh,
+            self.param.drift_compensation_variance_inlier,
+            self.param.traversability_inlier,
+            self.param.min_valid_distance,
+            self.param.max_height_range,
+            self.param.ramped_height_range_a,
+            self.param.ramped_height_range_b,
+            self.param.ramped_height_range_c,
+        )
+        self.average_map_kernel = average_map_kernel(
+            self.cell_n, self.cell_n, self.param.max_variance, self.initial_variance
+        )
 
         self.dilation_filter_kernel = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size)
-        self.dilation_filter_kernel_initializer = dilation_filter_kernel(self.cell_n, self.cell_n, self.param.dilation_size_initialize)
+        self.dilation_filter_kernel_initializer = dilation_filter_kernel(
+            self.cell_n, self.cell_n, self.param.dilation_size_initialize
+        )
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
@@ -199,37 +214,60 @@ class ElevationMap(object):
         error_cnt = cp.array([0], dtype=cp.float32)
         with self.map_lock:
             self.shift_translation_to_map_center(t)
-            self.error_counting_kernel(self.elevation_map, points,
-                                       cp.array([0.]), cp.array([0.]), R, t,
-                                       self.new_map, error, error_cnt,
-                                       size=(points.shape[0]))
-            if (self.param.enable_drift_compensation
-                    and error_cnt > self.param.min_height_drift_cnt
-                    and (position_noise > self.param.position_noise_thresh
-                         or orientation_noise > self.param.orientation_noise_thresh)):
+            self.error_counting_kernel(
+                self.elevation_map,
+                points,
+                cp.array([0.0]),
+                cp.array([0.0]),
+                R,
+                t,
+                self.new_map,
+                error,
+                error_cnt,
+                size=(points.shape[0]),
+            )
+            if (
+                self.param.enable_drift_compensation
+                and error_cnt > self.param.min_height_drift_cnt
+                and (
+                    position_noise > self.param.position_noise_thresh
+                    or orientation_noise > self.param.orientation_noise_thresh
+                )
+            ):
                 self.mean_error = error / error_cnt
                 self.additive_mean_error += self.mean_error
                 if np.abs(self.mean_error) < self.param.max_drift:
                     self.elevation_map[0] += self.mean_error * self.param.drift_compensation_alpha
-            self.add_points_kernel(points, cp.array([0.]), cp.array([0.]), R, t, self.normal_map,
-                                   self.elevation_map, self.new_map,
-                                   size=(points.shape[0]))
-            self.average_map_kernel(self.new_map, self.elevation_map,
-                                    size=(self.cell_n * self.cell_n))
+            self.add_points_kernel(
+                points,
+                cp.array([0.0]),
+                cp.array([0.0]),
+                R,
+                t,
+                self.normal_map,
+                self.elevation_map,
+                self.new_map,
+                size=(points.shape[0]),
+            )
+            self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
             if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
 
             # dilation before traversability_filter
             self.traversability_input *= 0.0
-            self.dilation_filter_kernel(self.elevation_map[5],
-                                        self.elevation_map[2]+self.elevation_map[6],
-                                        self.traversability_input,
-                                        self.traversability_mask_dummy,
-                                        size=(self.cell_n * self.cell_n))
+            self.dilation_filter_kernel(
+                self.elevation_map[5],
+                self.elevation_map[2] + self.elevation_map[6],
+                self.traversability_input,
+                self.traversability_mask_dummy,
+                size=(self.cell_n * self.cell_n),
+            )
             # calculate traversability
             traversability = self.traversability_filter(self.traversability_input)
-            self.elevation_map[3][3:-3, 3:-3] = traversability.reshape((traversability.shape[2], traversability.shape[3]))
+            self.elevation_map[3][3:-3, 3:-3] = traversability.reshape(
+                (traversability.shape[2], traversability.shape[3])
+            )
 
         # calculate normal vectors
         self.update_normal(self.traversability_input)
@@ -238,7 +276,7 @@ class ElevationMap(object):
         # Clear overlapping area around center
         height_min = t[2] - self.param.overlap_clear_range_z
         height_max = t[2] + self.param.overlap_clear_range_z
-        near_map = self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max]
+        near_map = self.elevation_map[:, self.cell_min : self.cell_max, self.cell_min : self.cell_max]
         valid_idx = ~cp.logical_or(near_map[0] < height_min, near_map[0] > height_max)
         near_map[0] = cp.where(valid_idx, near_map[0], 0.0)
         near_map[1] = cp.where(valid_idx, near_map[1], self.initial_variance)
@@ -246,7 +284,7 @@ class ElevationMap(object):
         valid_idx = ~cp.logical_or(near_map[5] < height_min, near_map[5] > height_max)
         near_map[5] = cp.where(valid_idx, near_map[5], 0.0)
         near_map[6] = cp.where(valid_idx, near_map[6], 0.0)
-        self.elevation_map[:, self.cell_min:self.cell_max, self.cell_min:self.cell_max] = near_map
+        self.elevation_map[:, self.cell_min : self.cell_max, self.cell_min : self.cell_max] = near_map
 
     def get_additive_mean_error(self):
         return self.additive_mean_error
@@ -271,13 +309,14 @@ class ElevationMap(object):
     def update_normal(self, dilated_map):
         with self.map_lock:
             self.normal_map *= 0.0
-            self.normal_filter_kernel(dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n))
+            self.normal_filter_kernel(
+                dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n)
+            )
 
     def process_map_for_publish(self, input_map, fill_nan=False, add_z=False, xp=cp):
         m = input_map.copy()
         if fill_nan:
-            m = xp.where(self.elevation_map[2] > 0.5,
-                    m, xp.nan)
+            m = xp.where(self.elevation_map[2] > 0.5, m, xp.nan)
         if add_z:
             m = m + self.center[2]
         return m[1:-1, 1:-1]
@@ -289,9 +328,10 @@ class ElevationMap(object):
         return self.process_map_for_publish(self.elevation_map[1], fill_nan=False, add_z=False)
 
     def get_traversability(self):
-        traversability = cp.where((self.elevation_map[2] + self.elevation_map[6]) > 0.5,
-                                  self.elevation_map[3].copy(), cp.nan)
-        self.traversability_buffer[3:-3, 3: -3] = traversability[3:-3, 3:-3]
+        traversability = cp.where(
+            (self.elevation_map[2] + self.elevation_map[6]) > 0.5, self.elevation_map[3].copy(), cp.nan
+        )
+        self.traversability_buffer[3:-3, 3:-3] = traversability[3:-3, 3:-3]
         traversability = self.traversability_buffer[1:-1, 1:-1]
         return traversability
 
@@ -300,7 +340,9 @@ class ElevationMap(object):
 
     def get_upper_bound(self):
         if self.param.use_only_above_for_upper_bound:
-            valid = cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5)
+            valid = cp.logical_or(
+                cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5
+            )
         else:
             valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
         upper_bound = cp.where(valid, self.elevation_map[5].copy(), cp.nan)
@@ -309,7 +351,9 @@ class ElevationMap(object):
 
     def get_is_upper_bound(self):
         if self.param.use_only_above_for_upper_bound:
-            valid = cp.logical_or(cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5)
+            valid = cp.logical_or(
+                cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5
+            )
         else:
             valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
         is_upper_bound = cp.where(valid, self.elevation_map[6].copy(), cp.nan)
@@ -409,29 +453,30 @@ class ElevationMap(object):
         polygon_bbox = cp.concatenate([polygon_min, polygon_max]).flatten()
         polygon_n = polygon.shape[0]
         clipped_area = calculate_area(polygon)
-        self.polygon_mask_kernel(polygon, self.center[0], self.center[1],
-                                 polygon_n, polygon_bbox, self.mask,
-                                 size=(self.cell_n * self.cell_n))
-        masked, masked_isvalid = get_masked_traversability(self.elevation_map,
-                                                           self.mask)
+        self.polygon_mask_kernel(
+            polygon,
+            self.center[0],
+            self.center[1],
+            polygon_n,
+            polygon_bbox,
+            self.mask,
+            size=(self.cell_n * self.cell_n),
+        )
+        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask)
         if masked_isvalid.sum() > 0:
             t = masked.sum() / masked_isvalid.sum()
         else:
             t = 0.0
-        is_safe, un_polygon = is_traversable(masked,
-                                             self.param.safe_thresh,
-                                             self.param.safe_min_thresh,
-                                             self.param.max_unsafe_n)
+        is_safe, un_polygon = is_traversable(
+            masked, self.param.safe_thresh, self.param.safe_min_thresh, self.param.max_unsafe_n
+        )
         untraversable_polygon_num = 0
         if un_polygon is not None:
-            un_polygon = transform_to_map_position(un_polygon,
-                                                   self.center[:2],
-                                                   self.cell_n,
-                                                   self.resolution)
+            un_polygon = transform_to_map_position(un_polygon, self.center[:2], self.cell_n, self.resolution)
             untraversable_polygon_num = un_polygon.shape[0]
         if clipped_area < 0.001:
             is_safe = False
-            print('requested polygon is outside of the map')
+            print("requested polygon is outside of the map")
         result[...] = np.array([is_safe, t, area])
         self.untraversable_polygon = un_polygon
         return untraversable_polygon_num
@@ -439,28 +484,27 @@ class ElevationMap(object):
     def get_untraversable_polygon(self, untraversable_polygon):
         untraversable_polygon[...] = xp.asnumpy(self.untraversable_polygon)
 
-    def initialize_map(self, points, method='cubic'):
+    def initialize_map(self, points, method="cubic"):
         self.clear()
         with self.map_lock:
             points = cp.asarray(points)
-            indices = transform_to_map_index(points[:, :2],
-                                             self.center[:2],
-                                             self.cell_n,
-                                             self.resolution)
+            indices = transform_to_map_index(points[:, :2], self.center[:2], self.cell_n, self.resolution)
             points[:, :2] = indices.astype(points.dtype)
             points[:, 2] -= self.center[2]
             self.map_initializer(self.elevation_map, points, method)
             if self.param.dilation_size_initialize > 0:
                 for i in range(2):
-                    self.dilation_filter_kernel_initializer(self.elevation_map[0],
-                                                            self.elevation_map[2],
-                                                            self.elevation_map[0],
-                                                            self.elevation_map[2],
-                                                            size=(self.cell_n * self.cell_n))
+                    self.dilation_filter_kernel_initializer(
+                        self.elevation_map[0],
+                        self.elevation_map[2],
+                        self.elevation_map[0],
+                        self.elevation_map[2],
+                        size=(self.cell_n * self.cell_n),
+                    )
             self.update_upper_bound_with_valid_elevation()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     #  Test script for profiling.
     #  $ python -m cProfile -o profile.stats elevation_mapping.py
     #  $ snakeviz profile.stats
@@ -470,9 +514,9 @@ if __name__ == '__main__':
     t = xp.random.rand(3)
     print(R, t)
     param = Parameter(use_chainer=False)
-    param.load_weights('../config/weights.dat')
+    param.load_weights("../config/weights.dat")
     elevation = ElevationMap(param)
-    layers = ['elevation', 'variance', 'traversability', 'min_filter', 'smooth', 'inpaint']
+    layers = ["elevation", "variance", "traversability", "min_filter", "smooth", "inpaint"]
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
     for i in range(500):
         elevation.input(points, R, t, 0, 0)
