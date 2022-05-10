@@ -2,8 +2,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(elevation_mapping_cupy)
 
-find_package(PythonInterp REQUIRED)
-find_package(PythonLibs REQUIRED)
+find_package(PythonInterp 3 REQUIRED)
+find_package(PythonLibs 3 REQUIRED)
 
 if(PYTHONLIBS_FOUND)
   message(STATUS "Using Python Libraries at: " ${PYTHON_LIBRARIES})
