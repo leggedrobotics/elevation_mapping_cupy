@@ -150,7 +150,7 @@ class ElevationMap(object):
 
     def shift_map_xy(self, delta_pixel):
         shift_value = delta_pixel.astype(cp.int)
-        if shift_value.sum() == 0:
+        if cp.abs(shift_value).sum() == 0:
             return
         with self.map_lock:
             self.elevation_map = cp.roll(self.elevation_map, shift_value, axis=(1, 2))
