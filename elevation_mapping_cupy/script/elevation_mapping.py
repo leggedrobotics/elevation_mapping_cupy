@@ -27,11 +27,8 @@ from traversability_polygon import (
 )
 
 import cupy as cp
-import cupyx.scipy as csp
-import cupyx.scipy.ndimage
 
 xp = cp
-sp = csp
 pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
 cp.cuda.set_allocator(pool.malloc)
 
@@ -131,20 +128,34 @@ class ElevationMap(object):
         self.shift_map_xy(-delta_pixel)
         self.shift_map_z(-delta[2])
 
+    def pad_value(self, x, shift_value, idx=None, value=0.0):
+        if idx is None:
+            if shift_value[0] > 0:
+                x[:, : shift_value[0], :] = value
+            elif shift_value[0] < 0:
+                x[:, shift_value[0] :, :] = value
+            if shift_value[1] > 0:
+                x[:, :, : shift_value[1]] = value
+            elif shift_value[1] < 0:
+                x[:, :, shift_value[1] :] = value
+        else:
+            if shift_value[0] > 0:
+                x[idx, : shift_value[0], :] = value
+            elif shift_value[0] < 0:
+                x[idx, shift_value[0] :, :] = value
+            if shift_value[1] > 0:
+                x[idx, :, : shift_value[1]] = value
+            elif shift_value[1] < 0:
+                x[idx, :, shift_value[1] :] = value
+
     def shift_map_xy(self, delta_pixel):
-        shift_value = delta_pixel
-        shift_fn = sp.ndimage.interpolation.shift
+        shift_value = delta_pixel.astype(cp.int)
+        if cp.abs(shift_value).sum() == 0:
+            return
         with self.map_lock:
-            # elevation
-            self.elevation_map[0] = shift_fn(self.elevation_map[0], shift_value, cval=0.0)
-            # variance
-            self.elevation_map[1] = shift_fn(self.elevation_map[1], shift_value, cval=self.initial_variance)
-            # is valid (1 is valid 0 is not valid)
-            self.elevation_map[2] = shift_fn(self.elevation_map[2], shift_value, cval=0)
-            # upper bound
-            self.elevation_map[5] = shift_fn(self.elevation_map[5], shift_value, cval=0)
-            # is upper bound
-            self.elevation_map[6] = shift_fn(self.elevation_map[6], shift_value, cval=0)
+            self.elevation_map = cp.roll(self.elevation_map, shift_value, axis=(1, 2))
+            self.pad_value(self.elevation_map, shift_value, value=0.0)
+            self.pad_value(self.elevation_map, shift_value, idx=1, value=self.initial_variance)
 
     def shift_map_z(self, delta_z):
         with self.map_lock:
@@ -513,14 +524,17 @@ if __name__ == "__main__":
     R = xp.random.rand(3, 3)
     t = xp.random.rand(3)
     print(R, t)
-    param = Parameter(use_chainer=False)
-    param.load_weights("../config/weights.dat")
+    param = Parameter(
+        use_chainer=False, weight_file="../config/weights.dat", plugin_config_file="../config/plugin_config.yaml"
+    )
     elevation = ElevationMap(param)
     layers = ["elevation", "variance", "traversability", "min_filter", "smooth", "inpaint"]
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
     for i in range(500):
         elevation.input(points, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
+        pos = np.array([i * 0.01, i * 0.02, i * 0.01])
+        elevation.move_to(pos)
         for layer in layers:
             elevation.get_map_with_name_ref(layer, data)
         print(i)
