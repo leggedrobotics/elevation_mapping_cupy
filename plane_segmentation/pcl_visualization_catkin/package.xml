@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pcl_catkin</name>
+  <name>pcl_visualization_catkin</name>
   <version>1.10.0</version>
-  <description>Catkin wrapper for PCL.</description>
+  <description>Catkin wrapper for PCL visualization.</description>
   <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
   <license>See package</license>

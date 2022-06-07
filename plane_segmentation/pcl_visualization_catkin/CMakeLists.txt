@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(pcl_catkin)
+project(pcl_visualization_catkin)
 
 include(GNUInstallDirs)
 
