@@ -8,7 +8,6 @@
 
 // grid map filters rsl.
 #include <grid_map_filters_rsl/processing.hpp>
-#include <iostream>
 
 namespace grid_map {
 namespace processing {

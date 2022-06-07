@@ -14,6 +14,7 @@
 
 namespace grid_map {
 namespace derivative {
+
 class GridMapDerivative {
  private:
   static constexpr int kernelSize_ = 5;

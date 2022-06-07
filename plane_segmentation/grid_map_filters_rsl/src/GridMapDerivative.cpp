@@ -71,5 +71,7 @@ Eigen::Vector2i GridMapDerivative::getKernelCenter(const grid_map::GridMap& grid
   }
   return centerId;
 }
+
 }  // namespace derivative
 }  // namespace grid_map
+
