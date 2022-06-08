@@ -22,6 +22,5 @@
     <depend>tf2_ros</depend>
 
     <exec_depend>grid_map_demos</exec_depend>
-    <exec_depend>pcl_visualization_catkin</exec_depend>
 
 </package>
