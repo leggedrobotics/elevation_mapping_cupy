@@ -75,3 +75,70 @@ TEST(TestInpainting, minValuesOnlyNaN) {  // NOLINT
   EXPECT_TRUE(map.get("filled_min_nan").hasNaN());
   EXPECT_DOUBLE_EQ(map.get("filled_min_nonan").minCoeff(), 1.0);
 }
+
+TEST(TestResampling, resampleSameSize) {  // NOLINT
+  const std::string layerName = "layer";
+
+  GridMap map;
+  map.setGeometry(Length(3.0, 2.01), 0.33, Position(0.1, 0.2));
+  map.add(layerName);
+  map.get(layerName).setRandom();
+
+  GridMap resampleMap = map;
+
+  inpainting::resample(resampleMap, layerName, map.getResolution());
+
+  // Compare geometry
+  EXPECT_TRUE(resampleMap.getSize().isApprox(map.getSize()));
+  EXPECT_TRUE(resampleMap.getPosition().isApprox(map.getPosition()));
+  EXPECT_DOUBLE_EQ(resampleMap.getResolution(), map.getResolution());
+
+  // Compare content
+  EXPECT_TRUE(resampleMap.get(layerName).isApprox(map.get(layerName)));
+}
+
+TEST(TestResampling, resampleUpsample) {  // NOLINT
+  const std::string layerName = "layer";
+  const double oldRes = 1.0;
+  const double newRes = 0.5;
+
+  GridMap map;
+  map.setGeometry(Length(3.0, 2.0), oldRes, Position(0.1, 0.2));
+  map.add(layerName);
+  map.get(layerName).setRandom();
+
+  GridMap resampleMap = map;
+
+  inpainting::resample(resampleMap, layerName, newRes);
+
+  // Compare geometry
+  const Eigen::Vector2d oldTrueSize(map.getResolution() * map.getSize().x(), map.getResolution() * map.getSize().y());
+  const Eigen::Vector2d newTrueSize(resampleMap.getResolution() * resampleMap.getSize().x(),
+                                    resampleMap.getResolution() * resampleMap.getSize().y());
+  EXPECT_TRUE(newTrueSize.isApprox(oldTrueSize));
+  EXPECT_TRUE(resampleMap.getPosition().isApprox(map.getPosition()));
+  EXPECT_DOUBLE_EQ(resampleMap.getResolution(), newRes);
+}
+
+TEST(TestResampling, resampleDownsample) {  // NOLINT
+  const std::string layerName = "layer";
+  const double oldRes = 0.5;
+  const double newRes = 1.0;
+
+  GridMap map;
+  map.setGeometry(Length(3.0, 2.0), oldRes, Position(0.1, 0.2));
+  map.add(layerName);
+  map.get(layerName).setRandom();
+
+  GridMap resampleMap = map;
+
+  inpainting::resample(resampleMap, layerName, newRes);
+
+  // Compare geometry
+  const Eigen::Vector2d oldTrueSize(map.getResolution() * map.getSize().x(), map.getResolution() * map.getSize().y());
+  const Eigen::Vector2d newTrueSize(resampleMap.getResolution() * resampleMap.getSize().x(),
+                                    resampleMap.getResolution() * resampleMap.getSize().y());
+  EXPECT_TRUE(newTrueSize.isApprox(oldTrueSize));
+  EXPECT_TRUE(resampleMap.getPosition().isApprox(map.getPosition()));
+  EXPECT_DOUBLE_EQ(resampleMap.getResolution(), newRes);
+}

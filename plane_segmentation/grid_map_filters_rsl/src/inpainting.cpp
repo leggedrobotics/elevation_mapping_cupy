@@ -262,7 +262,7 @@ void resample(grid_map::GridMap& map, const std::string& layer, double newRes) {
   for (const auto& layer_name : layer_names) {
     Eigen::MatrixXf elevationMap = std::move(map.get(layer_name));
 
-    // Convert elevation map ro open-cv image.
+    // Convert elevation map to open-cv image.
     cv::Mat elevationImage;
     cv::eigen2cv(elevationMap, elevationImage);
 
