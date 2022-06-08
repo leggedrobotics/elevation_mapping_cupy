@@ -28,8 +28,8 @@ TEST(TestRegionGrowing, center_on_border) {
 }
 
 TEST(TestRegionGrowing, debug_case) {
-  // Rare case where the region algorithm go stuck
-  const int numberOfVertices = 16;  // Multiple of 4 is nice for symmetry.
+  // Rare case where the region algorithm got stuck
+  const int numberOfVertices = 16;
   const double growthFactor = 1.05;
   CgalPoint2d center(-0.147433, 0.800114);
 
