@@ -6,7 +6,7 @@
 
     <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
 
-    <license>TODO</license>
+    <license>MIT</license>
 
     <buildtool_depend>catkin</buildtool_depend>
 

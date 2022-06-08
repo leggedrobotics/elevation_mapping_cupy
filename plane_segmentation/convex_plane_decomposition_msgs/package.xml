@@ -6,8 +6,9 @@
     <version>0.0.0</version>
     <description>Convex plane decomposition message definitions.</description>
 
-    <license>TODO</license>
     <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+    <license>MIT</license>
 
     <buildtool_depend>catkin</buildtool_depend>
 
