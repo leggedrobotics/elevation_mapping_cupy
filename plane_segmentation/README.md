@@ -1,7 +1,9 @@
-# Convex Terrain Representation #
+# Plane Segmentation
 
 ## Overview
-This is a C++ ROS package for extracting convex polygons from elevation maps created by elevation_mapping.  
+This is a C++ ROS package for extracting convex polygons from elevation maps.
+In a first step, the terrain is segmented into planes, and their non-convex contour is extracted.
+In a second step, a local convex approximation can be obtained.
 
 ## Installation
 
@@ -30,11 +32,10 @@ sudo apt-get install libboost-all-dev
 
 #### PCL
 PCL is required, but the ANYbotics distributed version does not contain visualization components. 
-With the following commands, the missing components are provided into your catkin workspace. 
-DO NOT do this on the ANYmal onboard PCs, only on OPC and simulation PCs.
+With pcl_visualization_catkin, the missing components are provided into your catkin workspace (for pcl 1.10). 
+Additionally vtk7 is required, DO NOT install this on the ANYmal onboard PCs, only on OPC and simulation PCs.
 ```bash
 sudo apt-get install libvtk7-dev
-catkin build pcl_visualization_catkin
 ```
 
 ### ROS package dependencies
@@ -46,7 +47,7 @@ sudo apt-get install ros-noetic-jsk-visualization
 ```
 
 #### Grid Map
-Grid map is available through ANYmal-research, or you can add it to your workspace. You can clone it using:
+Grid map is available through ANYmal-research, apt install, or you can add it to your workspace. You can clone it using:
 ```bash
 git clone https://github.com/ANYbotics/grid_map.git
 ```
@@ -56,9 +57,21 @@ git clone https://github.com/ANYbotics/grid_map.git
 ```bash
 catkin build convex_plane_decomposition_ros
 ```
+
+### Run as node
+```bash
+roslaunch convex_plane_decomposition_ros convex_plane_decomposition.launch
+```
+
 ### Run demo
 ```bash
 roslaunch convex_plane_decomposition_ros demo.launch
+```
+
+### Convex approximation demo
+A simple 2D demo the convex inner approximation is available:
+```bash
+rosrun convex_plane_decomposition_ros convex_plane_decomposition_ros_TestShapeGrowing
 ```
 
 ### Parameters

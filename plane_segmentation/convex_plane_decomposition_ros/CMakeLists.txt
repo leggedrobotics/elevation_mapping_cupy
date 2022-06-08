@@ -111,18 +111,10 @@ install(DIRECTORY config data launch rviz
 #############
 ## Testing ##
 #############
-add_executable(${PROJECT_NAME}_test
-	test/test.cpp
+add_executable(${PROJECT_NAME}_TestShapeGrowing
+	test/TestShapeGrowing.cpp
 )
-target_link_libraries(${PROJECT_NAME}_test
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-)
-
-add_executable(${PROJECT_NAME}_shapegrowing
-	test/shapeGrowing.cpp
-)
-target_link_libraries(${PROJECT_NAME}_shapegrowing
+target_link_libraries(${PROJECT_NAME}_TestShapeGrowing
 	${catkin_LIBRARIES}
 	${OpenCV_LIBRARIES}
 )
