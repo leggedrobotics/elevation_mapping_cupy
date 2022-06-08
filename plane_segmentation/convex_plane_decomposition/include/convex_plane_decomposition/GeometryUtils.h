@@ -2,10 +2,10 @@
 // Created by rgrandia on 09.06.20.
 //
 
+#pragma once
+
 #include "PlanarRegion.h"
 #include "PolygonTypes.h"
-
-#pragma once
 
 namespace convex_plane_decomposition {
 
