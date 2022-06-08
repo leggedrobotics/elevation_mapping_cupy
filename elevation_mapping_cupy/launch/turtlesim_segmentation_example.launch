@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+  <!-- Launch elevation mapping turtle sim. -->
+  <include file="$(find elevation_mapping_cupy)/launch/turtlesim_example.launch">
+    <arg name="rviz_config"    value="$(find elevation_mapping_cupy)/rviz/turtle_segmentation_example.rviz"/>
+  </include>
+
+  <!-- Launch the plane decomposition node. -->
+  <include file="$(find convex_plane_decomposition_ros)/launch/convex_plane_decomposition.launch"/>
+
+</launch>

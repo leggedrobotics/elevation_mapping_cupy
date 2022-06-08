@@ -1,16 +1,18 @@
 # Elevation Mapping cupy
 
 ## Overview
+
 This is a ros package of elevation mapping on GPU.  
 Code are written in python and uses cupy for GPU calculation.  
 ![screenshot](doc/main_repo.png)
 
 \* plane segmentation is coming soon.
 
-
 ## Citing
+
 > Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
 > Elevation Mapping for Locomotion and Navigation using GPU  [arXiv](https://arxiv.org/abs/2204.12876)
+
 ```
 @misc{https://doi.org/10.48550/arxiv.2204.12876,
   doi = {10.48550/ARXIV.2204.12876},
@@ -26,7 +28,11 @@ Code are written in python and uses cupy for GPU calculation.
 
 ## Installation
 
+The following installation instructions are for elevation mapping. For the plane segmentation, please find additional instructions in the
+dedicated README.
+
 ### CUDA & cuDNN
+
 The tested versions are CUDA10.2, 11.6
 
 [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation)  
@@ -34,9 +40,9 @@ The tested versions are CUDA10.2, 11.6
 
 Check how to install [here](doc/cuda-installation.md).
 
-
 ### Python dependencies
-You will need 
+
+You will need
 
 - [cupy](https://cupy.chainer.org/)
 - [numpy](https://www.numpy.org/)
@@ -53,9 +59,11 @@ Optinally, opencv for inpainting filter.
 - [opencv-python](https://opencv.org/)
 
 Install `numpy`, `scipy`, `shapely`, `opencv-python` with the following command.
+
 ```bash
 pip3 install -r requirements.txt
 ```
+
 #### Cupy
 cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. `pip install cupy` could work)  
 > For CUDA 10.2
@@ -85,8 +93,8 @@ cupy can be installed with specific CUDA versions. (On jetson, only "from source
 > (Install CuPy from source)
 > % pip install cupy
 
-
 #### Traversability filter
+
 You can choose either pytorch, or chainer to run the CNN based traversability filter.  
 Install by following the official documents.
 
@@ -107,23 +115,31 @@ sudo apt install ros-noetic-grid-map-core ros-noetic-grid-map-msgs
 ```
 
 ## On Jetson
+
 #### CUDA CuDNN
+
 `CUDA` and `cuDNN` can be installed via apt. It comes with nvidia-jetpack. The tested version is jetpack 4.5 with L4T 32.5.0.
 
 #### python dependencies
+
 On jetson, you need the version for its CPU arch:
+
 ```bash
 wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 pip3 install Cython
 pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
 ```
+
 Also, you need to install cupy with
+
 ```bash
 pip3 install cupy
 ```
+
 This builds the packages from source so it would take time.
 
 #### ROS dependencies
+
 - [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
 - [grid_map](https://github.com/ANYbotics/grid_map)
 
@@ -133,6 +149,7 @@ sudo apt install ros-melodic-grid-map-core ros-melodic-grid-map-msgs
 ```
 
 Also, on jetson you need fortran (should already be installed).
+
 ```bash
 sudo apt install gfortran
 ```
@@ -144,13 +161,17 @@ git clone git@github.com:ros/filters.git -b noetic-devel
 ```
 
 ## Usage
+
 ### Build
+
 ```bash
 catkin build elevation_mapping_cupy
 ```
 
 #### Errors
-If you get error such as  
+
+If you get error such as
+
 ```
 Make Error at /usr/share/cmake-3.16/Modules/FindPackageHandleStandardArgs.cmake:146 (message):
   Could NOT find PythonInterp: Found unsuitable version "2.7.18", but
@@ -158,32 +179,50 @@ Make Error at /usr/share/cmake-3.16/Modules/FindPackageHandleStandardArgs.cmake:
 ```
 
 Build with option.
+
 ```bash
 catkin build elevation_mapping_cupy -DPYTHON_EXECUTABLE=$(which python3)
 ```
 
 ### Run
+
 Basic usage.
+
 ```bash
 roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
 ```
 
 ### Run TurtleBot example
+
 First, install turtlebot simulation.
+
 ```bash
 sudo apt install ros-noetic-turtlebot3*
 ```
-Then, you can run the example.
+
+Then, you can run the examples. For the basic version:
+
 ```bash
 export TURTLEBOT3_MODEL=waffle
 roslaunch elevation_mapping_cupy turtlesim_example.launch
 ```
+
+Or, for the version including plane segmentation:
+
+```bash
+catkin build convex_plane_decomposition_ros
+export TURTLEBOT3_MODEL=waffle
+roslaunch elevation_mapping_cupy turtlesim_segmentation_example.launch
+```
+
 To control the robot with a keyboard, a new terminal window needs to be opened.  
 Then run
+
 ```bash
 export TURTLEBOT3_MODEL=waffle
 roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 ```
+
 Velocity inputs can be sent to the robot by pressing the keys `a`, `w`, `d`, `x`. To stop the robot completely, press `s`.
 
 
