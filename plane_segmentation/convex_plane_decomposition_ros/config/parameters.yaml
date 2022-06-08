@@ -17,10 +17,10 @@ sliding_window_plane_extractor:
   global_plane_fit_angle_error_threshold_degrees: 25.0  # [deg] Allowed normal vector deviation for a point w.r.t. the plane normal. If any point violates this, RANSAC is triggered
 
 ransac_plane_refinement:
-  probability: 0.01       # Probability to miss the largest candidate shape. A lower probability provides a higher reliability and determinism at the cost of longer running times
+  probability: 0.001      # Probability to miss the largest candidate shape. A lower probability provides a higher reliability and determinism at the cost of longer running times
   min_points: 4           # This minimum number of points per plane. Controls the termination of the algorithm.
   epsilon: 0.025          # Maximum distance to plane
-  cluster_epsilon: 0.08   # [m] Set maximum Euclidean distance between points to be clustered. Two points are connected if separated by a distance of at most 2*sqrt(2)*cluster_epsilon = 2.828 * cluster_epsilon. Set this higher than resolution
+  cluster_epsilon: 0.041  # [m] Set maximum Euclidean distance between points to be clustered. Two points are connected if separated by a distance of at most 2*sqrt(2)*cluster_epsilon = 2.828 * cluster_epsilon. Set this higher than resolution
   normal_threshold: 25.0  # [deg] Set maximum normal deviation between cluster surface_normal and point normal.
 
 contour_extraction:

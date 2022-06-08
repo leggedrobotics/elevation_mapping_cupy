@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_save_elevationmap" name="convex_plane_decomposition_ros_save_elevationmap"
+  <node pkg="convex_plane_decomposition_ros" type="save_elevation_map" name="save_elevation_map"
   output="screen" launch-prefix="">
       <param name="frequency" value="0.1"/>
       <param name="elevation_topic" value="/elevation_mapping/elevation_map_raw"/>

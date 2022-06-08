@@ -19,10 +19,10 @@
 
   <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_add_noise" name="convex_plane_decomposition_ros_add_noise"
     output="screen" launch-prefix="">
-    <param name="noiseGauss" value="0.02"/>
-    <param name="noiseUniform" value="0.02"/>
-    <param name="outlier_percentage" value="0.0"/>
-    <param name="blur" value="true"/>
+    <param name="noiseGauss" value="0.01"/>
+    <param name="noiseUniform" value="0.01"/>
+    <param name="outlier_percentage" value="5.0"/>
+    <param name="blur" value="false"/>
     <param name="frequency" value="30.0"/>
     <param name="elevation_topic_in" value="/image_to_gridmap_demo/grid_map"/>
     <param name="elevation_topic_out" value="/elevation_mapping/elevation_map_raw"/>
@@ -31,7 +31,7 @@
   </node>
 
   <!-- Static transform map to odom. x y z yaw pitch roll frame_id child_frame_id -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="map2odom_broadcaster" args="0.0 0 0.0 1.0 0 0 map odom" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="map2odom_broadcaster" args="0.0 0.0 0.0 0.0 0.0 0.0 map odom" />
 
   <!-- Launch the plane decomposition node. -->
   <include file="$(find convex_plane_decomposition_ros)/launch/convex_plane_decomposition.launch">
@@ -39,6 +39,6 @@
   </include>
 
   <!-- Launch rviz. -->
-  <include file="$(find convex_plane_decomposition_ros)/launch/rviz.launch"/>
+  <node type="rviz" name="rviz" respawn="true" pkg="rviz" args="-d $(find convex_plane_decomposition_ros)/rviz/config_demo.rviz" />
 
 </launch>
