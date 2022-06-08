@@ -22,7 +22,6 @@ PreprocessingParameters loadPreprocessingParameters(const ros::NodeHandle& nodeH
   loadParameter(nodeHandle, prefix, "resolution", preprocessingParameters.resolution);
   loadParameter(nodeHandle, prefix, "kernelSize", preprocessingParameters.kernelSize);
   loadParameter(nodeHandle, prefix, "numberOfRepeats", preprocessingParameters.numberOfRepeats);
-  loadParameter(nodeHandle, prefix, "increasing", preprocessingParameters.increasing);
   return preprocessingParameters;
 }
 

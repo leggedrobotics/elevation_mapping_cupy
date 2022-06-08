@@ -13,8 +13,6 @@ struct PreprocessingParameters {
   int kernelSize = 3;
   /// Number of times the image is filtered
   int numberOfRepeats = 2;
-  /// If the kernel size should increase each filter step.
-  bool increasing = false;
 };
 
 class GridMapPreprocessing {
