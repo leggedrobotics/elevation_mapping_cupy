@@ -2,11 +2,9 @@
 
 ## Overview
 
-This is a ros package of elevation mapping on GPU.  
-Code are written in python and uses cupy for GPU calculation.  
+This is a ROS package for elevation mapping on GPU. The elevation mapping code is written in python and uses cupy for GPU computation. The
+plane segmentation is done independently and runs on CPU.
 ![screenshot](doc/main_repo.png)
-
-\* plane segmentation is coming soon.
 
 ## Citing
 
@@ -65,31 +63,32 @@ pip3 install -r requirements.txt
 ```
 
 #### Cupy
-cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. `pip install cupy` could work)  
+
+cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. `pip install cupy` could work)
 > For CUDA 10.2
 > pip install cupy-cuda102
-> 
+>
 > For CUDA 11.0
 > pip install cupy-cuda110
-> 
+>
 > For CUDA 11.1
 > pip install cupy-cuda111
-> 
+>
 > For CUDA 11.2
 > pip install cupy-cuda112
-> 
+>
 > For CUDA 11.3
 > pip install cupy-cuda113
-> 
+>
 > For CUDA 11.4
 > pip install cupy-cuda114
-> 
+>
 > For CUDA 11.5
 > pip install cupy-cuda115
-> 
+>
 > For CUDA 11.6
 > pip install cupy-cuda116
-> 
+>
 > (Install CuPy from source)
 > % pip install cupy
 
@@ -225,23 +224,23 @@ roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 
 Velocity inputs can be sent to the robot by pressing the keys `a`, `w`, `d`, `x`. To stop the robot completely, press `s`.
 
-
 ### Subscribed Topics
 
 * topics specified in **`pointcloud_topics`** in **`parameters.yaml`** ([sensor_msgs/PointCloud2])
 
-    The distance measurements.
+  The distance measurements.
 
 * **`/tf`** ([tf/tfMessage])
 
-    The transformation tree.
-
+  The transformation tree.
 
 ### Published Topics
+
 The topics are published as set in the rosparam.  
 You can specify which layers to publish in which fps.
 
 Under `publishers`, you can specify the `topic_name`, `layers` `basic_layers` and `fps`.
+
 ```yaml
 publishers:
   your_topic_name:
@@ -250,30 +249,29 @@ publishers:
     fps: 5.0                                                        # Publish rate. Use smaller value than `map_acquire_fps`.
 ```
 
-
 Example setting in `config/parameters.yaml`.
 
 * **`elevation_map_raw`** ([grid_map_msg/GridMap])
 
-    The entire elevation map.
+  The entire elevation map.
 
 
 * **`elevation_map_recordable`** ([grid_map_msg/GridMap])
 
-    The entire elevation map with slower update rate for visualization and logging.
+  The entire elevation map with slower update rate for visualization and logging.
 
 * **`elevation_map_filter`** ([grid_map_msg/GridMap])
 
-    The filtered maps using plugins.
-
-
+  The filtered maps using plugins.
 
 # Plugins
+
 You can create your own plugin to process the elevation map and publish as a layer in GridMap message.
 
 Let's look at the example.
 
 First, create your plugin file in `elevation_mapping_cupy/script/plugins/` and save as `example.py`.
+
 ```python
 import cupy as cp
 from typing import List
@@ -294,9 +292,10 @@ class NameOfYourPlugin(PluginBase):
 ```
 
 Then, add your plugin setting to `config/plugin_config.yaml`
+
 ```yaml
 example:                                      # Use the same name as your file name.
-  enable: True                                # weather to laod this plugin
+  enable: True                                # weather to load this plugin
   fill_nan: True                              # Fill nans to invalid cells of elevation layer.
   is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
   layer_name: "example_layer"                 # The layer name.
