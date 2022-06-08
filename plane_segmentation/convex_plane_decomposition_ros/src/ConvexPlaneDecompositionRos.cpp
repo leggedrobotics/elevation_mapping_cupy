@@ -183,14 +183,4 @@ Eigen::Isometry3d ConvexPlaneExtractionROS::getTransformToTargetFrame(const std:
   return transformation;
 }
 
-ros::Time ConvexPlaneExtractionROS::getMessageTime(const grid_map_msgs::GridMap& message) const {
-  try {
-    ros::Time time;
-    return time.fromNSec(message.info.header.stamp.toNSec());
-  } catch (std::runtime_error& ex) {
-    ROS_WARN("[ConvexPlaneExtractionROS::getMessageTime] %s", ex.what());
-    return ros::Time::now();
-  }
-}
-
 }  // namespace convex_plane_decomposition
