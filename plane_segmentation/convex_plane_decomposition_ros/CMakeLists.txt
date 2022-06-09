@@ -87,6 +87,15 @@ target_link_libraries(${PROJECT_NAME}_save_elevationmap
 	${OpenCV_LIBRARIES}
 	)
 
+add_executable(${PROJECT_NAME}_approximation_demo_node
+	src/ConvexApproximationDemoNode.cpp
+	)
+target_link_libraries(${PROJECT_NAME}_approximation_demo_node
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	${PROJECT_NAME}
+	)
+
 #############
 ## Install ##
 #############

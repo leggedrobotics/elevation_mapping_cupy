@@ -38,6 +38,10 @@
     <arg name="node_parameter_file"    value="$(find convex_plane_decomposition_ros)/config/demo_node.yaml"/>
   </include>
 
+  <!-- Launch the approximation demo. -->
+  <node pkg="convex_plane_decomposition_ros" type="convex_plane_decomposition_ros_approximation_demo_node" name="convex_plane_decomposition_ros_approximation_demo_node"
+      output="screen" launch-prefix=""/>
+
   <!-- Launch rviz. -->
   <node type="rviz" name="rviz" respawn="true" pkg="rviz" args="-d $(find convex_plane_decomposition_ros)/rviz/config_demo.rviz" />
 
