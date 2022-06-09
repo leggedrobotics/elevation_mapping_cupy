@@ -65,6 +65,7 @@ add_library(${PROJECT_NAME}
   src/PlanarRegion.cpp
   src/PlaneDecompositionPipeline.cpp
   src/Postprocessing.cpp
+  src/SegmentedPlaneProjection.cpp
 )
 add_dependencies(${PROJECT_NAME}
 	${catkin_EXPORTED_TARGETS}
@@ -97,6 +98,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
+	test/testConvexApproximation.cpp
 	test/testPipeline.cpp
 	test/testPlanarRegion.cpp
 	test/testRegionGrowing.cpp
