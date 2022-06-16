@@ -29,8 +29,8 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   module_path = module_path + "/script";
   path.attr("insert")(0, module_path);
 
-  auto elevation_mapping = py::module::import("elevation_mapping");
-  auto parameter = py::module::import("parameter");
+  auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
+  auto parameter = py::module::import("elevation_mapping_cupy.parameter");
   param_ = parameter.attr("Parameter")();
   setParameters(nh);
   map_ = elevation_mapping.attr("ElevationMap")(param_);

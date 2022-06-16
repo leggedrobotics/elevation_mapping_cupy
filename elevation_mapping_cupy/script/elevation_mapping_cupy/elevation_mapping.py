@@ -7,18 +7,18 @@ import numpy as np
 import threading
 import subprocess
 
-from traversability_filter import get_filter_chainer, get_filter_torch
-from parameter import Parameter
-from custom_kernels import add_points_kernel
-from custom_kernels import error_counting_kernel
-from custom_kernels import average_map_kernel
-from custom_kernels import dilation_filter_kernel
-from custom_kernels import normal_filter_kernel
-from custom_kernels import polygon_mask_kernel
-from map_initializer import MapInitializer
-from plugins.plugin_manager import PluginManger
+from .traversability_filter import get_filter_chainer, get_filter_torch
+from .parameter import Parameter
+from .custom_kernels import add_points_kernel
+from .custom_kernels import error_counting_kernel
+from .custom_kernels import average_map_kernel
+from .custom_kernels import dilation_filter_kernel
+from .custom_kernels import normal_filter_kernel
+from .custom_kernels import polygon_mask_kernel
+from .map_initializer import MapInitializer
+from .plugins.plugin_manager import PluginManger
 
-from traversability_polygon import (
+from .traversability_polygon import (
     get_masked_traversability,
     is_traversable,
     calculate_area,
