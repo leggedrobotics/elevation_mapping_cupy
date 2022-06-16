@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<package format="2">
+
+    <name>convex_plane_decomposition_msgs</name>
+    <version>0.0.0</version>
+    <description>Convex plane decomposition message definitions.</description>
+
+    <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+    <license>MIT</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>message_generation</build_depend>
+
+    <depend>std_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>grid_map_msgs</depend>
+
+    <exec_depend>message_runtime</exec_depend>
+
+</package>

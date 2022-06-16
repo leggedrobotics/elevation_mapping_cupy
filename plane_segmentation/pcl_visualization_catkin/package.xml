@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pcl_visualization_catkin</name>
+  <version>1.10.0</version>
+  <description>Catkin wrapper for PCL visualization.</description>
+  <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+
+  <license>See package</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>libvtk7-dev</exec_depend>  <!-- required for the buildserver -->
+
+</package>
