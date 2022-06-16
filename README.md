@@ -246,7 +246,7 @@ roslaunch convex_plane_decomposition_ros convex_plane_decomposition.launch
 First, install turtlebot simulation.
 
 ```bash
-sudo apt install ros-noetic-turtlebot3*
+sudo apt install ros-noetic-turtlebot3-gazebo ros-noetic-turtlebot3-teleop
 ```
 
 Then, you can run the examples. For the basic version:
