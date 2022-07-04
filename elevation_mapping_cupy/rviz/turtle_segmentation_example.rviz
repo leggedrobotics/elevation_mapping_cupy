@@ -200,20 +200,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
-    - Alpha: 1
-      Class: jsk_rviz_plugin/PolygonArray
-      Color: 25; 255; 0
+    - Class: rviz/MarkerArray
       Enabled: true
+      Marker Topic: /convex_plane_decomposition_ros/boundaries
       Name: PlaneBoundaries
-      Queue Size: 10
-      Topic: /convex_plane_decomposition_ros/boundaries
-      Unreliable: false
+      Namespaces:
+        "": true
+      Queue Size: 100
       Value: true
-      coloring: Label
-      enable lighting: true
-      normal length: 0.10000000149011612
-      only border: true
-      show normal: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Class: grid_map_rviz_plugin/GridMap
