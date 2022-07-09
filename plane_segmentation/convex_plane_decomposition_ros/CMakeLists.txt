@@ -9,10 +9,10 @@ set(CATKIN_PACKAGE_DEPENDENCIES
 	grid_map_cv
 	grid_map_msgs
 	geometry_msgs
-	jsk_recognition_msgs
 	convex_plane_decomposition
 	convex_plane_decomposition_msgs
 	tf2_ros
+	visualization_msgs
 )
 
 find_package(catkin REQUIRED COMPONENTS
