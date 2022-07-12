@@ -222,6 +222,21 @@ For the plane segmentation node
 roslaunch convex_plane_decomposition_ros convex_plane_decomposition.launch
 ```
 
+#### Errors
+If you build with the install flag under ros melodic, you might get issues with the modules not found:
+
+```bash
+terminate called after throwing an instance of 'pybind11::error_already_set'
+  what():  ModuleNotFoundError: No module named 'elevation_mapping_cupy'
+```
+This is because python3 modules are installed into a different location.
+
+This can be fixed by including also the python3 modules location in the `PYTHONPATH` by adding following line into the launch file:
+
+```xml
+<env name="PYTHONPATH" value="<path_to_your_install>/lib/python3/dist-packages:$(env PYTHONPATH)" />
+```
+
 ### Run TurtleBot example
 
 First, install turtlebot simulation.
