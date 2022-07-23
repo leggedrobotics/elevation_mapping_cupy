@@ -25,3 +25,12 @@ inpainting:
   layer_name: "inpaint"
   extra_params:
     method: "telea"                           # telea or ns
+# Apply smoothing for inpainted layer
+smooth_filter_1:                                
+  type: "smooth_filter"
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "smooth_1"
+  extra_params:
+    input_layer_name: "inpaint"
