@@ -87,7 +87,7 @@ class PluginManger(object):
             if v["enable"]:
                 plugin_params.append(
                     PluginParams(
-                        name=k,
+                        name=k if not "type" in v else v["type"],
                         layer_name=v["layer_name"],
                         fill_nan=v["fill_nan"],
                         is_height_layer=v["is_height_layer"],

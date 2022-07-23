@@ -33,34 +33,22 @@ Toolbars:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 1
-      Class: jsk_rviz_plugin/PolygonArray
-      Color: 25; 255; 0
+    - Class: rviz/MarkerArray
       Enabled: true
+      Marker Topic: /convex_plane_decomposition_ros/boundaries
       Name: Boundaries
-      Queue Size: 10
-      Topic: /convex_plane_decomposition_ros/boundaries
-      Unreliable: false
+      Namespaces:
+        "": true
+      Queue Size: 100
       Value: true
-      coloring: Label
-      enable lighting: true
-      normal length: 0.10000000149011612
-      only border: true
-      show normal: false
-    - Alpha: 1
-      Class: jsk_rviz_plugin/PolygonArray
-      Color: 25; 255; 0
+    - Class: rviz/MarkerArray
       Enabled: false
+      Marker Topic: /convex_plane_decomposition_ros/insets
       Name: Insets
-      Queue Size: 10
-      Topic: /convex_plane_decomposition_ros/insets
-      Unreliable: false
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: false
-      coloring: Label
-      enable lighting: true
-      normal length: 0.10000000149011612
-      only border: true
-      show normal: false
     - Alpha: 0.10000000149011612
       Autocompute Intensity Bounds: true
       Class: grid_map_rviz_plugin/GridMap

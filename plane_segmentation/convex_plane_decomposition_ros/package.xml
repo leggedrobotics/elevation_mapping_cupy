@@ -16,10 +16,10 @@
     <depend>grid_map_cv</depend>
     <depend>grid_map_msgs</depend>
     <depend>geometry_msgs</depend>
-    <depend>jsk_recognition_msgs</depend>
     <depend>convex_plane_decomposition</depend>
     <depend>convex_plane_decomposition_msgs</depend>
     <depend>tf2_ros</depend>
+    <depend>visualization_msgs</depend>
 
     <exec_depend>grid_map_demos</exec_depend>
 

@@ -19,8 +19,8 @@ ConvexPlaneExtractionROS::ConvexPlaneExtractionROS(ros::NodeHandle& nodeHandle) 
   if (parametersLoaded) {
     elevationMapSubscriber_ = nodeHandle.subscribe(elevationMapTopic_, 1, &ConvexPlaneExtractionROS::callback, this);
     filteredmapPublisher_ = nodeHandle.advertise<grid_map_msgs::GridMap>("filtered_map", 1);
-    boundaryPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("boundaries", 1);
-    insetPublisher_ = nodeHandle.advertise<jsk_recognition_msgs::PolygonArray>("insets", 1);
+    boundaryPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("boundaries", 1);
+    insetPublisher_ = nodeHandle.advertise<visualization_msgs::MarkerArray>("insets", 1);
     regionPublisher_ = nodeHandle.advertise<convex_plane_decomposition_msgs::PlanarTerrain>("planar_terrain", 1);
   }
 }
@@ -152,10 +152,11 @@ void ConvexPlaneExtractionROS::callback(const grid_map_msgs::GridMap& message) {
   grid_map::GridMapRosConverter::toMessage(planarTerrain.gridMap, outputMessage);
   filteredmapPublisher_.publish(outputMessage);
 
-  boundaryPublisher_.publish(convertBoundariesToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
-                                                            planarTerrain.gridMap.getTimestamp()));
-  insetPublisher_.publish(
-      convertInsetsToRosPolygons(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(), planarTerrain.gridMap.getTimestamp()));
+  const double lineWidth = 0.005;  // [m] RViz marker size
+  boundaryPublisher_.publish(convertBoundariesToRosMarkers(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
+                                                           planarTerrain.gridMap.getTimestamp(), lineWidth));
+  insetPublisher_.publish(convertInsetsToRosMarkers(planarTerrain.planarRegions, planarTerrain.gridMap.getFrameId(),
+                                                    planarTerrain.gridMap.getTimestamp(), lineWidth));
 
   callbackTimer_.endTimer();
 }
