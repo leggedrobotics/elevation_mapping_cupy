@@ -376,7 +376,7 @@ example_large:                                # You can apply same filter with d
   enable: True                                # weather to load this plugin
   fill_nan: True                              # Fill nans to invalid cells of elevation layer.
   is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
-  layer_name: "example_layer_large"                 # The layer name.
+  layer_name: "example_layer_large"           # The layer name.
   extra_params:                               # This params are passed to the plugin class on initialization.
     add_value: 100.0                          # Example param with larger value.
 ```
