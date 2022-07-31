@@ -6,13 +6,13 @@ from .plugin_manager import PluginBase
 
 
 class StepFilter(PluginBase):
-    def __init__(self, cell_n: int = 100, radius: int = 1, include_neg_steps: bool = False, **kwargs):
+    def __init__(self, cell_n: int = 100, radius: int = 1, include_negative_steps: bool = False, **kwargs):
         super().__init__()
 
         self.width = cell_n
         self.height = cell_n
 
-        include_neg_steps_string = "true" if include_neg_steps else "false"
+        include_negative_steps_string = "true" if include_negative_steps else "false"
 
         self.step_filtered = cp.zeros((self.width, self.height))
         self.step_filter_kernel = cp.ElementwiseKernel(
@@ -59,14 +59,17 @@ class StepFilter(PluginBase):
                   for (int dx = -${radius}; dx <= ${radius}; ++dx)
                   {
                     int idx = get_relative_map_idx(i, dx, dy, 0);
-                    if (!is_inside(idx))
+                    int valid_idx = get_relative_map_idx(i, dx, dy, 2);
+                    // U is_valid = map[valid_idx];
+                    U is_valid = 1.0;
+                    if (!is_inside(idx) || is_valid < 0.5)
                     {
                       continue;
                     }
 
                     U distance = center_value - map[idx];
 
-                    if (${include_neg_steps} && distance < 0.0)
+                    if (${include_negative_steps} && distance < 0.0)
                     {
                       distance = -distance;
                     }
@@ -80,21 +83,26 @@ class StepFilter(PluginBase):
 
                 resultmap[get_map_idx(i, 0)] = max_distance;
                 """
-            ).substitute(radius=radius, include_neg_steps=include_neg_steps_string),
+            ).substitute(radius=radius, include_negative_steps=include_negative_steps_string),
             name="step_filter_kernel",
         )
 
-    def __call__(self, map: cp.ndarray, layer_names: List[str],
-                 plugin_layers: cp.ndarray, plugin_layer_names: List[str]) -> cp.ndarray:
+    def __call__(
+        self,
+        elevation_map: cp.ndarray,
+        layer_names: List[str],
+        plugin_layers: cp.ndarray,
+        plugin_layer_names: List[str],
+    ) -> cp.ndarray:
 
-        elevation_idx = layer_names.index('elevation')
+        elevation_idx = layer_names.index("elevation")
 
-        self.step_filtered = map[elevation_idx].copy()
+        self.step_filtered *= 0.0
 
         self.step_filter_kernel(
-            map[elevation_idx],
+            elevation_map,
             self.step_filtered,
             size=(self.width * self.height),
         )
 
-        return self.step_filtered.copy()
+        return self.step_filtered

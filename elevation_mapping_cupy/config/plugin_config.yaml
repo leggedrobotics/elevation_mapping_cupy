@@ -2,6 +2,7 @@
 
 # min_filter fills in minimum value around the invalid cell.
 min_filter:                                   
+  type: "min_filter"
   enable: True                                # weather to load this plugin
   fill_nan: False                             # Fill nans to invalid cells of elevation layer.
   is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
@@ -11,6 +12,7 @@ min_filter:
     iteration_n: 30                           # The number of iterations
 # Apply smoothing.
 smooth_filter:                                
+  type: "smooth_filter"
   enable: True
   fill_nan: False
   is_height_layer: True
@@ -19,12 +21,23 @@ smooth_filter:
     input_layer_name: "min_filter"
 # Apply inpainting using opencv
 inpainting:                                   
+  type: "inpainting"
   enable: True
   fill_nan: False
   is_height_layer: True
   layer_name: "inpaint"
   extra_params:
     method: "telea"                           # telea or ns
+# Step Filter. Calculates maximum step within range.
+step_filter:                                
+  type: "step_filter"
+  enable: True                                # weather to load this plugin
+  fill_nan: False                             # Fill nans to invalid cells of elevation layer.
+  is_height_layer: False                      # If this is a height layer (such as elevation) or not (such as traversability)
+  layer_name: "step_filter"                   # The layer name.
+  extra_params:                               # This params are passed to the plugin class on initialization.
+    radius: 2                               # The patch size to apply
+    include_negative_steps: True             # Include negative steps in the calculation
 # Apply smoothing for inpainted layer
 smooth_filter_1:                                
   type: "smooth_filter"

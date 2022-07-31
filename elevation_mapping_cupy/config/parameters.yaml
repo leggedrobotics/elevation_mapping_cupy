@@ -79,7 +79,7 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance']
+    layers: ['elevation', 'traversability', 'variance', 'step_filter']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
   elevation_map_recordable:
