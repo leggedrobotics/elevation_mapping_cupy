@@ -8,20 +8,7 @@
 
 namespace convex_plane_decomposition {
 
-CgalPolygon2d createRegularPolygon(const CgalPoint2d& center, double radius, int numberOfVertices) {
-  assert(numberOfVertices > 2);
-  CgalPolygon2d polygon;
-  polygon.container().reserve(numberOfVertices);
-  double angle = (2. * M_PI) / numberOfVertices;
-  for (int i = 0; i < numberOfVertices; ++i) {
-    double phi = i * angle;
-    double px = radius * std::cos(phi) + center.x();
-    double py = radius * std::sin(phi) + center.y();
-    // Counter clockwise
-    polygon.push_back({px, py});
-  }
-  return polygon;
-}
+namespace {
 
 int getCounterClockWiseNeighbour(int i, int lastVertex) {
   return (i > 0) ? i - 1 : lastVertex;
@@ -29,12 +16,6 @@ int getCounterClockWiseNeighbour(int i, int lastVertex) {
 
 int getClockWiseNeighbour(int i, int lastVertex) {
   return (i < lastVertex) ? i + 1 : 0;
-}
-
-void updateMean(CgalPoint2d& mean, const CgalPoint2d& oldValue, const CgalPoint2d& updatedValue, int N) {
-  // old_mean = 1/N * ( others + old_value); -> others = N*old_mean - old_value
-  // new_mean = 1/N * ( others + new_value); -> new_mean = old_mean - 1/N * oldValue + 1/N * updatedValue
-  mean += 1.0 / N * (updatedValue - oldValue);
 }
 
 std::array<CgalPoint2d, 2> getNeighbours(const CgalPolygon2d& polygon, int i) {
@@ -75,6 +56,55 @@ bool pointAndNeighboursAreWithinFreeSphere(const std::array<CgalPoint2d, 2>& nei
   return isInside(neighbours[0], circle) && isInside(point, circle) && isInside(neighbours[1], circle);
 }
 
+/**
+ * Returns {true, 0.0} if either one of the point -> neighbour segments intersects the parent shape
+ * Returns {false, minSquareDistance} if none of the segments intersects. minSquareDistance is the minimum square distance between the
+ * point and the parent shape
+ */
+template <typename T>
+std::pair<bool, double> doEdgesIntersectAndSquareDistance(const std::array<CgalPoint2d, 2>& neighbours, const CgalPoint2d& point,
+                                                          const T& parentShape);
+
+template <>
+std::pair<bool, double> doEdgesIntersectAndSquareDistance(const std::array<CgalPoint2d, 2>& neighbours, const CgalPoint2d& point,
+                                                          const CgalPolygon2d& parentShape) {
+  CgalSegment2d segment0{neighbours[0], point};
+  CgalSegment2d segment1{neighbours[1], point};
+
+  double minDistSquared = std::numeric_limits<double>::max();
+  for (auto edgeIt = parentShape.edges_begin(); edgeIt != parentShape.edges_end(); ++edgeIt) {
+    const auto edge = *edgeIt;
+    if (CGAL::do_intersect(segment0, edge) || CGAL::do_intersect(segment1, edge)) {
+      return {true, 0.0};
+    } else {
+      minDistSquared = std::min(minDistSquared, CGAL::squared_distance(point, edge));
+    }
+  }
+
+  return {false, minDistSquared};
+}
+
+template <>
+std::pair<bool, double> doEdgesIntersectAndSquareDistance(const std::array<CgalPoint2d, 2>& neighbours, const CgalPoint2d& point,
+                                                          const CgalPolygonWithHoles2d& parentShape) {
+  const auto intersectAndDistance = doEdgesIntersectAndSquareDistance(neighbours, point, parentShape.outer_boundary());
+  if (intersectAndDistance.first) {
+    return {true, 0.0};
+  }
+
+  double minDistSquared = intersectAndDistance.second;
+  for (const auto& hole : parentShape.holes()) {
+    const auto holeIntersectAndDistance = doEdgesIntersectAndSquareDistance(neighbours, point, hole);
+    if (holeIntersectAndDistance.first) {
+      return {true, 0.0};
+    } else {
+      minDistSquared = std::min(minDistSquared, holeIntersectAndDistance.second);
+    }
+  }
+
+  return {false, minDistSquared};
+}
+
 template <typename T>
 bool pointCanBeMoved(const CgalPolygon2d& growthShape, int i, const CgalPoint2d& candidatePoint, CgalCircle2d& freeSphere,
                      const T& parentShape) {
@@ -83,17 +113,15 @@ bool pointCanBeMoved(const CgalPolygon2d& growthShape, int i, const CgalPoint2d&
     if (pointAndNeighboursAreWithinFreeSphere(neighbours, candidatePoint, freeSphere)) {
       return true;
     } else {
-      // Update free sphere around new point
-      freeSphere = CgalCircle2d(candidatePoint, squaredDistance(candidatePoint, parentShape));
-      CgalSegment2d segment0{neighbours[0], candidatePoint};
-      CgalSegment2d segment1{neighbours[1], candidatePoint};
+      // Look for intersections and minimum distances simultaneously
+      const auto intersectAndDistance = doEdgesIntersectAndSquareDistance(neighbours, candidatePoint, parentShape);
 
-      bool segment0IsFree = isInside(neighbours[0], freeSphere) || !doEdgesIntersect(segment0, parentShape);
-      if (segment0IsFree) {
-        bool segment1IsFree = isInside(neighbours[1], freeSphere) || !doEdgesIntersect(segment1, parentShape);
-        return segment1IsFree;
-      } else {
+      if (intersectAndDistance.first) {
         return false;
+      } else {
+        // Update free sphere around new point
+        freeSphere = CgalCircle2d(candidatePoint, intersectAndDistance.second);
+        return true;
       }
     }
   } else {
@@ -101,7 +129,6 @@ bool pointCanBeMoved(const CgalPolygon2d& growthShape, int i, const CgalPoint2d&
   }
 }
 
-namespace {
 inline std::ostream& operator<<(std::ostream& os, const CgalPolygon2d& p) {
   os << "CgalPolygon2d: \n";
   for (auto it = p.vertices_begin(); it != p.vertices_end(); ++it) {
@@ -119,7 +146,6 @@ inline std::ostream& operator<<(std::ostream& os, const CgalPolygonWithHoles2d& 
   }
   return os;
 }
-}  // namespace
 
 template <typename T>
 CgalPolygon2d growConvexPolygonInsideShape_impl(const T& parentShape, CgalPoint2d center, int numberOfVertices, double growthFactor) {
@@ -164,8 +190,24 @@ CgalPolygon2d growConvexPolygonInsideShape_impl(const T& parentShape, CgalPoint2
     std::cerr << "Center: " << centerCopy.x() << ", " << centerCopy.y() << "\n";
     std::cerr << parentShape << "\n";
   }
-
   return growthShape;
+}
+
+}  // namespace
+
+CgalPolygon2d createRegularPolygon(const CgalPoint2d& center, double radius, int numberOfVertices) {
+  assert(numberOfVertices > 2);
+  CgalPolygon2d polygon;
+  polygon.container().reserve(numberOfVertices);
+  double angle = (2. * M_PI) / numberOfVertices;
+  for (int i = 0; i < numberOfVertices; ++i) {
+    double phi = i * angle;
+    double px = radius * std::cos(phi) + center.x();
+    double py = radius * std::sin(phi) + center.y();
+    // Counter clockwise
+    polygon.push_back({px, py});
+  }
+  return polygon;
 }
 
 CgalPolygon2d growConvexPolygonInsideShape(const CgalPolygon2d& parentShape, CgalPoint2d center, int numberOfVertices,
@@ -177,4 +219,11 @@ CgalPolygon2d growConvexPolygonInsideShape(const CgalPolygonWithHoles2d& parentS
                                            double growthFactor) {
   return growConvexPolygonInsideShape_impl(parentShape, center, numberOfVertices, growthFactor);
 }
+
+void updateMean(CgalPoint2d& mean, const CgalPoint2d& oldValue, const CgalPoint2d& updatedValue, int N) {
+  // old_mean = 1/N * ( others + old_value); -> others = N*old_mean - old_value
+  // new_mean = 1/N * ( others + new_value); -> new_mean = old_mean - 1/N * oldValue + 1/N * updatedValue
+  mean += 1.0 / N * (updatedValue - oldValue);
+}
+
 }  // namespace convex_plane_decomposition
