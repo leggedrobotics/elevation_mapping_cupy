@@ -60,8 +60,7 @@ class StepFilter(PluginBase):
                   {
                     int idx = get_relative_map_idx(i, dx, dy, 0);
                     int valid_idx = get_relative_map_idx(i, dx, dy, 2);
-                    // U is_valid = map[valid_idx];
-                    U is_valid = 1.0;
+                    U is_valid = map[valid_idx];
                     if (!is_inside(idx) || is_valid < 0.5)
                     {
                       continue;
