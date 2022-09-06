@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <grid_map_msgs/GridMap.h>
-
 #include "convex_plane_decomposition/GridMapPreprocessing.h"
 #include "convex_plane_decomposition/PlanarRegion.h"
 #include "convex_plane_decomposition/Postprocessing.h"
