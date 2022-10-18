@@ -54,7 +54,7 @@ class PluginBase(ABC):
         pass
 
 
-class PluginManger(object):
+class PluginManager(object):
     """
     This manages the plugins.
     """
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         PluginParams(name="smooth_filter", layer_name="smooth"),
     ]
     extra_params = [{"dilation_size": 5, "iteration_n": 5}, {"input_layer_name": "elevation2"}]
-    manager = PluginManger(200)
+    manager = PluginManager(200)
     manager.load_plugin_settings("config/plugin_config.yaml")
     print(manager.layer_names)
     print(manager.plugin_names)

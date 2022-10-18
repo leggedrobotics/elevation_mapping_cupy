@@ -13,6 +13,7 @@
 
 // Pybind
 #include <pybind11_catkin/pybind11/embed.h>  // everything needed for embedding
+#include <pybind11/stl.h>
 
 // ROS
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -42,11 +43,11 @@ class ElevationMappingWrapper {
 
   ElevationMappingWrapper();
 
-  void initialize(ros::NodeHandle& nh);
+  void initialize(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms);
 
-  void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
+  void input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
              const double positionNoise, const double orientationNoise);
-  void move_to(const Eigen::VectorXd& p);
+  void move_to(const Eigen::VectorXd& p, const RowMatrixXd& R);
   void clear();
   void update_variance();
   void update_time();
@@ -57,11 +58,10 @@ class ElevationMappingWrapper {
                                   std::vector<Eigen::Vector2d>& untraversable_polygon);
   double get_additive_mean_error();
   void initializeWithPoints(std::vector<Eigen::Vector3d>& points, std::string method);
-  void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
   void addNormalColorLayer(grid_map::GridMap& map);
 
  private:
-  void setParameters(ros::NodeHandle& nh);
+  void setParameters(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms);
   py::object map_;
   py::object param_;
   double resolution_;

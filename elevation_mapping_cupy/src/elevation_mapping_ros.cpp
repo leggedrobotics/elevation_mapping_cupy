@@ -30,15 +30,15 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       enablePointCloudPublishing_(false),
       isGridmapUpdated_(false) {
   nh_ = nh;
-  map_.initialize(nh_);
+
   std::string pose_topic, map_frame;
   XmlRpc::XmlRpcValue publishers;
-  std::vector<std::string> pointcloud_topics;
+  XmlRpc::XmlRpcValue subscribers;
   std::vector<std::string> map_topics;
   double recordableFps, updateVarianceFps, timeInterval, updatePoseFps, updateGridMapFps, publishStatisticsFps;
   bool enablePointCloudPublishing(false);
 
-  nh.param<std::vector<std::string>>("pointcloud_topics", pointcloud_topics, {"points"});
+  nh.getParam("subscribers", subscribers);
   nh.getParam("publishers", publishers);
   nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
@@ -63,10 +63,28 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
 
-  for (const auto& pointcloud_topic : pointcloud_topics) {
+  std::vector<std::string> additional_layers;
+  std::vector<std::string> fusion_algorithms;
+  for (auto & subscriber : subscribers) {
+    auto channels = subscriber.second["channels"];
+    auto fusion = subscriber.second["fusion"];
+    for (int32_t i = 0; i < channels.size(); ++i) {
+      auto name = static_cast<std::string>(channels[i]);
+      if (!std::count(additional_layers.begin(), additional_layers.end(), name)){
+        additional_layers.push_back(name);
+        fusion_algorithms.push_back(static_cast<std::string>(fusion[i]));
+      }
+    }
+
+    std::string pointcloud_topic = subscriber.second["topic_name"];
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
+
+  for (int i = 0; i < additional_layers.size(); ++i){
+    ROS_INFO_STREAM("Additional layers " << additional_layers.at(i)<<" fusion algorithm "<<fusion_algorithms.at(i));
+  }
+  map_.initialize(nh_,additional_layers,fusion_algorithms);
 
   // register map publishers
   for (auto itr = publishers.begin(); itr != publishers.end(); ++itr) {
@@ -217,11 +235,30 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
 
 void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud) {
   auto start = ros::Time::now();
-  pcl::PCLPointCloud2 pcl_pc;
-  pcl_conversions::toPCL(cloud, pcl_pc);
+//  transform pointcloud into matrix
+  auto* pcl_pc = new pcl::PCLPointCloud2;
+  pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
+  pcl_conversions::toPCL(cloud, *pcl_pc);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromPCLPointCloud2(pcl_pc, *pointCloud);
+  uint array_dim = pcl_pc->point_step/4;// we assume that they are all float32 or at least 32bits
+  RowMatrixXd points = RowMatrixXd(pcl_pc->width,array_dim);
+
+  for (unsigned int i = 0; i < pcl_pc->width; ++i) {
+    for(unsigned  int j = 0; j<array_dim;++j){
+      float temp;
+      uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
+      memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
+      points(i, j) = static_cast<double>(temp);
+    }
+  }
+//  get channels
+  auto fields = cloud.fields;
+  std::vector<std::string> channels;
+  for(auto & field: fields){
+     channels.push_back(field.name);
+//     TODO: check that datatype is always 7?
+  }
+//  get pose of sensor in map frame
   tf::StampedTransform transformTf;
   std::string sensorFrameId = cloud.header.frame_id;
   auto timeStamp = cloud.header.stamp;
@@ -242,14 +279,13 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
     positionError = positionError_;
     orientationError = orientationError_;
   }
-
-  map_.input(pointCloud, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError, orientationError);
+  map_.input(points, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError, orientationError);
 
   if (enableDriftCorrectedTFPublishing_) {
     publishMapToOdom(map_.get_additive_mean_error());
   }
 
-  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(pointCloud->size()),
+  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(points.size()),
                      (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError);
@@ -260,9 +296,11 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
 void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
   tf::StampedTransform transformTf;
   const auto& timeStamp = ros::Time::now();
+  Eigen::Affine3d transformationBaseToMap;
   try {
     transformListener_.waitForTransform(mapFrameId_, baseFrameId_, timeStamp, ros::Duration(1.0));
     transformListener_.lookupTransform(mapFrameId_, baseFrameId_, timeStamp, transformTf);
+    poseTFToEigen(transformTf, transformationBaseToMap);
   } catch (tf::TransformException& ex) {
     ROS_ERROR("%s", ex.what());
     return;
@@ -270,7 +308,7 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
 
   // This is to check if the robot is moving. If the robot is not moving, drift compensation is disabled to avoid creating artifacts.
   Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
-  map_.move_to(position);
+  map_.move_to(position,transformationBaseToMap.rotation().transpose());
   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(), transformTf.getRotation().z(),
                               transformTf.getRotation().w());

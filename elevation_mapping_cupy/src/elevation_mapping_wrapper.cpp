@@ -14,11 +14,13 @@
 // ROS
 #include <ros/package.h>
 
+#include <utility>
+
 namespace elevation_mapping_cupy {
 
 ElevationMappingWrapper::ElevationMappingWrapper() {}
 
-void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
+void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms) {
   // Add the elevation_mapping_cupy path to sys.path
   auto threading = py::module::import("threading");
   py::gil_scoped_acquire acquire;
@@ -32,7 +34,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
   auto parameter = py::module::import("elevation_mapping_cupy.parameter");
   param_ = parameter.attr("Parameter")();
-  setParameters(nh);
+  setParameters(nh, std::move(additional_layers),std::move(fusion_algorithms));
   map_ = elevation_mapping.attr("ElevationMap")(param_);
 }
 
@@ -40,7 +42,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
  *  Load ros parameters into Parameter class.
  *  Search for the same name within the name space.
  */
-void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
+void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms) {
   // Get all parameters names and types.
   py::list paramNames = param_.attr("get_names")();
   py::list paramTypes = param_.attr("get_types")();
@@ -74,6 +76,9 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
     }
   }
 
+  param_.attr("set_value")("additional_layers",additional_layers);
+  param_.attr("set_value")("fusion_algorithms",fusion_algorithms);
+
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
   map_length_ = py::cast<float>(param_.attr("get_value")("map_length"));
   map_n_ = static_cast<int>(round(map_length_ / resolution_));
@@ -83,18 +88,16 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);
 }
 
-void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
+void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
                                     const double positionNoise, const double orientationNoise) {
   py::gil_scoped_acquire acquire;
-  RowMatrixXd points;
-  pointCloudToMatrix(pointCloud, points);
-  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points), Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
+  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points),channels, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
                      positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
+void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p,  const RowMatrixXd& R) {
   py::gil_scoped_acquire acquire;
-  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p));
+  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p),  Eigen::Ref<const RowMatrixXd>(R));
 }
 
 void ElevationMappingWrapper::clear() {
@@ -176,7 +179,7 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
   if (untraversable_polygon_num > 0) {
     RowMatrixXf untraversable_polygon_m(untraversable_polygon_num, 2);
     map_.attr("get_untraversable_polygon")(Eigen::Ref<RowMatrixXf>(untraversable_polygon_m));
-    for (int j = 0; j < untraversable_polygon_num; i++) {
+    for (int j = 0; j < untraversable_polygon_num; j++) {
       Eigen::Vector2d p;
       p.x() = untraversable_polygon_m(j, 0);
       p.y() = untraversable_polygon_m(j, 1);
@@ -198,15 +201,6 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d>&
   map_.attr("initialize_map")(Eigen::Ref<const RowMatrixXd>(points_m), method);
 }
 
-void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points) {
-  points = RowMatrixXd(pointCloud->size(), 3);
-  for (unsigned int i = 0; i < pointCloud->size(); ++i) {
-    const auto& point = pointCloud->points[i];
-    points(i, 0) = static_cast<double>(point.x);
-    points(i, 1) = static_cast<double>(point.y);
-    points(i, 2) = static_cast<double>(point.z);
-  }
-}
 
 void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map) {
   const auto& normalX = map["normal_x"];
