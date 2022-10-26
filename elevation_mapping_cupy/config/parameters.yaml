@@ -81,7 +81,7 @@ publishers:
     basic_layers: ['elevation', 'traversability']
     fps: 2.0
   elevation_map_filter:
-    layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound']
+    layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound','rgb']
     basic_layers: ['min_filter']
     fps: 3.0
 

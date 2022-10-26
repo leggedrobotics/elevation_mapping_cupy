@@ -143,8 +143,8 @@ def add_points_kernel(
 ):
 
     add_points_kernel = cp.ElementwiseKernel(
-        in_params="raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
-        out_params="raw U map, raw T newmap",
+        in_params="raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
+        out_params="raw U p, raw U map, raw T newmap",
         preamble=map_utils(
             resolution,
             width,
@@ -165,8 +165,8 @@ def add_points_kernel(
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
+            int idx = get_idx(x, y, center_x[0], center_y[0]);
             if (is_valid(x, y, z, t[0], t[1], t[2])) {
-                int idx = get_idx(x, y, center_x[0], center_y[0]);
                 if (is_inside(idx)) {
                     U map_h = map[get_map_idx(idx, 0)];
                     U map_v = map[get_map_idx(idx, 1)];
@@ -258,6 +258,9 @@ def add_points_kernel(
                     }
                 }
             }
+            p[i * 3]= idx;
+            p[i * 3 + 1] = is_valid(x, y, z, t[0], t[1], t[2]);
+            p[i * 3 + 2] = is_inside(idx);
             """
         ).substitute(
             mahalanobis_thresh=mahalanobis_thresh,
@@ -652,6 +655,263 @@ def polygon_mask_kernel(width, height, resolution):
     )
     return polygon_mask_kernel
 
+
+def sum_kernel(
+        resolution,
+        width,
+        height,
+
+    ):
+    # input the list of layers, amount of channels can slo be input through kernel
+    sum_kernel = cp.ElementwiseKernel(
+        in_params="raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params="raw U map, raw T newmap",
+        preamble=string.Template(
+            """
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+            """
+        ).substitute(resolution=resolution,width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+           //U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
+           //U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
+           //U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
+            // U v = z_noise(rz);      
+            //if (valid) {
+                // int idx = get_idx(x, y, center_x[0], center_y[0]);
+                U map_h = map[get_map_idx(idx, 0)];
+                if (inside) {
+                    for ( int it=0;it<pcl_channels[1];it++){
+                        T feat = p[i * pcl_channels[0] + pcl_chan[it]];
+                        atomicAdd(&newmap[get_map_idx(idx, map_lay[it])], feat);
+                    }
+                }
+            //}
+            """
+        ).substitute(
+            # pcl_channels=pcl_channels,
+            # amount_features=amount_features,
+        ),
+        name="sum_kernel",
+    )
+    return sum_kernel
+
+
+def average_kernel(
+        width,
+        height,
+        max_variance,
+        initial_variance,
+        pcl_channels,
+        amount_features,
+        amount_class_prob,
+        sem_class,
+        rgb,
+):
+    average_kernel = cp.ElementwiseKernel(
+        in_params="raw U newmap",
+        out_params="raw U map",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
+            U h = map[get_map_idx(i, 0)];
+            U v = map[get_map_idx(i, 1)];
+            U valid = map[get_map_idx(i, 2)];
+            U new_h = newmap[get_map_idx(i, 0)];
+            U new_v = newmap[get_map_idx(i, 1)];
+            U new_cnt = newmap[get_map_idx(i, 2)];
+            if (new_cnt > 0) {
+                //U sem_cnt = newmap[get_map_idx(i, 7)];
+                //for ( int it=0;it<${amount_features};it++){
+                //    U orig_f=map[get_map_idx(i, 7+${rgb}+it)];
+                //    U new_f=newmap[get_map_idx(i, 7+${rgb}+it)];
+                //    if (orig_f==0){
+                //        map[get_map_idx(i, 7+${rgb}+it)]=new_f/sem_cnt;
+                //    }
+                //    else{
+                //        map[get_map_idx(i, 7+${rgb}+it)]=orig_f*0.5+new_f/sem_cnt*0.5;
+                //    }
+                //}
+                // int stored_it = 0;
+                // U highest_probability = 0;
+                // for ( int it=0;it<${amount_class_prob};it++){
+                //     U orig_p=map[get_map_idx(i, 7+${rgb}+${amount_features}+it)];
+                //     U new_p=newmap[get_map_idx(i, 7+${rgb}+${amount_features}+it)];
+                //     U probability =0;
+                //     if (orig_p==0){
+                //         probability = new_p/sem_cnt;
+                //         map[get_map_idx(i, 7+${rgb}+${amount_features}+it)]=probability;
+                //     }
+                //     else{
+                //         probability = orig_p*0.5+new_p/sem_cnt*0.5;
+                //         map[get_map_idx(i, 7+${rgb}+${amount_features}+it)]=probability;
+                //     }
+                //     if(probability>= highest_probability){
+                //         stored_it = it;
+                //         highest_probability = probability;
+                //     }
+                // }
+                // if (${sem_class}){
+                //     // check max classs prob
+                //     map[get_map_idx(i, 7+${rgb}+${amount_features}+${amount_class_prob})] = stored_it;
+                // }
+            }
+
+            """
+        ).substitute(
+            max_variance=max_variance,
+            initial_variance=initial_variance,
+            pcl_channels=pcl_channels,
+            amount_features=amount_features,
+            amount_class_prob=amount_class_prob,
+            sem_class=int(sem_class),
+            rgb=int(rgb),
+        ),
+        name="average_map_kernel",
+    )
+    return average_kernel
+
+
+def add_color_kernel(
+        width,
+        height,
+):
+    add_color_kernel = cp.ElementwiseKernel(
+        in_params="raw T p, raw U center_x, raw U center_y, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params="raw U map, raw V color_map",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            __device__ unsigned int get_color(unsigned int color){
+            unsigned int red = 0xFF0000;
+            unsigned int green = 0xFF00;
+            unsigned int blue = 0xFF;
+            unsigned int reds = (color & red) >> 16;
+            unsigned int greens = (color & green) >> 8;
+            unsigned int blues = ( color & blue);
+            unsigned int rgbValue = (reds<<16 ) + (greens << 8) + blues;
+            // TODO: at the moment it seems to be working, but if we want
+            //to average over all points we need to use the color layer 
+            //color_out[get_map_idx(idx, 1)] = color;
+            //[get_map_idx(idx, 2)] = color;
+            return rgbValue;
+            }
+            __device__ unsigned int get_r(unsigned int color){
+            unsigned int red = 0xFF0000;
+            unsigned int reds = (color & red) >> 16;
+            return reds;
+            }
+            __device__ unsigned int get_g(unsigned int color){
+            unsigned int green = 0xFF00;
+            unsigned int greens = (color & green) >> 8;
+            return greens;
+            }
+            __device__ unsigned int get_b(unsigned int color){
+            unsigned int blue = 0xFF;
+            unsigned int blues = ( color & blue);
+            return blues;
+            }
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+            if (true){
+                for ( int it=0;it<pcl_channels[1];it++){
+                    unsigned int color = __float_as_uint(p[i * pcl_channels[0] + pcl_chan[it]]);
+                    // unsigned int rgbValue = get_color(color);
+                    
+                    if (! false){
+                        map[get_map_idx(idx,  map_lay[it])] = color;
+                        atomicAdd(&color_map[get_map_idx(idx, it*3)], get_r(color));
+                        atomicAdd(&color_map[get_map_idx(idx, it*3+1)], get_g(color));
+                        atomicAdd(&color_map[get_map_idx(idx, it*3 + 2)], get_b(color));
+                        atomicAdd(&color_map[get_map_idx(idx, pcl_channels[1]*3)], 1);}
+                }
+            }
+            """
+        ).substitute(
+            width=width
+        ),
+        name="add_color_kernel",
+    )
+    return add_color_kernel
+
+def color_average_kernel(
+        width,
+        height,
+):
+    color_average_kernel = cp.ElementwiseKernel(
+        in_params="raw V color_map, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params="raw U map",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            __device__ unsigned int get_r(unsigned int color){
+            unsigned int red = 0xFF0000;
+            unsigned int reds = (color & red) >> 16;
+            return reds;
+            }
+            __device__ unsigned int get_g(unsigned int color){
+            unsigned int green = 0xFF00;
+            unsigned int greens = (color & green) >> 8;
+            return greens;
+            }
+            __device__ unsigned int get_b(unsigned int color){
+            unsigned int blue = 0xFF;
+            unsigned int blues = ( color & blue);
+            return blues;
+            }
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
+            unsigned int cnt = color_map[get_map_idx(i, pcl_channels[1]*3)];
+            if (cnt>0){
+                for ( int it=0;it<pcl_channels[1];it++){
+                    // U prev_color = map[get_map_idx(i, map_lay[it])];
+                    unsigned int r = color_map[get_map_idx(i, it*3)]/(1*cnt);
+                    unsigned int g = color_map[get_map_idx(i, it*3+1)]/(1*cnt);
+                    unsigned int b = color_map[get_map_idx(i, it*3+2)]/(1*cnt);
+                    //if (prev_color>=0){
+                    //    unsigned int prev_r = get_r(prev_color);
+                    //    unsigned int prev_g = get_g(prev_color);
+                    //    unsigned int prev_b = get_b(prev_color);
+                    //    unsigned int r = prev_r/2 + color_map[get_map_idx(i, it*3)]/(2*cnt);
+                    //    unsigned int g = prev_g/2 + color_map[get_map_idx(i, it*3+1)]/(2*cnt);
+                    //    unsigned int b = prev_b/2 + color_map[get_map_idx(i, it*3+2)]/(2*cnt);
+                    //}
+                    //unsigned int rgb = (r<<16) + (g << 8) + b;
+                    // map[get_map_idx(i,  map_lay[it])] = __uint_as_float(rgb);
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="color_average_kernel",
+    )
+    return color_average_kernel
 
 if __name__ == "__main__":
     for i in range(10):
