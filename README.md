@@ -1,5 +1,6 @@
 # Elevation Mapping cupy
 
+![python tests](https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg)
 ## Overview
 
 This is a ROS package for elevation mapping on GPU. The elevation mapping code is written in python and uses cupy for GPU computation. The
