@@ -92,6 +92,9 @@ class Parameter(Serializable):
     def get_value(self, name):
         return getattr(self, name)
 
+    def update(self):
+        # +2 is a border for outside map
+        self.cell_n = int(round(self.map_length / self.resolution)) + 2
 
 if __name__ == "__main__":
     param = Parameter()

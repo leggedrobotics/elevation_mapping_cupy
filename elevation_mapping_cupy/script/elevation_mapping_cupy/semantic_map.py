@@ -2,7 +2,13 @@ from .parameter import Parameter
 import cupy as cp
 import numpy as np
 from typing import List
-from .custom_kernels import sum_kernel, add_color_kernel, color_average_kernel
+from .custom_kernels import (
+    sum_kernel,
+    add_color_kernel,
+    color_average_kernel,
+    average_kernel,
+    class_average_kernel,
+)
 
 xp = cp
 
@@ -40,10 +46,19 @@ class SemanticMap:
             None:
 
         """
+        # TODO: maybe this could be improved by creating functions for each single
+        # create a base class containing compile kernel as well as update and this then can be created for various
+        # then for each method this two functions canbe overloaded. and called through a list of all the algporithms
+        # that need to be called
+        # but I am not sure as we would need to pass a lot of arguments... check plugin
         if "average" in self.unique_fusion:
             print("Initialize fusion kernel")
             self.sum_kernel = sum_kernel(
                 self.param.resolution,
+                self.param.cell_n,
+                self.param.cell_n,
+            )
+            self.average_kernel = average_kernel(
                 self.param.cell_n,
                 self.param.cell_n,
             )
@@ -56,6 +71,17 @@ class SemanticMap:
             )
             self.color_average_kernel = color_average_kernel(
                 self.param.cell_n, self.param.cell_n
+            )
+        if "class_average" in self.unique_fusion:
+            print("Initialize fusion kernel")
+            self.sum_kernel = sum_kernel(
+                self.param.resolution,
+                self.param.cell_n,
+                self.param.cell_n,
+            )
+            self.class_average_kernel = class_average_kernel(
+                self.param.cell_n,
+                self.param.cell_n,
             )
 
     def get_fusion_of_pcl(self, channels: List[str]) -> List[str]:
@@ -97,17 +123,13 @@ class SemanticMap:
                 layer_indices = cp.append(layer_indices, it).astype(np.int32)
         return pcl_indices, layer_indices
 
-    def update_layers(self, points_all, channels, R, t):
+    def update_layers(self, points_all, channels, R, t, elevation_map):
         additional_fusion = self.get_fusion_of_pcl(channels)
-
         self.new_map *= 0.0
-
         if "average" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "average")
             self.sum_kernel(
                 points_all,
-                cp.array([0.0]),
-                cp.array([0.0]),
                 R,
                 t,
                 pcl_ids,
@@ -117,6 +139,38 @@ class SemanticMap:
                 self.new_map,
                 size=(points_all.shape[0]),
             )
+            self.average_kernel(
+                self.new_map,
+                pcl_ids,
+                layer_ids,
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                elevation_map,
+                self.map,
+                size=(self.param.cell_n * self.param.cell_n),
+            )
+        if "class_average" in additional_fusion:
+            pcl_ids, layer_ids = self.get_indices_fusion(channels, "class_average")
+            self.sum_kernel(
+                points_all,
+                R,
+                t,
+                pcl_ids,
+                layer_ids,
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                self.map,
+                self.new_map,
+                size=(points_all.shape[0]),
+            )
+            self.class_average_kernel(
+                self.new_map,
+                pcl_ids,
+                layer_ids,
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                elevation_map,
+                self.map,
+                size=(self.param.cell_n * self.param.cell_n),
+            )
+
         if "color" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "color")
             if self.color_map is None:
@@ -124,17 +178,16 @@ class SemanticMap:
                     (1 + 3 * layer_ids.shape[0], self.param.cell_n, self.param.cell_n),
                     dtype=np.uint32,
                 )
+            self.color_map *= 0
+            # TODO this is not a good solution
             points_all = cp.asarray(cp.float32(points_all.get()))
             self.add_color_kernel(
                 points_all,
-                cp.array([0.0]),
-                cp.array([0.0]),
                 R,
                 t,
                 pcl_ids,
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
-                self.map,
                 self.color_map,
                 size=(points_all.shape[0]),
             )

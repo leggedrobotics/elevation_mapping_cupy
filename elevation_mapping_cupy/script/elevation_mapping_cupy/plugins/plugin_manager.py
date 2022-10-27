@@ -26,9 +26,9 @@ class PluginBase(ABC):
 
     def __init__(self, *args, **kwargs):
         """
-        Parameters
-        ----------
-        plugin_params : PluginParams
+
+        Args:
+            plugin_params : PluginParams
             The parameter of callback
         """
 
@@ -39,8 +39,15 @@ class PluginBase(ABC):
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
     ) -> cp.ndarray:
-        """
-        This gets the elevation map data and plugin layers as a cupy array.
+        """This gets the elevation map data and plugin layers as a cupy array.
+
+
+        Args:
+            elevation_map ():
+            layer_names ():
+            plugin_layers ():
+            plugin_layer_names ():
+
         Run your processing here and return the result.
         layer of elevation_map  0: elevation
                                 1: variance
@@ -50,6 +57,7 @@ class PluginBase(ABC):
                                 5: upper_bound
                                 6: is_upper_bound
         You can also access to the other plugins' layer with plugin_layers and plugin_layer_names
+
         """
         pass
 

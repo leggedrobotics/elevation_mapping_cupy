@@ -15,6 +15,7 @@ def elmap_ex(add_lay, fusion_alg):
     )
     p.additional_layers = additional_layer
     p.fusion_algorithms = fusion_algorithms
+    p.update()
     e = elevation_mapping.ElevationMap(p)
     return e
 
@@ -27,21 +28,21 @@ def elmap_ex(add_lay, fusion_alg):
     ],
 )
 class TestElevationMap:
-    def test_elmap_init(self, elmap_ex):
+    def test_init(self, elmap_ex):
         assert len(elmap_ex.layer_names) == elmap_ex.elevation_map.shape[0]
-        assert elmap_ex.color_map is None
+        # assert elmap_ex.color_map is None
 
-    def test_elmap_input(self, elmap_ex):
+    def test_input(self, elmap_ex):
         channels = ["x", "y", "z"] + elmap_ex.param.additional_layers
         points = cp.random.rand(100000, len(channels))
         R = cp.random.rand(3, 3)
         t = cp.random.rand(3)
         elmap_ex.input(points, channels, R, t, 0, 0)
 
-    def test_elmap_update_normal(self, elmap_ex):
+    def test_update_normal(self, elmap_ex):
         elmap_ex.update_normal(elmap_ex.elevation_map[0])
 
-    def test_elmap_move_to(self, elmap_ex):
+    def test_move_to(self, elmap_ex):
         for i in range(20):
             pos = np.array([i * 0.01, i * 0.02, i * 0.01])
             R = cp.random.rand(3, 3)
@@ -61,25 +62,30 @@ class TestElevationMap:
         for layer in layers:
             elmap_ex.get_map_with_name_ref(layer, data)
 
-# @pytest.mark.parametrize(
-#     "add_lay, fusion_alg,channels",
-#     [(["feat_0", "feat_1"], ["average", "average"],["feat_0"]),
-#     (["feat_0", "feat_1"], ["average", "average"],[]),
-#     (["feat_0", "feat_1", "rgb"], ["average", "average", "color"],["rgb", "feat_0"]),
-#      ],
-# )
-# def test_fusion_of_pcl(elmap_ex, channels):
-#     fusion = elmap_ex.get_fusion_of_pcl(channels=channels)
-#     assert len(fusion) <= len(channels)
-#     assert len(fusion)>0 or len(channels)==0
-#     assert all(isinstance(item, str) for item in fusion)
-#
-#
-# @pytest.mark.parametrize(
-#     "add_lay, fusion_alg",
-#     [(["feat_0", "feat_1", "rgb"], ["average", "average", "color"]),
-#      ],
-# )
-# @pytest.mark.parametrize("channels", [["rgb"], ["rgb", "feat_0"], []])
-# def test_indices_fusion(elmap_ex, channels,fusion_alg):
-#     pcl_indices, layer_indices = elmap_ex.get_indices_fusion(pcl_channels=channels,fusion_alg=fusion_alg[0])
+    def test_get_position(self,elmap_ex):
+        pos = np.random.rand(1,3)
+        elmap_ex.get_position(pos)
+
+    def test_clear(self,elmap_ex):
+        elmap_ex.clear()
+
+    def test_move(self,elmap_ex):
+        delta_position = np.random.rand(3)
+        elmap_ex.move(delta_position)
+
+    def test_exists_layer(self,elmap_ex, add_lay):
+        for layer in add_lay:
+            assert elmap_ex.exists_layer(layer)
+
+    def test_polygon_traversability(self,elmap_ex):
+        polygon = cp.array([[0, 0], [2, 0], [0, 2]], dtype=np.float64)
+        result = np.array([0, 0, 0])
+        number_polygons = elmap_ex.get_polygon_traversability(polygon, result)
+        untraversable_polygon = np.zeros((number_polygons, 2))
+        elmap_ex.get_untraversable_polygon(untraversable_polygon)
+
+    def test_initialize_map(self, elmap_ex):
+        methods = ['linear', 'cubic', 'nearest']
+        for method in methods:
+            points = np.array([[-4.0, 0.0, 0.0],[-4.0, 8.0, 1.0],[4.0, 8.0, 0.0],[4.0, 0.0, 0.0]])
+            elmap_ex.initialize_map(points,method)
