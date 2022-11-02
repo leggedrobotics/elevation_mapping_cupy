@@ -682,7 +682,7 @@ def sum_kernel(
             if (valid) {
                 if (inside) {
                     for ( int it=0;it<pcl_channels[1];it++){
-                        T feat = p[i * pcl_channels[0] + pcl_chan[it]];
+                        U feat = p[i * pcl_channels[0] + pcl_chan[it]];
                         atomicAdd(&newmap[get_map_idx(idx, map_lay[it])], feat);
                     }
                 }
@@ -715,7 +715,7 @@ def average_kernel(
             U cnt = new_elmap[get_map_idx(i, 2)];
             if (cnt>0){
                 for ( int it=0;it<pcl_channels[1];it++){
-                    U feat = newmap[get_map_idx(i, it*3)]/(1*cnt);
+                    U feat = newmap[get_map_idx(i,  map_lay[it])]/(1*cnt);
                     map[get_map_idx(i,  map_lay[it])] = feat;
                 }
             }
@@ -748,11 +748,11 @@ def class_average_kernel(
                 for ( int it=0;it<pcl_channels[1];it++){
                     U prev_val = map[get_map_idx(i,  map_lay[it])];
                     if (prev_val==0){
-                        U val = newmap[get_map_idx(i, it*3)]/(1*cnt);
+                        U val = newmap[get_map_idx(i, map_lay[it])]/(1*cnt);
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                     else{
-                        U val = prev_val /2 + newmap[get_map_idx(i, it*3)]/(2*cnt);
+                        U val = prev_val /2 + newmap[get_map_idx(i, map_lay[it])]/(2*cnt);
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                 }
