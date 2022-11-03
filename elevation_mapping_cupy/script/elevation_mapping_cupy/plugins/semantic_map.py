@@ -7,10 +7,10 @@ from typing import List
 import cupyx.scipy.ndimage as ndimage
 
 from .plugin_manager import PluginBase
+from elevation_mapping_cupy.semantic_map import SemanticMap
 
-
-class SmoothFilter(PluginBase):
-    """This is a filter to smoothen
+class SemanticFilter(PluginBase):
+    """This is a filter to create colors
 
     ...
 
@@ -23,6 +23,7 @@ class SmoothFilter(PluginBase):
     def __init__(self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs):
         super().__init__()
         self.input_layer_name = input_layer_name
+        self.indices = []
 
     def __call__(
         self,
@@ -30,8 +31,14 @@ class SmoothFilter(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        semantic_map: SemanticMap,
         **kwargs,
     ) -> cp.ndarray:
+        # get indices of all layers that
+        semantic_map.param.additional_layers
+         # check which has the highest value
+        # create color coding
+        ##################
         if self.input_layer_name in layer_names:
             idx = layer_names.index(self.input_layer_name)
             h = elevation_map[idx]

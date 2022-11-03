@@ -9,6 +9,7 @@ import importlib
 import inspect
 from dataclasses import dataclass
 from ruamel.yaml import YAML
+from inspect import signature
 
 
 @dataclass
@@ -38,6 +39,7 @@ class PluginBase(ABC):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        **kwargs,
     ) -> cp.ndarray:
         """This gets the elevation map data and plugin layers as a cupy array.
 
@@ -75,9 +77,15 @@ class PluginManager(object):
 
         self.plugins = []
         for param, extra_param in zip(plugin_params, extra_params):
-            m = importlib.import_module("." + param.name, package="elevation_mapping_cupy.plugins")  # -> 'module'
+            m = importlib.import_module(
+                "." + param.name, package="elevation_mapping_cupy.plugins"
+            )  # -> 'module'
             for name, obj in inspect.getmembers(m):
-                if inspect.isclass(obj) and issubclass(obj, PluginBase) and name != "PluginBase":
+                if (
+                    inspect.isclass(obj)
+                    # and issubclass(obj, PluginBase)
+                    and name != "PluginBase"
+                ):
                     # Add cell_n to params
                     extra_param["cell_n"] = self.cell_n
                     self.plugins.append(obj(**extra_param))
@@ -102,6 +110,7 @@ class PluginManager(object):
                     )
                 )
             extra_params.append(v["extra_params"])
+        print(plugin_params)
         self.init(plugin_params, extra_params)
         print("Loaded plugins are ", *self.plugin_names)
 
@@ -133,10 +142,38 @@ class PluginManager(object):
             print("Error with layer {}: {}".format(name, e))
             return None
 
-    def update_with_name(self, name: str, elevation_map: cp.ndarray, layer_names: List[str]):
+    def update_with_name(
+        self,
+        name: str,
+        elevation_map: cp.ndarray,
+        layer_names: List[str],
+        semantic_map=None,
+        transform=None,
+    ):
         idx = self.get_layer_index_with_name(name)
         if idx is not None:
-            self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)
+            n_param = len(signature(self.plugins[idx]).parameters)
+            if n_param == 5:
+                self.layers[idx] = self.plugins[idx](
+                    elevation_map, layer_names, self.layers, self.layer_names
+                )
+            elif n_param == 6:
+                self.layers[idx] = self.plugins[idx](
+                    elevation_map,
+                    layer_names,
+                    self.layers,
+                    self.layer_names,
+                    semantic_map,
+                )
+            else:
+                self.layers[idx] = self.plugins[idx](
+                    elevation_map,
+                    layer_names,
+                    self.layers,
+                    self.layer_names,
+                    semantic_map,
+                    transform,
+                )
 
     def get_map_with_name(self, name: str) -> cp.ndarray:
         idx = self.get_layer_index_with_name(name)
@@ -154,17 +191,28 @@ if __name__ == "__main__":
         PluginParams(name="min_filter", layer_name="min_filter"),
         PluginParams(name="smooth_filter", layer_name="smooth"),
     ]
-    extra_params = [{"dilation_size": 5, "iteration_n": 5}, {"input_layer_name": "elevation2"}]
+    extra_params = [
+        {"dilation_size": 5, "iteration_n": 5},
+        {"input_layer_name": "elevation2"},
+    ]
     manager = PluginManager(200)
-    manager.load_plugin_settings("config/plugin_config.yaml")
+    manager.load_plugin_settings("../config/plugin_config.yaml")
     print(manager.layer_names)
     print(manager.plugin_names)
     elevation_map = cp.zeros((7, 200, 200)).astype(cp.float32)
-    layer_names = ["elevation", "variance", "is_valid", "traversability", "time", "upper_bound", "is_upper_bound"]
+    layer_names = [
+        "elevation",
+        "variance",
+        "is_valid",
+        "traversability",
+        "time",
+        "upper_bound",
+        "is_upper_bound",
+    ]
     elevation_map[0] = cp.random.randn(200, 200)
     elevation_map[2] = cp.abs(cp.random.randn(200, 200))
     print("map", elevation_map[0])
     print("layer map ", manager.layers[0])
     manager.update_with_name("min_filter", elevation_map, layer_names)
-    manager.update_with_name("smooth_filter", elevation_map, layer_names)
+    manager.update_with_name("smooth", elevation_map, layer_names)
     print(manager.get_map_with_name("smooth"))

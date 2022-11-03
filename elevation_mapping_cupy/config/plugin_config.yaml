@@ -26,7 +26,7 @@ inpainting:
   extra_params:
     method: "telea"                           # telea or ns
 # Apply smoothing for inpainted layer
-smooth_filter_1:                                
+smooth_filter_1:
   type: "smooth_filter"
   enable: True
   fill_nan: False
