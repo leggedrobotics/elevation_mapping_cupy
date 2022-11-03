@@ -30,6 +30,8 @@ class PointcloudNode:
         # setup semantics
         self.feature_extractor = None
         self.semantic_model = None
+        self.segmentation_channels = None
+        self.feature_channels = None
         self.initialize_semantics()
 
         # setup pointcloud creation
