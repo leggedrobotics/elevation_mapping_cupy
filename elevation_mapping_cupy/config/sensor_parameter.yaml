@@ -4,8 +4,8 @@ subscribers:
 #    fusion: ['average','average']
 #    topic_name: '/elevation_mapping/pointcloud_semantic'
   front_cam:
-    channels: ['rgb','feat_0','feat_1','person','grass']
-    fusion: ['color','average','average','class_average']
+    channels: []
+    fusion: []
     topic_name: '/elvation_mapping/pointcloud_semantic'
     semantic_segmentation: True
     segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x'
@@ -26,6 +26,7 @@ subscribers:
     cam_frame: "zed2i_right_camera_optical_frame"
     confidence_topic: "/zed2i/zed_node/confidence/confidence_map"
     confidence_threshold: 10
+    feature_extractor: False
 
 
 
