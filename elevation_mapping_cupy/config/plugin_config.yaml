@@ -18,7 +18,7 @@ smooth_filter:
   extra_params:
     input_layer_name: "min_filter"
 # Apply inpainting using opencv
-inpainting:                                   
+inpainting:
   enable: True
   fill_nan: False
   is_height_layer: True
@@ -34,3 +34,14 @@ smooth_filter_1:
   layer_name: "smooth_1"
   extra_params:
     input_layer_name: "inpaint"
+
+semantic_filter:
+  type: "semantic_filter"
+  enable: False
+  fill_nan: False
+  is_height_layer: False
+  layer_name: "sem_fil"
+  extra_params:
+#    TODO make a better link between classes and color
+    classes: ['grass','tree','fence','person']
+    colors: [[0,255,0],[120,120,0],[170,0,20],[0,0,255],[255,0,0]]

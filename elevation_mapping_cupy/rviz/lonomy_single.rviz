@@ -55,8 +55,8 @@ Visualization Manager:
       Autocompute Intensity Bounds: true
       Class: grid_map_rviz_plugin/GridMap
       Color: 200; 200; 200
-      Color Layer: person
-      Color Transformer: IntensityLayer
+      Color Layer: rgb
+      Color Transformer: ColorLayer
       Enabled: true
       Height Layer: smooth
       Height Transformer: GridMapLayer
@@ -449,9 +449,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5547983050346375
+      Pitch: 0.6447982788085938
       Target Frame: base_footprint
-      Yaw: 1.4138503074645996
+      Yaw: 1.8688498735427856
     Saved: ~
 Window Geometry:
   Displays:

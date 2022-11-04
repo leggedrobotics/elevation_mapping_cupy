@@ -5,7 +5,7 @@ subscribers:
 #    topic_name: '/elevation_mapping/pointcloud_semantic'
   front_cam:
     channels: ['rgb','feat_0','feat_1','person','grass']
-    fusion: ['color','average','average','class_average']
+    fusion: ['color','average','average','class_average','class_average']
     topic_name: '/elvation_mapping/pointcloud_semantic'
     semantic_segmentation: True
     segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x'

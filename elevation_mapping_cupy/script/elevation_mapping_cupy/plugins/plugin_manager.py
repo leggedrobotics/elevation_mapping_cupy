@@ -89,8 +89,9 @@ class PluginManager(object):
                     # Add cell_n to params
                     extra_param["cell_n"] = self.cell_n
                     self.plugins.append(obj(**extra_param))
-
-        self.layers = cp.zeros((len(self.plugins), self.cell_n, self.cell_n))
+        self.layers = cp.zeros(
+            (len(self.plugins), self.cell_n, self.cell_n), dtype=cp.float32
+        )
         self.layer_names = self.get_layer_names()
         self.plugin_names = self.get_plugin_names()
 
@@ -212,7 +213,8 @@ if __name__ == "__main__":
     elevation_map[0] = cp.random.randn(200, 200)
     elevation_map[2] = cp.abs(cp.random.randn(200, 200))
     print("map", elevation_map[0])
-    print("layer map ", manager.layers[0])
+    print("layer map ", manager.layers)
     manager.update_with_name("min_filter", elevation_map, layer_names)
-    manager.update_with_name("smooth", elevation_map, layer_names)
+    manager.update_with_name("smooth_filter", elevation_map, layer_names)
+    # manager.update_with_name("sem_fil", elevation_map, layer_names, semantic_map=semantic_map)
     print(manager.get_map_with_name("smooth"))

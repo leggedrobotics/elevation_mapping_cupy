@@ -665,7 +665,7 @@ def sum_kernel(
     # input the list of layers, amount of channels can slo be input through kernel
     sum_kernel = cp.ElementwiseKernel(
         in_params="raw U p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
-        out_params="raw U map, raw T newmap",
+        out_params="raw U map, raw U newmap",
         preamble=string.Template(
             """
                 __device__ int get_map_idx(int idx, int layer_n) {
@@ -681,7 +681,7 @@ def sum_kernel(
             U inside = p[i * pcl_channels[0] + 2];
             if (valid) {
                 if (inside) {
-                    for ( int it=0;it<pcl_channels[1];it++){
+                    for ( W it=0;it<pcl_channels[1];it++){
                         U feat = p[i * pcl_channels[0] + pcl_chan[it]];
                         atomicAdd(&newmap[get_map_idx(idx, map_lay[it])], feat);
                     }
@@ -864,7 +864,8 @@ def color_average_kernel(
                     //    unsigned int b = prev_b/2 + color_map[get_map_idx(i, it*3+2)]/(2*cnt);
                     //}
                     unsigned int rgb = (r<<16) + (g << 8) + b;
-                    map[get_map_idx(i,  map_lay[it])] = rgb;
+                    float rgb_ = __uint_as_float(rgb);
+                    map[get_map_idx(i,  map_lay[it])] = rgb_;
                 }
             }
             """

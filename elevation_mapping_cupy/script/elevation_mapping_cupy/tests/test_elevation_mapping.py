@@ -34,9 +34,9 @@ class TestElevationMap:
 
     def test_input(self, elmap_ex):
         channels = ["x", "y", "z"] + elmap_ex.param.additional_layers
-        points = cp.random.rand(100000, len(channels))
-        R = cp.random.rand(3, 3)
-        t = cp.random.rand(3)
+        points = cp.random.rand(100000, len(channels), dtype=elmap_ex.param.data_type)
+        R = cp.random.rand(3, 3, dtype=elmap_ex.param.data_type)
+        t = cp.random.rand(3, dtype=elmap_ex.param.data_type)
         elmap_ex.input(points, channels, R, t, 0, 0)
 
     def test_update_normal(self, elmap_ex):
@@ -62,22 +62,22 @@ class TestElevationMap:
         for layer in layers:
             elmap_ex.get_map_with_name_ref(layer, data)
 
-    def test_get_position(self,elmap_ex):
-        pos = np.random.rand(1,3)
+    def test_get_position(self, elmap_ex):
+        pos = np.random.rand(1, 3)
         elmap_ex.get_position(pos)
 
-    def test_clear(self,elmap_ex):
+    def test_clear(self, elmap_ex):
         elmap_ex.clear()
 
-    def test_move(self,elmap_ex):
+    def test_move(self, elmap_ex):
         delta_position = np.random.rand(3)
         elmap_ex.move(delta_position)
 
-    def test_exists_layer(self,elmap_ex, add_lay):
+    def test_exists_layer(self, elmap_ex, add_lay):
         for layer in add_lay:
             assert elmap_ex.exists_layer(layer)
 
-    def test_polygon_traversability(self,elmap_ex):
+    def test_polygon_traversability(self, elmap_ex):
         polygon = cp.array([[0, 0], [2, 0], [0, 2]], dtype=np.float64)
         result = np.array([0, 0, 0])
         number_polygons = elmap_ex.get_polygon_traversability(polygon, result)
@@ -85,7 +85,9 @@ class TestElevationMap:
         elmap_ex.get_untraversable_polygon(untraversable_polygon)
 
     def test_initialize_map(self, elmap_ex):
-        methods = ['linear', 'cubic', 'nearest']
+        methods = ["linear", "cubic", "nearest"]
         for method in methods:
-            points = np.array([[-4.0, 0.0, 0.0],[-4.0, 8.0, 1.0],[4.0, 8.0, 0.0],[4.0, 0.0, 0.0]])
-            elmap_ex.initialize_map(points,method)
+            points = np.array(
+                [[-4.0, 0.0, 0.0], [-4.0, 8.0, 1.0], [4.0, 8.0, 0.0], [4.0, 0.0, 0.0]]
+            )
+            elmap_ex.initialize_map(points, method)

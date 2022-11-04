@@ -25,11 +25,13 @@ class SemanticMap:
         self.layer_specs = layer_specs
         self.amount_additional_layers = len(self.param.additional_layers)
         self.map = xp.zeros(
-            (self.amount_additional_layers, self.param.cell_n, self.param.cell_n)
+            (self.amount_additional_layers, self.param.cell_n, self.param.cell_n),
+            dtype=param.data_type,
         )
         self.get_unique_fusion()
         self.new_map = xp.zeros(
-            (self.amount_additional_layers, self.param.cell_n, self.param.cell_n)
+            (self.amount_additional_layers, self.param.cell_n, self.param.cell_n),
+            param.data_type,
         )
         self.color_map = None
 
@@ -179,8 +181,7 @@ class SemanticMap:
                     dtype=np.uint32,
                 )
             self.color_map *= 0
-            # TODO this is not a good solution
-            points_all = cp.asarray(cp.float32(points_all.get()))
+            points_all = points_all.astype(cp.float32)
             self.add_color_kernel(
                 points_all,
                 R,
@@ -211,8 +212,9 @@ class SemanticMap:
     def get_rgb(self, name):
         idx = self.param.additional_layers.index(name)
         c = self.process_map_for_publish(self.map[idx])
-        c = xp.uint32(c.get())
-        c.dtype = np.float32
+        c = c.astype(np.float32)
+        # c = xp.uint32(c.get())
+        # c.dtype = np.float32
         return c
 
     def get_semantic(self, name):

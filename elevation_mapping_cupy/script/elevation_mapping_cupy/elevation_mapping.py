@@ -36,7 +36,6 @@ xp = cp
 pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
 cp.cuda.set_allocator(pool.malloc)
 
-
 class ElevationMap:
     """
     Core elevation mapping class.
@@ -49,16 +48,16 @@ class ElevationMap:
             param (elevation_mapping_cupy.parameter.Parameter):
         """
         self.param = param
-
+        self.data_type = self.param.data_type
         self.resolution = param.resolution
-        self.center = xp.array([0, 0, 0], dtype=float)
+        self.center = xp.array([0, 0, 0], dtype=self.data_type)
         self.map_length = param.map_length
         self.cell_n = param.cell_n
 
         self.map_lock = threading.Lock()
         self.additional_layers = dict(zip(self.param.additional_layers, self.param.fusion_algorithms))
         self.semantic_map = SemanticMap(self.param, self.additional_layers)
-        self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
+        self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n),dtype=self.data_type)
         self.layer_names = [
             "elevation",
             "variance",
@@ -71,7 +70,7 @@ class ElevationMap:
 
         # buffers
         self.traversability_buffer = xp.full((self.cell_n, self.cell_n), xp.nan)
-        self.normal_map = xp.zeros((3, self.cell_n, self.cell_n))
+        self.normal_map = xp.zeros((3, self.cell_n, self.cell_n),dtype=self.data_type)
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
@@ -223,12 +222,12 @@ class ElevationMap:
 
         """
         # Compile custom cuda kernels.
-        self.new_map = cp.zeros((self.elevation_map.shape[0], self.cell_n, self.cell_n))
-        self.traversability_input = cp.zeros((self.cell_n, self.cell_n))
-        self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n))
-        self.min_filtered = cp.zeros((self.cell_n, self.cell_n))
-        self.min_filtered_mask = cp.zeros((self.cell_n, self.cell_n))
-        self.mask = cp.zeros((self.cell_n, self.cell_n))
+        self.new_map = cp.zeros((self.elevation_map.shape[0], self.cell_n, self.cell_n),dtype=self.data_type)
+        self.traversability_input = cp.zeros((self.cell_n, self.cell_n),dtype=self.data_type)
+        self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n),dtype=self.data_type)
+        self.min_filtered = cp.zeros((self.cell_n, self.cell_n),dtype=self.data_type)
+        self.min_filtered_mask = cp.zeros((self.cell_n, self.cell_n),dtype=self.data_type)
+        self.mask = cp.zeros((self.cell_n, self.cell_n),dtype=self.data_type)
         self.add_points_kernel = add_points_kernel(
             self.resolution,
             self.cell_n,
@@ -302,8 +301,8 @@ class ElevationMap:
             self.error_counting_kernel(
                 self.elevation_map,
                 points,
-                cp.array([0.0]),
-                cp.array([0.0]),
+                cp.array([0.0],dtype=self.data_type),
+                cp.array([0.0],dtype=self.data_type),
                 R,
                 t,
                 self.new_map,
@@ -324,8 +323,8 @@ class ElevationMap:
                 if np.abs(self.mean_error) < self.param.max_drift:
                     self.elevation_map[0] += self.mean_error * self.param.drift_compensation_alpha
             self.add_points_kernel(
-                cp.array([0.0]),
-                cp.array([0.0]),
+                cp.array([0.0],dtype=self.data_type),
+                cp.array([0.0],dtype=self.data_type),
                 R,
                 t,
                 self.normal_map,
@@ -337,7 +336,7 @@ class ElevationMap:
             self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
             # self.update_additional_layers(additional_fusion, points_all, channels, R, t)
-            self.semantic_map.update_layers(points_all, channels, R, t,self.new_map)
+            self.semantic_map.update_layers(points_all, channels, R, t, self.new_map)
 
             if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
@@ -405,10 +404,10 @@ class ElevationMap:
             None: 
         """
         # Update elevation map using point cloud input.
-        raw_points = cp.asarray(raw_points)
+        raw_points = cp.asarray(raw_points, dtype=self.data_type)
         additional_channels = channels[3:]
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points, additional_channels, cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
+        self.update_map_with_kernel(raw_points, additional_channels, cp.asarray(R,dtype=self.data_type), cp.asarray(t,dtype=self.data_type), position_noise, orientation_noise)
 
     def update_normal(self, dilated_map):
         """ Clear the normal map and then apply the normal kernel with dilated map as input.
@@ -561,7 +560,7 @@ class ElevationMap:
             elif name in self.additional_layers.keys():
                 m = self.semantic_map.get_map_with_name(name)
             elif name in self.plugin_manager.layer_names:
-                self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names)
+                self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names, self.semantic_map)
                 m = self.plugin_manager.get_map_with_name(name)
                 p = self.plugin_manager.get_param_with_name(name)
                 xp = self.xp_of_array(m)
@@ -607,7 +606,7 @@ class ElevationMap:
         """
         polygon = xp.asarray(polygon)
         area = calculate_area(polygon)
-        polygon = polygon.astype(np.float64)
+        polygon = polygon.astype(self.data_type)
         pmin = self.center[:2] - self.map_length / 2 + self.resolution
         pmax = self.center[:2] + self.map_length / 2 - self.resolution
         polygon[:, 0] = polygon[:, 0].clip(pmin[0], pmax[0])
@@ -630,7 +629,7 @@ class ElevationMap:
         if masked_isvalid.sum() > 0:
             t = masked.sum() / masked_isvalid.sum()
         else:
-            t = cp.asarray(0.0)
+            t = cp.asarray(0.0,dtype=self.data_type)
         is_safe, un_polygon = is_traversable(
             masked, self.param.safe_thresh, self.param.safe_min_thresh, self.param.max_unsafe_n
         )
@@ -662,7 +661,7 @@ class ElevationMap:
         """
         self.clear()
         with self.map_lock:
-            points = cp.asarray(points)
+            points = cp.asarray(points,dtype=self.data_type)
             indices = transform_to_map_index(points[:, :2], self.center[:2], self.cell_n, self.resolution)
             points[:, :2] = indices.astype(points.dtype)
             points[:, 2] -= self.center[2]
@@ -708,7 +707,7 @@ if __name__ == "__main__":
         for layer in layers:
             elevation.get_map_with_name_ref(layer, data)
         print(i)
-        polygon = cp.array([[0, 0], [2, 0], [0, 2]], dtype=np.float64)
+        polygon = cp.array([[0, 0], [2, 0], [0, 2]], dtype=param.data_type)
         result = np.array([0, 0, 0])
         elevation.get_polygon_traversability(polygon, result)
         print(result)

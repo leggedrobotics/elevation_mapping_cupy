@@ -14,6 +14,7 @@ class Parameter(Serializable):
     additional_layers: list = ['feat_0'].copy
     fusion_algorithms: list = ['average'].copy
     cell_n: int = None
+    data_type: str = np.float32
 
     map_length: float = 10.0
     sensor_noise_factor: float = 0.05
