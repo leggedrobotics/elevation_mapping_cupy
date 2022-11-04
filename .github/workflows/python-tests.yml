@@ -4,7 +4,7 @@ name: Python testing
 
 on:
   push:
-    branches: [ "feature/2_semantic_python" ]
+    branches: [ "feature/2_semantic_python", "feature/**"]
 #  pull_request:
 #    branches: [ "main" ]
 
@@ -14,7 +14,8 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+#    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
 
     steps:
     - uses: actions/checkout@v3
