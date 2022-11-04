@@ -28,7 +28,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest cupy
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Test with pytest
+    - name: Test elevation mapping with pytest
       run: |
         cd elevation_mapping_cupy/script/elevation_mapping_cupy/tests/
+        pytest
+    - name: Test semantic_pointcloud with pytest
+      run: |
+        cd sensor_processing/semantic_pointcloud/script/semantic_pointcloud/tests
         pytest
