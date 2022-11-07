@@ -30,6 +30,7 @@ class PointcloudParameter(Serializable):
     image_topic: str = "/zed2i/zed_node/left/image_rect_color"
     depth_topic: str = "/zed2i/zed_node/depth/depth_registered"
     cam_frame: str = "zed2i_right_camera_optical_frame"
+    confidence: bool = True
     confidence_topic: str = "/zed2i/zed_node/confidence/confidence_map"
     confidence_threshold: int = 10
 

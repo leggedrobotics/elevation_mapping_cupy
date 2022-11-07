@@ -41,6 +41,7 @@ def test_plugin_manager(semmap_ex, channels):
     manager = PluginManager(200)
     manager.load_plugin_settings(plugin_path)
     elevation_map = cp.zeros((7, 200, 200)).astype(cp.float32)
+    rotation = cp.eye(3,dtype=cp.float32)
     layer_names = [
         "elevation",
         "variance",
@@ -56,6 +57,9 @@ def test_plugin_manager(semmap_ex, channels):
     manager.layers[0]
     manager.update_with_name("min_filter", elevation_map, layer_names)
     manager.update_with_name("smooth_filter", elevation_map, layer_names)
-    manager.update_with_name("semantic_filter", elevation_map, layer_names)
-
+    manager.update_with_name("semantic_filter", elevation_map, layer_names,semmap_ex,rotation)
     manager.get_map_with_name("smooth")
+    for lay in manager.get_layer_names():
+        manager.update_with_name(lay,elevation_map,layer_names,semmap_ex,rotation)
+        manager.get_map_with_name(lay)
+

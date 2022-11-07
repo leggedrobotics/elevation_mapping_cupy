@@ -30,7 +30,7 @@ class SmoothFilter(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
-        **kwargs,
+        *args,
     ) -> cp.ndarray:
         if self.input_layer_name in layer_names:
             idx = layer_names.index(self.input_layer_name)

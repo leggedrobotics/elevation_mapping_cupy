@@ -39,6 +39,7 @@ class PluginBase(ABC):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        *args,
         **kwargs,
     ) -> cp.ndarray:
         """This gets the elevation map data and plugin layers as a cupy array.
@@ -111,7 +112,6 @@ class PluginManager(object):
                     )
                 )
             extra_params.append(v["extra_params"])
-        print(plugin_params)
         self.init(plugin_params, extra_params)
         print("Loaded plugins are ", *self.plugin_names)
 
@@ -149,7 +149,7 @@ class PluginManager(object):
         elevation_map: cp.ndarray,
         layer_names: List[str],
         semantic_map=None,
-        transform=None,
+        rotation=None,
     ):
         idx = self.get_layer_index_with_name(name)
         if idx is not None:
@@ -173,7 +173,7 @@ class PluginManager(object):
                     self.layers,
                     self.layer_names,
                     semantic_map,
-                    transform,
+                    rotation,
                 )
 
     def get_map_with_name(self, name: str) -> cp.ndarray:

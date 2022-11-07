@@ -18,13 +18,14 @@ class PointcloudNode:
     def __init__(self, sensor_name):
         # TODO: if this is going to be loaded from another package we might need to change namespace
         config = rospy.get_param("/semantic_pointcloud/subscribers")
-        print(config)
-        print(len(config))
         self.param: PointcloudParameter = PointcloudParameter.from_dict(
             config[sensor_name]
         )
         self.param.sensor_name = sensor_name
+        print("--------------Pointcloud Parameters-------------------")
         print(self.param.dumps_yaml())
+        print("--------------End of Parameters-----------------------")
+
         # setup custom dtype
         self.create_custom_dtype()
         # setup semantics
@@ -41,16 +42,28 @@ class PointcloudNode:
         rospy.Subscriber(self.param.cam_info_topic, CameraInfo, self.cam_info_callback)
         rgb_sub = message_filters.Subscriber(self.param.image_topic, Image)
         depth_sub = message_filters.Subscriber(self.param.depth_topic, Image)
-        confidence_sub = message_filters.Subscriber(self.param.confidence_topic, Image)
-        ts = message_filters.ApproximateTimeSynchronizer(
-            [
-                rgb_sub,
-                depth_sub,
-                confidence_sub,
-            ],
-            queue_size=10,
-            slop=0.5,
-        )
+        if self.param.confidence:
+            confidence_sub = message_filters.Subscriber(
+                self.param.confidence_topic, Image
+            )
+            ts = message_filters.ApproximateTimeSynchronizer(
+                [
+                    rgb_sub,
+                    depth_sub,
+                    confidence_sub,
+                ],
+                queue_size=10,
+                slop=0.5,
+            )
+        else:
+            ts = message_filters.ApproximateTimeSynchronizer(
+                [
+                    rgb_sub,
+                    depth_sub,
+                ],
+                queue_size=10,
+                slop=0.5,
+            )
         ts.registerCallback(self.image_callback)
 
         self.pcl_pub = rospy.Publisher(self.param.topic_name, PointCloud2, queue_size=2)
@@ -99,9 +112,9 @@ class PointcloudNode:
         self.height = msg.height
         self.width = msg.width
 
-    def image_callback(self, rgb_msg, depth_msg, confidence_msg):
+    def image_callback(self, rgb_msg, depth_msg, confidence_msg=None):
+        confidence = None
         if self.P is None:
-            print("No cam info topic has been published yet!")
             return
         image = cp.asarray(
             self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
@@ -109,9 +122,12 @@ class PointcloudNode:
         depth = cp.asarray(
             self.cv_bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
         )
-        confidence = cp.asarray(
-            self.cv_bridge.imgmsg_to_cv2(confidence_msg, desired_encoding="passthrough")
-        )
+        if confidence_msg is not None:
+            confidence = cp.asarray(
+                self.cv_bridge.imgmsg_to_cv2(
+                    confidence_msg, desired_encoding="passthrough"
+                )
+            )
 
         pcl = self.create_pcl_from_image(image, depth, confidence)
 
@@ -134,7 +150,10 @@ class PointcloudNode:
     def get_coordinates(self, depth, confidence):
         pos = cp.where(depth > 0, 1, 0)
         low = cp.where(depth < 8, 1, 0)
-        conf = cp.where(confidence >= self.param.confidence_threshold, 1, 0)
+        if confidence is not None:
+            conf = cp.where(confidence >= self.param.confidence_threshold, 1, 0)
+        else:
+            conf = cp.ones(pos.shape)
         fin = cp.isfinite(depth)
         temp = cp.maximum(cp.rint(fin + pos + conf + low - 2.6), 0)
         mask = cp.nonzero(temp)

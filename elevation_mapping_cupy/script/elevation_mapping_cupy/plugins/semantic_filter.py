@@ -54,7 +54,7 @@ class SemanticFilter(PluginBase):
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
         semantic_map,
-        **kwargs,
+        *args,
     ) -> cp.ndarray:
         # get indices of all layers that
         layer_indices = cp.array([], dtype=cp.int32)

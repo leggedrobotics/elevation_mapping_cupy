@@ -51,6 +51,7 @@ class ElevationMap:
         self.data_type = self.param.data_type
         self.resolution = param.resolution
         self.center = xp.array([0, 0, 0], dtype=self.data_type)
+        self.base_rotation = xp.eye(3, dtype=self.data_type)
         self.map_length = param.map_length
         self.cell_n = param.cell_n
 
@@ -70,7 +71,7 @@ class ElevationMap:
 
         # buffers
         self.traversability_buffer = xp.full((self.cell_n, self.cell_n), xp.nan)
-        self.normal_map = xp.zeros((3, self.cell_n, self.cell_n),dtype=self.data_type)
+        self.normal_map = xp.zeros((3, self.cell_n, self.cell_n), dtype=self.data_type)
         # Initial variance
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
@@ -149,7 +150,7 @@ class ElevationMap:
             R (cupy._core.core.ndarray):
         """
         # Shift map to the center of robot.
-        self.base_rotation = xp.asarray(R)
+        self.base_rotation = xp.asarray(R,dtype=self.data_type)
         position = xp.asarray(position)
         delta = position - self.center
         delta_pixel = xp.around(delta[:2] / self.resolution)
@@ -560,7 +561,7 @@ class ElevationMap:
             elif name in self.additional_layers.keys():
                 m = self.semantic_map.get_map_with_name(name)
             elif name in self.plugin_manager.layer_names:
-                self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names, self.semantic_map)
+                self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names, self.semantic_map, self.base_rotation)
                 m = self.plugin_manager.get_map_with_name(name)
                 p = self.plugin_manager.get_param_with_name(name)
                 xp = self.xp_of_array(m)

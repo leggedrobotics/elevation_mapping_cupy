@@ -40,7 +40,6 @@ class SemanticMap:
         for x in list(self.layer_specs.values()):
             if x not in self.unique_fusion:
                 self.unique_fusion.append(x)
-        print("Fusion algorithms running: ", self.unique_fusion)
 
     def compile_kernels(self) -> None:
         """

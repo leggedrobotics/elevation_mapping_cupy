@@ -38,7 +38,7 @@ class Inpainting(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
-        **kwargs,
+        *args,
     ) -> cp.ndarray:
         mask = cp.asnumpy((elevation_map[2] < 0.5).astype("uint8"))
         if (mask < 1).any():

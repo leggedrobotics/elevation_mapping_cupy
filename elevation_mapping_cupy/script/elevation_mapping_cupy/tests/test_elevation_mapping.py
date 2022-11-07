@@ -91,3 +91,9 @@ class TestElevationMap:
                 [[-4.0, 0.0, 0.0], [-4.0, 8.0, 1.0], [4.0, 8.0, 0.0], [4.0, 0.0, 0.0]]
             )
             elmap_ex.initialize_map(points, method)
+
+    def test_plugins(self, elmap_ex):
+        layers = elmap_ex.plugin_manager.layer_names
+        data= np.zeros((500,500),dtype=np.float32)
+        for layer in layers:
+            elmap_ex.get_map_with_name_ref(layer, data)

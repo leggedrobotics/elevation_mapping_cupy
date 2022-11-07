@@ -94,7 +94,7 @@ class MinFilter(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
-        **kwargs,
+        *args,
     ) -> cp.ndarray:
         self.min_filtered = elevation_map[0].copy()
         self.min_filtered_mask = elevation_map[2].copy()
