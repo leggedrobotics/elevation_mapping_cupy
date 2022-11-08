@@ -6,7 +6,7 @@
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
 // Pybind
-#include <pybind11_catkin/pybind11/eigen.h>
+#include <pybind11/eigen.h>
 
 // PCL
 #include <pcl/common/projection_matrix.h>

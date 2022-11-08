@@ -13,7 +13,7 @@
 #include <Eigen/Dense>
 
 // Pybind
-#include <pybind11_catkin/pybind11/embed.h>  // everything needed for embedding
+#include <pybind11/embed.h>  // everything needed for embedding
 
 // ROS
 #include <geometry_msgs/PolygonStamped.h>

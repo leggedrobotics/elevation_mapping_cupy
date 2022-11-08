@@ -6,7 +6,7 @@
 #include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
 
 // Pybind
-#include <pybind11_catkin/pybind11/eigen.h>
+#include <pybind11/eigen.h>
 
 // ROS
 #include <geometry_msgs/Point32.h>
