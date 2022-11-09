@@ -94,6 +94,6 @@ class TestElevationMap:
 
     def test_plugins(self, elmap_ex):
         layers = elmap_ex.plugin_manager.layer_names
-        data= np.zeros((500,500),dtype=np.float32)
+        data = np.zeros((200, 200), dtype=np.float32)
         for layer in layers:
             elmap_ex.get_map_with_name_ref(layer, data)

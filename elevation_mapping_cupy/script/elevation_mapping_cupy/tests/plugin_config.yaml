@@ -36,7 +36,7 @@ smooth_filter_1:
     input_layer_name: "inpaint"
 robot_centric_elevation:                                  # Use the same name as your file name.
 #  type: "robot_centric_elevation"
-  enable: False                                # weather to load this plugin
+  enable: True                                # weather to load this plugin
   fill_nan: False                              # Fill nans to invalid cells of elevation layer.
   is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
   layer_name: "robot_centric_elevation"                 # The layer name.
@@ -47,17 +47,16 @@ robot_centric_elevation:                                  # Use the same name as
     use_threshold: True
 semantic_filter:
   type: "semantic_filter"
-  enable: False
+  enable: True
   fill_nan: False
   is_height_layer: False
   layer_name: "sem_fil"
   extra_params:
     classes: ['grass','tree','fence','person']
     colors: [[0,255,0],[120,120,0],[170,0,20],[0,0,255],[255,0,0]]
-
 semantic_traversability:
   type: "semantic_traversability"
-  enable: False
+  enable: True
   fill_nan: False
   is_height_layer: False
   layer_name: "sem_traversability"

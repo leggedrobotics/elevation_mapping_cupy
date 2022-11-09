@@ -595,6 +595,22 @@ class ElevationMap:
         normal_y_data[...] = xp.asnumpy(maps[1], stream=self.stream)
         normal_z_data[...] = xp.asnumpy(maps[2], stream=self.stream)
 
+    def get_layer(self,name):
+        if name in self.layer_names:
+            idx = self.layer_names.index(name)
+            map = self.elevation_map[idx]
+        elif name in self.semantic_map.param.additional_layers:
+            idx = self.semantic_map.param.additional_layers.index(name)
+            map= self.semantic_map.map[idx]
+        elif name in self.plugin_manager.layer_names:
+            self.plugin_manager.update_with_name(name, self.elevation_map, self.layer_names, self.semantic_map,
+                                                 self.base_rotation)
+            map = self.plugin_manager.get_map_with_name(name)
+        else:
+            print("Layer {} is not in the map, returning traversabiltiy!".format(name))
+            return
+        return map
+
     def get_polygon_traversability(self, polygon, result):
         """ Check if input polygons are traversable.
 
@@ -626,11 +642,12 @@ class ElevationMap:
             self.mask,
             size=(self.cell_n * self.cell_n),
         )
-        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask)
+        map = self.get_layer(self.param.checker_layer)
+        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask, map)
         if masked_isvalid.sum() > 0:
             t = masked.sum() / masked_isvalid.sum()
         else:
-            t = cp.asarray(0.0,dtype=self.data_type)
+            t = cp.asarray(0.0, dtype=self.data_type)
         is_safe, un_polygon = is_traversable(
             masked, self.param.safe_thresh, self.param.safe_min_thresh, self.param.max_unsafe_n
         )
@@ -697,14 +714,14 @@ if __name__ == "__main__":
     layers = ["elevation", "variance", "traversability", "min_filter", "smooth", "inpaint","rgb"]
     points = xp.random.rand(100000, len(layers))
 
-    channels = ['x','y','z']+ param.additional_layers
+    channels = ['x', 'y', 'z'] + param.additional_layers
     print(channels)
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
     for i in range(20):
         elevation.input(points,channels, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
         pos = np.array([i * 0.01, i * 0.02, i * 0.01])
-        elevation.move_to(pos,R)
+        elevation.move_to(pos, R)
         for layer in layers:
             elevation.get_map_with_name_ref(layer, data)
         print(i)
