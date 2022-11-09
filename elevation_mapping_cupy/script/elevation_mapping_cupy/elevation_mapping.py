@@ -16,7 +16,7 @@ from .custom_kernels import dilation_filter_kernel
 from .custom_kernels import normal_filter_kernel
 from .custom_kernels import polygon_mask_kernel
 from .map_initializer import MapInitializer
-from .plugins.plugin_manager import PluginManger
+from .plugins.plugin_manager import PluginManager
 
 from .traversability_polygon import (
     get_masked_traversability,
@@ -48,7 +48,7 @@ class ElevationMap(object):
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
 
         self.map_lock = threading.Lock()
-
+        self.additional_layers = dict(zip(self.param.additional_layers, self.param.fusion_algorithms))
         # layers: elevation, variance, is_valid, traversability, time, upper_bound, is_upper_bound
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n))
         self.layer_names = [
@@ -90,7 +90,7 @@ class ElevationMap(object):
         self.untraversable_polygon = xp.zeros((1, 2))
 
         # Plugins
-        self.plugin_manager = PluginManger(cell_n=self.cell_n)
+        self.plugin_manager = PluginManager(cell_n=self.cell_n)
         plugin_config_file = subprocess.getoutput('echo "' + param.plugin_config_file + '"')
         self.plugin_manager.load_plugin_settings(plugin_config_file)
 
@@ -117,8 +117,9 @@ class ElevationMap(object):
         self.shift_map_xy(delta_pixel)
         self.shift_map_z(-delta_position[2])
 
-    def move_to(self, position):
+    def move_to(self, position, R):
         # Shift map to the center of robot.
+        self.base_rotation = xp.asarray(R)
         position = xp.asarray(position)
         delta = position - self.center
         delta_pixel = xp.around(delta[:2] / self.resolution)
@@ -311,11 +312,11 @@ class ElevationMap(object):
         self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
 
-    def input(self, raw_points, R, t, position_noise, orientation_noise):
+    def input(self, raw_points,channels, R, t, position_noise, orientation_noise):
         # Update elevation map using point cloud input.
         raw_points = cp.asarray(raw_points)
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points, cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
+        self.update_map_with_kernel(raw_points[:,:3], cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
 
     def update_normal(self, dilated_map):
         with self.map_lock:
@@ -424,7 +425,7 @@ class ElevationMap(object):
                 xp = self.xp_of_array(m)
                 m = self.process_map_for_publish(m, fill_nan=p.fill_nan, add_z=p.is_height_layer, xp=xp)
             else:
-                # print("Layer {} is not in the map".format(name))
+                print("Layer {} is not in the map".format(name))
                 return
         m = xp.flip(m, 0)
         m = xp.flip(m, 1)

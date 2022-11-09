@@ -1,3 +1,6 @@
 *.pyc
 *.bkp
 *.orig
+.idea*
+.vscode*
+*.egg-info

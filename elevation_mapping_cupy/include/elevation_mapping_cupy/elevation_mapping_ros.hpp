@@ -48,6 +48,7 @@ namespace elevation_mapping_cupy {
 class ElevationMappingNode {
  public:
   ElevationMappingNode(ros::NodeHandle& nh);
+  using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
  private:
   void readParameters();

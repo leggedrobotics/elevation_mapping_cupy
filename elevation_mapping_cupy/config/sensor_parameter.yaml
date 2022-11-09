@@ -1,0 +1,29 @@
+subscribers:
+#  sensor_name:
+#    channels: ['feat_0','feat_1']
+#    fusion: ['average','average']
+#    topic_name: '/elevation_mapping/pointcloud_semantic'
+  front_cam:
+    channels: ['feat_0','feat_1']
+    fusion: ['average','average']
+    topic_name: '/elvation_mapping/pointcloud_semantic'
+  
+  front_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_front/point_cloud_self_filtered
+  
+  rear_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_rear/point_cloud_self_filtered
+  
+  left_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_left/point_cloud_self_filtered
+  
+  right_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_right/point_cloud_self_filtered

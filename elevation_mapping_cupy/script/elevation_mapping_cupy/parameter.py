@@ -5,12 +5,14 @@
 from dataclasses import dataclass
 import pickle
 import numpy as np
-import os
+from simple_parsing.helpers import Serializable
 
 
 @dataclass
-class Parameter:
+class Parameter(Serializable):
     resolution: float = 0.02
+    additional_layers: list = ['feat_0'].copy
+    fusion_algorithms: list = ['average'].copy
 
     map_length: float = 10.0
     sensor_noise_factor: float = 0.05

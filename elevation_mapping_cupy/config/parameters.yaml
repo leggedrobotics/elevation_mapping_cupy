@@ -42,7 +42,7 @@ overlap_clear_range_z: 2.0                      # z range [m] for clearing overl
 
 map_frame: 'odom'                               # The map frame where the odometry source uses.
 base_frame: 'base'                              # The robot's base frame. This frame will be a center of the map.
-corrected_map_frame: 'corrected_odom'
+corrected_map_frame: 'odom_corrected'
 
 #### Feature toggles ########
 enable_edge_sharpen: true
@@ -64,13 +64,7 @@ use_only_above_for_upper_bound: false
 plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/plugin_config.yaml'
 
 #### Subscribers ########
-pointcloud_topics: ['/depth_camera_front/depth/color/points',
-                    '/depth_camera_rear/depth/color/points',
-                    '/depth_camera_left/depth/color/points',
-                    '/depth_camera_right/depth/color/points',
-                    '/robot_self_filter/bpearl_front/point_cloud',
-                    '/robot_self_filter/bpearl_rear/point_cloud'
-                    ]
+
 
 #### Publishers ########
 # topic_name:
@@ -93,7 +87,7 @@ publishers:
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
-initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
+initialize_frame_id: ['base_footprint']   # One tf (like ['footprint'] ) initializes a square around it.
 initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
 dilation_size_initialize: 5                                         # dilation size after the init.
 initialize_tf_grid_size: 0.4                                        # This is not used if number of tf is more than 3.
