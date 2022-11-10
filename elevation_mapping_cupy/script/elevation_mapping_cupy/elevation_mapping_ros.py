@@ -22,21 +22,21 @@ class ElevationMapWrapper():
     def __init__(self):
         rospack = rospkg.RosPack()
         self.root = rospack.get_path("elevation_mapping_cupy")
-        self.initalize_elevation_mapping()
+        weight_file = os.path.join(self.root, "config/weights.dat")
+        plugin_config_file = os.path.join(self.root, "config/plugin_config.yaml")
+        self.param = Parameter( use_chainer=False, weight_file=weight_file, plugin_config_file=plugin_config_file )
         self.node_name = "elevation_mapping"
         # ROS
         self.initalize_ros()
         self.register_subscribers()
+        self.initalize_elevation_mapping()
         self.register_publishers()
         self.register_timers()
 
     def initalize_elevation_mapping(self):
-        weight_file = os.path.join(self.root, "config/weights.dat") 
-        plugin_config_file = os.path.join(self.root, "config/plugin_config.yaml")
-        param = Parameter( use_chainer=False, weight_file=weight_file, plugin_config_file=plugin_config_file )
-        param.update()
+        self.param.update()
         self._pointcloud_process_counter = 0
-        self._map = ElevationMap(param)
+        self._map = ElevationMap(self.param)
         self._map_data = np.zeros((self._map.cell_n - 2, self._map.cell_n - 2), dtype=np.float32)
         self._map_q = None
         self._map_t = None
@@ -49,10 +49,24 @@ class ElevationMapWrapper():
         
     def register_subscribers(self):
         pointcloud_subs = {}
-        for config in self.subscribers.values(): 
-            self.subscribers
-            rospy.Subscriber(config["topic_name"], PointCloud2, self.pointcloud_callback, (config["channels"], config["fusion"]))
-            
+        additional = []
+        fusion = []
+        for key, config in self.subscribers.items():
+            pointcloud_subs[key] = rospy.Subscriber(config["topic_name"], PointCloud2, self.pointcloud_callback, (config["channels"], config["fusion"]))
+            for chan,fus in zip(config["channels"],config["fusion"]):
+                if chan not in additional:
+                    additional.append(chan)
+                    fusion.append(fus)
+        self.param.additional_layers = additional
+        self.param.fusion_algorithms = fusion
+        self.dtype = [
+            ("x", np.float32),
+            ("y", np.float32),
+            ("z", np.float32),
+        ]
+        for chan in config["channels"]:
+            self.dtype.append((chan, np.float32))
+
     def register_publishers(self):
         # TODO publishers
         self._publishers = {}
@@ -88,7 +102,7 @@ class ElevationMapWrapper():
 
         for i, layer in enumerate(gm.layers):
             self._map.get_map_with_name_ref(layer, self._map_data)
-            self._map_data = np.nan_to_num(self._map_data, False, 0)            
+            # self._map_data = np.nan_to_num(self._map_data, False, 0)
             data = self._map_data.copy() 
             arr = Float32MultiArray()
             arr.layout = MAL()
@@ -107,10 +121,13 @@ class ElevationMapWrapper():
         
     def pointcloud_callback(self, msg, config):
         # convert pcd into numpy array
-        channels = config[0]
+        channels = ['x','y','z']+config[0]
         fusion = config[1]
-        points = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg)
-        
+        points = ros_numpy.numpify(msg)
+        pts = np.empty((points.shape[0],0))
+        for ch in channels:
+            pts = np.append(pts,np.expand_dims(points[ch],1),axis=1)
+
         # get pose of pointcloud
         t = rospy.Time(secs=msg.header.stamp.secs, nsecs=msg.header.stamp.nsecs)
         try:
@@ -123,9 +140,9 @@ class ElevationMapWrapper():
         t = np.array( [t.x, t.y, t.z] )
         q = transform.transform.rotation
         R = quaternion_matrix([q.w, q.x, q.y, q.z])[:3,:3]
-            
+
         # process pointcloud
-        self._map.input(points, ['x','y','z']+channels, R, t, 0, 0)
+        self._map.input(pts, channels, R, t, 0, 0)
         self._pointcloud_process_counter += 1
         print(self._pointcloud_process_counter)
         
