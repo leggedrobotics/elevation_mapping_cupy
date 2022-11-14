@@ -107,11 +107,12 @@ python dependencies
 
 On jetson, you need the version for its CPU arch:
 
-```bash
-wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
-pip3 install Cython
-pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
-```
+.. code-block:: bash
+    
+    wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
+    pip3 install Cython
+    pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
+
 
 Also, you need to install cupy with
 
@@ -144,21 +145,25 @@ If the Jetson is set up with Jetpack 4.5 with ROS Melodic the following package 
 git clone git@github.com:ros/filters.git -b noetic-devel
 ```
 
-### Plane segmentation dependencies
+Plane segmentation dependencies
+=====================================
 
-#### OpenCV
+OpenCV
+-------------------------------
 
 ```bash
 sudo apt install libopencv-dev
 ```
 
-#### Eigen
+Eigen
+-------------------------------
 
 ```bash
 sudo apt install libeigen3-dev
 ```
 
-#### CGAL
+CGAL
+-------------------------------
 
 CGAL5 is required. It will be automatically downloaded and installed into the catkin workspace by the cgal5_catkin package. Make sure you
 have the third-party libaries installed on you machine:
