@@ -1,9 +1,5 @@
-.. _introduction:
+.. _plugins:
 
-Introduction
+Plugins
 ==================================================
-
-
-
-
 

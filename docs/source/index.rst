@@ -1,23 +1,40 @@
-##################################################
-Welcome to elevation_mapping_cupy's documentation!
-##################################################
 
+.. include:: documentation.rst
    
 .. toctree::
-   :maxdepth: 2
-   :caption: Pages:
+   :maxdepth: 1
+   :caption: Overview <documentation>
 
 
-   getting_started/index
-   python/index
+.. toctree::
+    :hidden:
+    :maxdepth: 2
+    :caption: Getting Started
 
-Getting Started
----------------
+    Introduction <getting_started/index>
+    Installation <getting_started/installation>
+    Tutorial <getting_started/tutorial>
 
-For getting started checkout :doc:`getting_started/index`..
+.. toctree::
+    :hidden:
+    :maxdepth: 2
+    :caption: Usage
+
+     Plugins <usage/plugins>
+     Parameters <usage/parameters>
+     Plane Segmentation <usage/plane_segmentation>
+     Semantics <usage/semantics>
 
 
-Old Documentation
------------------
+.. toctree::
+    :hidden:
+    :maxdepth: 2
+    :caption: Library
+
+     Python <python/index>
+
+
+
+
 
 

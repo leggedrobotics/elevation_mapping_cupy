@@ -1,9 +1,4 @@
-.. _introduction:
+.. _tutorial:
 
-Introduction
+Tutorial
 ==================================================
-
-
-
-
-

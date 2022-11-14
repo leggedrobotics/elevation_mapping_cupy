@@ -1,9 +1,4 @@
-.. _introduction:
-
-Introduction
+.. _parameters:
+Parameters
 ==================================================
-
-
-
-
 
