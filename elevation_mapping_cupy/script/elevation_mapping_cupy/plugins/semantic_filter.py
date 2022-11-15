@@ -24,22 +24,35 @@ class SemanticFilter(PluginBase):
         self,
         cell_n: int = 100,
         classes: list = ["person", "grass"],
-        colors: list = [
-            [0, 255, 0],
-            [0, 255, 255],
-            [0, 0, 255],
-            [255, 255, 0],
-            [255, 0, 0],
-        ],
         **kwargs,
     ):
         super().__init__()
         self.indices = []
         self.classes = classes
-        color_classes = np.array(colors)
-        self.color_encoding = self.transform_color(color_classes)
+        self.color_encoding = self.transform_color()
 
-    def transform_color(self, color_classes):
+    def color_map(self, N=256, normalized=False):
+        def bitget(byteval, idx):
+            return (byteval & (1 << idx)) != 0
+
+        dtype = "float32" if normalized else "uint8"
+        cmap = np.zeros((N+1, 3), dtype=dtype)
+        for i in range(N+1):
+            r = g = b = 0
+            c = i
+            for j in range(8):
+                r = r | (bitget(c, 0) << 7 - j)
+                g = g | (bitget(c, 1) << 7 - j)
+                b = b | (bitget(c, 2) << 7 - j)
+                c = c >> 3
+
+            cmap[i] = np.array([r, g, b])
+
+        cmap = cmap / 255 if normalized else cmap
+        return cmap[1:]
+
+    def transform_color(self):
+        color_classes = self.color_map(len(self.classes))
         r = np.asarray(color_classes[:, 0], dtype=np.uint32)
         g = np.asarray(color_classes[:, 1], dtype=np.uint32)
         b = np.asarray(color_classes[:, 2], dtype=np.uint32)
@@ -59,9 +72,7 @@ class SemanticFilter(PluginBase):
         # get indices of all layers that
         layer_indices = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
-            if fusion_alg == "class_average" and (
-                semantic_map.param.additional_layers[it] in self.classes
-            ):
+            if (fusion_alg in ["class_bayesian","class_average"]):
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
 
         # check which has the highest value

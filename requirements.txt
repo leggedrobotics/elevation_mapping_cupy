@@ -4,7 +4,8 @@ scipy
 dataclasses
 ruamel.yaml
 opencv-python
-simple-parsing
+simple_parsing
+scikit-image
 
 ###### Requirements with Version Specifiers ######`
 shapely==1.7.1

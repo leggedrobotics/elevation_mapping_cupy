@@ -4,10 +4,12 @@ import sys
 import numpy as np
 import cupy as cp
 import ros_numpy
+import matplotlib.pyplot as plt
+from skimage.io import imshow
 
 import message_filters
 from sensor_msgs.msg import Image, CameraInfo
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image
 from cv_bridge import CvBridge
 
 from semantic_pointcloud.pointcloud_parameters import PointcloudParameter
@@ -67,6 +69,52 @@ class PointcloudNode:
         ts.registerCallback(self.image_callback)
 
         self.pcl_pub = rospy.Publisher(self.param.topic_name, PointCloud2, queue_size=2)
+        if self.param.publish_segmentation_image:
+            self.seg_pub = rospy.Publisher(
+                self.param.segmentation_image_topic, Image, queue_size=2
+            )
+        self.semseg_color_map = self.color_map(
+            len(list(self.segmentation_channels.keys()))
+        )
+        self.color_map_viz()
+
+    def color_map(self, N=256, normalized=False):
+        def bitget(byteval, idx):
+            return (byteval & (1 << idx)) != 0
+
+        dtype = "float32" if normalized else "uint8"
+        cmap = np.zeros((N + 1, 3), dtype=dtype)
+        for i in range(N + 1):
+            r = g = b = 0
+            c = i
+            for j in range(8):
+                r = r | (bitget(c, 0) << 7 - j)
+                g = g | (bitget(c, 1) << 7 - j)
+                b = b | (bitget(c, 2) << 7 - j)
+                c = c >> 3
+
+            cmap[i] = np.array([r, g, b])
+
+        cmap = cmap / 255 if normalized else cmap
+        return cmap[1:]
+
+    def color_map_viz(self):
+        # labels = self.semantic_model["model"].get_classes()
+        labels = list(self.segmentation_channels.keys())
+        nclasses = len(labels)
+        row_size = 50
+        col_size = 500
+        cmap = self.semseg_color_map
+        array = np.empty(
+            (row_size * (nclasses), col_size, cmap.shape[1]), dtype=cmap.dtype
+        )
+        for i in range(nclasses):
+            array[i * row_size : i * row_size + row_size, :] = cmap[i]
+        imshow(array)
+        plt.yticks([row_size * i + row_size / 2 for i in range(nclasses)], labels)
+        plt.xticks([])
+        plt.show()
+        # plt.savefig("./labels.png")
 
     def initialize_semantics(self):
         if self.param.semantic_segmentation:
@@ -81,10 +129,12 @@ class PointcloudNode:
             )
             indices = []
             channels = []
-            for chan in self.param.channels:
+            for it, chan in enumerate(self.param.channels):
                 if chan in [cls for cls in list(class_to_idx.keys())]:
                     indices.append(class_to_idx[chan])
                     channels.append(chan)
+                elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
+                    print(chan, " is not in the semantic segmentation model.")
             self.segmentation_channels = dict(zip(channels, indices))
         if self.param.feature_extractor:
             self.feature_channels = []
@@ -111,6 +161,7 @@ class PointcloudNode:
         self.P = cp.resize(a, (3, 4))
         self.height = msg.height
         self.width = msg.width
+        self.header = msg.header
 
     def image_callback(self, rgb_msg, depth_msg, confidence_msg=None):
         confidence = None
@@ -190,12 +241,25 @@ class PointcloudNode:
         values = mask[:, v.get(), u.get()].cpu().detach().numpy()
         for it, channel in enumerate(self.segmentation_channels.keys()):
             points[channel] = values[it]
+        if self.param.publish_segmentation_image:
+            self.publish_segmentation_image(mask)
 
     def extract_features(self, image, points, u, v):
         prediction = self.feature_extractor["model"](image)
         values = prediction[:, v.get(), u.get()].cpu().detach().numpy()
         for it, channel in enumerate(self.feature_channels):
             points[channel] = values[it]
+
+    def publish_segmentation_image(self, probabilities):
+        probabilities = cp.asarray(probabilities)
+        colors = cp.asarray(self.semseg_color_map)
+        assert colors.ndim == 2 and colors.shape[1] == 3
+        img = cp.argmax(probabilities, axis=0)
+        img = colors[img].astype(cp.uint8)  # N x H x W x 3
+        img = img.get()
+        seg_msg = self.cv_bridge.cv2_to_imgmsg(img, encoding="rgb8")
+        seg_msg.header.frame_id = self.header.frame_id
+        self.seg_pub.publish(seg_msg)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,8 @@ class PointcloudParameter(Serializable):
 
     semantic_segmentation: bool = True
     segmentation_model: str = "detectron_coco_panoptic_fpn_R_101_3x"
+    publish_segmentation_image: bool = True
+    segmentation_image_topic: str = "/semantic_pointcloud/sem_seg"
 
     cam_info_topic: str = "/zed2i/zed_node/depth/camera_info"
     image_topic: str = "/zed2i/zed_node/left/image_rect_color"

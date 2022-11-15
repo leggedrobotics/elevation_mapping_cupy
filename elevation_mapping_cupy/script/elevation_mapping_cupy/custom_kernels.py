@@ -694,6 +694,50 @@ def sum_kernel(
     )
     return sum_kernel
 
+def alpha_kernel(
+        resolution,
+        width,
+        height,
+    ):
+    # input the list of layers, amount of channels can slo be input through kernel
+    alpha_kernel = cp.ElementwiseKernel(
+        in_params="raw U p, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params="raw U newmap",
+        preamble=string.Template(
+            """
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+            """
+        ).substitute(resolution=resolution,width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+            if (valid) {
+                if (inside) {
+                    U theta_max = 0;
+                    W arg_max = 0;
+                    for ( W it=0;it<pcl_channels[1];it++){
+                    U theta = p[i * pcl_channels[0] + pcl_chan[it]];
+                        if (theta >=theta_max){
+                            arg_max = map_lay[it];
+                            theta_max = theta;
+                        }
+                    }
+                    atomicAdd(&newmap[get_map_idx(idx, arg_max)], 1.0);
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="alpha_kernel",
+    )
+    return alpha_kernel
+
+
 
 def average_kernel(
         width,
@@ -875,7 +919,6 @@ def color_average_kernel(
     )
     return color_average_kernel
 
-# TODO: in future add more kernels e.g. bayesian kernel
 
 if __name__ == "__main__":
     for i in range(10):

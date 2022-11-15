@@ -8,6 +8,7 @@ from .custom_kernels import (
     color_average_kernel,
     average_kernel,
     class_average_kernel,
+    alpha_kernel,
 )
 
 xp = cp
@@ -74,13 +75,20 @@ class SemanticMap:
                 self.param.cell_n, self.param.cell_n
             )
         if "class_average" in self.unique_fusion:
-            print("Initialize fusion kernel")
+            print("Initialize class average kernel")
             self.sum_kernel = sum_kernel(
                 self.param.resolution,
                 self.param.cell_n,
                 self.param.cell_n,
             )
             self.class_average_kernel = class_average_kernel(
+                self.param.cell_n,
+                self.param.cell_n,
+            )
+        if "class_bayesian" in self.unique_fusion:
+            print("Initialize class bayesian kernel")
+            self.alpha_kernel = alpha_kernel(
+                self.param.resolution,
                 self.param.cell_n,
                 self.param.cell_n,
             )
@@ -99,7 +107,7 @@ class SemanticMap:
         return fusion_list
 
     def get_indices_fusion(self, pcl_channels: List[str], fusion_alg: str):
-        """Computes the indices that are used for the additional kernel update of the pcl and the elmap.
+        """Computes the indices that are used for the additional kernel update of the popintcloud and the semantic map.
 
         Args:
             pcl_channels (List[str]):
@@ -171,6 +179,25 @@ class SemanticMap:
                 self.map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
+
+        if "class_bayesian" in additional_fusion:
+            pcl_ids, layer_ids = self.get_indices_fusion(channels, "class_bayesian")
+            # alpha sum get points as input and calculate for each point to what cell it belongs and then
+            # adds to the right channel a one
+            self.alpha_kernel(
+                points_all,
+                pcl_ids,
+                layer_ids,
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                self.new_map,
+                size=(points_all.shape[0]),
+            )
+            # calculate new thetas
+            sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
+            self.map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(
+                sum_alpha, axis=0
+            )
+            # assert  cp.unique(cp.sum(self.map[layer_ids], axis=0)) equal to zero or to nan
 
         if "color" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "color")

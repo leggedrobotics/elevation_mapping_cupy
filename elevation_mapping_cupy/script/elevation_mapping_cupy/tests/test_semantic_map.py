@@ -26,6 +26,9 @@ def semmap_ex(add_lay, fusion_alg):
     [(["feat_0", "feat_1"], ["average", "average"],["feat_0"]),
     (["feat_0", "feat_1"], ["average", "average"],[]),
     (["feat_0", "feat_1", "rgb"], ["average", "average", "color"],["rgb", "feat_0"]),
+    (["feat_0", "feat_1", "rgb"], ["class_average", "average", "color"], ["rgb", "feat_0"]),
+    (["feat_0", "feat_1", "rgb"], ["class_bayesian", "average", "color"], ["rgb", "feat_0"]),
+     (["feat_0", "feat_1", "rgb"], ["class_bayesian", "average", "color"], ["rgb", "feat_0", "feat_1"]),
      ],
 )
 def test_fusion_of_pcl(semmap_ex, channels):
@@ -42,4 +45,4 @@ def test_fusion_of_pcl(semmap_ex, channels):
 )
 @pytest.mark.parametrize("channels", [["rgb"], ["rgb", "feat_0"], []])
 def test_indices_fusion(semmap_ex, channels,fusion_alg):
-    pcl_indices, layer_indices = semmap_ex.get_indices_fusion(pcl_channels=channels,fusion_alg=fusion_alg[0])
+    pcl_indices, layer_indices = semmap_ex.get_indices_fusion(pcl_channels=channels, fusion_alg=fusion_alg[0])
