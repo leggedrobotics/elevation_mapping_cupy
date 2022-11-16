@@ -73,9 +73,11 @@ class PointcloudNode:
             self.seg_pub = rospy.Publisher(
                 self.param.segmentation_image_topic, Image, queue_size=2
             )
-        self.semseg_color_map = self.color_map(
-            len(list(self.segmentation_channels.keys()))
-        )
+        if self.param.pub_all:
+            self.labels = self.semantic_model["model"].get_classes()
+        else:
+            self.labels = list(self.segmentation_channels.keys())
+        self.semseg_color_map = self.color_map(len(self.labels))
         self.color_map_viz()
 
     def color_map(self, N=256, normalized=False):
@@ -99,9 +101,7 @@ class PointcloudNode:
         return cmap[1:]
 
     def color_map_viz(self):
-        # labels = self.semantic_model["model"].get_classes()
-        labels = list(self.segmentation_channels.keys())
-        nclasses = len(labels)
+        nclasses = len(self.labels)
         row_size = 50
         col_size = 500
         cmap = self.semseg_color_map
@@ -111,7 +111,7 @@ class PointcloudNode:
         for i in range(nclasses):
             array[i * row_size : i * row_size + row_size, :] = cmap[i]
         imshow(array)
-        plt.yticks([row_size * i + row_size / 2 for i in range(nclasses)], labels)
+        plt.yticks([row_size * i + row_size / 2 for i in range(nclasses)], self.labels)
         plt.xticks([])
         plt.show()
         # plt.savefig("./labels.png")
@@ -242,7 +242,10 @@ class PointcloudNode:
         for it, channel in enumerate(self.segmentation_channels.keys()):
             points[channel] = values[it]
         if self.param.publish_segmentation_image:
-            self.publish_segmentation_image(mask)
+            if self.param.pub_all:
+                self.publish_segmentation_image(prediction)
+            else:
+                self.publish_segmentation_image(mask)
 
     def extract_features(self, image, points, u, v):
         prediction = self.feature_extractor["model"](image)
