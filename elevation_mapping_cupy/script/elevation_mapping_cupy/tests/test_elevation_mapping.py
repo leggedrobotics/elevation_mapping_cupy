@@ -27,6 +27,7 @@ def elmap_ex(add_lay, fusion_alg):
         (["feat_0", "feat_1"], ["average", "average"]),
         (["feat_0", "feat_1"], ["class_average", "class_average"]),
         (["feat_0", "feat_1"], ["class_bayesian", "class_bayesian"]),
+        (["feat_0", "feat_1"], ["bayesian_inference", "bayesian_inference"]),
     ],
 )
 class TestElevationMap:

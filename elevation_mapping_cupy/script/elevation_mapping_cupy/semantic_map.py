@@ -9,6 +9,8 @@ from .custom_kernels import (
     average_kernel,
     class_average_kernel,
     alpha_kernel,
+    bayesian_inference_kernel,
+    sum_compact_kernel,
 )
 
 xp = cp
@@ -64,7 +66,26 @@ class SemanticMap:
                 self.param.cell_n,
                 self.param.cell_n,
             )
-
+        if "bayesian_inference" in self.unique_fusion:
+            print("Initialize bayesian inference kernel")
+            self.sum_mean = xp.ones(
+                (
+                    self.param.fusion_algorithms.count("bayesian_inference"),
+                    self.param.cell_n,
+                    self.param.cell_n,
+                ),
+                self.param.data_type,
+            )
+            # todo initialize the variance with a value different than 0
+            self.sum_compact_kernel = sum_compact_kernel(
+                self.param.resolution,
+                self.param.cell_n,
+                self.param.cell_n,
+            )
+            self.bayesian_inference_kernel = bayesian_inference_kernel(
+                self.param.cell_n,
+                self.param.cell_n,
+            )
         if "color" in self.unique_fusion:
             print("Initialize color kernel")
             self.add_color_kernel = add_color_kernel(
@@ -154,6 +175,29 @@ class SemanticMap:
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
                 elevation_map,
+                self.map,
+                size=(self.param.cell_n * self.param.cell_n),
+            )
+        if "bayesian_inference" in additional_fusion:
+            pcl_ids, layer_ids = self.get_indices_fusion(channels, "bayesian_inference")
+            self.sum_mean *= 0
+            self.sum_compact_kernel(
+                points_all,
+                R,
+                t,
+                pcl_ids,
+                layer_ids,
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                self.sum_mean,
+                size=(points_all.shape[0]),
+            )
+            self.bayesian_inference_kernel(
+                pcl_ids,
+                layer_ids,
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                elevation_map,
+                self.new_map,
+                self.sum_mean,
                 self.map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
