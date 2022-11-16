@@ -1,7 +1,7 @@
 .. _elevation_mapping:
 
 Elevation mapping cupy
-==================================================
+******************************************************************
 
 .. automodule:: elevation_mapping_cupy.elevation_mapping
     :members:
