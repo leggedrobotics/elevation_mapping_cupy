@@ -7,6 +7,9 @@ Weclome to Elevation Mapping documentation
     :target: https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg
     :alt: python tests
 
+.. image:: https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/documentation.yml/badge.svg
+    :target: https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/documentation.yml/badge.svg
+    :alt: documentation
 
 Index
 ---------------

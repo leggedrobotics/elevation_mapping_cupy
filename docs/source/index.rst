@@ -8,7 +8,7 @@
 
 .. toctree::
     :hidden:
-    :maxdepth: 2
+    :maxdepth: 3
     :caption: Getting Started
 
     Introduction <getting_started/index>

@@ -3,7 +3,51 @@
 Plugins
 ******************************************************************
 
+This page is structured in two parts:
 
+* `Existing plugins`_
+
+* `Create a plugin`_
+
+Existing plugins
+==================================================================
+
+1. Min filter
+-------------------------------------------------------------------
+.. automodule:: elevation_mapping_cupy.plugins.min_filter
+    :members:
+
+2. Inpainting
+-------------------------------------------------------------------
+
+.. automodule:: elevation_mapping_cupy.plugins.inpainting
+    :members:
+
+3. Smooth Filter
+-------------------------------------------------------------------
+.. automodule:: elevation_mapping_cupy.plugins.smooth_filter
+    :members:
+
+4. Robot centric elevation
+-------------------------------------------------------------------
+.. automodule:: elevation_mapping_cupy.plugins.robot_centric_elevation
+    :members:
+
+5. Semantic Filter
+-------------------------------------------------------------------
+.. automodule:: elevation_mapping_cupy.plugins.semantic_filter
+    :members:
+
+6. Semantic traversability
+-------------------------------------------------------------------
+.. automodule:: elevation_mapping_cupy.plugins.semantic_traversability
+    :members:
+
+
+
+
+Create a plugin
+==================================================================
 You can create your own plugin to process the elevation map and publish as a layer in GridMap message.
 
 Let's look at the example.

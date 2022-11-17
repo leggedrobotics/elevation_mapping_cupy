@@ -1,5 +1,14 @@
 .. _installation:
 
+
+.. toctree::
+    :hidden:
+    :maxdepth: 2
+
+    Cuda installation <cuda_installation>
+
+
+
 Installation
 ******************************************************************
 
@@ -12,7 +21,9 @@ The tested versions are CUDA10.2, 11.6
 `cuDNN <https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux>`_
 
 
-Check how to install :ref:`here<getting_started/cuda_installation>`.
+Check how to install :ref:`here<cuda_installation>`.
+
+
 
 Python dependencies
 -------------------------------------------------------------------

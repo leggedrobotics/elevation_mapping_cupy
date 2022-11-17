@@ -10,22 +10,19 @@ from elevation_mapping_cupy.plugins.plugin_manager import PluginBase
 
 
 class SemanticFilter(PluginBase):
-    """This is a filter to create colors
-
-    ...
-
-    Attributes
-    ----------
-    cell_n: int
-        width and height of the elevation map.
-    """
-
     def __init__(
         self,
         cell_n: int = 100,
         classes: list = ["person", "grass"],
         **kwargs,
     ):
+        """This is a filter to create a one hot encoded map of the class probabilities.
+
+        Args:
+            cell_n (int): width and height of the elevation map.
+            classes (ruamel.yaml.comments.CommentedSeq):
+            **kwargs ():
+        """
         super().__init__()
         self.indices = []
         self.classes = classes
@@ -36,8 +33,8 @@ class SemanticFilter(PluginBase):
             return (byteval & (1 << idx)) != 0
 
         dtype = "float32" if normalized else "uint8"
-        cmap = np.zeros((N+1, 3), dtype=dtype)
-        for i in range(N+1):
+        cmap = np.zeros((N + 1, 3), dtype=dtype)
+        for i in range(N + 1):
             r = g = b = 0
             c = i
             for j in range(8):
@@ -69,10 +66,23 @@ class SemanticFilter(PluginBase):
         semantic_map,
         *args,
     ) -> cp.ndarray:
+        """
+
+        Args:
+            elevation_map (cupy._core.core.ndarray):
+            layer_names (List[str]):
+            plugin_layers (cupy._core.core.ndarray):
+            plugin_layer_names (List[str]):
+            semantic_map (elevation_mapping_cupy.semantic_map.SemanticMap):
+            *args ():
+
+        Returns:
+            cupy._core.core.ndarray:
+        """
         # get indices of all layers that
         layer_indices = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
-            if (fusion_alg in ["class_bayesian","class_average"]):
+            if fusion_alg in ["class_bayesian", "class_average"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
 
         # check which has the highest value
