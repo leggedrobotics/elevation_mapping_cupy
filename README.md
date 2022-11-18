@@ -14,15 +14,13 @@ terrain can be efficiently generated.
 > Elevation Mapping for Locomotion and Navigation using GPU  [arXiv](https://arxiv.org/abs/2204.12876)
 
 ```
-@misc{https://doi.org/10.48550/arxiv.2204.12876,
+@misc{mikielevation2022,
   doi = {10.48550/ARXIV.2204.12876},
-  url = {https://arxiv.org/abs/2204.12876},
   author = {Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
   keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
   title = {Elevation Mapping for Locomotion and Navigation using GPU},
-  publisher = {arXiv},
+  publisher = {International Conference on Intelligent Robots and Systems (IROS)},
   year = {2022},
-  copyright = {arXiv.org perpetual, non-exclusive license}
 }
 ```
 
