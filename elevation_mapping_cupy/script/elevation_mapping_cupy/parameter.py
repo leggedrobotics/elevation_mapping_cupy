@@ -6,13 +6,13 @@ from dataclasses import dataclass
 import pickle
 import numpy as np
 from simple_parsing.helpers import Serializable
-
+from dataclasses import field
 
 @dataclass
 class Parameter(Serializable):
     resolution: float = 0.04
-    additional_layers: list = ['feat_0'].copy
-    fusion_algorithms: list = ['average'].copy
+    additional_layers: list = field(default_factory=lambda: ["feat_0"]) 
+    fusion_algorithms: list = field(default_factory=lambda: ["average"])
     cell_n: int = None
     data_type: str = np.float32
 
