@@ -665,7 +665,7 @@ def sum_kernel(
     # input the list of layers, amount of channels can slo be input through kernel
     sum_kernel = cp.ElementwiseKernel(
         in_params="raw U p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
-        out_params="raw U map, raw T newmap",
+        out_params="raw U map, raw U newmap",
         preamble=string.Template(
             """
                 __device__ int get_map_idx(int idx, int layer_n) {
@@ -681,8 +681,8 @@ def sum_kernel(
             U inside = p[i * pcl_channels[0] + 2];
             if (valid) {
                 if (inside) {
-                    for ( int it=0;it<pcl_channels[1];it++){
-                        T feat = p[i * pcl_channels[0] + pcl_chan[it]];
+                    for ( W it=0;it<pcl_channels[1];it++){
+                        U feat = p[i * pcl_channels[0] + pcl_chan[it]];
                         atomicAdd(&newmap[get_map_idx(idx, map_lay[it])], feat);
                     }
                 }
@@ -693,6 +693,50 @@ def sum_kernel(
         name="sum_kernel",
     )
     return sum_kernel
+
+def alpha_kernel(
+        resolution,
+        width,
+        height,
+    ):
+    # input the list of layers, amount of channels can slo be input through kernel
+    alpha_kernel = cp.ElementwiseKernel(
+        in_params="raw U p, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params="raw U newmap",
+        preamble=string.Template(
+            """
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+            """
+        ).substitute(resolution=resolution,width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+            if (valid) {
+                if (inside) {
+                    U theta_max = 0;
+                    W arg_max = 0;
+                    for ( W it=0;it<pcl_channels[1];it++){
+                    U theta = p[i * pcl_channels[0] + pcl_chan[it]];
+                        if (theta >=theta_max){
+                            arg_max = map_lay[it];
+                            theta_max = theta;
+                        }
+                    }
+                    atomicAdd(&newmap[get_map_idx(idx, arg_max)], 1.0);
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="alpha_kernel",
+    )
+    return alpha_kernel
+
 
 
 def average_kernel(
@@ -715,7 +759,7 @@ def average_kernel(
             U cnt = new_elmap[get_map_idx(i, 2)];
             if (cnt>0){
                 for ( int it=0;it<pcl_channels[1];it++){
-                    U feat = newmap[get_map_idx(i, it*3)]/(1*cnt);
+                    U feat = newmap[get_map_idx(i,  map_lay[it])]/(1*cnt);
                     map[get_map_idx(i,  map_lay[it])] = feat;
                 }
             }
@@ -748,11 +792,11 @@ def class_average_kernel(
                 for ( int it=0;it<pcl_channels[1];it++){
                     U prev_val = map[get_map_idx(i,  map_lay[it])];
                     if (prev_val==0){
-                        U val = newmap[get_map_idx(i, it*3)]/(1*cnt);
+                        U val = newmap[get_map_idx(i, map_lay[it])]/(1*cnt);
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                     else{
-                        U val = prev_val /2 + newmap[get_map_idx(i, it*3)]/(2*cnt);
+                        U val = prev_val /2 + newmap[get_map_idx(i, map_lay[it])]/(2*cnt);
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                 }
@@ -864,7 +908,8 @@ def color_average_kernel(
                     //    unsigned int b = prev_b/2 + color_map[get_map_idx(i, it*3+2)]/(2*cnt);
                     //}
                     unsigned int rgb = (r<<16) + (g << 8) + b;
-                    map[get_map_idx(i,  map_lay[it])] = rgb;
+                    float rgb_ = __uint_as_float(rgb);
+                    map[get_map_idx(i,  map_lay[it])] = rgb_;
                 }
             }
             """
@@ -874,7 +919,6 @@ def color_average_kernel(
     )
     return color_average_kernel
 
-# TODO: in future add more kernels e.g. bayesian kernel
 
 if __name__ == "__main__":
     for i in range(10):

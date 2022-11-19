@@ -10,12 +10,13 @@ from dataclasses import field
 
 @dataclass
 class Parameter(Serializable):
-    resolution: float = 0.02
+    resolution: float = 0.04
     additional_layers: list = field(default_factory=lambda: ["feat_0"]) 
     fusion_algorithms: list = field(default_factory=lambda: ["average"])
     cell_n: int = None
+    data_type: str = np.float32
 
-    map_length: float = 10.0
+    map_length: float = 8.0
     sensor_noise_factor: float = 0.05
     mahalanobis_thresh: float = 2.0
     outlier_variance: float = 0.01
@@ -44,6 +45,7 @@ class Parameter(Serializable):
     safe_thresh: float = 0.5
     safe_min_thresh: float = 0.5
     max_unsafe_n: int = 20
+    checker_layer: str = 'traversability'
 
     min_filter_size: int = 5
     min_filter_iteration: int = 3

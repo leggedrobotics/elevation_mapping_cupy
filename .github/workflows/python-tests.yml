@@ -4,7 +4,7 @@ name: Python testing
 
 on:
   push:
-    branches: [ "feature/2_semantic_python" ]
+    branches: [ "feature/2_semantic_python", "feature/**"]
 #  pull_request:
 #    branches: [ "main" ]
 
@@ -14,7 +14,8 @@ permissions:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+#    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +28,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest cupy
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Test with pytest
+    - name: Test elevation mapping with pytest
       run: |
         cd elevation_mapping_cupy/script/elevation_mapping_cupy/tests/
+        pytest
+    - name: Test semantic_pointcloud with pytest
+      run: |
+        cd sensor_processing/semantic_pointcloud/script/semantic_pointcloud/tests
         pytest

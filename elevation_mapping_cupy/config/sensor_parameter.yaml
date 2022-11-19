@@ -1,14 +1,35 @@
 subscribers:
-#  sensor_name:
-#    channels: ['feat_0','feat_1']
-#    fusion: ['average','average']
-#    topic_name: '/elevation_mapping/pointcloud_semantic'
+  sensor_name:
+     channels: ['feat_0','feat_1']
+     fusion: ['average','average']
+     topic_name: '/elevation_mapping/pointcloud_semantic'
 
   front_cam:
-    channels: ['rgb','feat_0','feat_1','c_prob_0']
-    fusion: ['color','average','average','class_average']
+    channels: ['rgb','feat_0','feat_1','grass','tree','fence','person']
+    fusion: ['color','average','average','class_average','class_average','class_average','class_average']
     topic_name: '/elvation_mapping/pointcloud_semantic'
+    semantic_segmentation: False
+    segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x'
+    feature_config:
+      name: 'DINO'
+      interpolation: 'bilinear'
+      model: "vit_small"
+      patch_size:  16
+      dim: 5
+      dropout: False
+      dino_feat_type: "feat"
+      input_size: [80, 160]
+      projection_type: "nonlinear"
 
+    cam_info_topic: "/camera/depth/camera_info"
+    image_topic: "/camera/rgb/image_raw"
+    depth_topic: "/camera/depth/image_raw"
+    cam_frame: camera_rgb_optical_frame
+    confidence: False
+    confidence_topic: "/camera/depth/image_raw"
+    confidence_threshold: 10
+    feature_extractor: False
+    
   front_bpearl:
     channels: []
     fusion: ['average']

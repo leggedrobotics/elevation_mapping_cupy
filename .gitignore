@@ -2,5 +2,10 @@
 *.bkp
 *.orig
 .idea*
+.pytest_cache
+.run/
+docs/build 
+_build
+.idea*
 .vscode*
 *.egg-info
