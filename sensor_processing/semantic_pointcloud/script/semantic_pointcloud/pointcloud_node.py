@@ -73,10 +73,11 @@ class PointcloudNode:
             self.seg_pub = rospy.Publisher(
                 self.param.segmentation_image_topic, Image, queue_size=2
             )
-        self.semseg_color_map = self.color_map(
-            len(list(self.segmentation_channels.keys()))
-        )
-        self.color_map_viz()
+        if  self.segmentation_channels is not None:
+            self.semseg_color_map = self.color_map(
+                len(list(self.segmentation_channels.keys()))
+            )
+            self.color_map_viz()
 
     def color_map(self, N=256, normalized=False):
         def bitget(byteval, idx):
