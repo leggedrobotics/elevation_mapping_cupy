@@ -1,8 +1,27 @@
 subscribers:
+  # Single-channel or multi-channel input (Depth or RGB)
+  # Case 1: 1 channel image - into single semantic layer
+  # Case 2: 3 channel image - into 3 individual semantic layer
+  # Case 3: 3 channel image - into RGB color layer
+
+  # Fusion:
+  # exponential averaging
+  # using neigborhodd to reduce artifacts
+
+  # Collision checking during raycasting from map to camera
+
+  debug_image:
+    fusion: ['image_exponential']
+    topic_name_camera: /debug_image
+    topic_name_camera_info: /zed2i/zed_node/right/camera_info
+    channels: ["single_channel_semantic"]    
+    type: image
+    
   front_cam:
     channels: ['rgb']
     fusion: ['color']
     topic_name: '/elvation_mapping/pointcloud_semantic'
+    type: pointcloud
     
   # front_cam:
   #   channels: ['rgb','feat_0','feat_1','grass','tree','fence','person']
@@ -34,28 +53,34 @@ subscribers:
     channels: []
     fusion: ['average']
     topic_name: /robot_self_filter/bpearl_front/point_cloud
+    type: pointcloud
   
   rear_bpearl:
     channels: []
     fusion: ['average']
     topic_name: /robot_self_filter/bpearl_rear/point_cloud
-
+    type: pointcloud
+  
   front_depth:
     channels: []
     fusion: ['average']
     topic_name: /depth_camera_front/point_cloud_self_filtered
-  
+    type: pointcloud
+
   rear_depth:
     channels: []
     fusion: ['average']
     topic_name: /depth_camera_rear/point_cloud_self_filtered
-  
+    type: pointcloud
+
   left_depth:
     channels: []
     fusion: ['average']
     topic_name: /depth_camera_left/point_cloud_self_filtered
-  
+    type: pointcloud
+
   right_depth:
     channels: []
     fusion: ['average']
     topic_name: /depth_camera_right/point_cloud_self_filtered
+    type: pointcloud

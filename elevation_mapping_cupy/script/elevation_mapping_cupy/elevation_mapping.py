@@ -358,6 +358,19 @@ class ElevationMap:
         # calculate normal vectors
         self.update_normal(self.traversability_input)
 
+
+    def update_map_with_semantic_kernel(self, semantic_image, K, channels, R, t):
+        """Update map with new measurement from semantic image. 
+
+        Args:
+            semantic_image (cupy._core.core.ndarray): 
+            K (cupy._core.core.ndarray): 
+            channels (List[str]): 
+            R (cupy._core.core.ndarray): 
+            t (cupy._core.core.ndarray): 
+        """
+        print("not implemented")
+        
     def clear_overlap_map(self, t):
         # Clear overlapping area around center
         height_min = t[2] - self.param.overlap_clear_range_z
@@ -385,7 +398,7 @@ class ElevationMap:
         mask = self.elevation_map[2] > 0.5
         self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
-
+    
     def input(self, raw_points: cp._core.core.ndarray, channels: List[str], R: cp._core.core.ndarray,
               t: cp._core.core.ndarray,
               position_noise: int,
@@ -409,6 +422,22 @@ class ElevationMap:
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
         self.update_map_with_kernel(raw_points, additional_channels, cp.asarray(R,dtype=self.data_type), cp.asarray(t,dtype=self.data_type), position_noise, orientation_noise)
 
+    def input_semantic_image(self, 
+        semantic_image: cp._core.core.ndarray, 
+        K: cp._core.core.ndarray, 
+        channels: List[str], 
+        R: cp._core.core.ndarray,
+        t: cp._core.core.ndarray
+        ):
+        
+        semantic_image = cp.asarray(semantic_image, dtype=self.data_type)
+        K = cp.asarray(K, dtype=self.data_type)
+        R = cp.asarray(R,dtype=self.data_type)
+        t = cp.asarray(t,dtype=self.data_type)
+        
+        self.update_map_with_semantic_kernel(semantic_image, K, channels, R, t)
+        
+        
     def update_normal(self, dilated_map):
         """ Clear the normal map and then apply the normal kernel with dilated map as input.
 
