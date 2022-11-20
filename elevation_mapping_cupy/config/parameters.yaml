@@ -40,9 +40,9 @@ max_unsafe_n: 10                                # if the number of cells under s
 overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
 overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
 
-map_frame: 'odom'                               # The map frame where the odometry source uses.
-base_frame: 'base'                              # The robot's base frame. This frame will be a center of the map.
-corrected_map_frame: 'odom_corrected'
+map_frame: 'enu'                               # The map frame where the odometry source uses.
+base_frame: 'base_footprint'                              # The robot's base frame. This frame will be a center of the map.
+corrected_map_frame: 'enu'
 
 #### Feature toggles ########
 enable_edge_sharpen: true

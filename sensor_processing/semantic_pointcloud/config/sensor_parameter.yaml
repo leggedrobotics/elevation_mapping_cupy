@@ -4,11 +4,13 @@ subscribers:
 #    fusion: ['average','average']
 #    topic_name: '/elevation_mapping/pointcloud_semantic'
   front_cam:
-    channels: ['rgb','feat_0','feat_1','person','grass']
-    fusion: ['color','average','average','class_average','class_average']
+    channels: ['rgb'] #'feat_0','feat_1','person','grass']
+    fusion: ['color'] #'average','average','class_average','class_average']
     topic_name: '/elvation_mapping/pointcloud_semantic'
-    semantic_segmentation: True
+    semantic_segmentation: False
     segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x'
+    publish_segmentation_image: True
+    feature_extractor: False
     feature_config:
       name: 'DINO'
       interpolation: 'bilinear'
@@ -26,6 +28,5 @@ subscribers:
     cam_frame: "zed2i_right_camera_optical_frame"
     confidence_topic: "/zed2i/zed_node/confidence/confidence_map"
     confidence_threshold: 10
-
 
 
