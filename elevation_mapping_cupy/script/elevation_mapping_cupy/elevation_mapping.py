@@ -18,6 +18,9 @@ from elevation_mapping_cupy.custom_kernels import average_map_kernel
 from elevation_mapping_cupy.custom_kernels import dilation_filter_kernel
 from elevation_mapping_cupy.custom_kernels import normal_filter_kernel
 from elevation_mapping_cupy.custom_kernels import polygon_mask_kernel
+from elevation_mapping_cupy.custom_semantic_image_kernels import image_to_map_corrospondence_kernel
+
+
 from elevation_mapping_cupy.map_initializer import MapInitializer
 from elevation_mapping_cupy.plugins.plugin_manager import PluginManager
 from elevation_mapping_cupy.semantic_map import SemanticMap
@@ -272,6 +275,16 @@ class ElevationMap:
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
+    def compile_semantic_image_kernels(self):
+        self.corrospondence_map = cp.zeros((self.elevation_map.shape[0], self.cell_n, self.cell_n),dtype=self.data_type)
+
+        self.image_to_map_corrospondence_kernel = image_to_map_corrospondence_kernel(
+            self.resolution,
+            self.cell_n,
+            self.cell_n
+        )
+        
+
     def shift_translation_to_map_center(self, t):
         """ Deduct the map center to get the translation of a point w.r.t. the map center.
 
@@ -359,7 +372,7 @@ class ElevationMap:
         self.update_normal(self.traversability_input)
 
 
-    def update_map_with_semantic_kernel(self, semantic_image, K, channels, R, t):
+    def update_map_with_semantic_image_kernel(self, semantic_image, K, channels, R, t):
         """Update map with new measurement from semantic image. 
 
         Args:
@@ -369,7 +382,13 @@ class ElevationMap:
             R (cupy._core.core.ndarray): 
             t (cupy._core.core.ndarray): 
         """
-        print("not implemented")
+        self.corrospondence_map *= 0
+        # TODO Speedup 1. Compute frustrum mask
+        
+        # TODO Minimal 2. Compute corrospondences based on visibilitz check (map to image)
+        self.image_to_map_corrospondence_kernel(H,W,K,R,t, self.corrospondence_map)
+        # TODO Minimal 3. Update the semantic layer based on calculated image to map corrospondences
+        
         
     def clear_overlap_map(self, t):
         # Clear overlapping area around center
@@ -435,7 +454,7 @@ class ElevationMap:
         R = cp.asarray(R,dtype=self.data_type)
         t = cp.asarray(t,dtype=self.data_type)
         
-        self.update_map_with_semantic_kernel(semantic_image, K, channels, R, t)
+        self.update_map_with_semantic_image_kernel(semantic_image, K, channels, R, t)
         
         
     def update_normal(self, dilated_map):

@@ -96,7 +96,7 @@ class ElevationMapWrapper:
             else:
                 typ = config["type"]
                 raise ValueError(f"{typ} unknown, only pointcloud and image defined.")
-                        
+                    
         self.param.additional_layers = additional
         self.param.fusion_algorithms = fusion
         self.dtype = [
@@ -199,7 +199,6 @@ class ElevationMapWrapper:
         self._image_process_counter += 1
         
     def pointcloud_callback(self, msg, config):
-        print("receive pointcloud")
         # convert pcd into numpy array
         # output = {}
         # total_bytes = msg.fields[-1].offset + PDC_DATATYPE[str(msg.fields[-1].datatype)](1).nbytes
@@ -235,7 +234,7 @@ class ElevationMapWrapper:
         # process pointcloud
         self._map.input(pts, channels, R, t, 0, 0)
         self._pointcloud_process_counter += 1
-        print(self._pointcloud_process_counter)
+        print("Pointclouds processed: ", self._pointcloud_process_counter)
 
     def update_pose(self, t):
         # get pose of base
