@@ -1,12 +1,8 @@
 import cupy as cp
 import string
 
-def image_to_map_corrospondence_kernel(
-    resolution,
-    width,
-    height, 
-    tolerance_z_collision
-):
+
+def image_to_map_corrospondence_kernel(resolution, width, height, tolerance_z_collision):
     image_to_map_corrospondence_kernel = cp.ElementwiseKernel(
         in_params="raw U map, raw U x1, raw U y1, raw U z1, raw U P, raw U image_height, raw U image_width, raw U center",
         out_params="raw U uv_corrospondence, raw B vaild_corrospondence",
@@ -119,19 +115,13 @@ def image_to_map_corrospondence_kernel(
             uv_corrospondence[get_map_idx(i, 1)] = v;
             vaild_corrospondence[get_map_idx(i, 0)] = 1;
             """
-        ).substitute(
-            height=height, width=width, resolution=resolution, tolerance_z_collision=tolerance_z_collision
-        ),
+        ).substitute(height=height, width=width, resolution=resolution, tolerance_z_collision=tolerance_z_collision),
         name="image_to_map_corrospondence_kernel",
     )
     return image_to_map_corrospondence_kernel
 
 
-def average_corrospondences_to_map_kernel(
-    resolution,
-    width,
-    height 
-):
+def average_corrospondences_to_map_kernel(resolution, width, height):
     average_corrospondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U semantic_image, raw U uv_corrospondence, raw B vaild_corrospondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
@@ -152,8 +142,7 @@ def average_corrospondences_to_map_kernel(
                 new_sem_map[cell_idx] = semantic_image[idx];
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="average_corrospondences_to_map_kernel",
     )
     return average_corrospondences_to_map_kernel

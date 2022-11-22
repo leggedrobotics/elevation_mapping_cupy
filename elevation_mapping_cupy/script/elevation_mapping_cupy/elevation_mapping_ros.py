@@ -86,8 +86,8 @@ class ElevationMapWrapper:
                         additional.append(chan)
                     if fus not in fusion:
                         fusion.append(fus)
-                    
-            elif config["type"] == "pointcloud":    
+
+            elif config["type"] == "pointcloud":
                 for chan, fus in zip(config["channels"], config["fusion"]):
                     if chan not in additional:
                         additional.append(chan)
@@ -96,7 +96,7 @@ class ElevationMapWrapper:
             else:
                 typ = config["type"]
                 raise ValueError(f"{typ} unknown, only pointcloud and image defined.")
-                    
+
         self.param.additional_layers = additional
         self.param.fusion_algorithms = fusion
         self.dtype = [
@@ -106,8 +106,7 @@ class ElevationMapWrapper:
         ]
         for chan in config["channels"]:
             self.dtype.append((chan, np.float32))
-        
-        
+
     def register_subscribers(self):
         pointcloud_subs = {}
         image_subs = {}
@@ -116,11 +115,11 @@ class ElevationMapWrapper:
                 camera_sub = message_filters.Subscriber(config["topic_name_camera"], Image)
                 camera_info_sub = message_filters.Subscriber(config["topic_name_camera_info"], CameraInfo)
                 image_subs[key] = message_filters.ApproximateTimeSynchronizer(
-                    [ camera_sub, camera_info_sub], queue_size=10,slop=0.5
+                    [camera_sub, camera_info_sub], queue_size=10, slop=0.5
                 )
                 image_subs[key].registerCallback(self.image_callback, (config["channels"], config["fusion"]))
-                
-            elif config["type"] == "pointcloud":    
+
+            elif config["type"] == "pointcloud":
                 pointcloud_subs[key] = rospy.Subscriber(
                     config["topic_name"], PointCloud2, self.pointcloud_callback, (config["channels"], config["fusion"])
                 )
@@ -179,7 +178,9 @@ class ElevationMapWrapper:
         ti = rospy.Time(secs=camera_msg.header.stamp.secs, nsecs=camera_msg.header.stamp.nsecs)
         self._last_t = ti
         try:
-            transform = self._tf_buffer.lookup_transform(camera_msg.header.frame_id, self.map_frame, ti, rospy.Duration(1.0))
+            transform = self._tf_buffer.lookup_transform(
+                camera_msg.header.frame_id, self.map_frame, ti, rospy.Duration(1.0)
+            )
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             print("pointcloud_callback error:", e)
             return
@@ -189,15 +190,14 @@ class ElevationMapWrapper:
         q = transform.transform.rotation
         R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3]
 
+        semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
 
-        semantic_img =  self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
-        
-        assert np.all( np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
-        K = np.array( camera_info_msg.K , dtype=np.float32).reshape(3,3)
+        assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
+        K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
         # process pointcloud
         self._map.input_semantic_image(semantic_img, K, config[0], R, t, camera_info_msg.height, camera_info_msg.width)
         self._image_process_counter += 1
-        
+
     def pointcloud_callback(self, msg, config):
         # convert pcd into numpy array
         # output = {}

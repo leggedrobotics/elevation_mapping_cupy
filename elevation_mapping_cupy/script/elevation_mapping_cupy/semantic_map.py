@@ -71,9 +71,7 @@ class SemanticMap:
                 self.param.cell_n,
                 self.param.cell_n,
             )
-            self.color_average_kernel = color_average_kernel(
-                self.param.cell_n, self.param.cell_n
-            )
+            self.color_average_kernel = color_average_kernel(self.param.cell_n, self.param.cell_n)
         if "class_average" in self.unique_fusion:
             print("Initialize class average kernel")
             self.sum_kernel = sum_kernel(
@@ -194,9 +192,7 @@ class SemanticMap:
             )
             # calculate new thetas
             sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
-            self.map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(
-                sum_alpha, axis=0
-            )
+            self.map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
             # assert  cp.unique(cp.sum(self.map[layer_ids], axis=0)) equal to zero or to nan
 
         if "color" in additional_fusion:
@@ -251,6 +247,6 @@ class SemanticMap:
     def process_map_for_publish(self, input_map):
         m = input_map.copy()
         return m[1:-1, 1:-1]
-    
+
     def get_index(self, name):
         return self.param.additional_layers.index(name)
