@@ -18,7 +18,9 @@ from elevation_mapping_cupy.custom_kernels import average_map_kernel
 from elevation_mapping_cupy.custom_kernels import dilation_filter_kernel
 from elevation_mapping_cupy.custom_kernels import normal_filter_kernel
 from elevation_mapping_cupy.custom_kernels import polygon_mask_kernel
-from elevation_mapping_cupy.custom_semantic_image_kernels import image_to_map_corrospondence_kernel
+
+from elevation_mapping_cupy.custom_semantic_image_kernerls import image_to_map_corrospondence_kernel
+from elevation_mapping_cupy.custom_semantic_image_kernerls import average_corrospondences_to_map_kernel
 
 
 from elevation_mapping_cupy.map_initializer import MapInitializer
@@ -90,6 +92,7 @@ class ElevationMap:
         self.additive_mean_error = 0.0
 
         self.compile_kernels()
+        self.compile_semantic_image_kernels()
         self.semantic_map.compile_kernels()
 
         weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
@@ -276,12 +279,21 @@ class ElevationMap:
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def compile_semantic_image_kernels(self):
-        self.corrospondence_map = cp.zeros((self.elevation_map.shape[0], self.cell_n, self.cell_n),dtype=self.data_type)
-
+        self.new_sem_map = cp.asarray( np.zeros( ( self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
+        self.vaild_corrospondence = cp.asarray( np.zeros( ( self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool)
+        self.uv_corrospondence = cp.asarray( np.zeros( ( 2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
+        
         self.image_to_map_corrospondence_kernel = image_to_map_corrospondence_kernel(
-            self.resolution,
-            self.cell_n,
-            self.cell_n
+            resolution = self.resolution,
+            width = self.cell_n,
+            height = self.cell_n,
+            tolerance_z_collision = 0.1
+        )
+        
+        self.average_corrospondences_to_map_kernel = average_corrospondences_to_map_kernel(
+            resolution = self.resolution,
+            width = self.cell_n,
+            height = self.cell_n
         )
         
 
@@ -372,23 +384,50 @@ class ElevationMap:
         self.update_normal(self.traversability_input)
 
 
-    def update_map_with_semantic_image_kernel(self, semantic_image, K, channels, R, t):
+    def update_map_with_semantic_image_kernel(self, semantic_image, K, channels, R, t, image_height, image_width):
         """Update map with new measurement from semantic image. 
-
-        Args:
-            semantic_image (cupy._core.core.ndarray): 
-            K (cupy._core.core.ndarray): 
-            channels (List[str]): 
-            R (cupy._core.core.ndarray): 
-            t (cupy._core.core.ndarray): 
         """
-        self.corrospondence_map *= 0
-        # TODO Speedup 1. Compute frustrum mask
+        P = cp.asarray( K @ np.concatenate([R, t[:, None]], 1), dtype=np.float32)
         
-        # TODO Minimal 2. Compute corrospondences based on visibilitz check (map to image)
-        self.image_to_map_corrospondence_kernel(H,W,K,R,t, self.corrospondence_map)
-        # TODO Minimal 3. Update the semantic layer based on calculated image to map corrospondences
+        t_cam_map = -R.T@t 
+        t_cam_map -= self.center.get()
         
+        x1 = cp.uint32((self.cell_n/2) + ((t_cam_map[0])/self.resolution))
+        y1 = cp.uint32((self.cell_n/2) + ((t_cam_map[1])/self.resolution))
+        z1 = cp.float32(t_cam_map[2])
+        
+        semantic_image = cp.asarray( semantic_image, dtype=np.float32)
+        
+        self.new_sem_map *= 0
+        self.uv_corrospondence *= 0
+        self.vaild_corrospondence[:,:] = False
+        
+        with self.map_lock:
+            sem_map_idx = self.semantic_map.get_index(channels[0])
+            self.image_to_map_corrospondence_kernel(
+                self.elevation_map, 
+                x1,y1,z1, 
+                P.reshape(-1), 
+                cp.float32(image_height), 
+                cp.float32(image_width), 
+                self.center,
+                self.uv_corrospondence,
+                self.vaild_corrospondence,
+                size=int(self.elevation_map.shape[1] * self.elevation_map.shape[2]) 
+            )
+            
+            self.average_corrospondences_to_map_kernel(
+                self.semantic_map.map[sem_map_idx],
+                semantic_image,
+                self.uv_corrospondence,
+                self.vaild_corrospondence,
+                cp.float32(image_height), 
+                cp.float32(image_width),
+                self.new_sem_map,
+                size=int(self.elevation_map.shape[1] * self.elevation_map.shape[2]) 
+            )
+            
+            self.semantic_map.map[sem_map_idx] = self.new_sem_map
         
     def clear_overlap_map(self, t):
         # Clear overlapping area around center
@@ -446,15 +485,11 @@ class ElevationMap:
         K: cp._core.core.ndarray, 
         channels: List[str], 
         R: cp._core.core.ndarray,
-        t: cp._core.core.ndarray
+        t: cp._core.core.ndarray,
+        image_height : int, 
+        image_width : int
         ):
-        
-        semantic_image = cp.asarray(semantic_image, dtype=self.data_type)
-        K = cp.asarray(K, dtype=self.data_type)
-        R = cp.asarray(R,dtype=self.data_type)
-        t = cp.asarray(t,dtype=self.data_type)
-        
-        self.update_map_with_semantic_image_kernel(semantic_image, K, channels, R, t)
+        self.update_map_with_semantic_image_kernel(semantic_image, K, channels, R, t, image_height, image_width)
         
         
     def update_normal(self, dilated_map):

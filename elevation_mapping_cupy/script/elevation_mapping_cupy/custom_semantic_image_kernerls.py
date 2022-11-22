@@ -1,15 +1,140 @@
 import cupy as cp
 import string
 
-
 def image_to_map_corrospondence_kernel(
     resolution,
     width,
-    height
+    height, 
+    tolerance_z_collision
 ):
     image_to_map_corrospondence_kernel = cp.ElementwiseKernel(
-        in_params="raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
-        out_params="raw U p, raw U map, raw T newmap",
+        in_params="raw U map, raw U x1, raw U y1, raw U z1, raw U P, raw U image_height, raw U image_width, raw U center",
+        out_params="raw U uv_corrospondence, raw B vaild_corrospondence",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            __device__ bool is_inside_map(int x, int y) {
+                return (x >= 0 && y >= 0 && x<${width} && x<${height});
+            }
+            __device__ float get_l2_distance(int x0, int y0, int x1, int y1) {
+                float dx = x0-x1;
+                float dy = y0-y1;
+                return sqrt( dx*dx + dy*dy);
+            }
+            """
+        ).substitute(width=width, height=height, resolution=resolution),
+        operation=string.Template(
+            """
+            int cell_idx = get_map_idx(i, 0);
+            
+            // return if gridcell has no valid height
+            if (map[get_map_idx(i, 2)] != 1){
+                return;
+            }
+            
+            // get current cell position
+            int y0 = i % ${width};
+            int x0 = i / ${width};
+            
+            // gridcell 3D point in worldframe TODO reverse x and y
+            float p1 = (x0-(${width}/2)) * ${resolution} + center[0];
+            float p2 = (y0-(${height}/2)) * ${resolution} + center[1];
+            float p3 = map[cell_idx] +  center[2];
+            
+            // reproject 3D point into image plane
+            float u = p1 * P[0]  + p2 * P[1] + p3 * P[2] + P[3];      
+            float v = p1 * P[4]  + p2 * P[5] + p3 * P[6] + P[7];
+            float d = p1 * P[8]  + p2 * P[9] + p3 * P[10] + P[11];
+            
+            // filter point behind image plane
+            if (d <= 0) {
+                return;
+            }
+            u = u/d;
+            v = v/d;
+            
+            // filter point nexto image plane
+            if ((u < 0) || (v < 0) || (u >= image_width) || (v >= image_height)){
+                return;
+            } 
+            
+            int y0_c = y0;
+            int x0_c = x0;
+            float total_dis = get_l2_distance(x0_c, y0_c, x1,y1);
+            float z0 = map[cell_idx];
+            float delta_z = z1-z0;
+            
+            
+            // bresenham algorithm to iterate over cells in line between camera center and current gridmap cell
+            // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+            int dx = abs(x1-x0);
+            int sx = x0 < x1 ? 1 : -1;
+            int dy = -abs(y1 - y0);
+            int sy = y0 < y1 ? 1 : -1;
+            int error = dx + dy;
+            
+            // iterate over all cells along line
+            while (1){
+                // assumption we do not need to check the height for camera center cell
+                if (x0 == x1 && y0 == y1){
+                    break;
+                }
+                
+                // check if height is invalid
+                if (is_inside_map(x0,y0)){
+                    int idx = y0 + (x0 * ${width});
+                    if (map[get_map_idx(idx, 2)]){
+                        float dis = get_l2_distance(x0_c, y0_c, x0, y0);
+                        float rayheight = z0 + ( dis / total_dis * delta_z);
+                        if ( map[idx] - ${tolerance_z_collision} > rayheight){
+                            break;
+                        }
+                    }
+                }
+
+                
+                // computation of next gridcell index in line
+                int e2 = 2 * error;
+                if (e2 >= dy){
+                    if(x0 == x1){
+                        break;
+                    }
+                    error = error + dy;
+                    x0 = x0 + sx;
+                }
+                if (e2 <= dx){
+                    if (y0 == y1){
+                        break;
+                    }
+                    error = error + dx;
+                    y0 = y0 + sy;        
+                }
+            }
+            
+            // mark the corrospondence
+            uv_corrospondence[get_map_idx(i, 0)] = u;
+            uv_corrospondence[get_map_idx(i, 1)] = v;
+            vaild_corrospondence[get_map_idx(i, 0)] = 1;
+            """
+        ).substitute(
+            height=height, width=width, resolution=resolution, tolerance_z_collision=tolerance_z_collision
+        ),
+        name="image_to_map_corrospondence_kernel",
+    )
+    return image_to_map_corrospondence_kernel
+
+
+def average_corrospondences_to_map_kernel(
+    resolution,
+    width,
+    height 
+):
+    average_corrospondences_to_map_kernel = cp.ElementwiseKernel(
+        in_params="raw U sem_map, raw U semantic_image, raw U uv_corrospondence, raw B vaild_corrospondence, raw U image_height, raw U image_width",
+        out_params="raw U new_sem_map",
         preamble=string.Template(
             """
             __device__ int get_map_idx(int idx, int layer_n) {
@@ -20,143 +145,15 @@ def image_to_map_corrospondence_kernel(
         ).substitute(width=width, height=height),
         operation=string.Template(
             """
-            """
-        ).substitute(
-        ),
-        name="image_to_map_corrospondence_kernel",
-    )
-    return image_to_map_corrospondence_kernel
-
-
-def test_kernel(
-    resolution,
-    width,
-    height, 
-    tolerance_z_collision
-):
-    test_kernel = cp.ElementwiseKernel(
-        in_params="raw U map, raw U x1, raw U y1, raw U z1",
-        out_params="raw U newmap, raw U debug1, raw U debug2",
-        preamble=string.Template(
-            """
-            __device__ int get_map_idx(int idx, int layer_n) {
-                const int layer = ${width} * ${height};
-                return layer * layer_n + idx;
-            }
-            __device__ int get_x_idx(float16 x, float16 center) {
-                int i = (x - center) / ${resolution} + 0.5 * ${width};
-                return i;
-            }
-            __device__ int get_y_idx(float16 y, float16 center) {
-                int i = (y - center) / ${resolution} + 0.5 * ${height};
-                return i;
-            }
-            """
-        ).substitute(width=width, height=height, resolution=resolution),
-        operation=string.Template(
-            """
-            // for each cell use Bersenham to calculate projection
-            unsigned int y0 = i % ${width};
-            unsigned int x0 = i / ${width};
-            
-            unsigned int y0_c = y0;
-            unsigned int x0_c = x0;
-            
-            
-            float z0 = map[get_map_idx(i, 0)];
-            float t1 = x1-x0_c;
-            float t2 = y1 - y0_c;
-            float total_dis = sqrt( t1*t1 + t2*t2);
-            debug2[get_map_idx(i, 0)] = total_dis;
-            
-            if (total_dis == 0){
-                return;
-            }
-            float delta_z = z1-z0;
-            
-            
-            // following plotLine implementation wikipedia https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-            
-            unsigned int dx = abs(x1-x0);
-            unsigned int sx = x0 < x1 ? 1 : -1;
-            unsigned int dy = -abs(y1 - y0);
-            unsigned int sy = y0 < y1 ? 1 : -1;
-            unsigned int error = dx + dy;
-            
-            unsigned int k = 0;
-            while (1){
-                // TODO do here the calculation
-                k++;
-                debug1[get_map_idx(i, 0)] = k;
-                
-                unsigned int idx = y0 + (x0 * ${width});
-                
-                float t1 = x0 - x0_c;
-                float t2 = y0 - y0_c;
-            
-                float dis = sqrt( t1*t1 + t2*t2);
-                float rayheight = z0 + dis/total_dis * (delta_z);
-                
-                if ( map[ get_map_idx(idx, 0)] > rayheight-${tolerance_z_collision}){
-                    newmap[get_map_idx(i, 0)] = 0;
-                }
-                
-                if (x0 == x1 && y0 == y1){
-                    return;
-                }
-                unsigned int e2 = 2 * error;
-                if (e2 >= dy){
-                    if(x0 == x1){
-                        return;
-                    }
-                    error = error + dy;
-                    x0 = x0 + sx;
-                }
-                if (e2 <= dx){
-                    if (y0 == y1){
-                        return;
-                    }
-                    error = error + dx;
-                    y0 = y0 + sy;
-                }
+            int cell_idx = get_map_idx(i, 0);
+            int cell_idx_2 = get_map_idx(i, 1);
+            if (vaild_corrospondence[cell_idx]){
+                int idx = int(uv_corrospondence[cell_idx]) + int(uv_corrospondence[cell_idx_2]) * image_width; 
+                new_sem_map[cell_idx] = semantic_image[idx];
             }
             """
         ).substitute(
-            height=height, width=width, resolution=resolution, tolerance_z_collision=tolerance_z_collision
         ),
-        name="test_kernel",
+        name="average_corrospondences_to_map_kernel",
     )
-    return test_kernel
-
-
-
-
-if __name__ == "__main__":
-    import numpy as np
-    kernel = test_kernel(
-        resolution = 0.1,
-        width = 100,
-        height = 100,
-        tolerance_z_collision = 0.0
-    )
-    arr1 = cp.asarray( np.ones( (100,100), dtype=np.float32), dtype=np.float32)
-    arr1[:2,:2] = 10
-    
-    
-    arr_out = cp.asarray( np.ones( (100,100), dtype=np.float32), dtype=np.float32)
-    
-    debug1 = cp.asarray( np.ones( (100,100), dtype=np.float32), dtype=np.float32)
-    debug2 = cp.asarray( np.ones( (100,100), dtype=np.float32), dtype=np.float32)
-    camera_x_idx = cp.uint32( 0 )
-    camera_y_idx = cp.uint32( 10 ) 
-    camera_z_meter = cp.float32( 2.0 ) 
-    kernel(arr1, camera_x_idx, camera_y_idx, camera_z_meter, arr_out, debug1, debug2, size=int(arr1.shape[0] * arr1.shape[1]) )
-    
-    print(arr1)
-    print(arr_out)
-    
-    print("K")
-    print(debug1)
-    
-    print("distance")
-    print(debug2)
+    return average_corrospondences_to_map_kernel

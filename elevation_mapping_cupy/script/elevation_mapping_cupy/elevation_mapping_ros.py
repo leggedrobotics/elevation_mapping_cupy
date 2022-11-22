@@ -179,7 +179,7 @@ class ElevationMapWrapper:
         ti = rospy.Time(secs=camera_msg.header.stamp.secs, nsecs=camera_msg.header.stamp.nsecs)
         self._last_t = ti
         try:
-            transform = self._tf_buffer.lookup_transform(self.map_frame, camera_msg.header.frame_id, ti, rospy.Duration(1.0))
+            transform = self._tf_buffer.lookup_transform(camera_msg.header.frame_id, self.map_frame, ti, rospy.Duration(1.0))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             print("pointcloud_callback error:", e)
             return
@@ -195,7 +195,7 @@ class ElevationMapWrapper:
         assert np.all( np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array( camera_info_msg.K , dtype=np.float32).reshape(3,3)
         # process pointcloud
-        self._map.input_semantic_image(semantic_img, K, config[0], R, t)
+        self._map.input_semantic_image(semantic_img, K, config[0], R, t, camera_info_msg.height, camera_info_msg.width)
         self._image_process_counter += 1
         
     def pointcloud_callback(self, msg, config):

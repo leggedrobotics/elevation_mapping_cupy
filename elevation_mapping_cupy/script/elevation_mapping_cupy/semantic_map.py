@@ -251,3 +251,6 @@ class SemanticMap:
     def process_map_for_publish(self, input_map):
         m = input_map.copy()
         return m[1:-1, 1:-1]
+    
+    def get_index(self, name):
+        return self.param.additional_layers.index(name)
