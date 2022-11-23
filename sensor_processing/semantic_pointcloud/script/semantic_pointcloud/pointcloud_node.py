@@ -73,10 +73,7 @@ class PointcloudNode:
             self.seg_pub = rospy.Publisher(
                 self.param.segmentation_image_topic, Image, queue_size=2
             )
-        if self.param.pub_all:
-            self.labels = self.semantic_model["model"].get_classes()
-        else:
-            self.labels = list(self.segmentation_channels.keys())
+        self.labels = list(self.segmentation_channels.keys())
         self.semseg_color_map = self.color_map(len(self.labels))
         self.color_map_viz()
 
@@ -118,24 +115,8 @@ class PointcloudNode:
 
     def initialize_semantics(self):
         if self.param.semantic_segmentation:
-            self.semantic_model = resolve_model(self.param.segmentation_model)
-            class_to_idx = {
-                cls: idx
-                for (idx, cls) in enumerate(self.semantic_model["model"].get_classes())
-            }
-            print(
-                "Semantic Segmentation possible channels: ",
-                self.semantic_model["model"].get_classes(),
-            )
-            indices = []
-            channels = []
-            for it, chan in enumerate(self.param.channels):
-                if chan in [cls for cls in list(class_to_idx.keys())]:
-                    indices.append(class_to_idx[chan])
-                    channels.append(chan)
-                elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
-                    print(chan, " is not in the semantic segmentation model.")
-            self.segmentation_channels = dict(zip(channels, indices))
+            self.semantic_model = resolve_model(self.param.segmentation_model, self.param)
+            self.segmentation_channels = self.semantic_model["model"].segmentation_channels
         if self.param.feature_extractor:
             self.feature_channels = []
             for i, fusion in enumerate(self.param.fusion):
@@ -237,15 +218,11 @@ class PointcloudNode:
 
     def perform_segmentation(self, image, points, u, v):
         prediction = self.semantic_model["model"](image)
-        mask = prediction[list(self.segmentation_channels.values())]
-        values = mask[:, v.get(), u.get()].cpu().detach().numpy()
+        values = prediction[:, v.get(), u.get()].get()#.cpu().detach().numpy()
         for it, channel in enumerate(self.segmentation_channels.keys()):
             points[channel] = values[it]
         if self.param.publish_segmentation_image:
-            if self.param.pub_all:
-                self.publish_segmentation_image(prediction)
-            else:
-                self.publish_segmentation_image(mask)
+            self.publish_segmentation_image(prediction)
 
     def extract_features(self, image, points, u, v):
         prediction = self.feature_extractor["model"](image)
@@ -254,7 +231,7 @@ class PointcloudNode:
             points[channel] = values[it]
 
     def publish_segmentation_image(self, probabilities):
-        probabilities = cp.asarray(probabilities)
+        probabilities = cp.asarray(probabilities.get())# cpu().detach().numpy())
         colors = cp.asarray(self.semseg_color_map)
         assert colors.ndim == 2 and colors.shape[1] == 3
         img = cp.argmax(probabilities, axis=0)
