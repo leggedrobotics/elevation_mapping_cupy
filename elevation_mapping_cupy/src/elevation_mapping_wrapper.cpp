@@ -97,7 +97,7 @@ void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector
                      positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::input_image_mono(const RowMatrixXf& image,
+void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image,
                                                const std::vector<std::string>& channels,
                                                const RowMatrixXd& R,
                                                const Eigen::VectorXd& t, 
@@ -105,34 +105,13 @@ void ElevationMappingWrapper::input_image_mono(const RowMatrixXf& image,
                                                int height,
                                                int width) {
   py::gil_scoped_acquire acquire;
-  map_.attr("input_image_mono")(Eigen::Ref<const RowMatrixXf>(image),
-                                channels, 
-                                Eigen::Ref<const RowMatrixXd>(R), 
-                                Eigen::Ref<const Eigen::VectorXd>(t), 
-                                Eigen::Ref<const RowMatrixXd>(cameraMatrix),
-                                height,
-                                width);
-}
-
-void ElevationMappingWrapper::input_image_rgb(const RowMatrixXf& image_r, 
-                                              const RowMatrixXf& image_g,
-                                              const RowMatrixXf& image_b,
-                                              const std::vector<std::string>& channels,
-                                              const RowMatrixXd& R,
-                                              const Eigen::VectorXd& t,
-                                              const RowMatrixXd& cameraMatrix,
-                                              int height,
-                                              int width) {
-  py::gil_scoped_acquire acquire;
-  map_.attr("input_image_rgb")(Eigen::Ref<const RowMatrixXf>(image_r),
-                               Eigen::Ref<const RowMatrixXf>(image_g),
-                               Eigen::Ref<const RowMatrixXf>(image_b),
-                               channels, 
-                               Eigen::Ref<const RowMatrixXd>(R), 
-                               Eigen::Ref<const Eigen::VectorXd>(t), 
-                               Eigen::Ref<const RowMatrixXd>(cameraMatrix),
-                               height,
-                               width);
+  map_.attr("input_image")(multichannel_image,
+                           channels, 
+                           Eigen::Ref<const RowMatrixXd>(R), 
+                           Eigen::Ref<const Eigen::VectorXd>(t), 
+                           Eigen::Ref<const RowMatrixXd>(cameraMatrix),
+                           height,
+                           width);
 }
 
 void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p,  const RowMatrixXd& R) {

@@ -348,14 +348,12 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
     return;
   }
 
-
-  // Transform to Eigen matrix and input to pipeline
+  // Transform to vector of Eigen matrices
+  std::vector<ColMatrixXf> multichannel_image;
   if (image.channels() == 1) {
     ColMatrixXf eigen_image;
     cv::cv2eigen(image, eigen_image);
-    // std::vector<std::string> channels{"mono"};
-
-    map_.input_image_mono(eigen_image, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
+    multichannel_image.push_back(eigen_image);
 
   } else if (image.channels() == 3) {
     cv::Mat bgr[3];
@@ -366,13 +364,17 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
     cv::cv2eigen(bgr[1], eigen_image_g);
     ColMatrixXf eigen_image_r;    
     cv::cv2eigen(bgr[2], eigen_image_r);
-    // std::vector<std::string> channels{"r", "g", "b"};
 
-    map_.input_image_rgb(eigen_image_r, eigen_image_g, eigen_image_b, channels, 
-                         transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
+    multichannel_image.push_back(eigen_image_r);
+    multichannel_image.push_back(eigen_image_g);
+    multichannel_image.push_back(eigen_image_b);
+
   } else {
     ROS_WARN_STREAM("Invalid number of channels [" << image.channels() << "]. Only allowed 1 (mono) or 3 (rgb)");
   }
+
+  // Pass image to pipeline
+  map_.input_image(multichannel_image, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }

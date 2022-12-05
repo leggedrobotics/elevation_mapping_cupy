@@ -48,10 +48,8 @@ class ElevationMappingWrapper {
 
   void input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
              const double positionNoise, const double orientationNoise);
-  void input_image_mono(const RowMatrixXf& image, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t, 
+  void input_image(const std::vector<ColMatrixXf>& image, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t, 
                          const RowMatrixXd& cameraMatrix, int height, int width);
-  void input_image_rgb(const RowMatrixXf& image_r, const RowMatrixXf& image_g, const RowMatrixXf& image_b,
-                       const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, int height, int width);
   void move_to(const Eigen::VectorXd& p, const RowMatrixXd& R);
   void clear();
   void update_variance();

@@ -19,8 +19,8 @@ from elevation_mapping_cupy.custom_kernels import dilation_filter_kernel
 from elevation_mapping_cupy.custom_kernels import normal_filter_kernel
 from elevation_mapping_cupy.custom_kernels import polygon_mask_kernel
 
-from elevation_mapping_cupy.custom_image_mono_kernels import image_to_map_correspondence_kernel
-from elevation_mapping_cupy.custom_image_mono_kernels import average_correspondences_to_map_kernel
+from elevation_mapping_cupy.custom_image_kernels import image_to_map_correspondence_kernel
+from elevation_mapping_cupy.custom_image_kernels import average_correspondences_to_map_kernel
 
 
 from elevation_mapping_cupy.map_initializer import MapInitializer
@@ -93,7 +93,7 @@ class ElevationMap:
         self.additive_mean_error = 0.0
 
         self.compile_kernels()
-        self.compile_image_mono_kernels()
+        self.compile_image_kernels()
         self.semantic_map.compile_kernels()
 
         weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
@@ -275,7 +275,7 @@ class ElevationMap:
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
-    def compile_image_mono_kernels(self):
+    def compile_image_kernels(self):
         self.new_sem_map = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
         self.valid_correspondence = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool)
         self.uv_correspondence = cp.asarray(np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
@@ -374,15 +374,16 @@ class ElevationMap:
         # calculate normal vectors
         self.update_normal(self.traversability_input)
 
-    def update_map_with_image_mono_kernel(self, image_mono, K, channels, R, t, image_height, image_width):
+    def update_map_with_image_kernel(self, image, K, channels, R, t, image_height, image_width):
         """Update map with new measurement from semantic image."""
         P = cp.asarray(K @ np.concatenate([R, t[:, None]], 1), dtype=np.float32)
-        t_cam_map = -R.T @ t
-        t_cam_map -= self.center.get()
+        t_cam_map = -R.T @ t - self.center
+        t_cam_map = t_cam_map.get()
         x1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[0]) / self.resolution))
         y1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[1]) / self.resolution))
         z1 = cp.float32(t_cam_map[2])
-        image_mono = cp.asarray(image_mono, dtype=np.float32)
+
+        image = cp.asarray(image, dtype=np.float32)
 
         self.new_sem_map *= 0
         self.uv_correspondence *= 0
@@ -405,7 +406,7 @@ class ElevationMap:
 
             self.average_correspondences_to_map_kernel(
                 self.semantic_map.map[sem_map_idx],
-                image_mono,
+                image,
                 self.uv_correspondence,
                 self.valid_correspondence,
                 cp.float32(image_height),
@@ -479,9 +480,9 @@ class ElevationMap:
             orientation_noise,
         )
 
-    def input_image_mono(
+    def input_image(
         self,
-        image_mono: cp._core.core.ndarray,
+        image: cp._core.core.ndarray,
         channels: List[str],
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
@@ -489,21 +490,14 @@ class ElevationMap:
         image_height: int,
         image_width: int,
     ):
-        self.update_map_with_image_mono_kernel(image_mono, K, channels, R, t, image_height, image_width)
-    
-    def input_image_rgb(
-        self,
-        image_r: cp._core.core.ndarray,
-        image_g: cp._core.core.ndarray,
-        image_b: cp._core.core.ndarray,
-        channels: List[str],
-        R: cp._core.core.ndarray,
-        t: cp._core.core.ndarray,
-        K: cp._core.core.ndarray,
-        image_height: int,
-        image_width: int,
-    ):
-        self.update_map_with_image_mono_kernel(image_r, K, channels, R, t, image_height, image_width)
+        image = np.stack(image, axis=0)
+        self.update_map_with_image_kernel(cp.asarray(image, dtype=self.data_type), 
+                                          cp.asarray(K, dtype=self.data_type),
+                                          channels,
+                                          cp.asarray(R, dtype=self.data_type),
+                                          cp.asarray(t, dtype=self.data_type),
+                                          image_height,
+                                          image_width)
 
     def update_normal(self, dilated_map):
         """Clear the normal map and then apply the normal kernel with dilated map as input.
