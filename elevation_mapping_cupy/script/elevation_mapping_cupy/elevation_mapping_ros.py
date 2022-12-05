@@ -55,7 +55,7 @@ class ElevationMapWrapper:
         self._last_t = None
 
     def setup_cv_bride(self):
-        if self.semantic_image_data:
+        if self.image_mono_data:
             self.cv_bridge = CvBridge()
 
     def initalize_elevation_mapping(self):
@@ -77,10 +77,10 @@ class ElevationMapWrapper:
     def overwrite_elevation_mapping_params(self):
         additional = []
         fusion = []
-        self.semantic_image_data = False
+        self.image_mono_data = False
         for key, config in self.subscribers.items():
             if config["type"] == "image":
-                self.semantic_image_data = True
+                self.image_mono_data = True
                 for chan, fus in zip(config["channels"], config["fusion"]):
                     if chan not in additional:
                         additional.append(chan)
@@ -195,7 +195,7 @@ class ElevationMapWrapper:
         assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
         # process pointcloud
-        self._map.input_semantic_image(semantic_img, K, config[0], R, t, camera_info_msg.height, camera_info_msg.width)
+        self._map.input_image_mono(semantic_img, config[0], R, t, K, camera_info_msg.height, camera_info_msg.width)
         self._image_process_counter += 1
 
     def pointcloud_callback(self, msg, config):

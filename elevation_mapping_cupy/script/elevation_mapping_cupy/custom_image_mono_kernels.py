@@ -2,10 +2,10 @@ import cupy as cp
 import string
 
 
-def image_to_map_corrospondence_kernel(resolution, width, height, tolerance_z_collision):
-    image_to_map_corrospondence_kernel = cp.ElementwiseKernel(
+def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_collision):
+    image_to_map_correspondence_kernel = cp.ElementwiseKernel(
         in_params="raw U map, raw U x1, raw U y1, raw U z1, raw U P, raw U image_height, raw U image_width, raw U center",
-        out_params="raw U uv_corrospondence, raw B vaild_corrospondence",
+        out_params="raw U uv_correspondence, raw B valid_correspondence",
         preamble=string.Template(
             """
             __device__ int get_map_idx(int idx, int layer_n) {
@@ -110,20 +110,20 @@ def image_to_map_corrospondence_kernel(resolution, width, height, tolerance_z_co
                 }
             }
             
-            // mark the corrospondence
-            uv_corrospondence[get_map_idx(i, 0)] = u;
-            uv_corrospondence[get_map_idx(i, 1)] = v;
-            vaild_corrospondence[get_map_idx(i, 0)] = 1;
+            // mark the correspondence
+            uv_correspondence[get_map_idx(i, 0)] = u;
+            uv_correspondence[get_map_idx(i, 1)] = v;
+            valid_correspondence[get_map_idx(i, 0)] = 1;
             """
         ).substitute(height=height, width=width, resolution=resolution, tolerance_z_collision=tolerance_z_collision),
-        name="image_to_map_corrospondence_kernel",
+        name="image_to_map_correspondence_kernel",
     )
-    return image_to_map_corrospondence_kernel
+    return image_to_map_correspondence_kernel
 
 
-def average_corrospondences_to_map_kernel(resolution, width, height):
-    average_corrospondences_to_map_kernel = cp.ElementwiseKernel(
-        in_params="raw U sem_map, raw U semantic_image, raw U uv_corrospondence, raw B vaild_corrospondence, raw U image_height, raw U image_width",
+def average_correspondences_to_map_kernel(resolution, width, height):
+    average_correspondences_to_map_kernel = cp.ElementwiseKernel(
+        in_params="raw U sem_map, raw U image_mono, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
         preamble=string.Template(
             """
@@ -137,12 +137,12 @@ def average_corrospondences_to_map_kernel(resolution, width, height):
             """
             int cell_idx = get_map_idx(i, 0);
             int cell_idx_2 = get_map_idx(i, 1);
-            if (vaild_corrospondence[cell_idx]){
-                int idx = int(uv_corrospondence[cell_idx]) + int(uv_corrospondence[cell_idx_2]) * image_width; 
-                new_sem_map[cell_idx] = semantic_image[idx];
+            if (valid_correspondence[cell_idx]){
+                int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
+                new_sem_map[cell_idx] = image_mono[idx];
             }
             """
         ).substitute(),
-        name="average_corrospondences_to_map_kernel",
+        name="average_correspondences_to_map_kernel",
     )
-    return average_corrospondences_to_map_kernel
+    return average_correspondences_to_map_kernel

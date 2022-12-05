@@ -19,8 +19,8 @@ from elevation_mapping_cupy.custom_kernels import dilation_filter_kernel
 from elevation_mapping_cupy.custom_kernels import normal_filter_kernel
 from elevation_mapping_cupy.custom_kernels import polygon_mask_kernel
 
-from elevation_mapping_cupy.custom_semantic_image_kernerls import image_to_map_corrospondence_kernel
-from elevation_mapping_cupy.custom_semantic_image_kernerls import average_corrospondences_to_map_kernel
+from elevation_mapping_cupy.custom_image_mono_kernels import image_to_map_correspondence_kernel
+from elevation_mapping_cupy.custom_image_mono_kernels import average_correspondences_to_map_kernel
 
 
 from elevation_mapping_cupy.map_initializer import MapInitializer
@@ -93,7 +93,7 @@ class ElevationMap:
         self.additive_mean_error = 0.0
 
         self.compile_kernels()
-        self.compile_semantic_image_kernels()
+        self.compile_image_mono_kernels()
         self.semantic_map.compile_kernels()
 
         weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
@@ -275,16 +275,16 @@ class ElevationMap:
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
-    def compile_semantic_image_kernels(self):
+    def compile_image_mono_kernels(self):
         self.new_sem_map = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
-        self.vaild_corrospondence = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool)
-        self.uv_corrospondence = cp.asarray(np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
+        self.valid_correspondence = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool)
+        self.uv_correspondence = cp.asarray(np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
 
-        self.image_to_map_corrospondence_kernel = image_to_map_corrospondence_kernel(
+        self.image_to_map_correspondence_kernel = image_to_map_correspondence_kernel(
             resolution=self.resolution, width=self.cell_n, height=self.cell_n, tolerance_z_collision=0.1
         )
 
-        self.average_corrospondences_to_map_kernel = average_corrospondences_to_map_kernel(
+        self.average_correspondences_to_map_kernel = average_correspondences_to_map_kernel(
             resolution=self.resolution, width=self.cell_n, height=self.cell_n
         )
 
@@ -374,26 +374,22 @@ class ElevationMap:
         # calculate normal vectors
         self.update_normal(self.traversability_input)
 
-    def update_map_with_semantic_image_kernel(self, semantic_image, K, channels, R, t, image_height, image_width):
+    def update_map_with_image_mono_kernel(self, image_mono, K, channels, R, t, image_height, image_width):
         """Update map with new measurement from semantic image."""
         P = cp.asarray(K @ np.concatenate([R, t[:, None]], 1), dtype=np.float32)
-
         t_cam_map = -R.T @ t
         t_cam_map -= self.center.get()
-
         x1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[0]) / self.resolution))
         y1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[1]) / self.resolution))
         z1 = cp.float32(t_cam_map[2])
-
-        semantic_image = cp.asarray(semantic_image, dtype=np.float32)
+        image_mono = cp.asarray(image_mono, dtype=np.float32)
 
         self.new_sem_map *= 0
-        self.uv_corrospondence *= 0
-        self.vaild_corrospondence[:, :] = False
-
+        self.uv_correspondence *= 0
+        self.valid_correspondence[:, :] = False
         with self.map_lock:
             sem_map_idx = self.semantic_map.get_index(channels[0])
-            self.image_to_map_corrospondence_kernel(
+            self.image_to_map_correspondence_kernel(
                 self.elevation_map,
                 x1,
                 y1,
@@ -402,16 +398,16 @@ class ElevationMap:
                 cp.float32(image_height),
                 cp.float32(image_width),
                 self.center,
-                self.uv_corrospondence,
-                self.vaild_corrospondence,
+                self.uv_correspondence,
+                self.valid_correspondence,
                 size=int(self.elevation_map.shape[1] * self.elevation_map.shape[2]),
             )
 
-            self.average_corrospondences_to_map_kernel(
+            self.average_correspondences_to_map_kernel(
                 self.semantic_map.map[sem_map_idx],
-                semantic_image,
-                self.uv_corrospondence,
-                self.vaild_corrospondence,
+                image_mono,
+                self.uv_correspondence,
+                self.valid_correspondence,
                 cp.float32(image_height),
                 cp.float32(image_width),
                 self.new_sem_map,
@@ -483,17 +479,31 @@ class ElevationMap:
             orientation_noise,
         )
 
-    def input_semantic_image(
+    def input_image_mono(
         self,
-        semantic_image: cp._core.core.ndarray,
-        K: cp._core.core.ndarray,
+        image_mono: cp._core.core.ndarray,
         channels: List[str],
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
+        K: cp._core.core.ndarray,
         image_height: int,
         image_width: int,
     ):
-        self.update_map_with_semantic_image_kernel(semantic_image, K, channels, R, t, image_height, image_width)
+        self.update_map_with_image_mono_kernel(image_mono, K, channels, R, t, image_height, image_width)
+    
+    def input_image_rgb(
+        self,
+        image_r: cp._core.core.ndarray,
+        image_g: cp._core.core.ndarray,
+        image_b: cp._core.core.ndarray,
+        channels: List[str],
+        R: cp._core.core.ndarray,
+        t: cp._core.core.ndarray,
+        K: cp._core.core.ndarray,
+        image_height: int,
+        image_width: int,
+    ):
+        self.update_map_with_image_mono_kernel(image_r, K, channels, R, t, image_height, image_width)
 
     def update_normal(self, dilated_map):
         """Clear the normal map and then apply the normal kernel with dilated map as input.
