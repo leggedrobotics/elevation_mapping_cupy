@@ -19,10 +19,16 @@ from semantic_pointcloud.utils import resolve_model, decode_max
 class PointcloudNode:
     def __init__(self, sensor_name):
         # TODO: if this is going to be loaded from another package we might need to change namespace
-        config = rospy.get_param("/semantic_pointcloud/subscribers")
-        self.param: PointcloudParameter = PointcloudParameter.from_dict(
-            config[sensor_name]
-        )
+        self.param: PointcloudParameter = PointcloudParameter()
+        # try catch for pytests
+        try:
+            config = rospy.get_param("/semantic_pointcloud/subscribers")
+            self.param: PointcloudParameter = PointcloudParameter.from_dict(
+                config[sensor_name]
+            )
+        except:
+            print("NO ROS ENV found.")
+
         self.param.sensor_name = sensor_name
         print("--------------Pointcloud Parameters-------------------")
         print(self.param.dumps_yaml())
@@ -40,6 +46,7 @@ class PointcloudNode:
         # setup pointcloud creation
         self.cv_bridge = CvBridge()
         self.P = None
+        self.header = None
 
         rospy.Subscriber(self.param.cam_info_topic, CameraInfo, self.cam_info_callback)
         rgb_sub = message_filters.Subscriber(self.param.image_topic, Image)
@@ -78,7 +85,8 @@ class PointcloudNode:
         else:
             self.labels = list(self.segmentation_channels.keys())
         self.semseg_color_map = self.color_map(len(self.labels))
-        self.color_map_viz()
+        if self.param.show_label_legend:
+            self.color_map_viz()
 
     def color_map(self, N=256, normalized=False):
         def bitget(byteval, idx):
@@ -114,14 +122,12 @@ class PointcloudNode:
         plt.yticks([row_size * i + row_size / 2 for i in range(nclasses)], self.labels)
         plt.xticks([])
         plt.show()
-        # plt.savefig("./labels.png")
 
     def initialize_semantics(self):
         if self.param.semantic_segmentation:
             self.semantic_model = resolve_model(
                 self.param.segmentation_model, self.param
             )
-            # todo (done) rewrite the segmenation channel such that keys are channels of seg and values are the fusion
             self.segmentation_channels = {}
             for i, (chan, fus) in enumerate(
                 zip(self.param.channels, self.param.fusion)
@@ -224,7 +230,6 @@ class PointcloudNode:
         if self.segmentation_channels is not None:
             self.perform_segmentation(image, points, u, v)
         if self.feature_channels is not None:
-            # TODO is no return needed?
             self.extract_features(image, points, u, v)
 
     def perform_segmentation(self, image, points, u, v):
@@ -244,7 +249,8 @@ class PointcloudNode:
     def publish_segmentation_image(self, probabilities):
         colors = cp.asarray(self.semseg_color_map)
         assert colors.ndim == 2 and colors.shape[1] == 3
-        # img = 0
+        if self.P is None:
+            return
         prob = cp.zeros((len(self.labels),) + probabilities.shape[1:])
         if "class_max" in self.param.fusion:
             # decode, create an array with all possible classes and insert probabilities
@@ -252,11 +258,11 @@ class PointcloudNode:
             for iit, (chan, fuse) in enumerate(
                 zip(self.param.channels, self.param.fusion)
             ):
-                if fuse == "class_max":
+                if fuse in ["class_max"]:
                     temp = probabilities[it]
                     temp_p, temp_i = decode_max(temp)
                     temp_i.choose(prob)
-                    c = cp.mgrid[0 : temp_i.shape[0], 0 : temp_i.shape[1]]
+                    c = cp.mgrid[0: temp_i.shape[0], 0: temp_i.shape[1]]
                     prob[temp_i, c[0], c[1]] = temp_p
                     it += 1
                 elif fuse in ["class_bayesian", "class_average"]:

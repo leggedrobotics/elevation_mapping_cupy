@@ -15,6 +15,7 @@ class Parameter(Serializable):
     fusion_algorithms: list = ['average'].copy
     cell_n: int = None
     data_type: str = np.float32
+    average_weight: float = 0.5
 
     map_length: float = 8.0
     sensor_noise_factor: float = 0.05

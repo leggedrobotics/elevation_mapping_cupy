@@ -128,13 +128,16 @@ class PytorchModel:
                 channels.append(chan)
             elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
                 print(chan, " is not in the semantic segmentation model.")
-        # for argamax
         for it, chan in enumerate(self.param.channels):
             if chan in [cls for cls in list(class_to_idx.keys())]:
                 indices.append(class_to_idx[chan])
                 channels.append(chan)
             elif self.param.fusion[it] in ["class_max"]:
+                pass
+                print(chan, " is not in the semantic segmentation model but is a max channel.")
+            else:
                 print(chan, " is not in the semantic segmentation model.")
+
         self.stuff_categories = dict(zip(channels, indices))
         self.segmentation_channels = self.stuff_categories
 
@@ -158,7 +161,6 @@ class PytorchModel:
             selected_masks = cp.asarray(
                 normalized_masks[list(self.stuff_categories.values())]
             )
-
             # get values of max, first remove the ones we already have
             normalized_masks[list(self.stuff_categories.values())] = 0
             for i in range(self.param.fusion.count("class_max")):
@@ -167,8 +169,10 @@ class PytorchModel:
                 selected_masks = cp.concatenate(
                     (selected_masks, cp.expand_dims(mer, axis=0)), axis=0
                 )
-                # TODO set to zero the max
-                # normalized_masks[index] = 0
+                x = torch.arange(0, index.shape[0])
+                y = torch.arange(0, index.shape[1])
+                c = torch.meshgrid(x, y)
+                normalized_masks[index, c[0], c[1]] = 0
         return cp.asarray(selected_masks)
 
     def get_classes(self):

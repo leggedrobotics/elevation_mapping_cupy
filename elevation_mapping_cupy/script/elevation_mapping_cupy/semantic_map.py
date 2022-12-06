@@ -106,6 +106,7 @@ class SemanticMap:
             self.class_average_kernel = class_average_kernel(
                 self.param.cell_n,
                 self.param.cell_n,
+                self.param.average_weight,
             )
         if "class_bayesian" in self.unique_fusion:
             print("Initialize class bayesian kernel")
@@ -252,6 +253,7 @@ class SemanticMap:
             )
             # calculate new thetas
             sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
+            # do not divide by zero
             sum_alpha[sum_alpha == 0] = 1
             self.map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(
                 sum_alpha, axis=0
@@ -265,8 +267,7 @@ class SemanticMap:
             # find unique ids in new measurement and in map
             unique_idm = cp.unique(pt_id)
             unique_ida = cp.unique(self.unique_id[self.id_max])
-            # get all unique ids, where index is the position in the prob_Sum and the value
-            # the value in the NN class
+            # get all unique ids, where index is the position in the prob_sum and the value in the NN class
             self.unique_id = cp.unique(cp.concatenate((unique_idm, unique_ida)))
             # contains the sum of the new measurement probabilities
             self.prob_sum = cp.zeros(
@@ -294,9 +295,11 @@ class SemanticMap:
             )
             # add the previous alpha
             for i, lay in enumerate(layer_ids):
-                # todo add residual of prev alpha to the prob_sum
-                c = cp.mgrid[0: self.new_map.shape[1], 0: self.new_map.shape[2]]
+                c = cp.mgrid[0 : self.new_map.shape[1], 0 : self.new_map.shape[2]]
                 self.prob_sum[self.id_max[i], c[0], c[1]] = self.new_map[lay]
+                # todo add residual of prev alpha to the prob_sum
+                # res = 1- self.new_map[lay]
+                # res /= (len(self.unique_id)-1)
 
             # find the alpha we want to keep
             for i, lay in enumerate(layer_ids):
@@ -306,7 +309,8 @@ class SemanticMap:
             #
             # update map calculate new thetas
             sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
-            sum_alpha[sum_alpha==0]=1
+            # do not divide by zero
+            sum_alpha[sum_alpha == 0] = 1
             self.map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(
                 sum_alpha, axis=0
             )

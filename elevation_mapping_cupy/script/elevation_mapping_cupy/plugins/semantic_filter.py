@@ -84,12 +84,12 @@ class SemanticFilter(PluginBase):
         class_map_id = cp.argmax(semantic_map.map[layer_indices], axis=0)
 
         if "class_max" in semantic_map.param.fusion_algorithms:
-            # todo here is only cosideredx the case where we only have one max
+            # todo here is only cosidered the case where we only have one max
             max_map = cp.amax(semantic_map.new_map[max_idcs], axis=0)
             max_map_id = semantic_map.unique_id[semantic_map.id_max[max_idcs]]
             map = cp.where(max_map > class_map, max_map_id, class_map_id)
         else:
-            map = class_map
+            map = class_map_id
         # create color coding
         enc = self.color_encoding[map]
         return enc

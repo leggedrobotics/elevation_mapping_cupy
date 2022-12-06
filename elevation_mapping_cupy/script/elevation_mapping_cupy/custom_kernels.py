@@ -889,6 +889,7 @@ def bayesian_inference_kernel(
 def class_average_kernel(
         width,
         height,
+        alpha,
 ):
     class_average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -912,13 +913,13 @@ def class_average_kernel(
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                     else{
-                        U val = prev_val /2 + newmap[get_map_idx(i, map_lay[it])]/(2*cnt);
+                        U val = ${alpha} *prev_val + ${alpha} * newmap[get_map_idx(i, map_lay[it])]/(cnt);
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                 }
             }
             """
-        ).substitute(
+        ).substitute(alpha=alpha,
         ),
         name="class_average_kernel",
     )
