@@ -27,6 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest cupy-cuda114
+        pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test elevation mapping with pytest
       run: |
