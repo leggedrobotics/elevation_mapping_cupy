@@ -10,15 +10,6 @@ from elevation_mapping_cupy.plugins.plugin_manager import PluginBase
 
 
 class SemanticTraversability(PluginBase):
-    """This is a filter to create colors
-
-    ...
-
-    Attributes
-    ----------
-    cell_n: int
-        width and height of the elevation map.
-    """
 
     def __init__(
         self,
@@ -28,6 +19,15 @@ class SemanticTraversability(PluginBase):
         type: list = ["traversability"],
         **kwargs,
     ):
+        """ Extracts traversability and elevations from layers and generates an updated traversability that can be used by checker.
+
+        Args:
+            cell_n (int):
+            layers (ruamel.yaml.comments.CommentedSeq):
+            thresholds (ruamel.yaml.comments.CommentedSeq):
+            type (ruamel.yaml.comments.CommentedSeq):
+            **kwargs ():
+        """
         super().__init__()
         self.layers = layers
         self.thresholds = cp.asarray(thresholds)
@@ -42,6 +42,19 @@ class SemanticTraversability(PluginBase):
         semantic_map,
         *args,
     ) -> cp.ndarray:
+        """
+
+        Args:
+            elevation_map (cupy._core.core.ndarray):
+            layer_names (List[str]):
+            plugin_layers (cupy._core.core.ndarray):
+            plugin_layer_names (List[str]):
+            semantic_map (elevation_mapping_cupy.semantic_map.SemanticMap):
+            *args ():
+
+        Returns:
+            cupy._core.core.ndarray:
+        """
         # get indices of all layers that
         map = cp.zeros(elevation_map[2].shape, np.float32)
         tempo = cp.zeros(elevation_map[2].shape, np.float32)

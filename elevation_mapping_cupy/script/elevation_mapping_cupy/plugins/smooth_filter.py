@@ -10,17 +10,15 @@ from .plugin_manager import PluginBase
 
 
 class SmoothFilter(PluginBase):
-    """This is a filter to smoothen
-
-    ...
-
-    Attributes
-    ----------
-    cell_n: int
-        width and height of the elevation map.
-    """
 
     def __init__(self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs):
+        """ This filters smoothees elevation map.
+
+        Args:
+            cell_n (int):
+            input_layer_name (str):
+            **kwargs ():
+        """
         super().__init__()
         self.input_layer_name = input_layer_name
 
@@ -32,6 +30,18 @@ class SmoothFilter(PluginBase):
         plugin_layer_names: List[str],
         *args,
     ) -> cp.ndarray:
+        """
+
+        Args:
+            elevation_map (cupy._core.core.ndarray):
+            layer_names (List[str]):
+            plugin_layers (cupy._core.core.ndarray):
+            plugin_layer_names (List[str]):
+            *args ():
+
+        Returns:
+            cupy._core.core.ndarray:
+        """
         if self.input_layer_name in layer_names:
             idx = layer_names.index(self.input_layer_name)
             h = elevation_map[idx]
