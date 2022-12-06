@@ -37,4 +37,4 @@ jobs:
     - name: Test semantic_pointcloud with pytest
       run: |
         cd sensor_processing/semantic_pointcloud/script/semantic_pointcloud/tests
-        pytest
+        pytest test_utils.py
