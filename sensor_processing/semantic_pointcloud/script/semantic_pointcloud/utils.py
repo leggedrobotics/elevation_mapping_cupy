@@ -32,9 +32,31 @@ from semantic_pointcloud.pointcloud_parameters import (
 )
 
 # from .pointcloud_parameters import PointcloudParameter, FeatureExtractorParameter
+def encode_max(maxim, index):
+    maxim, index = cp.asarray(maxim, dtype=cp.float32), cp.asarray(
+        index, dtype=cp.uint32
+    )
+    # fuse them
+    maxim = maxim.astype(cp.float16)
+    maxim = maxim.view(cp.uint16)
+    maxim = maxim.astype(cp.uint32)
+    index = index.astype(cp.uint32)
+    mer = cp.array(cp.left_shift(index, 16) | maxim, dtype=cp.uint32)
+    mer = mer.view(cp.float32)
+    return mer
 
 
-def resolve_model(name, config = None):
+def decode_max(mer):
+    mer = mer.astype(cp.float32)
+    mer = mer.view(dtype=cp.uint32)
+    ma = cp.bitwise_and(mer, 0xFFFF, dtype=np.uint16)
+    ma = ma.view(np.float16)
+    ma = ma.astype(np.float32)
+    ind = cp.right_shift(mer, 16)
+    return ma, ind
+
+
+def resolve_model(name, config=None):
     """Get the model class based on the name of the pretrained model.
 
     Args:
@@ -93,10 +115,7 @@ class PytorchModel:
         self.resolve_cateories()
 
     def resolve_cateories(self):
-        class_to_idx = {
-            cls: idx
-            for (idx, cls) in enumerate(self.get_classes())
-        }
+        class_to_idx = {cls: idx for (idx, cls) in enumerate(self.get_classes())}
         print(
             "Semantic Segmentation possible channels: ",
             self.get_classes(),
@@ -109,9 +128,15 @@ class PytorchModel:
                 channels.append(chan)
             elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
                 print(chan, " is not in the semantic segmentation model.")
+        # for argamax
+        for it, chan in enumerate(self.param.channels):
+            if chan in [cls for cls in list(class_to_idx.keys())]:
+                indices.append(class_to_idx[chan])
+                channels.append(chan)
+            elif self.param.fusion[it] in ["class_max"]:
+                print(chan, " is not in the semantic segmentation model.")
         self.stuff_categories = dict(zip(channels, indices))
         self.segmentation_channels = self.stuff_categories
-
 
     def __call__(self, image, *args, **kwargs):
         """Feewforward image through model.
@@ -126,10 +151,25 @@ class PytorchModel:
         """
         batch = torch.as_tensor(image, device="cuda").permute(2, 0, 1).unsqueeze(0)
         batch = TF.convert_image_dtype(batch, torch.float32)
-        prediction = self.model(batch)["out"]
-        normalized_masks = torch.squeeze(prediction.softmax(dim=1), dim=0)
-        selected_masks = normalized_masks[list(self.stuff_categories.values())]
-        return selected_masks
+        with torch.no_grad():
+            prediction = self.model(batch)["out"]
+            normalized_masks = torch.squeeze(prediction.softmax(dim=1), dim=0)
+            # get masks of fix classes
+            selected_masks = cp.asarray(
+                normalized_masks[list(self.stuff_categories.values())]
+            )
+
+            # get values of max, first remove the ones we already have
+            normalized_masks[list(self.stuff_categories.values())] = 0
+            for i in range(self.param.fusion.count("class_max")):
+                maxim, index = torch.max(normalized_masks, dim=0)
+                mer = encode_max(maxim, index)
+                selected_masks = cp.concatenate(
+                    (selected_masks, cp.expand_dims(mer, axis=0)), axis=0
+                )
+                # TODO set to zero the max
+                # normalized_masks[index] = 0
+        return cp.asarray(selected_masks)
 
     def get_classes(self):
         """Get list of strings containing all the classes.
@@ -152,7 +192,7 @@ class DetectronModel:
         self.cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(weights)
         self.predictor = DefaultPredictor(self.cfg)
         self.meta = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0])
-        self.stuff_categories, self.is_stuff =self.resolve_cateories("stuff_classes")
+        self.stuff_categories, self.is_stuff = self.resolve_cateories("stuff_classes")
         self.thing_categories, self.is_thing = self.resolve_cateories("thing_classes")
         self.segmentation_channels = {}
         for chan in self.param.channels:
@@ -166,10 +206,7 @@ class DetectronModel:
 
     def resolve_cateories(self, name):
         classes = self.get_cat(name)
-        class_to_idx = {
-            cls: idx
-            for (idx, cls) in enumerate(classes)
-        }
+        class_to_idx = {cls: idx for (idx, cls) in enumerate(classes)}
         print(
             "Semantic Segmentation possible channels: ",
             classes,
@@ -194,14 +231,22 @@ class DetectronModel:
         image = cp.flip(image, axis=2)
         prediction = self.predictor(image.get())
         probabilities = cp.asarray(torch.softmax(prediction["sem_seg"], dim=0))
-        output = cp.zeros((len(self.segmentation_channels), probabilities.shape[1], probabilities.shape[2]))
+        output = cp.zeros(
+            (
+                len(self.segmentation_channels),
+                probabilities.shape[1],
+                probabilities.shape[2],
+            )
+        )
         # add semseg
-        output[cp.array(list(self.is_stuff.values()))] = probabilities[list(self.stuff_categories.values())]
+        output[cp.array(list(self.is_stuff.values()))] = probabilities[
+            list(self.stuff_categories.values())
+        ]
         # add instances
         indices, insta_info = prediction["panoptic_seg"]
         # TODO dont know why i need temp, look into how to avoid
         temp = output[cp.array(list(self.is_thing.values()))]
-        for i,insta in enumerate(insta_info):
+        for i, insta in enumerate(insta_info):
             if insta is None or not insta["isthing"]:
                 continue
             mask = cp.asarray((indices == insta["id"]).int())
@@ -210,12 +255,11 @@ class DetectronModel:
         output[cp.array(list(self.is_thing.values()))] = temp
         return output
 
-
-    def get_cat(self,name):
+    def get_cat(self, name):
         return self.meta.get(name)
-    
+
     def get_classes(self):
-        return self.get_cat("thing_classes")+self.get_cat("stuff_classes")
+        return self.get_cat("thing_classes") + self.get_cat("stuff_classes")
 
 
 class STEGOModel:

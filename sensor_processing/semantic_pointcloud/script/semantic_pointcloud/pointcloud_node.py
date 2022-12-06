@@ -13,7 +13,7 @@ from sensor_msgs.msg import PointCloud2, Image
 from cv_bridge import CvBridge
 
 from semantic_pointcloud.pointcloud_parameters import PointcloudParameter
-from semantic_pointcloud.utils import resolve_model
+from semantic_pointcloud.utils import resolve_model, decode_max
 
 
 class PointcloudNode:
@@ -73,7 +73,10 @@ class PointcloudNode:
             self.seg_pub = rospy.Publisher(
                 self.param.segmentation_image_topic, Image, queue_size=2
             )
-        self.labels = list(self.segmentation_channels.keys())
+        if "class_max" in self.param.fusion:
+            self.labels = self.semantic_model["model"].get_classes()
+        else:
+            self.labels = list(self.segmentation_channels.keys())
         self.semseg_color_map = self.color_map(len(self.labels))
         self.color_map_viz()
 
@@ -115,8 +118,16 @@ class PointcloudNode:
 
     def initialize_semantics(self):
         if self.param.semantic_segmentation:
-            self.semantic_model = resolve_model(self.param.segmentation_model, self.param)
-            self.segmentation_channels = self.semantic_model["model"].segmentation_channels
+            self.semantic_model = resolve_model(
+                self.param.segmentation_model, self.param
+            )
+            # todo (done) rewrite the segmenation channel such that keys are channels of seg and values are the fusion
+            self.segmentation_channels = {}
+            for i, (chan, fus) in enumerate(
+                zip(self.param.channels, self.param.fusion)
+            ):
+                if fus in ["class_bayesian", "class_average", "class_max"]:
+                    self.segmentation_channels[chan] = fus
         if self.param.feature_extractor:
             self.feature_channels = []
             for i, fusion in enumerate(self.param.fusion):
@@ -133,7 +144,7 @@ class PointcloudNode:
             ("y", np.float32),
             ("z", np.float32),
         ]
-        for chan in self.param.channels:
+        for chan, fus in zip(self.param.channels, self.param.fusion):
             self.dtype.append((chan, np.float32))
         print(self.dtype)
 
@@ -218,7 +229,7 @@ class PointcloudNode:
 
     def perform_segmentation(self, image, points, u, v):
         prediction = self.semantic_model["model"](image)
-        values = prediction[:, v.get(), u.get()].get()#.cpu().detach().numpy()
+        values = prediction[:, v.get(), u.get()].get()
         for it, channel in enumerate(self.segmentation_channels.keys()):
             points[channel] = values[it]
         if self.param.publish_segmentation_image:
@@ -231,10 +242,34 @@ class PointcloudNode:
             points[channel] = values[it]
 
     def publish_segmentation_image(self, probabilities):
-        probabilities = cp.asarray(probabilities.get())# cpu().detach().numpy())
         colors = cp.asarray(self.semseg_color_map)
         assert colors.ndim == 2 and colors.shape[1] == 3
-        img = cp.argmax(probabilities, axis=0)
+        # img = 0
+        prob = cp.zeros((len(self.labels),) + probabilities.shape[1:])
+        if "class_max" in self.param.fusion:
+            # decode, create an array with all possible classes and insert probabilities
+            it = 0
+            for iit, (chan, fuse) in enumerate(
+                zip(self.param.channels, self.param.fusion)
+            ):
+                if fuse == "class_max":
+                    temp = probabilities[it]
+                    temp_p, temp_i = decode_max(temp)
+                    temp_i.choose(prob)
+                    c = cp.mgrid[0 : temp_i.shape[0], 0 : temp_i.shape[1]]
+                    prob[temp_i, c[0], c[1]] = temp_p
+                    it += 1
+                elif fuse in ["class_bayesian", "class_average"]:
+                    # assign fixed probability to correct index
+                    if chan in self.semantic_model["model"].segmentation_channels:
+                        prob[
+                            self.semantic_model["model"].segmentation_channels[chan]
+                        ] = probabilities[it]
+                        it += 1
+            img = cp.argmax(prob, axis=0)
+
+        else:
+            img = cp.argmax(probabilities, axis=0)
         img = colors[img].astype(cp.uint8)  # N x H x W x 3
         img = img.get()
         seg_msg = self.cv_bridge.cv2_to_imgmsg(img, encoding="rgb8")

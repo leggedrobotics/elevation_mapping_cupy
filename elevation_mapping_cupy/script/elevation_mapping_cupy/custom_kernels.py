@@ -731,6 +731,47 @@ def sum_compact_kernel(
     )
     return sum_compact_kernel
 
+
+def sum_max_kernel(
+        resolution,
+        width,
+        height,
+    ):
+    # input the list of layers, amount of channels can slo be input through kernel
+    sum_max_kernel = cp.ElementwiseKernel(
+        in_params="raw U p, raw U max_pt, raw T max_id, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params=" raw U newmap",
+        preamble=string.Template(
+            """
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+            """
+        ).substitute(resolution=resolution,width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+            if (valid) {
+                if (inside) {
+                // for every max value
+                    for ( W it=0;it<pcl_channels[2];it++){
+                        //U feat = p[i * pcl_channels[0] + pcl_chan[it]];
+                        U prob = max_pt[i * pcl_channels[2] + it];
+                        T id = max_id[i * pcl_channels[2] + it];
+                        atomicAdd(&newmap[get_map_idx(idx, id)], prob);
+                    }
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="sum_max_kernel",
+    )
+    return sum_max_kernel
+
 def alpha_kernel(
         resolution,
         width,
@@ -764,7 +805,7 @@ def alpha_kernel(
                             theta_max = theta;
                         }
                     }
-                    atomicAdd(&newmap[get_map_idx(idx, arg_max)], 1.0);
+                    atomicAdd(&newmap[get_map_idx(idx, arg_max)], theta_max);
                 }
             }
             """

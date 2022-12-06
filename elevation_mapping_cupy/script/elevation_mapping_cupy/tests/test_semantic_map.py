@@ -29,6 +29,7 @@ def semmap_ex(add_lay, fusion_alg):
     (["feat_0", "feat_1", "rgb"], ["class_average", "average", "color"], ["rgb", "feat_0"]),
     (["feat_0", "feat_1", "rgb"], ["class_bayesian", "average", "color"], ["rgb", "feat_0"]),
      (["feat_0", "feat_1", "rgb"], ["class_bayesian", "average", "color"], ["rgb", "feat_0", "feat_1"]),
+     (["feat_0", "feat_1", "rgb"], ["class_bayesian", "class_max", "color"], ["rgb", "feat_0", "feat_1"]),
      ],
 )
 def test_fusion_of_pcl(semmap_ex, channels):

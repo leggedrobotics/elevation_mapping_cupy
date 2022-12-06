@@ -20,8 +20,8 @@ class FeatureExtractorParameter(Serializable):
 class PointcloudParameter(Serializable):
     sensor_name: str = "camera"
     topic_name: str = "/elvation_mapping/pointcloud_semantic"
-    channels: list = field(default_factory=lambda: ["rgb", "person", "grass", "tree"])
-    fusion: list = field(default_factory=lambda: ["color", "class_average", "class_average", "class_average"])
+    channels: list = field(default_factory=lambda: ["rgb", "person", "grass", "tree","max"])
+    fusion: list = field(default_factory=lambda: ["color", "class_average", "class_average", "class_average","class_max"])
 
     semantic_segmentation: bool = True
     segmentation_model: str = "detectron_coco_panoptic_fpn_R_101_3x"
