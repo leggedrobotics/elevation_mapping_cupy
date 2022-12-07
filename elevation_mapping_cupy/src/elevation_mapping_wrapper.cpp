@@ -76,6 +76,10 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std
     }
   }
 
+  XmlRpc::XmlRpcValue subscribers;
+  nh.getParam("subscribers", subscribers);
+  param_.attr("subscribers") = subscribers.toXml();
+
   param_.attr("set_value")("additional_layers",additional_layers);
   param_.attr("set_value")("fusion_algorithms",fusion_algorithms);
 
@@ -83,7 +87,6 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
   map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
   map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
-  ROS_WARN_STREAM(resolution_<<map_length_<< map_n_);
 
   nh.param<bool>("enable_normal", enable_normal_, false);
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);

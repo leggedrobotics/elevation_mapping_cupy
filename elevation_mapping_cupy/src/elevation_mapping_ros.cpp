@@ -63,6 +63,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
 
+//  TODO in the longterm remove this and add it directly in the elevation map config
   std::vector<std::string> additional_layers;
   std::vector<std::string> fusion_algorithms;
   for (auto & subscriber : subscribers) {
