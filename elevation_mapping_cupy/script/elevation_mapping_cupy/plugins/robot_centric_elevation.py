@@ -8,6 +8,15 @@ class RobotCentricElevation(PluginBase):
     def __init__(
         self, cell_n: int = 100, resolution: float = 0.05, threshold: float = 0.4, use_threshold: bool = 0, **kwargs
     ):
+        """ Generates an elevation map with respect to the robot frame.
+
+        Args:
+            cell_n (int):
+            resolution (ruamel.yaml.scalarfloat.ScalarFloat):
+            threshold (ruamel.yaml.scalarfloat.ScalarFloat):
+            use_threshold (bool):
+            **kwargs ():
+        """
         super().__init__()
         self.width = cell_n
         self.height = cell_n
@@ -83,6 +92,20 @@ class RobotCentricElevation(PluginBase):
         rotation,
         *args,
     ) -> cp.ndarray:
+        """
+
+        Args:
+            elevation_map (cupy._core.core.ndarray):
+            layer_names (List[str]):
+            plugin_layers (cupy._core.core.ndarray):
+            plugin_layer_names (List[str]):
+            semantic_map (elevation_mapping_cupy.semantic_map.SemanticMap):
+            rotation (cupy._core.core.ndarray):
+            *args ():
+
+        Returns:
+            cupy._core.core.ndarray:
+        """
         # Process maps here
         # check that transform is a ndarray
         self.min_filtered = elevation_map[0].copy()

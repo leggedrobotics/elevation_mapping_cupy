@@ -1,11 +1,10 @@
 #### Subscribers ########
 subscribers:
-#  sensor_name: #if you have multiple sensors assign different names
-#    channels: ['features','person'] # names of the channels, for sem seg it should be the same name as the
-                                    # pretrained network uses
-#    fusion: ['average','class_average'] # the fusion algorithm type used.
-                                    # Pick between: ['color', 'average','class_average']
-#    topic_name: '/elevation_mapping/pointcloud_semantic' # of the published pointcloud subscribed by the el_map
+  sensor_name:
+     channels: ['feat_0','feat_1']
+     fusion: ['average','average']
+     topic_name: '/elevation_mapping/pointcloud_semantic'
+
   front_cam:
     channels: ['rgb','feat_0','feat_1','grass','tree','fence','person']
     fusion: ['color','average','average','class_average','class_average','class_average','class_average']
@@ -31,7 +30,33 @@ subscribers:
     confidence_topic: "/camera/depth/image_raw"
     confidence_threshold: 10
     feature_extractor: False
+    
+  front_bpearl:
+    channels: []
+    fusion: ['average']
+    topic_name: /robot_self_filter/bpearl_front/point_cloud
+  
+  rear_bpearl:
+    channels: []
+    fusion: ['average']
+    topic_name: /robot_self_filter/bpearl_rear/point_cloud
 
-
-
-
+  front_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_front/point_cloud_self_filtered
+  
+  rear_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_rear/point_cloud_self_filtered
+  
+  left_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_left/point_cloud_self_filtered
+  
+  right_depth:
+    channels: []
+    fusion: ['average']
+    topic_name: /depth_camera_right/point_cloud_self_filtered
