@@ -136,12 +136,14 @@ def average_correspondences_to_map_kernel(resolution, width, height):
         operation=string.Template(
             """
             int cell_idx = get_map_idx(i, 0);
-            int target_idx = get_map_idx(i, map_idx);
-            int cell_idx_2 = get_map_idx(i, 1);
             if (valid_correspondence[cell_idx]){
+                int cell_idx_2 = get_map_idx(i, 1);
                 int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
-                new_sem_map[target_idx] = image_mono[idx];
+                new_sem_map[get_map_idx(i, map_idx)] = image_mono[idx];
+            }else{
+                new_sem_map[get_map_idx(i, map_idx)] = sem_map[get_map_idx(i, map_idx)];
             }
+            
             """
         ).substitute(),
         name="average_correspondences_to_map_kernel",
@@ -151,7 +153,7 @@ def average_correspondences_to_map_kernel(resolution, width, height):
 
 def color_correspondences_to_map_kernel(resolution, width, height):
     color_correspondences_to_map_kernel = cp.ElementwiseKernel(
-        in_params="raw U sem_map, raw W map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
+        in_params="raw U sem_map, raw U map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
         preamble=string.Template(
             """
@@ -164,10 +166,22 @@ def color_correspondences_to_map_kernel(resolution, width, height):
         operation=string.Template(
             """
             int cell_idx = get_map_idx(i, 0);
-            int cell_idx_2 = get_map_idx(i, 1);
             if (valid_correspondence[cell_idx]){
-                int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
-                new_sem_map[cell_idx] = image_rgb[idx];
+                int cell_idx_2 = get_map_idx(i, 1);
+                
+                int idx_red = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
+                int idx_green = image_width * image_height + idx_red;
+                int idx_blue = image_width * image_height * 2 + idx_red;
+                
+                unsigned int r = image_rgb[idx_red];
+                unsigned int g = image_rgb[idx_green];
+                unsigned int b = image_rgb[idx_blue];
+                
+                unsigned int rgb = (r<<16) + (g << 8) + b;
+                float rgb_ = __uint_as_float(rgb);
+                new_sem_map[get_map_idx(i, map_idx)] = rgb_;
+            }else{
+                new_sem_map[get_map_idx(i, map_idx)] = sem_map[get_map_idx(i, map_idx)];
             }
             """
         ).substitute(),

@@ -161,6 +161,7 @@ class ElevationMapWrapper:
         R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3]
 
         semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
+        semantic_img = [semantic_img[:, :, k] for k in range(3)]
 
         assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
