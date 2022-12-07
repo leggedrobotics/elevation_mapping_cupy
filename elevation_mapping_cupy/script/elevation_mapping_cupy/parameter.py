@@ -13,7 +13,6 @@ class Parameter(Serializable):
     resolution: float = 0.04
     additional_layers: list = ['feat_0'].copy
     fusion_algorithms: list = ['average'].copy
-    cell_n: int = None
     data_type: str = np.float32
     average_weight: float = 0.5
 
@@ -75,6 +74,12 @@ class Parameter(Serializable):
     w3: np.ndarray = np.zeros((4, 1, 3, 3))
     w_out: np.ndarray = np.zeros((1, 12, 1, 1))
 
+    # # not configurable params
+    true_map_length: float = None
+    cell_n: int = None
+    true_cell_n: int = None
+
+
     def load_weights(self, filename):
         with open(filename, "rb") as file:
             weights = pickle.load(file)
@@ -98,6 +103,10 @@ class Parameter(Serializable):
     def update(self):
         # +2 is a border for outside map
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
+        self.true_cell_n = round(self.map_length / self.resolution)
+        self.true_map_length = self.true_cell_n * self.resolution
+
+
 
 if __name__ == "__main__":
     param = Parameter()

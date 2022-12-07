@@ -1,3 +1,4 @@
+#### Subscribers ########
 subscribers:
 #  sensor_name: #if you have multiple sensors assign different names
 #    channels: ['features','person'] # names of the channels, for sem seg it should be the same name as the
