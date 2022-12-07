@@ -89,9 +89,7 @@ class TestElevationMap:
     def test_initialize_map(self, elmap_ex):
         methods = ["linear", "cubic", "nearest"]
         for method in methods:
-            points = np.array(
-                [[-4.0, 0.0, 0.0], [-4.0, 8.0, 1.0], [4.0, 8.0, 0.0], [4.0, 0.0, 0.0]]
-            )
+            points = np.array([[-4.0, 0.0, 0.0], [-4.0, 8.0, 1.0], [4.0, 8.0, 0.0], [4.0, 0.0, 0.0]])
             elmap_ex.initialize_map(points, method)
 
     def test_plugins(self, elmap_ex):

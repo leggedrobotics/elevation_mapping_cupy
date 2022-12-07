@@ -11,16 +11,15 @@ import subprocess
 
 from elevation_mapping_cupy.traversability_filter import get_filter_chainer, get_filter_torch
 from elevation_mapping_cupy.parameter import Parameter
-from elevation_mapping_cupy.custom_kernels import add_points_kernel, add_color_kernel, color_average_kernel
-from elevation_mapping_cupy.custom_kernels import sum_kernel
-from elevation_mapping_cupy.custom_kernels import error_counting_kernel
-from elevation_mapping_cupy.custom_kernels import average_map_kernel
-from elevation_mapping_cupy.custom_kernels import dilation_filter_kernel
-from elevation_mapping_cupy.custom_kernels import normal_filter_kernel
-from elevation_mapping_cupy.custom_kernels import polygon_mask_kernel
 
-from elevation_mapping_cupy.custom_image_kernels import image_to_map_correspondence_kernel
-from elevation_mapping_cupy.custom_image_kernels import average_correspondences_to_map_kernel
+from elevation_mapping_cupy.kernels import add_points_kernel, add_color_kernel, color_average_kernel
+from elevation_mapping_cupy.kernels import sum_kernel
+from elevation_mapping_cupy.kernels import error_counting_kernel
+from elevation_mapping_cupy.kernels import average_map_kernel
+from elevation_mapping_cupy.kernels import dilation_filter_kernel
+from elevation_mapping_cupy.kernels import normal_filter_kernel
+from elevation_mapping_cupy.kernels import polygon_mask_kernel
+from elevation_mapping_cupy.kernels import image_to_map_correspondence_kernel
 
 
 from elevation_mapping_cupy.map_initializer import MapInitializer
@@ -61,8 +60,7 @@ class ElevationMap:
         self.cell_n = param.cell_n
 
         self.map_lock = threading.Lock()
-        self.additional_layers = dict(zip(self.param.additional_layers, self.param.fusion_algorithms))
-        self.semantic_map = SemanticMap(self.param, self.additional_layers)
+        self.semantic_map = SemanticMap(self.param)
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n), dtype=self.data_type)
         self.layer_names = [
             "elevation",
@@ -93,7 +91,9 @@ class ElevationMap:
         self.additive_mean_error = 0.0
 
         self.compile_kernels()
+
         self.compile_image_kernels()
+
         self.semantic_map.compile_kernels()
 
         weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
@@ -118,7 +118,8 @@ class ElevationMap:
             self.elevation_map *= 0.0
             # Initial variance
             self.elevation_map[1] += self.initial_variance
-            self.semantic_map.map *= 0.0
+            self.semantic_map.clear()
+
         self.mean_error = 0.0
         self.additive_mean_error = 0.0
 
@@ -207,8 +208,9 @@ class ElevationMap:
             self.pad_value(self.elevation_map, shift_value, value=0.0)
             self.pad_value(self.elevation_map, shift_value, idx=1, value=self.initial_variance)
 
-            self.semantic_map.map = cp.roll(self.semantic_map.map, shift_value, axis=(1, 2))
-            self.pad_value(self.semantic_map.map, shift_value, value=0.0)
+            # TODO: This in general is not best practice. This should be layered
+            self.semantic_map.semantic_map = cp.roll(self.semantic_map.semantic_map, shift_value, axis=(1, 2))
+            self.pad_value(self.semantic_map.semantic_map, shift_value, value=0.0)
 
     def shift_map_z(self, delta_z):
         """Shift the relevant layers along the vertical axis.
@@ -276,17 +278,19 @@ class ElevationMap:
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def compile_image_kernels(self):
-        self.new_sem_map = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
-        self.valid_correspondence = cp.asarray(np.zeros((self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool)
-        self.uv_correspondence = cp.asarray(np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32)
-
-        self.image_to_map_correspondence_kernel = image_to_map_correspondence_kernel(
-            resolution=self.resolution, width=self.cell_n, height=self.cell_n, tolerance_z_collision=0.1
-        )
-
-        self.average_correspondences_to_map_kernel = average_correspondences_to_map_kernel(
-            resolution=self.resolution, width=self.cell_n, height=self.cell_n
-        )
+        for config in self.param.subscriber_cfg.values():
+            if config["data_type"] == "image":
+                self.valid_correspondence = cp.asarray(
+                    np.zeros((self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool
+                )
+                self.uv_correspondence = cp.asarray(
+                    np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32
+                )
+                # TODO tolerance_z_collision add parameter
+                self.image_to_map_correspondence_kernel = image_to_map_correspondence_kernel(
+                    resolution=self.resolution, width=self.cell_n, height=self.cell_n, tolerance_z_collision=0.1
+                )
+                break
 
     def shift_translation_to_map_center(self, t):
         """Deduct the map center to get the translation of a point w.r.t. the map center.
@@ -352,7 +356,7 @@ class ElevationMap:
             self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
             # self.update_additional_layers(additional_fusion, points_all, channels, R, t)
-            self.semantic_map.update_layers(points_all, channels, R, t, self.new_map)
+            self.semantic_map.update_layers_pointcloud(points_all, channels, R, t, self.new_map)
 
             if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
@@ -373,49 +377,6 @@ class ElevationMap:
 
         # calculate normal vectors
         self.update_normal(self.traversability_input)
-
-    def update_map_with_image_kernel(self, image, K, channels, R, t, image_height, image_width):
-        """Update map with new measurement from semantic image."""
-        P = cp.asarray(K @ np.concatenate([R, t[:, None]], 1), dtype=np.float32)
-        t_cam_map = -R.T @ t - self.center
-        t_cam_map = t_cam_map.get()
-        x1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[0]) / self.resolution))
-        y1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[1]) / self.resolution))
-        z1 = cp.float32(t_cam_map[2])
-
-        image = cp.asarray(image, dtype=np.float32)
-
-        self.new_sem_map *= 0
-        self.uv_correspondence *= 0
-        self.valid_correspondence[:, :] = False
-        with self.map_lock:
-            sem_map_idx = self.semantic_map.get_index(channels[0])
-            self.image_to_map_correspondence_kernel(
-                self.elevation_map,
-                x1,
-                y1,
-                z1,
-                P.reshape(-1),
-                cp.float32(image_height),
-                cp.float32(image_width),
-                self.center,
-                self.uv_correspondence,
-                self.valid_correspondence,
-                size=int(self.elevation_map.shape[1] * self.elevation_map.shape[2]),
-            )
-
-            self.average_correspondences_to_map_kernel(
-                self.semantic_map.map[sem_map_idx],
-                image,
-                self.uv_correspondence,
-                self.valid_correspondence,
-                cp.float32(image_height),
-                cp.float32(image_width),
-                self.new_sem_map,
-                size=int(self.elevation_map.shape[1] * self.elevation_map.shape[2]),
-            )
-
-            self.semantic_map.map[sem_map_idx] = self.new_sem_map
 
     def clear_overlap_map(self, t):
         # Clear overlapping area around center
@@ -453,7 +414,7 @@ class ElevationMap:
         t: cp._core.core.ndarray,
         position_noise: int,
         orientation_noise: int,
-    ) -> None:
+    ):
         """Input the pointcloud and fuse the new measurements to update the elevation map.
 
         Args:
@@ -482,8 +443,8 @@ class ElevationMap:
 
     def input_image(
         self,
+        sub_key: str,
         image: cp._core.core.ndarray,
-        channels: List[str],
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
         K: cp._core.core.ndarray,
@@ -491,13 +452,45 @@ class ElevationMap:
         image_width: int,
     ):
         image = np.stack(image, axis=0)
-        self.update_map_with_image_kernel(cp.asarray(image, dtype=self.data_type), 
-                                          cp.asarray(K, dtype=self.data_type),
-                                          channels,
-                                          cp.asarray(R, dtype=self.data_type),
-                                          cp.asarray(t, dtype=self.data_type),
-                                          image_height,
-                                          image_width)
+        if len(image.shape) == 2:
+            image = image[None]
+
+        # Convert to cupy
+        image = cp.asarray(image, dtype=self.data_type)
+        K = cp.asarray(K, dtype=self.data_type)
+        R = cp.asarray(R, dtype=self.data_type)
+        t = cp.asarray(t, dtype=self.data_type)
+        image_height = cp.float32(image_height)
+        image_width = cp.float32(image_width)
+
+        # Calculate transformation matrix
+        P = cp.asarray(K @ cp.concatenate([R, t[:, None]], 1), dtype=np.float32)
+        t_cam_map = -R.T @ t - self.center
+        t_cam_map = t_cam_map.get()
+        x1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[0]) / self.resolution))
+        y1 = cp.uint32((self.cell_n / 2) + ((t_cam_map[1]) / self.resolution))
+        z1 = cp.float32(t_cam_map[2])
+
+        self.uv_correspondence *= 0
+        self.valid_correspondence[:, :] = False
+
+        with self.map_lock:
+            self.image_to_map_correspondence_kernel(
+                self.elevation_map,
+                x1,
+                y1,
+                z1,
+                P.reshape(-1),
+                image_height,
+                image_width,
+                self.center,
+                self.uv_correspondence,
+                self.valid_correspondence,
+                size=int(self.cell_n * self.cell_n),
+            )
+            self.semantic_map.update_layers_image(
+                sub_key, image, self.uv_correspondence, self.valid_correspondence, image_height, image_width
+            )
 
     def update_normal(self, dilated_map):
         """Clear the normal map and then apply the normal kernel with dilated map as input.
@@ -610,7 +603,7 @@ class ElevationMap:
         """
         if name in self.layer_names:
             return True
-        elif name in self.additional_layers:
+        elif name in self.semantic_map.layer_names:
             return True
         elif name in self.plugin_manager.layer_names:
             return True
@@ -647,7 +640,7 @@ class ElevationMap:
                 m = self.normal_map.copy()[1, 1:-1, 1:-1]
             elif name == "normal_z":
                 m = self.normal_map.copy()[2, 1:-1, 1:-1]
-            elif name in self.additional_layers.keys():
+            elif name in self.semantic_map.layer_names:
                 m = self.semantic_map.get_map_with_name(name)
             elif name in self.plugin_manager.layer_names:
                 self.plugin_manager.update_with_name(
@@ -689,19 +682,19 @@ class ElevationMap:
     def get_layer(self, name):
         if name in self.layer_names:
             idx = self.layer_names.index(name)
-            map = self.elevation_map[idx]
-        elif name in self.semantic_map.param.additional_layers:
-            idx = self.semantic_map.param.additional_layers.index(name)
-            map = self.semantic_map.map[idx]
+            return_map = self.elevation_map[idx]
+        elif name in self.semantic_map.layer_names:
+            idx = self.semantic_map.layer_names.index(name)
+            return_map = self.semantic_map.semantic_map[idx]
         elif name in self.plugin_manager.layer_names:
             self.plugin_manager.update_with_name(
                 name, self.elevation_map, self.layer_names, self.semantic_map, self.base_rotation
             )
-            map = self.plugin_manager.get_map_with_name(name)
+            return_map = self.plugin_manager.get_map_with_name(name)
         else:
             print("Layer {} is not in the map, returning traversabiltiy!".format(name))
             return
-        return map
+        return return_map
 
     def get_polygon_traversability(self, polygon, result):
         """Check if input polygons are traversable.
@@ -734,8 +727,8 @@ class ElevationMap:
             self.mask,
             size=(self.cell_n * self.cell_n),
         )
-        map = self.get_layer(self.param.checker_layer)
-        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask, map)
+        tmp_map = self.get_layer(self.param.checker_layer)
+        masked, masked_isvalid = get_masked_traversability(self.elevation_map, self.mask, tmp_map)
         if masked_isvalid.sum() > 0:
             t = masked.sum() / masked_isvalid.sum()
         else:

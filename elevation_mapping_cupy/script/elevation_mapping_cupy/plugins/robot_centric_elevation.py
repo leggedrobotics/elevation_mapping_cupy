@@ -8,7 +8,7 @@ class RobotCentricElevation(PluginBase):
     def __init__(
         self, cell_n: int = 100, resolution: float = 0.05, threshold: float = 0.4, use_threshold: bool = 0, **kwargs
     ):
-        """ Generates an elevation map with respect to the robot frame.
+        """Generates an elevation map with respect to the robot frame.
 
         Args:
             cell_n (int):
@@ -20,7 +20,7 @@ class RobotCentricElevation(PluginBase):
         super().__init__()
         self.width = cell_n
         self.height = cell_n
-        self.min_filtered = cp.zeros((self.width, self.height),dtype=cp.float32)
+        self.min_filtered = cp.zeros((self.width, self.height), dtype=cp.float32)
 
         self.base_elevation_kernel = cp.ElementwiseKernel(
             in_params="raw U map, raw U mask, raw U R",

@@ -10,9 +10,8 @@ from .plugin_manager import PluginBase
 
 
 class MinFilter(PluginBase):
-
     def __init__(self, cell_n: int = 100, dilation_size: int = 5, iteration_n: int = 5, **kwargs):
-        """ This is a filter to fill in invalid cells with minimum values around.
+        """This is a filter to fill in invalid cells with minimum values around.
 
         Args:
             cell_n (int): width of the elevation map.

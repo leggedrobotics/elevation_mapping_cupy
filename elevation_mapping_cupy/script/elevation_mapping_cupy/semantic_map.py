@@ -1,52 +1,58 @@
-from .parameter import Parameter
+from elevation_mapping_cupy.parameter import Parameter
 import cupy as cp
 import numpy as np
 from typing import List
-from .custom_kernels import (
-    sum_kernel,
-    add_color_kernel,
-    color_average_kernel,
-    average_kernel,
-    class_average_kernel,
-    alpha_kernel,
-)
+from elevation_mapping_cupy.kernels import sum_kernel, add_color_kernel, color_average_kernel
+from elevation_mapping_cupy.kernels import average_kernel, class_average_kernel, alpha_kernel
+from elevation_mapping_cupy.kernels import average_correspondences_to_map_kernel, color_correspondences_to_map_kernel
 
 xp = cp
 
 
 class SemanticMap:
-    def __init__(self, param: Parameter, layer_specs: dict):
+    def __init__(self, param: Parameter):
         """
 
         Args:
             param (elevation_mapping_cupy.parameter.Parameter):
-            layer_specs (Dict[str, str]):
         """
+
         self.param = param
-        self.layer_specs = layer_specs
-        self.amount_additional_layers = len(self.param.additional_layers)
-        self.map = xp.zeros(
-            (self.amount_additional_layers, self.param.cell_n, self.param.cell_n),
+
+        # TODO: maps channel to fusion strategy (maybe rename)
+        self.layer_specs = {}
+        self.layer_names = []
+        self.unique_fusion = []
+
+        for k, config in self.param.subscriber_cfg.items():
+            for f, c in zip(config["fusion"], config["channels"]):
+                if c not in self.layer_names:
+                    self.layer_names.append(c)
+                    self.layer_specs[c] = f
+                else:
+                    assert self.layer_specs[c] == f, "Error: Single layer has multiple fusion algorithms!"
+
+                if f not in self.unique_fusion:
+                    self.unique_fusion.append(f)
+
+        self.amount_layer_names = len(self.layer_names)
+
+        self.semantic_map = xp.zeros(
+            (self.amount_layer_names, self.param.cell_n, self.param.cell_n),
             dtype=param.data_type,
         )
-        self.get_unique_fusion()
         self.new_map = xp.zeros(
-            (self.amount_additional_layers, self.param.cell_n, self.param.cell_n),
+            (self.amount_layer_names, self.param.cell_n, self.param.cell_n),
             param.data_type,
         )
-        self.color_map = None
 
-    def get_unique_fusion(self):
-        self.unique_fusion = []
-        for x in list(self.layer_specs.values()):
-            if x not in self.unique_fusion:
-                self.unique_fusion.append(x)
+    def clear(self):
+        self.semantic_map *= 0.0
 
     def compile_kernels(self) -> None:
         """
         Returns:
             None:
-
         """
         # TODO: maybe this could be improved by creating functions for each single
         # create a base class containing compile kernel as well as update and this then can be created for various
@@ -67,6 +73,7 @@ class SemanticMap:
 
         if "color" in self.unique_fusion:
             print("Initialize color kernel")
+
             self.add_color_kernel = add_color_kernel(
                 self.param.cell_n,
                 self.param.cell_n,
@@ -89,6 +96,16 @@ class SemanticMap:
                 self.param.resolution,
                 self.param.cell_n,
                 self.param.cell_n,
+            )
+
+        if "image_exponential" in self.unique_fusion:
+            self.average_correspondences_to_map_kernel = average_correspondences_to_map_kernel(
+                resolution=self.param.resolution, width=self.param.cell_n, height=self.param.cell_n
+            )
+
+        if "image_color" in self.unique_fusion:
+            self.color_correspondences_to_map_kernel = color_correspondences_to_map_kernel(
+                resolution=self.param.resolution, width=self.param.cell_n, height=self.param.cell_n
             )
 
     def get_fusion_of_pcl(self, channels: List[str]) -> List[str]:
@@ -130,7 +147,7 @@ class SemanticMap:
                 layer_indices = cp.append(layer_indices, it).astype(np.int32)
         return pcl_indices, layer_indices
 
-    def update_layers(self, points_all, channels, R, t, elevation_map):
+    def update_layers_pointcloud(self, points_all, channels, R, t, elevation_map):
         additional_fusion = self.get_fusion_of_pcl(channels)
         self.new_map *= 0.0
         if "average" in additional_fusion:
@@ -142,7 +159,7 @@ class SemanticMap:
                 pcl_ids,
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
-                self.map,
+                self.semantic_map,
                 self.new_map,
                 size=(points_all.shape[0]),
             )
@@ -152,7 +169,7 @@ class SemanticMap:
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
                 elevation_map,
-                self.map,
+                self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
         if "class_average" in additional_fusion:
@@ -164,7 +181,7 @@ class SemanticMap:
                 pcl_ids,
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
-                self.map,
+                self.semantic_map,
                 self.new_map,
                 size=(points_all.shape[0]),
             )
@@ -174,7 +191,7 @@ class SemanticMap:
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
                 elevation_map,
-                self.map,
+                self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
 
@@ -192,17 +209,16 @@ class SemanticMap:
             )
             # calculate new thetas
             sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
-            self.map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
-            # assert  cp.unique(cp.sum(self.map[layer_ids], axis=0)) equal to zero or to nan
+            self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
+            # assert  cp.unique(cp.sum(self.semantic_map[layer_ids], axis=0)) equal to zero or to nan
 
         if "color" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "color")
-            if self.color_map is None:
-                self.color_map = cp.zeros(
-                    (1 + 3 * layer_ids.shape[0], self.param.cell_n, self.param.cell_n),
-                    dtype=np.uint32,
-                )
-            self.color_map *= 0
+            self.color_map = cp.zeros(
+                (1 + 3 * layer_ids.shape[0], self.param.cell_n, self.param.cell_n),
+                dtype=np.uint32,
+            )
+
             points_all = points_all.astype(cp.float32)
             self.add_color_kernel(
                 points_all,
@@ -219,9 +235,56 @@ class SemanticMap:
                 pcl_ids,
                 layer_ids,
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
-                self.map,
+                self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
+
+    def update_layers_image(
+        self,
+        sub_key: str,
+        image: cp._core.core.ndarray,
+        uv_correspondence: cp._core.core.ndarray,
+        valid_correspondence: cp._core.core.ndarray,
+        image_height: cp._core.core.ndarray,
+        image_width: cp._core.core.ndarray,
+    ):
+
+        self.new_map *= 0
+        config = self.param.subscriber_cfg[sub_key]
+
+        for j, (fusion, channel) in enumerate(zip(config["fusion"], config["channels"])):
+            sem_map_idx = self.get_index(channel)
+
+            if fusion == "image_exponential":
+                self.average_correspondences_to_map_kernel(
+                    self.semantic_map,
+                    cp.uint64(sem_map_idx),
+                    image[j],
+                    uv_correspondence,
+                    valid_correspondence,
+                    image_height,
+                    image_width,
+                    self.new_map,
+                    size=int(self.param.cell_n * self.param.cell_n),
+                )
+                self.semantic_map[sem_map_idx] = self.new_map[sem_map_idx]
+
+            elif fusion == "image_color":
+                self.color_correspondences_to_map_kernel(
+                    self.semantic_map,
+                    cp.uint64(sem_map_idx),
+                    image,
+                    uv_correspondence,
+                    valid_correspondence,
+                    image_height,
+                    image_width,
+                    self.new_map,
+                    size=int(self.param.cell_n * self.param.cell_n),
+                )
+                self.semantic_map[sem_map_idx] = self.new_map[sem_map_idx]
+
+            else:
+                raise ValueError("Fusion for image is unkown.")
 
     def get_map_with_name(self, name):
         if self.layer_specs[name] == "color":
@@ -232,16 +295,16 @@ class SemanticMap:
             return m
 
     def get_rgb(self, name):
-        idx = self.param.additional_layers.index(name)
-        c = self.process_map_for_publish(self.map[idx])
+        idx = self.layer_names.index(name)
+        c = self.process_map_for_publish(self.semantic_map[idx])
         c = c.astype(np.float32)
         # c = xp.uint32(c.get())
         # c.dtype = np.float32
         return c
 
     def get_semantic(self, name):
-        idx = self.param.additional_layers.index(name)
-        c = self.process_map_for_publish(self.map[idx])
+        idx = self.layer_names.index(name)
+        c = self.process_map_for_publish(self.semantic_map[idx])
         return c
 
     def process_map_for_publish(self, input_map):
@@ -249,4 +312,4 @@ class SemanticMap:
         return m[1:-1, 1:-1]
 
     def get_index(self, name):
-        return self.param.additional_layers.index(name)
+        return self.layer_names.index(name)

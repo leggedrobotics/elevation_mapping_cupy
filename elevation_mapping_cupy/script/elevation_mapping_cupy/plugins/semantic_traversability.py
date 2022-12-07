@@ -10,7 +10,6 @@ from elevation_mapping_cupy.plugins.plugin_manager import PluginBase
 
 
 class SemanticTraversability(PluginBase):
-
     def __init__(
         self,
         cell_n: int = 100,
@@ -19,7 +18,7 @@ class SemanticTraversability(PluginBase):
         type: list = ["traversability"],
         **kwargs,
     ):
-        """ Extracts traversability and elevations from layers and generates an updated traversability that can be used by checker.
+        """Extracts traversability and elevations from layers and generates an updated traversability that can be used by checker.
 
         Args:
             cell_n (int):
@@ -69,9 +68,7 @@ class SemanticTraversability(PluginBase):
                 idx = plugin_layer_names.index(name)
                 tempo = plugin_layers[idx]
             else:
-                print(
-                    "Layer {} is not in the map, returning traversabiltiy!".format(name)
-                )
+                print("Layer {} is not in the map, returning traversabiltiy!".format(name))
                 return
             if self.type[it] == "traversability":
                 tempo = cp.where(tempo <= self.thresholds[it], 1, 0)
@@ -79,6 +76,6 @@ class SemanticTraversability(PluginBase):
             else:
                 tempo = cp.where(tempo >= self.thresholds[it], 1, 0)
                 map += tempo
-        map = cp.where(map <= 0.9, 0.1,1)
+        map = cp.where(map <= 0.9, 0.1, 1)
 
         return map

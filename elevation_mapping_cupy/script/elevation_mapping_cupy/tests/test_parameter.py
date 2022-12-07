@@ -15,4 +15,3 @@ def test_parameter():
     param.update()
     assert param.resolution == param.get_value("resolution")
     param.load_weights(param.weight_file)
-

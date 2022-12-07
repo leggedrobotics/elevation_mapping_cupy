@@ -54,9 +54,7 @@ class Inpainting(PluginBase):
             h = elevation_map[0]
             h_max = float(h[mask < 1].max())
             h_min = float(h[mask < 1].min())
-            h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype(
-                "uint8"
-            )
+            h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype("uint8")
             dst = np.array(cv.inpaint(h, mask, 1, self.method))
             h_inpainted = dst.astype(np.float32) * (h_max - h_min) / 255 + h_min
             return cp.asarray(h_inpainted).astype(np.float64)

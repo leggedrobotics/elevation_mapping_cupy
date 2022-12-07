@@ -78,9 +78,7 @@ class PluginManager(object):
 
         self.plugins = []
         for param, extra_param in zip(plugin_params, extra_params):
-            m = importlib.import_module(
-                "." + param.name, package="elevation_mapping_cupy.plugins"
-            )  # -> 'module'
+            m = importlib.import_module("." + param.name, package="elevation_mapping_cupy.plugins")  # -> 'module'
             for name, obj in inspect.getmembers(m):
                 if (
                     inspect.isclass(obj)
@@ -90,9 +88,7 @@ class PluginManager(object):
                     # Add cell_n to params
                     extra_param["cell_n"] = self.cell_n
                     self.plugins.append(obj(**extra_param))
-        self.layers = cp.zeros(
-            (len(self.plugins), self.cell_n, self.cell_n), dtype=cp.float32
-        )
+        self.layers = cp.zeros((len(self.plugins), self.cell_n, self.cell_n), dtype=cp.float32)
         self.layer_names = self.get_layer_names()
         self.plugin_names = self.get_plugin_names()
 
@@ -155,9 +151,7 @@ class PluginManager(object):
         if idx is not None:
             n_param = len(signature(self.plugins[idx]).parameters)
             if n_param == 5:
-                self.layers[idx] = self.plugins[idx](
-                    elevation_map, layer_names, self.layers, self.layer_names
-                )
+                self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)
             elif n_param == 6:
                 self.layers[idx] = self.plugins[idx](
                     elevation_map,

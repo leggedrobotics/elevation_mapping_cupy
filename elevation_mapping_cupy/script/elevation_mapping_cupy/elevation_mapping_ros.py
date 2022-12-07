@@ -42,21 +42,19 @@ class ElevationMapWrapper:
         weight_file = os.path.join(self.root, "config/weights.dat")
         plugin_config_file = os.path.join(self.root, "config/plugin_config.yaml")
         self.param = Parameter(use_chainer=False, weight_file=weight_file, plugin_config_file=plugin_config_file)
+
         self.node_name = "elevation_mapping"
+
         # ROS
         self.initalize_ros()
-        self.overwrite_elevation_mapping_params()
-        self.setup_cv_bride()
+        self.param.subscriber_cfg = self.subscribers
+
         self.initalize_elevation_mapping()
         self.register_subscribers()
         self.register_publishers()
         self.register_timers()
 
         self._last_t = None
-
-    def setup_cv_bride(self):
-        if self.image_mono_data:
-            self.cv_bridge = CvBridge()
 
     def initalize_elevation_mapping(self):
         self.param.update()
@@ -74,54 +72,27 @@ class ElevationMapWrapper:
         self._listener = tf2_ros.TransformListener(self._tf_buffer)
         self.get_ros_params()
 
-    def overwrite_elevation_mapping_params(self):
-        additional = []
-        fusion = []
-        self.image_mono_data = False
-        for key, config in self.subscribers.items():
-            if config["type"] == "image":
-                self.image_mono_data = True
-                for chan, fus in zip(config["channels"], config["fusion"]):
-                    if chan not in additional:
-                        additional.append(chan)
-                    if fus not in fusion:
-                        fusion.append(fus)
-
-            elif config["type"] == "pointcloud":
-                for chan, fus in zip(config["channels"], config["fusion"]):
-                    if chan not in additional:
-                        additional.append(chan)
-                    if fus not in fusion:
-                        fusion.append(fus)
-            else:
-                typ = config["type"]
-                raise ValueError(f"{typ} unknown, only pointcloud and image defined.")
-
-        self.param.additional_layers = additional
-        self.param.fusion_algorithms = fusion
-        self.dtype = [
-            ("x", np.float32),
-            ("y", np.float32),
-            ("z", np.float32),
-        ]
-        for chan in config["channels"]:
-            self.dtype.append((chan, np.float32))
-
     def register_subscribers(self):
+        # check if CV bridge is needed
+        for config in self.param.subscriber_cfg.values():
+            if config["data_type"] == "image":
+                self.cv_bridge = CvBridge()
+                break
+
         pointcloud_subs = {}
         image_subs = {}
         for key, config in self.subscribers.items():
-            if config["type"] == "image":
+            if config["data_type"] == "image":
                 camera_sub = message_filters.Subscriber(config["topic_name_camera"], Image)
                 camera_info_sub = message_filters.Subscriber(config["topic_name_camera_info"], CameraInfo)
                 image_subs[key] = message_filters.ApproximateTimeSynchronizer(
                     [camera_sub, camera_info_sub], queue_size=10, slop=0.5
                 )
-                image_subs[key].registerCallback(self.image_callback, (config["channels"], config["fusion"]))
+                image_subs[key].registerCallback(self.image_callback, key)
 
-            elif config["type"] == "pointcloud":
+            elif config["data_type"] == "pointcloud":
                 pointcloud_subs[key] = rospy.Subscriber(
-                    config["topic_name"], PointCloud2, self.pointcloud_callback, (config["channels"], config["fusion"])
+                    config["topic_name"], PointCloud2, self.pointcloud_callback, key
                 )
 
     def register_publishers(self):
@@ -172,8 +143,7 @@ class ElevationMapWrapper:
         self.timer_pose = rospy.Timer(rospy.Duration(1 / self.update_pose_fps), self.update_pose)
         self.timer_time = rospy.Timer(rospy.Duration(self.time_interval), self.update_time)
 
-    def image_callback(self, camera_msg, camera_info_msg, config):
-        fusion = config[1]
+    def image_callback(self, camera_msg, camera_info_msg, sub_key):
         # get pose of image
         ti = rospy.Time(secs=camera_msg.header.stamp.secs, nsecs=camera_msg.header.stamp.nsecs)
         self._last_t = ti
@@ -195,23 +165,12 @@ class ElevationMapWrapper:
         assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
         # process pointcloud
-        self._map.input_image_mono(semantic_img, config[0], R, t, K, camera_info_msg.height, camera_info_msg.width)
+        self._map.input_image(sub_key, semantic_img, R, t, K, camera_info_msg.height, camera_info_msg.width)
         self._image_process_counter += 1
 
-    def pointcloud_callback(self, msg, config):
-        # convert pcd into numpy array
-        # output = {}
-        # total_bytes = msg.fields[-1].offset + PDC_DATATYPE[str(msg.fields[-1].datatype)](1).nbytes
-        # res = np.frombuffer(msg.data, np.dtype(np.uint8)).reshape((-1, msg.point_step))
-        # for field in msg.fields:
-        #     assert field.count == 1, "If this is not case, maybe does not work"
-        #     PDC_DATATYPE[str(field.datatype)]
-        #     dtype = PDC_DATATYPE[str(field.datatype)]
-        #     nbytes = dtype(1).nbytes
-        #     data = res[:, field.offset : field.offset + nbytes]
-        #     output[field.name] = np.frombuffer(data.copy(), np.dtype(dtype)).reshape((-1))
-        channels = ["x", "y", "z"] + config[0]
-        fusion = config[1]
+    def pointcloud_callback(self, msg, sub_key):
+        channels = ["x", "y", "z"] + self.param.subscriber_cfg[sub_key]["channels"]
+
         points = ros_numpy.numpify(msg)
         pts = np.empty((points.shape[0], 0))
         for ch in channels:

@@ -24,7 +24,7 @@ class ImageDebugNode:
     def image_callback(self, rgb_msg):
         img =  self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
         out = np.zeros((img.shape[0],img.shape[1]), dtype=np.uint16)
-        out[:int(img.shape[0]/2)] = 1
+        out[:, :int(img.shape[1]/2)] = 1
         seg_msg = self.cv_bridge.cv2_to_imgmsg(out, encoding="mono16")
         seg_msg.header = rgb_msg.header
         self.debug_pub.publish(seg_msg)

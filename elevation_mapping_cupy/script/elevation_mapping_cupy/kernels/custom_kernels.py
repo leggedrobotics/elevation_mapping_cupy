@@ -655,13 +655,15 @@ def polygon_mask_kernel(width, height, resolution):
     )
     return polygon_mask_kernel
 
+
 ##################### additional kernels #################################
 
+
 def sum_kernel(
-        resolution,
-        width,
-        height,
-    ):
+    resolution,
+    width,
+    height,
+):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_kernel = cp.ElementwiseKernel(
         in_params="raw U p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -673,7 +675,7 @@ def sum_kernel(
                     return layer * layer_n + idx;
                 }
             """
-        ).substitute(resolution=resolution,width=width, height=height),
+        ).substitute(resolution=resolution, width=width, height=height),
         operation=string.Template(
             """
             U idx = p[i * pcl_channels[0]];
@@ -688,17 +690,17 @@ def sum_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="sum_kernel",
     )
     return sum_kernel
 
+
 def alpha_kernel(
-        resolution,
-        width,
-        height,
-    ):
+    resolution,
+    width,
+    height,
+):
     # input the list of layers, amount of channels can slo be input through kernel
     alpha_kernel = cp.ElementwiseKernel(
         in_params="raw U p, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -710,7 +712,7 @@ def alpha_kernel(
                     return layer * layer_n + idx;
                 }
             """
-        ).substitute(resolution=resolution,width=width, height=height),
+        ).substitute(resolution=resolution, width=width, height=height),
         operation=string.Template(
             """
             U idx = p[i * pcl_channels[0]];
@@ -731,17 +733,15 @@ def alpha_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="alpha_kernel",
     )
     return alpha_kernel
 
 
-
 def average_kernel(
-        width,
-        height,
+    width,
+    height,
 ):
     average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -764,15 +764,15 @@ def average_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="average_map_kernel",
     )
     return average_kernel
 
+
 def class_average_kernel(
-        width,
-        height,
+    width,
+    height,
 ):
     class_average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -802,15 +802,15 @@ def class_average_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="class_average_kernel",
     )
     return class_average_kernel
 
+
 def add_color_kernel(
-        width,
-        height,
+    width,
+    height,
 ):
     add_color_kernel = cp.ElementwiseKernel(
         in_params="raw T p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -853,16 +853,15 @@ def add_color_kernel(
                 }
             }
             """
-        ).substitute(
-            width=width
-        ),
+        ).substitute(width=width),
         name="add_color_kernel",
     )
     return add_color_kernel
 
+
 def color_average_kernel(
-        width,
-        height,
+    width,
+    height,
 ):
     color_average_kernel = cp.ElementwiseKernel(
         in_params="raw V color_map, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -913,8 +912,7 @@ def color_average_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="color_average_kernel",
     )
     return color_average_kernel

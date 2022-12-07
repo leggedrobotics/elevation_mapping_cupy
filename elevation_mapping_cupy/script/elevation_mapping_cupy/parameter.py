@@ -8,11 +8,12 @@ import numpy as np
 from simple_parsing.helpers import Serializable
 from dataclasses import field
 
+
 @dataclass
 class Parameter(Serializable):
+    subscriber_cfg: dict = field(default_factory=lambda: {})
+
     resolution: float = 0.04
-    additional_layers: list = field(default_factory=lambda: ["feat_0"]) 
-    fusion_algorithms: list = field(default_factory=lambda: ["average"])
     cell_n: int = None
     data_type: str = np.float32
 
@@ -45,7 +46,7 @@ class Parameter(Serializable):
     safe_thresh: float = 0.5
     safe_min_thresh: float = 0.5
     max_unsafe_n: int = 20
-    checker_layer: str = 'traversability'
+    checker_layer: str = "traversability"
 
     min_filter_size: int = 5
     min_filter_iteration: int = 3
@@ -97,6 +98,7 @@ class Parameter(Serializable):
     def update(self):
         # +2 is a border for outside map
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
+
 
 if __name__ == "__main__":
     param = Parameter()

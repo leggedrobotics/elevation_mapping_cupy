@@ -123,7 +123,35 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
 
 def average_correspondences_to_map_kernel(resolution, width, height):
     average_correspondences_to_map_kernel = cp.ElementwiseKernel(
-        in_params="raw U sem_map, raw U image_mono, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
+        in_params="raw U sem_map, raw U map_idx, raw U image_mono, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
+        out_params="raw U new_sem_map",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
+            int cell_idx = get_map_idx(i, 0);
+            int target_idx = get_map_idx(i, map_idx);
+            int cell_idx_2 = get_map_idx(i, 1);
+            if (valid_correspondence[cell_idx]){
+                int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
+                new_sem_map[target_idx] = image_mono[idx];
+            }
+            """
+        ).substitute(),
+        name="average_correspondences_to_map_kernel",
+    )
+    return average_correspondences_to_map_kernel
+
+
+def color_correspondences_to_map_kernel(resolution, width, height):
+    color_correspondences_to_map_kernel = cp.ElementwiseKernel(
+        in_params="raw U sem_map, raw W map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
         preamble=string.Template(
             """
@@ -139,10 +167,10 @@ def average_correspondences_to_map_kernel(resolution, width, height):
             int cell_idx_2 = get_map_idx(i, 1);
             if (valid_correspondence[cell_idx]){
                 int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
-                new_sem_map[cell_idx] = image_mono[idx];
+                new_sem_map[cell_idx] = image_rgb[idx];
             }
             """
         ).substitute(),
-        name="average_correspondences_to_map_kernel",
+        name="color_correspondences_to_map_kernel",
     )
-    return average_correspondences_to_map_kernel
+    return color_correspondences_to_map_kernel

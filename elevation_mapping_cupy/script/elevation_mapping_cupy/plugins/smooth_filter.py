@@ -10,9 +10,8 @@ from .plugin_manager import PluginBase
 
 
 class SmoothFilter(PluginBase):
-
     def __init__(self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs):
-        """ This filters smoothees elevation map.
+        """This filters smoothees elevation map.
 
         Args:
             cell_n (int):
