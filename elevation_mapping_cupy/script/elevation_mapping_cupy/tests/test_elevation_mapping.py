@@ -27,8 +27,8 @@ def elmap_ex(add_lay, fusion_alg):
         weight_file="../../../config/weights.dat",
         plugin_config_file="../../../config/plugin_config.yaml",
     )
-    p.additional_layers = additional_layer
-    p.fusion_algorithms = fusion_algorithms
+    p.subscribers["front_cam"]["channels"] = additional_layer
+    p.subscribers["front_cam"]["fusion"] = fusion_algorithms
     p.update()
     e = elevation_mapping.ElevationMap(p)
     return e

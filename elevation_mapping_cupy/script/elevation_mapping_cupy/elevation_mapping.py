@@ -56,20 +56,8 @@ class ElevationMap:
 
         self.map_lock = threading.Lock()
         # # get unique channels
-        semantic_layers = []
-        fusion_algorithms = []
-        for subscriber,sub_val in self.param.subscribers.items():
 
-            channels = sub_val["channels"]
-            fusion = sub_val["fusion"]
-            for i in range(len(channels)):
-                name = channels[i]
-                if name not in semantic_layers:
-                    semantic_layers.append(name)
-                    fusion_algorithms.append(fusion[i])
-        self.param.additional_layers = semantic_layers
-        self.param.fusion_algorithms = fusion_algorithms
-        self.additional_layers = dict(zip(semantic_layers, fusion_algorithms))
+        self.additional_layers = dict(zip(self.param.additional_layers, self.param.fusion_algorithms))
 
         self.semantic_map = SemanticMap(self.param, self.additional_layers)
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n),dtype=self.data_type)
