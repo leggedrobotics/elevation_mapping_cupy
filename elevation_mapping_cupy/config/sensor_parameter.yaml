@@ -1,3 +1,4 @@
+#### Subscribers ########
 subscribers:
   debug_rgb:
     fusion: ['image_color']

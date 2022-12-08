@@ -8,14 +8,29 @@ import numpy as np
 from simple_parsing.helpers import Serializable
 from dataclasses import field
 
+# todo add this for the future
+@dataclass
+class Subscriber(Serializable):
+    sensor_name: str = "front_cam"
+    channels: list = field(default_factory=lambda: ["feat_0"])
+    fusion: list = field(default_factory=lambda: ["average"])
+    topic_name: str = '/elevation_mapping/pointcloud_semantic'
+
+@dataclass
+class Subscribers(Serializable):
+    front_cam: Subscriber = Subscriber
 
 @dataclass
 class Parameter(Serializable):
+    # todo: fix subscriber
     subscriber_cfg: dict = field(default_factory=lambda: {})
 
     resolution: float = 0.04
-    cell_n: int = None
+    subscribers: dict = field(default_factory=lambda: {'front_cam': {'cam_frame': 'zed2i_right_camera_optical_frame', 'cam_info_topic': '/zed2i/zed_node/depth/camera_info', 'channels': ['rgb', 'person'], 'confidence': True, 'confidence_threshold': 10, 'confidence_topic': '/zed2i/zed_node/confidence/confidence_map', 'depth_topic': '/zed2i/zed_node/depth/depth_registered', 'feature_extractor': False, 'fusion': ['color', 'class_average'], 'image_topic': '/zed2i/zed_node/left/image_rect_color', 'segmentation_model': 'lraspp_mobilenet_v3_large', 'semantic_segmentation': True, 'show_label_legend': True, 'topic_name': '/elvation_mapping/pointcloud_semantic'}})
+    additional_layers: list = field(default_factory=lambda: ["feat_0"]) 
+    fusion_algorithms: list = field(default_factory=lambda: ["average"])
     data_type: str = np.float32
+    average_weight: float = 0.5
 
     map_length: float = 8.0
     sensor_noise_factor: float = 0.05
@@ -75,6 +90,11 @@ class Parameter(Serializable):
     w3: np.ndarray = np.zeros((4, 1, 3, 3))
     w_out: np.ndarray = np.zeros((1, 12, 1, 1))
 
+    # # not configurable params
+    true_map_length: float = None
+    cell_n: int = None
+    true_cell_n: int = None
+
     def load_weights(self, filename):
         with open(filename, "rb") as file:
             weights = pickle.load(file)
@@ -98,6 +118,21 @@ class Parameter(Serializable):
     def update(self):
         # +2 is a border for outside map
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
+        self.true_cell_n = round(self.map_length / self.resolution)
+        self.true_map_length = self.true_cell_n * self.resolution
+        semantic_layers = []
+        fusion_algorithms = []
+        for subscriber,sub_val in self.subscribers.items():
+            channels = sub_val["channels"]
+            fusion = sub_val["fusion"]
+            for i in range(len(channels)):
+                name = channels[i]
+                if name not in semantic_layers:
+                    semantic_layers.append(name)
+                    fusion_algorithms.append(fusion[i])
+        self.additional_layers = semantic_layers
+        self.fusion_algorithms = fusion_algorithms
+
 
 
 if __name__ == "__main__":

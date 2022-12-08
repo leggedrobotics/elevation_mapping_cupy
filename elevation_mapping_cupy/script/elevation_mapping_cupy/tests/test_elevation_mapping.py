@@ -4,6 +4,20 @@ import cupy as cp
 import numpy as np
 
 
+def encode_max(maxim, index):
+    maxim, index = cp.asarray(maxim, dtype=cp.float32), cp.asarray(
+        index, dtype=cp.uint32
+    )
+    # fuse them
+    maxim = maxim.astype(cp.float16)
+    maxim = maxim.view(cp.uint16)
+    maxim = maxim.astype(cp.uint32)
+    index = index.astype(cp.uint32)
+    mer = cp.array(cp.left_shift(index, 16) | maxim, dtype=cp.uint32)
+    mer = mer.view(cp.float32)
+    return mer
+
+
 @pytest.fixture()
 def elmap_ex(add_lay, fusion_alg):
     additional_layer = add_lay
@@ -13,8 +27,8 @@ def elmap_ex(add_lay, fusion_alg):
         weight_file="../../../config/weights.dat",
         plugin_config_file="../../../config/plugin_config.yaml",
     )
-    p.additional_layers = additional_layer
-    p.fusion_algorithms = fusion_algorithms
+    p.subscribers["front_cam"]["channels"] = additional_layer
+    p.subscribers["front_cam"]["fusion"] = fusion_algorithms
     p.update()
     e = elevation_mapping.ElevationMap(p)
     return e
@@ -27,6 +41,8 @@ def elmap_ex(add_lay, fusion_alg):
         (["feat_0", "feat_1"], ["average", "average"]),
         (["feat_0", "feat_1"], ["class_average", "class_average"]),
         (["feat_0", "feat_1"], ["class_bayesian", "class_bayesian"]),
+        (["feat_0", "feat_1"], ["class_bayesian", "class_max"]),
+        (["feat_0", "feat_1"], ["bayesian_inference", "bayesian_inference"]),
     ],
 )
 class TestElevationMap:
@@ -36,7 +52,14 @@ class TestElevationMap:
 
     def test_input(self, elmap_ex):
         channels = ["x", "y", "z"] + elmap_ex.param.additional_layers
-        points = cp.random.rand(100000, len(channels), dtype=elmap_ex.param.data_type)
+        if "class_max" in elmap_ex.param.fusion_algorithms:
+            val = cp.random.rand(100000, len(channels), dtype=cp.float32).astype(cp.float16)
+            ind = cp.random.randint(0, 2, (100000, len(channels)), dtype=cp.uint32).astype(cp.float32)
+            points = encode_max(val, ind)
+        else:
+            points = cp.random.rand(
+                100000, len(channels), dtype=elmap_ex.param.data_type
+            )
         R = cp.random.rand(3, 3, dtype=elmap_ex.param.data_type)
         t = cp.random.rand(3, dtype=elmap_ex.param.data_type)
         elmap_ex.input(points, channels, R, t, 0, 0)

@@ -49,7 +49,7 @@ class SemanticFilter(PluginBase):
         return cmap[1:]
 
     def transform_color(self):
-        color_classes = self.color_map(len(self.classes))
+        color_classes = self.color_map(255)
         r = np.asarray(color_classes[:, 0], dtype=np.uint32)
         g = np.asarray(color_classes[:, 1], dtype=np.uint32)
         b = np.asarray(color_classes[:, 2], dtype=np.uint32)
@@ -81,12 +81,25 @@ class SemanticFilter(PluginBase):
         """
         # get indices of all layers that
         layer_indices = cp.array([], dtype=cp.int32)
+        max_idcs = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
             if fusion_alg in ["class_bayesian", "class_average"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
+            if fusion_alg in ["class_max"]:
+                max_idcs = cp.append(max_idcs, it).astype(cp.int32)
 
         # check which has the highest value
-        class_map = cp.argmax(semantic_map.map[layer_indices], axis=0)
+        # todo we are using the new_map because of the bayesian
+        class_map = cp.amax(semantic_map.new_map[layer_indices], axis=0)
+        class_map_id = cp.argmax(semantic_map.map[layer_indices], axis=0)
+
+        if "class_max" in semantic_map.param.fusion_algorithms:
+            # todo here is only cosidered the case where we only have one max
+            max_map = cp.amax(semantic_map.new_map[max_idcs], axis=0)
+            max_map_id = semantic_map.unique_id[semantic_map.id_max[max_idcs]]
+            map = cp.where(max_map > class_map, max_map_id, class_map_id)
+        else:
+            map = class_map_id
         # create color coding
-        enc = self.color_encoding[class_map]
+        enc = self.color_encoding[map]
         return enc

@@ -71,12 +71,11 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   enablePointCloudPublishing_ = enablePointCloudPublishing;
 
   // Iterate all the subscribers
-  std::vector<std::string> additional_layers;
-  std::vector<std::string> fusion_algorithms;
+  // here we have to remove all the stuff
   for (auto & subscriber : subscribers) {
     auto channels = subscriber.second["channels"];
     auto fusion = subscriber.second["fusion"];
-    auto type = static_cast<std::string>(subscriber.second["type"]);
+    auto type = static_cast<std::string>(subscriber.second["data_type"]);
     std::vector<std::string> channels_str;
 
     for (int32_t i = 0; i < channels.size(); ++i) {
@@ -116,7 +115,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   for (int i = 0; i < additional_layers.size(); ++i){
     ROS_INFO_STREAM("Additional layers " << additional_layers.at(i) << " fusion algorithm "<<fusion_algorithms.at(i));
   }
-  map_.initialize(nh_, additional_layers, fusion_algorithms);
+  map_.initialize(nh_);
 
   // Register map publishers
   for (auto itr = publishers.begin(); itr != publishers.end(); ++itr) {

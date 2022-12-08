@@ -22,18 +22,16 @@ def semmap_ex(add_lay, fusion_alg):
     p.cell_n = int(round(p.map_length / p.resolution)) + 2
 
     e = semantic_map.SemanticMap(p, additional_layers)
+    e.compile_kernels()
     return e
 
 
 @pytest.mark.parametrize(
     "add_lay, fusion_alg,channels",
     [
-        (
-            ["grass", "tree", "fence", "person"],
-            ["class_average", "class_average", "class_average", "class_average"],
-            ["grass"],
-        ),
-        (["grass", "tree"], ["class_average", "class_average"], ["grass"]),
+        (['grass','tree','fence','person'], ["class_average", "class_average", "class_average", "class_average"], ["grass"]),
+        (['grass','tree'], ["class_average", "class_average"], ['grass']),
+        (['grass','tree'], ["class_average", "class_max"], ['tree']),
         # (
         #     ["feat_0", "feat_1", "rgb"],
         #     ["average", "average", "color"],

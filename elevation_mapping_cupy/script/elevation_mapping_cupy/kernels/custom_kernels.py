@@ -695,6 +695,83 @@ def sum_kernel(
     )
     return sum_kernel
 
+def sum_compact_kernel(
+        resolution,
+        width,
+        height,
+    ):
+    # input the list of layers, amount of channels can slo be input through kernel
+    sum_compact_kernel = cp.ElementwiseKernel(
+        in_params="raw U p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params=" raw U newmap",
+        preamble=string.Template(
+            """
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+            """
+        ).substitute(resolution=resolution,width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+            if (valid) {
+                if (inside) {
+                    for ( W it=0;it<pcl_channels[1];it++){
+                        U feat = p[i * pcl_channels[0] + pcl_chan[it]];
+                        atomicAdd(&newmap[get_map_idx(idx, it)], feat);
+                    }
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="sum_compact_kernel",
+    )
+    return sum_compact_kernel
+
+
+def sum_max_kernel(
+        resolution,
+        width,
+        height,
+    ):
+    # input the list of layers, amount of channels can slo be input through kernel
+    sum_max_kernel = cp.ElementwiseKernel(
+        in_params="raw U p, raw U max_pt, raw T max_id, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
+        out_params=" raw U newmap",
+        preamble=string.Template(
+            """
+                __device__ int get_map_idx(int idx, int layer_n) {
+                    const int layer = ${width} * ${height};
+                    return layer * layer_n + idx;
+                }
+            """
+        ).substitute(resolution=resolution,width=width, height=height),
+        operation=string.Template(
+            """
+            U idx = p[i * pcl_channels[0]];
+            U valid = p[i * pcl_channels[0] + 1];
+            U inside = p[i * pcl_channels[0] + 2];
+            if (valid) {
+                if (inside) {
+                // for every max value
+                    for ( W it=0;it<pcl_channels[2];it++){
+                        //U feat = p[i * pcl_channels[0] + pcl_chan[it]];
+                        U prob = max_pt[i * pcl_channels[2] + it];
+                        T id = max_id[i * pcl_channels[2] + it];
+                        atomicAdd(&newmap[get_map_idx(idx, id)], prob);
+                    }
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="sum_max_kernel",
+    )
+    return sum_max_kernel
 
 def alpha_kernel(
     resolution,
@@ -729,7 +806,7 @@ def alpha_kernel(
                             theta_max = theta;
                         }
                     }
-                    atomicAdd(&newmap[get_map_idx(idx, arg_max)], 1.0);
+                    atomicAdd(&newmap[get_map_idx(idx, arg_max)], theta_max);
                 }
             }
             """
@@ -770,9 +847,47 @@ def average_kernel(
     return average_kernel
 
 
+def bayesian_inference_kernel(
+        width,
+        height,
+):
+    bayesian_inference_kernel = cp.ElementwiseKernel(
+        in_params=" raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
+        out_params="raw U newmap, raw U sum_mean, raw U map",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
+            U cnt = new_elmap[get_map_idx(i, 2)];
+            if (cnt>0){
+                for ( int it=0;it<pcl_channels[1];it++){
+                    U feat_ml = sum_mean[get_map_idx(i,  it)]/cnt;
+                    U feat_old = map[get_map_idx(i,  map_lay[it])];
+                    U sigma_old = newmap[get_map_idx(i,  map_lay[it])];
+                    U sigma = 1.0;
+                    U feat_new = sigma*feat_old /(cnt*sigma_old + sigma) +cnt*sigma_old *feat_ml /(cnt*sigma_old+sigma);
+                    U sigma_new = sigma*sigma_old /(cnt*sigma_old +sigma);
+                    map[get_map_idx(i,  map_lay[it])] = feat_new;
+                    newmap[get_map_idx(i,  map_lay[it])] = sigma_new;
+                }
+            }
+            """
+        ).substitute(
+        ),
+        name="bayesian_inference_kernel",
+    )
+    return bayesian_inference_kernel
+
 def class_average_kernel(
-    width,
-    height,
+        width,
+        height,
+        alpha,
 ):
     class_average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -796,13 +911,14 @@ def class_average_kernel(
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                     else{
-                        U val = prev_val /2 + newmap[get_map_idx(i, map_lay[it])]/(2*cnt);
+                        U val = ${alpha} *prev_val + ${alpha} * newmap[get_map_idx(i, map_lay[it])]/(cnt);
                         map[get_map_idx(i,  map_lay[it])] = val;
                     }
                 }
             }
             """
-        ).substitute(),
+        ).substitute(alpha=alpha,
+        ),
         name="class_average_kernel",
     )
     return class_average_kernel
