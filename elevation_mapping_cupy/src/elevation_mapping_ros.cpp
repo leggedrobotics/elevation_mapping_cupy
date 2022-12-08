@@ -63,29 +63,13 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
 
-//  TODO in the longterm remove this and add it directly in the elevation map config
-  std::vector<std::string> additional_layers;
-  std::vector<std::string> fusion_algorithms;
   for (auto & subscriber : subscribers) {
-    auto channels = subscriber.second["channels"];
-    auto fusion = subscriber.second["fusion"];
-    for (int32_t i = 0; i < channels.size(); ++i) {
-      auto name = static_cast<std::string>(channels[i]);
-      if (!std::count(additional_layers.begin(), additional_layers.end(), name)){
-        additional_layers.push_back(name);
-        fusion_algorithms.push_back(static_cast<std::string>(fusion[i]));
-      }
-    }
-
     std::string pointcloud_topic = subscriber.second["topic_name"];
     ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
     pointcloudSubs_.push_back(sub);
   }
 
-  for (int i = 0; i < additional_layers.size(); ++i){
-    ROS_INFO_STREAM("Additional layers " << additional_layers.at(i)<<" fusion algorithm "<<fusion_algorithms.at(i));
-  }
-  map_.initialize(nh_,additional_layers,fusion_algorithms);
+  map_.initialize(nh_);
 
   // register map publishers
   for (auto itr = publishers.begin(); itr != publishers.end(); ++itr) {

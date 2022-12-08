@@ -20,7 +20,7 @@ namespace elevation_mapping_cupy {
 
 ElevationMappingWrapper::ElevationMappingWrapper() {}
 
-void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms) {
+void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   // Add the elevation_mapping_cupy path to sys.path
   auto threading = py::module::import("threading");
   py::gil_scoped_acquire acquire;
@@ -34,7 +34,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::s
   auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
   auto parameter = py::module::import("elevation_mapping_cupy.parameter");
   param_ = parameter.attr("Parameter")();
-  setParameters(nh, std::move(additional_layers),std::move(fusion_algorithms));
+  setParameters(nh);
   map_ = elevation_mapping.attr("ElevationMap")(param_);
 }
 
@@ -42,7 +42,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::s
  *  Load ros parameters into Parameter class.
  *  Search for the same name within the name space.
  */
-void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms) {
+void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   // Get all parameters names and types.
   py::list paramNames = param_.attr("get_names")();
   py::list paramTypes = param_.attr("get_types")();
@@ -120,9 +120,6 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std
         }
       }
       param_.attr("subscribers") = sub_dict;
-
-  param_.attr("set_value")("additional_layers",additional_layers);
-  param_.attr("set_value")("fusion_algorithms",fusion_algorithms);
 
   param_.attr("update")();
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
