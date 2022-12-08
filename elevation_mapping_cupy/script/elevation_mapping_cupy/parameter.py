@@ -6,8 +6,6 @@ from dataclasses import dataclass
 import pickle
 import numpy as np
 from simple_parsing.helpers import Serializable
-import xml.etree.ElementTree as ET
-import xmltodict
 from dataclasses import field
 
 @dataclass
@@ -80,8 +78,7 @@ class Parameter(Serializable):
     true_map_length: float = None
     cell_n: int = None
     true_cell_n: int = None
-    subscribers: ET = None
-    subscribers_dict: dict = None
+    subscribers: dict = None
 
 
     def load_weights(self, filename):
@@ -109,8 +106,6 @@ class Parameter(Serializable):
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
         self.true_cell_n = round(self.map_length / self.resolution)
         self.true_map_length = self.true_cell_n * self.resolution
-        self.subscribers_dict = xmltodict.parse(self.subscribers)
-
 
 
 if __name__ == "__main__":

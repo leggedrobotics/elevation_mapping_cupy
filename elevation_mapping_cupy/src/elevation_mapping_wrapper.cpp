@@ -78,7 +78,48 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std
 
   XmlRpc::XmlRpcValue subscribers;
   nh.getParam("subscribers", subscribers);
-  param_.attr("subscribers") = subscribers.toXml();
+
+      py::dict sub_dict;
+      for (auto & subscriber : subscribers) {
+        const char *const name = subscriber.first.c_str();
+        const auto & subscriber_params = subscriber.second;
+        if (!sub_dict.contains(name)) {
+          sub_dict[name] = py::dict();
+        }
+        for(auto iterat : subscriber_params){
+          const char *const key = iterat.first.c_str();
+          const auto val = iterat.second;
+          std::vector<std::string> arr;
+          switch (val.getType()) {
+            case XmlRpc::XmlRpcValue::TypeString:
+              sub_dict[name][key] = static_cast<std::string>(val);
+              break;
+            case XmlRpc::XmlRpcValue::TypeInt:
+              sub_dict[name][key] = static_cast<int>(val);
+              break;
+            case XmlRpc::XmlRpcValue::TypeDouble:
+              sub_dict[name][key] = static_cast<double>(val);
+              break;
+            case XmlRpc::XmlRpcValue::TypeBoolean:
+              sub_dict[name][key] = static_cast<bool>(val);
+              break;
+            case XmlRpc::XmlRpcValue::TypeArray:
+              for (int32_t i = 0; i < val.size(); ++i) {
+                auto elem = static_cast<std::string>(val[i]);
+                arr.push_back(elem);
+                }
+              sub_dict[name][key] = arr;
+              arr.clear();
+              break;
+            case XmlRpc::XmlRpcValue::TypeStruct:
+              break;
+            default:
+              sub_dict[name][key] = py::cast(val);
+              break;
+          }
+        }
+      }
+      param_.attr("subscribers") = sub_dict;
 
   param_.attr("set_value")("additional_layers",additional_layers);
   param_.attr("set_value")("fusion_algorithms",fusion_algorithms);
