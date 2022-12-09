@@ -25,6 +25,7 @@ inpainting:
   layer_name: "inpaint"
   extra_params:
     method: "telea"                           # telea or ns
+    input_layer_name: "max_filter"
 # Apply smoothing for inpainted layer
 smooth_filter_1:                                
   type: "smooth_filter"
@@ -34,3 +35,11 @@ smooth_filter_1:
   layer_name: "smooth_1"
   extra_params:
     input_layer_name: "inpaint"
+max_filter:                                   
+  enable: True                                # weather to load this plugin
+  fill_nan: False                             # Fill nans to invalid cells of elevation layer.
+  is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
+  layer_name: "max_filter"                    # The layer name.
+  extra_params:                               # This params are passed to the plugin class on initialization.
+    dilation_size: 1                         # The patch size to apply
+    iteration_n: 5                           # The number of iterations

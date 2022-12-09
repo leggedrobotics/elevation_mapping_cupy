@@ -23,8 +23,9 @@ class Inpainting(PluginBase):
         width and height of the elevation map.
     """
 
-    def __init__(self, cell_n: int = 100, method: str = "telea", **kwargs):
+    def __init__(self, cell_n: int = 100, method: str = "telea", input_layer_name: str = "elevation", **kwargs):
         super().__init__()
+        self.input_layer_name = input_layer_name
         if method == "telea":
             self.method = cv.INPAINT_TELEA
         elif method == "ns":  # Navier-Stokes
@@ -41,7 +42,15 @@ class Inpainting(PluginBase):
     ) -> cp.ndarray:
         mask = cp.asnumpy((elevation_map[2] < 0.5).astype("uint8"))
         if (mask < 1).any():
-            h = elevation_map[0]
+            if self.input_layer_name in layer_names:
+                idx = layer_names.index(self.input_layer_name)
+                h = elevation_map[idx]
+            elif self.input_layer_name in plugin_layer_names:
+                idx = plugin_layer_names.index(self.input_layer_name)
+                h = plugin_layers[idx]
+            else:
+                print("layer name {} was not found. Using elevation layer.".format(self.input_layer_name))
+                h = elevation_map[0]
             h_max = float(h[mask < 1].max())
             h_min = float(h[mask < 1].min())
             h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype("uint8")
