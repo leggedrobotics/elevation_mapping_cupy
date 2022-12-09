@@ -5,25 +5,22 @@ import numpy as np
 
 
 @pytest.fixture()
-def semmap_ex(add_lay, fusion_alg):
-    additional_layer = add_lay
-    fusion_algorithms = fusion_alg
+def semmap_ex(sem_lay, fusion_alg):
     p = parameter.Parameter(
         use_chainer=False,
         weight_file="../../../config/weights.dat",
         plugin_config_file="../../../config/plugin_config.yaml",
     )
-    p.additional_layers = additional_layer
-    p.fusion_algorithms = fusion_algorithms
-    additional_layers = dict(zip(p.additional_layers, p.fusion_algorithms))
-    p.cell_n = int(round(p.map_length / p.resolution)) + 2
-
-    e = semantic_map.SemanticMap(p, additional_layers)
+    for subs, value in p.subscriber_cfg.items():
+        value["channels"] = sem_lay
+        value["fusion"] = fusion_alg
+    p.update()
+    e = semantic_map.SemanticMap(p)
     return e
 
 
 @pytest.mark.parametrize(
-    "add_lay, fusion_alg,channels",
+    "sem_lay, fusion_alg,channels",
     [
         (["feat_0", "feat_1"], ["average", "average"], ["feat_0"]),
         (["feat_0", "feat_1"], ["average", "average"], []),
@@ -62,7 +59,7 @@ def test_fusion_of_pcl(semmap_ex, channels):
 
 
 @pytest.mark.parametrize(
-    "add_lay, fusion_alg",
+    "sem_lay, fusion_alg",
     [
         (["feat_0", "feat_1", "rgb"], ["average", "average", "color"]),
     ],

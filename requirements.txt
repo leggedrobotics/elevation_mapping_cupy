@@ -7,7 +7,6 @@ opencv-python
 simple_parsing
 scikit-image
 matplotlib
-xmltodict
 
 ###### Requirements with Version Specifiers ######`
 shapely==1.7.1

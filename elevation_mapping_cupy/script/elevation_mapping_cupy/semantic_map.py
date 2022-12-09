@@ -2,10 +2,22 @@ from elevation_mapping_cupy.parameter import Parameter
 import cupy as cp
 import numpy as np
 from typing import List
-from elevation_mapping_cupy.kernels import sum_kernel, add_color_kernel, color_average_kernel,bayesian_inference_kernel
+from elevation_mapping_cupy.kernels import (
+    sum_kernel,
+    add_color_kernel,
+    color_average_kernel,
+    bayesian_inference_kernel,
+)
 from elevation_mapping_cupy.kernels import sum_compact_kernel, sum_max_kernel
-from elevation_mapping_cupy.kernels import average_kernel, class_average_kernel, alpha_kernel
-from elevation_mapping_cupy.kernels import average_correspondences_to_map_kernel, color_correspondences_to_map_kernel
+from elevation_mapping_cupy.kernels import (
+    average_kernel,
+    class_average_kernel,
+    alpha_kernel,
+)
+from elevation_mapping_cupy.kernels import (
+    average_correspondences_to_map_kernel,
+    color_correspondences_to_map_kernel,
+)
 
 
 xp = cp
@@ -32,7 +44,9 @@ class SemanticMap:
                     self.layer_names.append(c)
                     self.layer_specs[c] = f
                 else:
-                    assert self.layer_specs[c] == f, "Error: Single layer has multiple fusion algorithms!"
+                    assert (
+                        self.layer_specs[c] == f
+                    ), "Error: Single layer has multiple fusion algorithms!"
 
                 if f not in self.unique_fusion:
                     self.unique_fusion.append(f)
@@ -99,7 +113,9 @@ class SemanticMap:
                 self.param.cell_n,
                 self.param.cell_n,
             )
-            self.color_average_kernel = color_average_kernel(self.param.cell_n, self.param.cell_n)
+            self.color_average_kernel = color_average_kernel(
+                self.param.cell_n, self.param.cell_n
+            )
         if "class_average" in self.unique_fusion:
             print("Initialize class average kernel")
             self.sum_kernel = sum_kernel(
@@ -134,13 +150,21 @@ class SemanticMap:
             self.unique_id = cp.array([0])
 
         if "image_exponential" in self.unique_fusion:
-            self.average_correspondences_to_map_kernel = average_correspondences_to_map_kernel(
-                resolution=self.param.resolution, width=self.param.cell_n, height=self.param.cell_n
+            self.average_correspondences_to_map_kernel = (
+                average_correspondences_to_map_kernel(
+                    resolution=self.param.resolution,
+                    width=self.param.cell_n,
+                    height=self.param.cell_n,
+                )
             )
 
         if "image_color" in self.unique_fusion:
-            self.color_correspondences_to_map_kernel = color_correspondences_to_map_kernel(
-                resolution=self.param.resolution, width=self.param.cell_n, height=self.param.cell_n
+            self.color_correspondences_to_map_kernel = (
+                color_correspondences_to_map_kernel(
+                    resolution=self.param.resolution,
+                    width=self.param.cell_n,
+                    height=self.param.cell_n,
+                )
             )
 
     def get_fusion_of_pcl(self, channels: List[str]) -> List[str]:
@@ -227,7 +251,7 @@ class SemanticMap:
                 elevation_map,
                 self.new_map,
                 self.sum_mean,
-                self.map,
+                self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
         if "class_average" in additional_fusion:
@@ -269,7 +293,9 @@ class SemanticMap:
             sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
             # do not divide by zero
             sum_alpha[sum_alpha == 0] = 1
-            self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
+            self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(
+                sum_alpha, axis=0
+            )
 
             # assert  cp.unique(cp.sum(self.map[layer_ids], axis=0)) equal to zero or to nan
         if "class_max" in additional_fusion:
@@ -368,7 +394,9 @@ class SemanticMap:
         self.new_map *= 0
         config = self.param.subscriber_cfg[sub_key]
 
-        for j, (fusion, channel) in enumerate(zip(config["fusion"], config["channels"])):
+        for j, (fusion, channel) in enumerate(
+            zip(config["fusion"], config["channels"])
+        ):
             sem_map_idx = self.get_index(channel)
 
             if fusion == "image_exponential":
@@ -401,6 +429,7 @@ class SemanticMap:
 
             else:
                 raise ValueError("Fusion for image is unkown.")
+
     def decode_max(self, mer):
         mer = mer.astype(cp.float32)
         mer = mer.view(dtype=cp.uint32)

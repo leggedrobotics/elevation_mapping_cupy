@@ -14,18 +14,40 @@ class Subscriber(Serializable):
     sensor_name: str = "front_cam"
     channels: list = field(default_factory=lambda: ["feat_0"])
     fusion: list = field(default_factory=lambda: ["average"])
-    topic_name: str = '/elevation_mapping/pointcloud_semantic'
+    topic_name: str = "/elevation_mapping/pointcloud_semantic"
+
 
 @dataclass
 class Subscribers(Serializable):
     front_cam: Subscriber = Subscriber
 
+
 @dataclass
 class Parameter(Serializable):
     # todo: fix subscriber
     resolution: float = 0.04
-    subscriber_cfg: dict = field(default_factory=lambda: {'front_cam': {'cam_frame': 'zed2i_right_camera_optical_frame', 'cam_info_topic': '/zed2i/zed_node/depth/camera_info', 'channels': ['rgb', 'person'], 'confidence': True, 'confidence_threshold': 10, 'confidence_topic': '/zed2i/zed_node/confidence/confidence_map', 'depth_topic': '/zed2i/zed_node/depth/depth_registered', 'feature_extractor': False, 'fusion': ['color', 'class_average'], 'image_topic': '/zed2i/zed_node/left/image_rect_color', 'segmentation_model': 'lraspp_mobilenet_v3_large', 'semantic_segmentation': True, 'show_label_legend': True, 'topic_name': '/elvation_mapping/pointcloud_semantic'}})
-    additional_layers: list = field(default_factory=lambda: ["feat_0"]) 
+    subscriber_cfg: dict = field(
+        default_factory=lambda: {
+            "front_cam": {
+                "cam_frame": "zed2i_right_camera_optical_frame",
+                "cam_info_topic": "/zed2i/zed_node/depth/camera_info",
+                "channels": ["rgb", "person"],
+                "confidence": True,
+                "confidence_threshold": 10,
+                "confidence_topic": "/zed2i/zed_node/confidence/confidence_map",
+                "depth_topic": "/zed2i/zed_node/depth/depth_registered",
+                "feature_extractor": False,
+                "fusion": ["color", "class_average"],
+                "image_topic": "/zed2i/zed_node/left/image_rect_color",
+                "segmentation_model": "lraspp_mobilenet_v3_large",
+                "semantic_segmentation": True,
+                "show_label_legend": True,
+                "topic_name": "/elvation_mapping/pointcloud_semantic",
+                "data_type": "pointcloud",
+            }
+        }
+    )
+    additional_layers: list = field(default_factory=lambda: ["feat_0"])
     fusion_algorithms: list = field(default_factory=lambda: ["average"])
     data_type: str = np.float32
     average_weight: float = 0.5
@@ -120,7 +142,7 @@ class Parameter(Serializable):
         self.true_map_length = self.true_cell_n * self.resolution
         semantic_layers = []
         fusion_algorithms = []
-        for subscriber,sub_val in self.subscriber_cfg.items():
+        for subscriber, sub_val in self.subscriber_cfg.items():
             channels = sub_val["channels"]
             fusion = sub_val["fusion"]
             for i in range(len(channels)):
@@ -130,7 +152,6 @@ class Parameter(Serializable):
                     fusion_algorithms.append(fusion[i])
         self.additional_layers = semantic_layers
         self.fusion_algorithms = fusion_algorithms
-
 
 
 if __name__ == "__main__":

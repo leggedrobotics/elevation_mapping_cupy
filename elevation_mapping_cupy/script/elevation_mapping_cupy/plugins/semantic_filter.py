@@ -91,7 +91,7 @@ class SemanticFilter(PluginBase):
         # check which has the highest value
         # todo we are using the new_map because of the bayesian
         class_map = cp.amax(semantic_map.new_map[layer_indices], axis=0)
-        class_map_id = cp.argmax(semantic_map.map[layer_indices], axis=0)
+        class_map_id = cp.argmax(semantic_map.semantic_map[layer_indices], axis=0)
 
         if "class_max" in semantic_map.param.fusion_algorithms:
             # todo here is only cosidered the case where we only have one max
