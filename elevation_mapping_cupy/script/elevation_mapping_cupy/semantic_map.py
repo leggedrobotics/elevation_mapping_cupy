@@ -2,17 +2,17 @@ from elevation_mapping_cupy.parameter import Parameter
 import cupy as cp
 import numpy as np
 from typing import List
-from elevation_mapping_cupy.kernels import (
-    sum_kernel,
-    add_color_kernel,
-    color_average_kernel,
-    bayesian_inference_kernel,
-)
-from elevation_mapping_cupy.kernels import sum_compact_kernel, sum_max_kernel
+
 from elevation_mapping_cupy.kernels import (
     average_kernel,
     class_average_kernel,
     alpha_kernel,
+    bayesian_inference_kernel,
+    add_color_kernel,
+    color_average_kernel,
+    sum_compact_kernel,
+    sum_max_kernel,
+    sum_kernel,
 )
 from elevation_mapping_cupy.kernels import (
     average_correspondences_to_map_kernel,
@@ -166,6 +166,38 @@ class SemanticMap:
                     height=self.param.cell_n,
                 )
             )
+
+    def pad_value(self, x, shift_value, idx=None, value=0.0):
+        """Create a padding of the map along x,y-axis according to amount that has shifted.
+
+        Args:
+            x (cupy._core.core.ndarray):
+            shift_value (cupy._core.core.ndarray):
+            idx (Union[None, int, None, None]):
+            value (float):
+        """
+        if idx is None:
+            if shift_value[0] > 0:
+                x[:, : shift_value[0], :] = value
+            elif shift_value[0] < 0:
+                x[:, shift_value[0] :, :] = value
+            if shift_value[1] > 0:
+                x[:, :, : shift_value[1]] = value
+            elif shift_value[1] < 0:
+                x[:, :, shift_value[1] :] = value
+        else:
+            if shift_value[0] > 0:
+                x[idx, : shift_value[0], :] = value
+            elif shift_value[0] < 0:
+                x[idx, shift_value[0] :, :] = value
+            if shift_value[1] > 0:
+                x[idx, :, : shift_value[1]] = value
+            elif shift_value[1] < 0:
+                x[idx, :, shift_value[1] :] = value
+
+    def shift_map_xy(self, shift_value):
+        self.semantic_map = cp.roll(self.semantic_map, shift_value, axis=(1, 2))
+        self.pad_value(self.semantic_map, shift_value, value=0.0)
 
     def get_fusion_of_pcl(self, channels: List[str]) -> List[str]:
         """Get all fusion algorithms that need to be applied to a specific pointcloud
