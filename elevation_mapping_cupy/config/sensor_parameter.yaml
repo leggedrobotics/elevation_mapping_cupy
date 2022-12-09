@@ -6,6 +6,11 @@ subscribers:
     topic_name_camera_info: /zed2i/zed_node/right/camera_info
     channels: ["rgb_image"]    
     data_type: image
+    fusion_types:
+      array_fusion: []
+      channels: []
+
+
 
   # debug_rgb_3_seperate:
   #   fusion: ['image_exponential','image_exponential','image_exponential']

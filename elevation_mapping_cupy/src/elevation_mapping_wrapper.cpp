@@ -79,47 +79,47 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   XmlRpc::XmlRpcValue subscribers;
   nh.getParam("subscribers", subscribers);
 
-      py::dict sub_dict;
-      for (auto & subscriber : subscribers) {
-        const char *const name = subscriber.first.c_str();
-        const auto & subscriber_params = subscriber.second;
-        if (!sub_dict.contains(name)) {
-          sub_dict[name] = py::dict();
-        }
-        for(auto iterat : subscriber_params){
-          const char *const key = iterat.first.c_str();
-          const auto val = iterat.second;
-          std::vector<std::string> arr;
-          switch (val.getType()) {
-            case XmlRpc::XmlRpcValue::TypeString:
-              sub_dict[name][key] = static_cast<std::string>(val);
-              break;
-            case XmlRpc::XmlRpcValue::TypeInt:
-              sub_dict[name][key] = static_cast<int>(val);
-              break;
-            case XmlRpc::XmlRpcValue::TypeDouble:
-              sub_dict[name][key] = static_cast<double>(val);
-              break;
-            case XmlRpc::XmlRpcValue::TypeBoolean:
-              sub_dict[name][key] = static_cast<bool>(val);
-              break;
-            case XmlRpc::XmlRpcValue::TypeArray:
-              for (int32_t i = 0; i < val.size(); ++i) {
-                auto elem = static_cast<std::string>(val[i]);
-                arr.push_back(elem);
-                }
-              sub_dict[name][key] = arr;
-              arr.clear();
-              break;
-            case XmlRpc::XmlRpcValue::TypeStruct:
-              break;
-            default:
-              sub_dict[name][key] = py::cast(val);
-              break;
-          }
-        }
+  py::dict sub_dict;
+  for (auto & subscriber : subscribers) {
+    const char *const name = subscriber.first.c_str();
+    const auto & subscriber_params = subscriber.second;
+    if (!sub_dict.contains(name)) {
+      sub_dict[name] = py::dict();
+    }
+    for(auto iterat : subscriber_params){
+      const char *const key = iterat.first.c_str();
+      const auto val = iterat.second;
+      std::vector<std::string> arr;
+      switch (val.getType()) {
+        case XmlRpc::XmlRpcValue::TypeString:
+          sub_dict[name][key] = static_cast<std::string>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeInt:
+          sub_dict[name][key] = static_cast<int>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeDouble:
+          sub_dict[name][key] = static_cast<double>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeBoolean:
+          sub_dict[name][key] = static_cast<bool>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeArray:
+          for (int32_t i = 0; i < val.size(); ++i) {
+            auto elem = static_cast<std::string>(val[i]);
+            arr.push_back(elem);
+            }
+          sub_dict[name][key] = arr;
+          arr.clear();
+          break;
+        case XmlRpc::XmlRpcValue::TypeStruct:
+          break;
+        default:
+          sub_dict[name][key] = py::cast(val);
+          break;
       }
-      param_.attr("subscribers") = sub_dict;
+    }
+  }
+  param_.attr("subscriber_cfg") = sub_dict;
 
   param_.attr("update")();
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
@@ -137,17 +137,16 @@ void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector
                      positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image,
-                                               const std::vector<std::string>& channels,
+void ElevationMappingWrapper::input_image(const std::string& key, const std::vector<ColMatrixXf>& multichannel_image,
                                                const RowMatrixXd& R,
                                                const Eigen::VectorXd& t, 
                                                const RowMatrixXd& cameraMatrix,
                                                int height,
                                                int width) {
   py::gil_scoped_acquire acquire;
-  map_.attr("input_image")(multichannel_image,
-                           channels, 
-                           Eigen::Ref<const RowMatrixXd>(R), 
+  map_.attr("input_image")(key,
+                           multichannel_image,
+                           Eigen::Ref<const RowMatrixXd>(R),
                            Eigen::Ref<const Eigen::VectorXd>(t), 
                            Eigen::Ref<const RowMatrixXd>(cameraMatrix),
                            height,

@@ -76,17 +76,18 @@ class PointcloudNode:
         ts.registerCallback(self.image_callback)
 
         self.pcl_pub = rospy.Publisher(self.param.topic_name, PointCloud2, queue_size=2)
-        if self.param.publish_segmentation_image:
-            self.seg_pub = rospy.Publisher(
-                self.param.segmentation_image_topic, Image, queue_size=2
-            )
-        if "class_max" in self.param.fusion:
-            self.labels = self.semantic_model["model"].get_classes()
-        else:
-            self.labels = list(self.segmentation_channels.keys())
-        self.semseg_color_map = self.color_map(len(self.labels))
-        if self.param.show_label_legend:
-            self.color_map_viz()
+        if self.param.semantic_segmentation:
+            if self.param.publish_segmentation_image:
+                self.seg_pub = rospy.Publisher(
+                    self.param.segmentation_image_topic, Image, queue_size=2
+                )
+            if "class_max" in self.param.fusion:
+                self.labels = self.semantic_model["model"].get_classes()
+            else:
+                self.labels = list(self.segmentation_channels.keys())
+            self.semseg_color_map = self.color_map(len(self.labels))
+            if self.param.show_label_legend:
+                self.color_map_viz()
 
     def color_map(self, N=256, normalized=False):
         def bitget(byteval, idx):

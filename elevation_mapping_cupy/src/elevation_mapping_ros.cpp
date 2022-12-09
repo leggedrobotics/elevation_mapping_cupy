@@ -73,19 +73,9 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   // Iterate all the subscribers
   // here we have to remove all the stuff
   for (auto & subscriber : subscribers) {
-    auto channels = subscriber.second["channels"];
-    auto fusion = subscriber.second["fusion"];
+    std::string key = subscriber.first;
     auto type = static_cast<std::string>(subscriber.second["data_type"]);
-    std::vector<std::string> channels_str;
 
-    for (int32_t i = 0; i < channels.size(); ++i) {
-      auto name = static_cast<std::string>(channels[i]);
-      channels_str.push_back(name);
-      if (!std::count(additional_layers.begin(), additional_layers.end(), name)){
-        additional_layers.push_back(name);
-        fusion_algorithms.push_back(static_cast<std::string>(fusion[i]));
-      }
-    }
 
     // Initialize subscribers depending on the type
     if (type == "pointcloud") {
@@ -103,7 +93,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       cameraInfoSubs_.push_back(cam_info_sub);
 
       CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-      sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2, channels_str));
+      sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2, key));
       cameraSyncs_.push_back(sync);
 
     } else {
@@ -112,9 +102,6 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
     }
   }
 
-  for (int i = 0; i < additional_layers.size(); ++i){
-    ROS_INFO_STREAM("Additional layers " << additional_layers.at(i) << " fusion algorithm "<<fusion_algorithms.at(i));
-  }
   map_.initialize(nh_);
 
   // Register map publishers
@@ -324,7 +311,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pointCloudProcessCounter_++;
 }
 
-void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::vector<std::string>& channels) {
+void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key) {
   auto start = ros::Time::now();
 
   // Get image
@@ -368,12 +355,26 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
     multichannel_image.push_back(eigen_image_g);
     multichannel_image.push_back(eigen_image_b);
 
+  } else if (image.channels() == 4) {
+    cv::Mat bgr[4];
+    cv::split(image, bgr);
+    ColMatrixXf eigen_image_b;
+    cv::cv2eigen(bgr[0], eigen_image_b);
+    ColMatrixXf eigen_image_g;
+    cv::cv2eigen(bgr[1], eigen_image_g);
+    ColMatrixXf eigen_image_r;
+    cv::cv2eigen(bgr[2], eigen_image_r);
+
+    multichannel_image.push_back(eigen_image_r);
+    multichannel_image.push_back(eigen_image_g);
+    multichannel_image.push_back(eigen_image_b);
+
   } else {
     ROS_WARN_STREAM("Invalid number of channels [" << image.channels() << "]. Only allowed 1 (mono) or 3 (rgb)");
   }
 
   // Pass image to pipeline
-  map_.input_image(multichannel_image, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
+  map_.input_image(key, multichannel_image, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
