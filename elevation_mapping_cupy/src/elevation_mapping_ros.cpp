@@ -274,7 +274,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   std::vector<std::string> channels;
   for(auto & field: fields){
      channels.push_back(field.name);
-//     TODO: check that datatype is always 7?
+    ROS_ASSERT(field.datatype == 7);
   }
 //  get pose of sensor in map frame
   tf::StampedTransform transformTf;
