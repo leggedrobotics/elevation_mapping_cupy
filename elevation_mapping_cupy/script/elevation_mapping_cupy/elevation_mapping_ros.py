@@ -152,7 +152,7 @@ class ElevationMapWrapper:
                 camera_msg.header.frame_id, self.map_frame, ti, rospy.Duration(1.0)
             )
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            print("pointcloud_callback error:", e)
+            print("image_callback error:", e)
             return
 
         t = transform.transform.translation

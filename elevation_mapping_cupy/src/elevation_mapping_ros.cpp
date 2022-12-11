@@ -97,7 +97,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       cameraSyncs_.push_back(sync);
 
     } else {
-      ROS_WARN_STREAM("Subscriber type [" << type << "] Not valid. Supported types: pointcloud, image");
+      ROS_WARN_STREAM("Subscriber data_type [" << type << "] Not valid. Supported types: pointcloud, image");
       continue;
     }
   }
@@ -326,8 +326,10 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   auto timeStamp = image_msg->header.stamp;
   Eigen::Affine3d transformationSensorToMap;
   try {
-    transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
-    transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
+    // transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
+    // transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
+    transformListener_.waitForTransform(sensorFrameId, mapFrameId_, timeStamp, ros::Duration(1.0));
+    transformListener_.lookupTransform(sensorFrameId, mapFrameId_, timeStamp, transformTf);
     poseTFToEigen(transformTf, transformationSensorToMap);
   } catch (tf::TransformException& ex) {
     ROS_ERROR("%s", ex.what());
