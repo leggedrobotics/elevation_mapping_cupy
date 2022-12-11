@@ -317,6 +317,13 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   // Get image
   cv::Mat image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
 
+  // Change encoding to RGB/RGBA
+  if (image_msg->encoding == "bgr8") {
+    cv::cvtColor(image, image, CV_BGR2RGB);
+  } else if (image_msg->encoding == "bgra8") {
+    cv::cvtColor(image, image, CV_BGRA2RGBA);
+  }
+
   // Extract camera matrix
   Eigen::Map<const Eigen::Matrix<double,3,3,Eigen::RowMajor>> cameraMatrix(&camera_info_msg->K[0]);
 
@@ -324,59 +331,28 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   tf::StampedTransform transformTf;
   std::string sensorFrameId = image_msg->header.frame_id;
   auto timeStamp = image_msg->header.stamp;
-  Eigen::Affine3d transformationSensorToMap;
+  Eigen::Affine3d transformationMapToSensor;
   try {
-    // transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
-    // transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
     transformListener_.waitForTransform(sensorFrameId, mapFrameId_, timeStamp, ros::Duration(1.0));
     transformListener_.lookupTransform(sensorFrameId, mapFrameId_, timeStamp, transformTf);
-    poseTFToEigen(transformTf, transformationSensorToMap);
+    poseTFToEigen(transformTf, transformationMapToSensor);
   } catch (tf::TransformException& ex) {
     ROS_ERROR("%s", ex.what());
     return;
   }
 
-  // Transform to vector of Eigen matrices
+  // Transform image to vector of Eigen matrices for easy pybind conversion
+  std::vector<cv::Mat> image_split;
   std::vector<ColMatrixXf> multichannel_image;
-  if (image.channels() == 1) {
-    ColMatrixXf eigen_image;
-    cv::cv2eigen(image, eigen_image);
-    multichannel_image.push_back(eigen_image);
-
-  } else if (image.channels() == 3) {
-    cv::Mat bgr[3];
-    cv::split(image, bgr);
-    ColMatrixXf eigen_image_b;
-    cv::cv2eigen(bgr[0], eigen_image_b);
-    ColMatrixXf eigen_image_g;
-    cv::cv2eigen(bgr[1], eigen_image_g);
-    ColMatrixXf eigen_image_r;    
-    cv::cv2eigen(bgr[2], eigen_image_r);
-
-    multichannel_image.push_back(eigen_image_r);
-    multichannel_image.push_back(eigen_image_g);
-    multichannel_image.push_back(eigen_image_b);
-
-  } else if (image.channels() == 4) {
-    cv::Mat bgr[4];
-    cv::split(image, bgr);
-    ColMatrixXf eigen_image_b;
-    cv::cv2eigen(bgr[0], eigen_image_b);
-    ColMatrixXf eigen_image_g;
-    cv::cv2eigen(bgr[1], eigen_image_g);
-    ColMatrixXf eigen_image_r;
-    cv::cv2eigen(bgr[2], eigen_image_r);
-
-    multichannel_image.push_back(eigen_image_r);
-    multichannel_image.push_back(eigen_image_g);
-    multichannel_image.push_back(eigen_image_b);
-
-  } else {
-    ROS_WARN_STREAM("Invalid number of channels [" << image.channels() << "]. Only allowed 1 (mono) or 3 (rgb)");
+  cv::split(image, image_split);
+  for (auto img : image_split) {
+    ColMatrixXf eigen_img;
+    cv::cv2eigen(img, eigen_img);
+    multichannel_image.push_back(eigen_img);
   }
 
   // Pass image to pipeline
-  map_.input_image(key, multichannel_image, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
+  map_.input_image(key, multichannel_image, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix, image.rows, image.cols);
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
