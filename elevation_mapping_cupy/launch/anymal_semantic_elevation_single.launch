@@ -16,6 +16,6 @@
         <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_sensor_parameter.yaml" />
     </node>
 
-     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/anymal.rviz"/>
+     <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/anymal.rviz"/> -->
 </launch>
 <!--        launch-prefix="gdb -ex run - -args"-->

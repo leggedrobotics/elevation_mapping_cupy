@@ -59,12 +59,8 @@ def test_plugin_manager(semmap_ex, channels):
     manager.layers[0]
     manager.update_with_name("min_filter", elevation_map, layer_names)
     manager.update_with_name("smooth_filter", elevation_map, layer_names)
-    manager.update_with_name(
-        "semantic_filter", elevation_map, layer_names, semmap_ex, rotation
-    )
-    manager.update_with_name(
-        "semantic_traversability", elevation_map, layer_names, semmap_ex
-    )
+    manager.update_with_name("semantic_filter", elevation_map, layer_names, semmap_ex, rotation)
+    manager.update_with_name("semantic_traversability", elevation_map, layer_names, semmap_ex)
     manager.get_map_with_name("smooth")
     for lay in manager.get_layer_names():
         manager.update_with_name(lay, elevation_map, layer_names, semmap_ex, rotation)
