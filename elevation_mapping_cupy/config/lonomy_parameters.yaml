@@ -61,7 +61,7 @@ weight_file: '$(rospack find elevation_mapping_cupy)/config/weights.dat'        
 use_only_above_for_upper_bound: false
 
 #### Plugins ########
-plugin_config_file: '$(rospack find lonomy_configuration)/elevation_map/config/plugin_config.yaml'
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/lonomy_plugin_config.yaml'
 
 #### Subscribers ########
 

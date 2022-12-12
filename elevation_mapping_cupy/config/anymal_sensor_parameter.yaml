@@ -94,17 +94,17 @@ subscribers:
   #   confidence_threshold: 10
   #   feature_extractor: False
     
-  # front_bpearl:
-  #   channels: []
-  #   fusion: ['average']
-  #   topic_name: /robot_self_filter/bpearl_front/point_cloud
-  #   type: pointcloud
+  front_bpearl:
+    channels: []
+    fusion: ['average']
+    topic_name: /robot_self_filter/bpearl_front/point_cloud
+    data_type: pointcloud
   
-  # rear_bpearl:
-  #   channels: []
-  #   fusion: ['average']
-  #   topic_name: /robot_self_filter/bpearl_rear/point_cloud
-  #   type: pointcloud
+  rear_bpearl:
+    channels: []
+    fusion: ['average']
+    topic_name: /robot_self_filter/bpearl_rear/point_cloud
+    data_type: pointcloud
   
   front_depth:
     channels: []

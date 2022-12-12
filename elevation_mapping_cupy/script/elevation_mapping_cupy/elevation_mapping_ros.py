@@ -175,7 +175,7 @@ class ElevationMapWrapper:
         points = ros_numpy.numpify(msg)
         pts = np.empty((points.shape[0], 0))
         for ch in channels:
-            pts = np.append(pts, np.expand_dims(points[ch], 1), axis=1)
+            pts = np.append(pts, points[ch], axis=1)
 
         # get pose of pointcloud
         ti = rospy.Time(secs=msg.header.stamp.secs, nsecs=msg.header.stamp.nsecs)
@@ -226,8 +226,8 @@ class ElevationMapWrapper:
     def get_ros_params(self):
         # TODO fix this here when later launching with launch-file
         # This is currently {p} elevation_mapping")
-        para = os.path.join(self.root, "config/parameters.yaml")
-        sens = os.path.join(self.root, "config/sensor_parameter.yaml")
+        para = os.path.join(self.root, "config/anymal_parameters.yaml")
+        sens = os.path.join(self.root, "config/anymal_sensor_parameter.yaml")
         os.system(f"rosparam delete /{self.node_name}")
         os.system(f"rosparam load {para} elevation_mapping")
         os.system(f"rosparam load {sens} elevation_mapping")
