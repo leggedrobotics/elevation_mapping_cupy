@@ -40,22 +40,25 @@ class Inpainting(PluginBase):
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
     ) -> cp.ndarray:
-        mask = cp.asnumpy((elevation_map[2] < 0.5).astype("uint8"))
+        if self.input_layer_name in layer_names:
+            idx = layer_names.index(self.input_layer_name)
+            h = elevation_map[idx]
+            mask = cp.asnumpy(cp.isnan(h).astype("uint8"))
+        elif self.input_layer_name in plugin_layer_names:
+            idx = plugin_layer_names.index(self.input_layer_name)
+            h = plugin_layers[idx]
+            mask = cp.asnumpy(cp.isnan(h).astype("uint8"))
+        else:
+            print("layer name {} was not found. Using elevation layer.".format(self.input_layer_name))
+            h = elevation_map[0]
+            mask = cp.asnumpy((elevation_map[2] < 0.5).astype("uint8"))
         if (mask < 1).any():
-            if self.input_layer_name in layer_names:
-                idx = layer_names.index(self.input_layer_name)
-                h = elevation_map[idx]
-            elif self.input_layer_name in plugin_layer_names:
-                idx = plugin_layer_names.index(self.input_layer_name)
-                h = plugin_layers[idx]
-            else:
-                print("layer name {} was not found. Using elevation layer.".format(self.input_layer_name))
-                h = elevation_map[0]
-            h_max = float(h[mask < 1].max())
-            h_min = float(h[mask < 1].min())
-            h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype("uint8")
+            h = np.nan_to_num(h)
+            h_max = float(h.max())
+            h_min = float(h.min())
+            h = cp.asnumpy((h - h_min) * 255 / (h_max - h_min)).astype("uint8")
             dst = np.array(cv.inpaint(h, mask, 1, self.method))
-            h_inpainted = dst.astype(np.float32) * (h_max - h_min) / 255 + h_min
+            h_inpainted = dst.astype(np.float32) * (h_max - h_min) / 255.0 + h_min
             return cp.asarray(h_inpainted).astype(np.float64)
         else:
-            return elevation_map[0]
+            return h

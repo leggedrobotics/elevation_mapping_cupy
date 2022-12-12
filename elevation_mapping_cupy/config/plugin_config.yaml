@@ -18,14 +18,6 @@ smooth_filter:
   extra_params:
     input_layer_name: "min_filter"
 # Apply inpainting using opencv
-inpainting:                                   
-  enable: True
-  fill_nan: False
-  is_height_layer: True
-  layer_name: "inpaint"
-  extra_params:
-    method: "telea"                           # telea or ns
-    input_layer_name: "max_filter"
 # Apply smoothing for inpainted layer
 smooth_filter_1:                                
   type: "smooth_filter"
@@ -43,3 +35,11 @@ max_filter:
   extra_params:                               # This params are passed to the plugin class on initialization.
     dilation_size: 1                         # The patch size to apply
     iteration_n: 5                           # The number of iterations
+inpainting:                                   
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "inpaint"
+  extra_params:
+    method: "telea"                           # telea or ns
+    input_layer_name: "max_filter"

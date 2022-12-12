@@ -40,7 +40,7 @@ max_unsafe_n: 10                                # if the number of cells under s
 overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
 overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
 
-map_frame: "msf_body_imu_map" #'odom'                               # The map frame where the odometry source uses.
+map_frame: "msf_body_imu_map" #'odom'           # The map frame where the odometry source uses.
 base_frame: 'base'                              # The robot's base frame. This frame will be a center of the map.
 corrected_map_frame: 'corrected_odom'
 
@@ -78,7 +78,7 @@ pointcloud_topics: ['/depth_camera_front/depth/color/points',
 #   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
-  elevation_map_raw2:
+  elevation_map_raw:
     layers: ['elevation', 'traversability', 'variance']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
@@ -86,10 +86,14 @@ publishers:
     layers: ['elevation', 'traversability']
     basic_layers: ['elevation', 'traversability']
     fps: 2.0
-  elevation_map_filter2:
+  elevation_map_filter:
+    layers: ['min_filter', 'max_filter', 'smooth', 'inpaint', 'upper_bound']
+    basic_layers: ['inpaint']
+    fps: 5.0
+  elevation_map_visualizable:
     layers: ['min_filter', 'max_filter', 'smooth', 'inpaint', 'upper_bound']
     basic_layers: ['min_filter']
-    fps: 3.0
+    fps: 5.0
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
