@@ -161,8 +161,13 @@ class ElevationMapWrapper:
         R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3]
 
         semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
-        semantic_img = [semantic_img[:, :, k] for k in range(3)]
-
+        
+        if len(semantic_img.shape) != 2:
+            semantic_img = [semantic_img[:, :, k] for k in range(3)]
+            
+        else:
+            semantic_img = [semantic_img]
+        
         assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
         # process pointcloud
@@ -175,7 +180,10 @@ class ElevationMapWrapper:
         points = ros_numpy.numpify(msg)
         pts = np.empty((points.shape[0], 0))
         for ch in channels:
-            pts = np.append(pts, points[ch], axis=1)
+            p = points[ch]
+            if len(p.shape) == 1:
+                p = p[:,None]
+            pts = np.append(pts, p, axis=1)
 
         # get pose of pointcloud
         ti = rospy.Time(secs=msg.header.stamp.secs, nsecs=msg.header.stamp.nsecs)
@@ -226,11 +234,15 @@ class ElevationMapWrapper:
     def get_ros_params(self):
         # TODO fix this here when later launching with launch-file
         # This is currently {p} elevation_mapping")
-        para = os.path.join(self.root, "config/anymal_parameters.yaml")
-        sens = os.path.join(self.root, "config/anymal_sensor_parameter.yaml")
+        typ = "lonomy"
+        para = os.path.join(self.root, f"config/{typ}_parameters.yaml")
+        sens = os.path.join(self.root, f"config/{typ}_sensor_parameter.yaml")
+        plugin = os.path.join(self.root, f"config/{typ}_plugin_config.yaml")
+        
         os.system(f"rosparam delete /{self.node_name}")
         os.system(f"rosparam load {para} elevation_mapping")
         os.system(f"rosparam load {sens} elevation_mapping")
+        os.system(f"rosparam load {plugin} elevation_mapping")
         self.subscribers = rospy.get_param("~subscribers")
         self.publishers = rospy.get_param("~publishers")
         self.initialize_frame_id = rospy.get_param("~initialize_frame_id", "base")
