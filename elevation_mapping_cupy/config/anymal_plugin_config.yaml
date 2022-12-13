@@ -2,7 +2,7 @@
 
 # min_filter fills in minimum value around the invalid cell.
 min_filter:                                   
-  enable: False                                # weather to load this plugin
+  enable: True                                # weather to load this plugin
   fill_nan: False                             # Fill nans to invalid cells of elevation layer.
   is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
   layer_name: "min_filter"                    # The layer name.
@@ -11,7 +11,7 @@ min_filter:
     iteration_n: 30                           # The number of iterations
 # Apply smoothing.
 smooth_filter:                                
-  enable: False
+  enable: True
   fill_nan: False
   is_height_layer: True
   layer_name: "smooth"
@@ -19,7 +19,7 @@ smooth_filter:
     input_layer_name: "min_filter"
 # Apply inpainting using opencv
 inpainting:
-  enable: False
+  enable: True
   fill_nan: False
   is_height_layer: True
   layer_name: "inpaint"

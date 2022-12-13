@@ -80,8 +80,17 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
     // Initialize subscribers depending on the type
     if (type == "pointcloud") {
       std::string pointcloud_topic = subscriber.second["topic_name"];
-      ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
+      boost::function<void (const sensor_msgs::PointCloud2 &)> f = boost::bind(&ElevationMappingNode::pointcloudCallback,this, _1, key);
+      ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1,f);
       pointcloudSubs_.push_back(sub);
+      const auto & channels = subscriber.second["channels"];
+      channels_[key].push_back("x");
+      channels_[key].push_back("y");
+      channels_[key].push_back("z");
+      for (int32_t i = 0; i < channels.size(); ++i) {
+        auto elem = static_cast<std::string>(channels[i]);
+        channels_[key].push_back(elem);
+        }
 
     } else if (type == "image") {
       std::string camera_topic = subscriber.second["topic_name_camera"];
@@ -251,30 +260,41 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
   mapPubs_[index].publish(msg);
 }
 
-void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud) {
+void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key) {
   auto start = ros::Time::now();
 //  transform pointcloud into matrix
   auto* pcl_pc = new pcl::PCLPointCloud2;
   pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
   pcl_conversions::toPCL(cloud, *pcl_pc);
 
-  uint array_dim = pcl_pc->point_step/4;// we assume that they are all float32 or at least 32bits
+  //  get channels
+  auto fields = cloud.fields;
+  std::vector<std::string> channels;
+  std::vector<bool> add_element;
+
+  for(int it =0;it<fields.size();it++){
+    auto & field = fields[it];
+    if( (std::find(channels_[key].begin(),channels_[key].end(),field.name)!=channels_[key].end())&& (field.datatype == 7)){
+      add_element.push_back(true);
+      channels.push_back(field.name);
+    }
+    else add_element.push_back(false);
+  }
+  uint array_dim = channels.size();
+
   RowMatrixXd points = RowMatrixXd(pcl_pc->width,array_dim);
 
   for (unsigned int i = 0; i < pcl_pc->width; ++i) {
-    for(unsigned  int j = 0; j<array_dim;++j){
-      float temp;
-      uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
-      memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
-      points(i, j) = static_cast<double>(temp);
+    int jit = 0;
+    for(unsigned  int j = 0; j<add_element.size();++j){
+        if(add_element[j]){
+          float temp;
+          uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
+          memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
+          points(i, jit) = static_cast<double>(temp);
+          jit++;
+        }
     }
-  }
-//  get channels
-  auto fields = cloud.fields;
-  std::vector<std::string> channels;
-  for(auto & field: fields){
-     channels.push_back(field.name);
-    ROS_ASSERT(field.datatype == 7);
   }
 //  get pose of sensor in map frame
   tf::StampedTransform transformTf;
