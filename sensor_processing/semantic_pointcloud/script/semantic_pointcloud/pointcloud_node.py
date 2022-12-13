@@ -18,6 +18,11 @@ from semantic_pointcloud.utils import resolve_model, decode_max
 
 class PointcloudNode:
     def __init__(self, sensor_name):
+        """ Get parameter from server, initialize variables and semantics, register publishers and subscribers.
+
+        Args:
+            sensor_name (str): Name of the sensor in the ros param server.
+        """
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: PointcloudParameter = PointcloudParameter()
         # try catch for pytests
@@ -47,7 +52,42 @@ class PointcloudNode:
         self.cv_bridge = CvBridge()
         self.P = None
         self.header = None
+        self.register_sub_pub()
 
+    def initialize_semantics(self):
+        """Resolve the feature and segmentation mode and create segmentation_channel and feature_channels.
+
+        - segmentation_channels: is a dictionary that contains the segmentation channel names as key and the fusion algorithm as value.
+        - feature_channels: is a dictionary that contains the features channel names as key and the fusion algorithm as value.
+        """
+        if self.param.semantic_segmentation:
+            self.semantic_model = resolve_model(
+                self.param.segmentation_model, self.param
+            )
+            self.segmentation_channels = {}
+            for i, (chan, fusion) in enumerate(
+                    zip(self.param.channels, self.param.fusion)
+            ):
+                if fusion in ["class_bayesian", "class_average", "class_max"]:
+                    self.segmentation_channels[chan] = fusion
+            assert len(self.segmentation_channels.keys()) > 0
+        if self.param.feature_extractor:
+            self.feature_extractor = resolve_model(
+                self.param.feature_config.name, self.param.feature_config
+            )
+            self.feature_channels = {}
+            for i, (chan, fusion) in enumerate(
+                    zip(self.param.channels, self.param.fusion)
+            ):
+                if fusion in ["average"]:
+                    self.feature_channels[chan] = fusion
+            assert len(self.feature_channels.keys()) > 0
+
+    def register_sub_pub(self):
+        """Register publishers and subscribers.
+
+        """
+        # subscribers
         rospy.Subscriber(self.param.cam_info_topic, CameraInfo, self.cam_info_callback)
         rgb_sub = message_filters.Subscriber(self.param.image_topic, Image)
         depth_sub = message_filters.Subscriber(self.param.depth_topic, Image)
@@ -76,6 +116,7 @@ class PointcloudNode:
         ts.registerCallback(self.image_callback)
 
         self.pcl_pub = rospy.Publisher(self.param.topic_name, PointCloud2, queue_size=2)
+        # publishers
         if self.param.semantic_segmentation:
             if self.param.publish_segmentation_image:
                 self.seg_pub = rospy.Publisher(
@@ -118,32 +159,11 @@ class PointcloudNode:
             (row_size * (nclasses), col_size, cmap.shape[1]), dtype=cmap.dtype
         )
         for i in range(nclasses):
-            array[i * row_size : i * row_size + row_size, :] = cmap[i]
+            array[i * row_size: i * row_size + row_size, :] = cmap[i]
         imshow(array)
         plt.yticks([row_size * i + row_size / 2 for i in range(nclasses)], self.labels)
         plt.xticks([])
         plt.show()
-
-    def initialize_semantics(self):
-        if self.param.semantic_segmentation:
-            self.semantic_model = resolve_model(
-                self.param.segmentation_model, self.param
-            )
-            self.segmentation_channels = {}
-            for i, (chan, fus) in enumerate(
-                zip(self.param.channels, self.param.fusion)
-            ):
-                if fus in ["class_bayesian", "class_average", "class_max"]:
-                    self.segmentation_channels[chan] = fus
-        if self.param.feature_extractor:
-            self.feature_channels = []
-            for i, fusion in enumerate(self.param.fusion):
-                if fusion == "average":
-                    self.feature_channels.append(self.param.channels[i])
-            assert len(self.feature_channels) > 0
-            self.feature_extractor = resolve_model(
-                self.param.feature_config.name, self.param.feature_config
-            )
 
     def create_custom_dtype(self):
         self.dtype = [
@@ -244,7 +264,7 @@ class PointcloudNode:
     def extract_features(self, image, points, u, v):
         prediction = self.feature_extractor["model"](image)
         values = prediction[:, v.get(), u.get()].cpu().detach().numpy()
-        for it, channel in enumerate(self.feature_channels):
+        for it, channel in enumerate(self.feature_channels.keys()):
             points[channel] = values[it]
 
     def publish_segmentation_image(self, probabilities):
@@ -257,7 +277,7 @@ class PointcloudNode:
             # decode, create an array with all possible classes and insert probabilities
             it = 0
             for iit, (chan, fuse) in enumerate(
-                zip(self.param.channels, self.param.fusion)
+                    zip(self.param.channels, self.param.fusion)
             ):
                 if fuse in ["class_max"]:
                     temp = probabilities[it]

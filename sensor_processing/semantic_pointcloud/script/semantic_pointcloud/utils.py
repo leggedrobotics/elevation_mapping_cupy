@@ -17,7 +17,6 @@ from detectron2.utils.logger import setup_logger
 setup_logger()
 
 
-# import some common detectron2 utilities
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
@@ -31,7 +30,6 @@ from semantic_pointcloud.pointcloud_parameters import (
     FeatureExtractorParameter,
 )
 
-# from .pointcloud_parameters import PointcloudParameter, FeatureExtractorParameter
 def encode_max(maxim, index):
     maxim, index = cp.asarray(maxim, dtype=cp.float32), cp.asarray(
         index, dtype=cp.uint32
@@ -106,15 +104,15 @@ def resolve_model(name, config=None):
 
 class PytorchModel:
     def __init__(self, net, weights, param):
-        self.model = net(weights)
+        self.model = net(weights=weights)
         self.weights = weights
         self.param = param
         self.model.eval()
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(device=device)
-        self.resolve_cateories()
+        self.resolve_categories()
 
-    def resolve_cateories(self):
+    def resolve_categories(self):
         class_to_idx = {cls: idx for (idx, cls) in enumerate(self.get_classes())}
         print(
             "Semantic Segmentation possible channels: ",
@@ -171,7 +169,7 @@ class PytorchModel:
                 )
                 x = torch.arange(0, index.shape[0])
                 y = torch.arange(0, index.shape[1])
-                c = torch.meshgrid(x, y)
+                c = torch.meshgrid(x, y, indexing='ij')
                 normalized_masks[index, c[0], c[1]] = 0
         return cp.asarray(selected_masks)
 
@@ -196,8 +194,8 @@ class DetectronModel:
         self.cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(weights)
         self.predictor = DefaultPredictor(self.cfg)
         self.meta = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0])
-        self.stuff_categories, self.is_stuff = self.resolve_cateories("stuff_classes")
-        self.thing_categories, self.is_thing = self.resolve_cateories("thing_classes")
+        self.stuff_categories, self.is_stuff = self.resolve_categories("stuff_classes")
+        self.thing_categories, self.is_thing = self.resolve_categories("thing_classes")
         self.segmentation_channels = {}
         for chan in self.param.channels:
             if chan in self.stuff_categories.keys():
@@ -208,7 +206,7 @@ class DetectronModel:
                 # remove it
                 pass
 
-    def resolve_cateories(self, name):
+    def resolve_categories(self, name):
         classes = self.get_cat(name)
         class_to_idx = {cls: idx for (idx, cls) in enumerate(classes)}
         print(

@@ -20,8 +20,10 @@ def pointcloud_ex(cam_name):
         "front_cam",
     ],
 )
-def test_initialize_semantics(pointcloud_ex):
+def test_initialize(pointcloud_ex):
+    # todo here we can add more test
     pointcloud_ex.initialize_semantics()
+    pointcloud_ex.register_sub_pub()
 
 
 @pytest.mark.parametrize(
