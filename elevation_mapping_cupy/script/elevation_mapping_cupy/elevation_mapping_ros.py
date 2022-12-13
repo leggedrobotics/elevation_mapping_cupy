@@ -240,7 +240,7 @@ class ElevationMapWrapper:
     def get_ros_params(self):
         # TODO fix this here when later launching with launch-file
         # This is currently {p} elevation_mapping")
-        typ = "anymal"
+        typ = "sim"
         para = os.path.join(self.root, f"config/{typ}_parameters.yaml")
         sens = os.path.join(self.root, f"config/{typ}_sensor_parameter.yaml")
         plugin = os.path.join(self.root, f"config/{typ}_plugin_config.yaml")
