@@ -79,22 +79,26 @@ class SemanticFilter(PluginBase):
         Returns:
             cupy._core.core.ndarray:
         """
-        # get indices of all layers that
+        # get indices of all layers that contain semantic class information
         layer_indices = cp.array([], dtype=cp.int32)
         max_idcs = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
             if fusion_alg in ["class_bayesian", "class_average"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
-            if fusion_alg in ["class_max"]:
+            # we care only for the first max in the display
+            if fusion_alg in ["class_max"] and len(max_idcs)<1:
                 max_idcs = cp.append(max_idcs, it).astype(cp.int32)
 
         # check which has the highest value
         # todo we are using the new_map because of the bayesian
-        class_map = cp.amax(semantic_map.new_map[layer_indices], axis=0)
-        class_map_id = cp.argmax(semantic_map.semantic_map[layer_indices], axis=0)
+        if len(layer_indices)>0:
+            class_map = cp.amax(semantic_map.new_map[layer_indices], axis=0)
+            class_map_id = cp.argmax(semantic_map.semantic_map[layer_indices], axis=0)
+        else:
+            class_map = cp.zeros_like(semantic_map.new_map[0])
+            class_map_id = cp.zeros_like(semantic_map.new_map[0],dtype=cp.int32)
 
         if "class_max" in semantic_map.param.fusion_algorithms:
-            # todo here is only cosidered the case where we only have one max
             max_map = cp.amax(semantic_map.new_map[max_idcs], axis=0)
             max_map_id = semantic_map.unique_id[semantic_map.id_max[max_idcs]]
             map = cp.where(max_map > class_map, max_map_id, class_map_id)

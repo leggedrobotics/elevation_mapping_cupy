@@ -14,8 +14,8 @@ def semmap_ex(add_lay, fusion_alg):
         weight_file="../../../config/weights.dat",
         plugin_config_file=plugin_path,
     )
-    p.additional_layers = add_lay
-    p.fusion_algorithms = fusion_alg
+    p.subscriber_cfg["front_cam"]["channels"] = add_lay
+    p.subscriber_cfg["front_cam"]["fusion"] = fusion_alg
     p.update()
     e = semantic_map.SemanticMap(p)
     e.compile_kernels()
@@ -32,11 +32,8 @@ def semmap_ex(add_lay, fusion_alg):
         ),
         (["grass", "tree"], ["class_average", "class_average"], ["grass"]),
         (["grass", "tree"], ["class_average", "class_max"], ["tree"]),
-        # (
-        #     ["feat_0", "feat_1", "rgb"],
-        #     ["average", "average", "color"],
-        #     ["rgb", "feat_0"],
-        # ),
+        (["max1","max2"], ["class_max", "class_max"], ["max1","max2"]),
+
     ],
 )
 def test_plugin_manager(semmap_ex, channels):
@@ -59,12 +56,8 @@ def test_plugin_manager(semmap_ex, channels):
     manager.layers[0]
     manager.update_with_name("min_filter", elevation_map, layer_names)
     manager.update_with_name("smooth_filter", elevation_map, layer_names)
-    manager.update_with_name(
-        "semantic_filter", elevation_map, layer_names, semmap_ex, rotation
-    )
-    manager.update_with_name(
-        "semantic_traversability", elevation_map, layer_names, semmap_ex
-    )
+    manager.update_with_name("semantic_filter", elevation_map, layer_names, semmap_ex, rotation)
+    manager.update_with_name("semantic_traversability", elevation_map, layer_names, semmap_ex)
     manager.get_map_with_name("smooth")
     for lay in manager.get_layer_names():
         manager.update_with_name(lay, elevation_map, layer_names, semmap_ex, rotation)
