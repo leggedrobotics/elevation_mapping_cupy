@@ -1,12 +1,9 @@
 import semantic_pointcloud.DINO.vision_transformer as vits
-# import vision_transformer as vits
 import torch.nn as nn
-import torch.nn.functional as F
 import torch
 
 
 class DinoFeaturizer(nn.Module):
-
     def __init__(self, weights, cfg):
         super().__init__()
         self.cfg = cfg
@@ -14,13 +11,11 @@ class DinoFeaturizer(nn.Module):
 
         self.feat_type = self.cfg.dino_feat_type
         arch = self.cfg.model
-        self.model = vits.__dict__[arch](
-            patch_size=self.cfg.patch_size,
-            num_classes=0)
+        self.model = vits.__dict__[arch](patch_size=self.cfg.patch_size, num_classes=0)
         for p in self.model.parameters():
             p.requires_grad = False
         self.model.eval().cuda()
-        self.dropout = torch.nn.Dropout2d(p=.1)
+        self.dropout = torch.nn.Dropout2d(p=0.1)
 
         if arch == "vit_small" and self.cfg.patch_size == 16:
             url = "dino_deitsmall16_pretrain/dino_deitsmall16_pretrain.pth"
@@ -32,7 +27,6 @@ class DinoFeaturizer(nn.Module):
             url = "dino_vitbase8_pretrain/dino_vitbase8_pretrain.pth"
         else:
             raise ValueError("Unknown arch and patch size")
-
 
         # if cfg.pretrained_weights is not None:
         #     state_dict = torch.load(cfg.pretrained_weights, map_location="cpu")
@@ -63,20 +57,20 @@ class DinoFeaturizer(nn.Module):
             self.cluster2 = self.make_nonlinear_clusterer(self.n_feats)
 
     def make_clusterer(self, in_channels):
-        return torch.nn.Sequential(
-            torch.nn.Conv2d(in_channels, self.dim, (1, 1)))  # ,
+        return torch.nn.Sequential(torch.nn.Conv2d(in_channels, self.dim, (1, 1)))  # ,
 
     def make_nonlinear_clusterer(self, in_channels):
         return torch.nn.Sequential(
             torch.nn.Conv2d(in_channels, in_channels, (1, 1)),
             torch.nn.ReLU(),
-            torch.nn.Conv2d(in_channels, self.dim, (1, 1)))
+            torch.nn.Conv2d(in_channels, self.dim, (1, 1)),
+        )
 
     def forward(self, img, n=1, return_class_feat=False):
         self.model.eval()
         with torch.no_grad():
-            assert (img.shape[2] % self.cfg.patch_size == 0)
-            assert (img.shape[3] % self.cfg.patch_size == 0)
+            assert img.shape[2] % self.cfg.patch_size == 0
+            assert img.shape[3] % self.cfg.patch_size == 0
 
             # get selected layer activations
             feat, attn, qkv = self.model.get_intermediate_feat(img, n=n)
@@ -108,5 +102,3 @@ class DinoFeaturizer(nn.Module):
             return self.dropout(image_feat), code
         else:
             return image_feat, code
-
-

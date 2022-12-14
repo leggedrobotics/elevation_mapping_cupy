@@ -19,9 +19,7 @@ class FeatureExtractorParameter(Serializable):
 class PointcloudParameter(Serializable):
     sensor_name: str = "camera"
     topic_name: str = "/elvation_mapping/pointcloud_semantic"
-    channels: list = field(
-        default_factory=lambda: ["rgb", "person", "grass", "tree", "max"]
-    )
+    channels: list = field(default_factory=lambda: ["rgb", "person", "grass", "tree", "max"])
     fusion: list = field(
         default_factory=lambda: [
             "color",

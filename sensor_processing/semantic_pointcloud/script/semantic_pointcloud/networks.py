@@ -140,17 +140,13 @@ class PytorchModel:
             prediction = self.model(batch)["out"]
             normalized_masks = torch.squeeze(prediction.softmax(dim=1), dim=0)
             # get masks of fix classes
-            selected_masks = cp.asarray(
-                normalized_masks[list(self.stuff_categories.values())]
-            )
+            selected_masks = cp.asarray(normalized_masks[list(self.stuff_categories.values())])
             # get values of max, first remove the ones we already have
             normalized_masks[list(self.stuff_categories.values())] = 0
             for i in range(self.param.fusion.count("class_max")):
                 maxim, index = torch.max(normalized_masks, dim=0)
                 mer = encode_max(maxim, index)
-                selected_masks = cp.concatenate(
-                    (selected_masks, cp.expand_dims(mer, axis=0)), axis=0
-                )
+                selected_masks = cp.concatenate((selected_masks, cp.expand_dims(mer, axis=0)), axis=0)
                 x = torch.arange(0, index.shape[0])
                 y = torch.arange(0, index.shape[1])
                 c = torch.meshgrid(x, y, indexing="ij")
@@ -227,9 +223,7 @@ class DetectronModel:
             )
         )
         # add semseg
-        output[cp.array(list(self.is_stuff.values()))] = probabilities[
-            list(self.stuff_categories.values())
-        ]
+        output[cp.array(list(self.is_stuff.values()))] = probabilities[list(self.stuff_categories.values())]
         # add instances
         indices, insta_info = prediction["panoptic_seg"]
         # TODO dont know why i need temp, look into how to avoid
@@ -275,15 +269,11 @@ class STEGOModel:
         image = self.to_tensor(image).unsqueeze(0)
         reset_size = Resize(image.shape[-2:])
         image = self.shrink(image)
-        image = TF.normalize(
-            image, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
-        )
+        image = TF.normalize(image, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 
         feat1, code1 = self.model(image)
         feat2, code2 = self.model(image.flip(dims=[3]))
         code = (code1 + code2.flip(dims=[3])) / 2
-        code = NF.interpolate(
-            code, image.shape[-2:], mode=self.cfg.interpolation, align_corners=False
-        ).detach()
+        code = NF.interpolate(code, image.shape[-2:], mode=self.cfg.interpolation, align_corners=False).detach()
         code = torch.squeeze(reset_size(code), dim=0)
         return code

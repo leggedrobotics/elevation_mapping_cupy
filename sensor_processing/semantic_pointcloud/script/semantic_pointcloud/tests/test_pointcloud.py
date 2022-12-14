@@ -85,9 +85,7 @@ def test_pcl_creation(pointcloud_ex, channels, fusion, semseg, segpub, showlbl):
     amount = 3
     if "class_max" in pointcloud_ex.param.fusion:
         val = cp.random.rand(360, 640, amount, dtype=cp.float32).astype(cp.float16)
-        ind = cp.random.randint(0, 2, (360, 640, amount), dtype=cp.uint32).astype(
-            cp.float32
-        )
+        ind = cp.random.randint(0, 2, (360, 640, amount), dtype=cp.uint32).astype(cp.float32)
         img = encode_max(val, ind)
     else:
         img = (cp.random.rand(360, 640, amount) * 255).astype(cp.int)

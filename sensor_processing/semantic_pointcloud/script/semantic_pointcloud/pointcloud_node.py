@@ -28,9 +28,7 @@ class PointcloudNode:
         self.param: PointcloudParameter = PointcloudParameter()
         if rospy.has_param("/semantic_pointcloud/subscribers"):
             config = rospy.get_param("/semantic_pointcloud/subscribers")
-            self.param: PointcloudParameter = PointcloudParameter.from_dict(
-                config[sensor_name]
-            )
+            self.param: PointcloudParameter = PointcloudParameter.from_dict(config[sensor_name])
         else:
             self.param.feature_config.input_size = [80, 160]
             print("NO ROS ENV found.")
@@ -63,24 +61,16 @@ class PointcloudNode:
         - feature_channels: is a dictionary that contains the features channel names as key and the fusion algorithm as value.
         """
         if self.param.semantic_segmentation:
-            self.semantic_model = resolve_model(
-                self.param.segmentation_model, self.param
-            )
+            self.semantic_model = resolve_model(self.param.segmentation_model, self.param)
             self.segmentation_channels = {}
-            for i, (chan, fusion) in enumerate(
-                zip(self.param.channels, self.param.fusion)
-            ):
+            for i, (chan, fusion) in enumerate(zip(self.param.channels, self.param.fusion)):
                 if fusion in ["class_bayesian", "class_average", "class_max"]:
                     self.segmentation_channels[chan] = fusion
             assert len(self.segmentation_channels.keys()) > 0
         if self.param.feature_extractor:
-            self.feature_extractor = resolve_model(
-                self.param.feature_config.name, self.param.feature_config
-            )
+            self.feature_extractor = resolve_model(self.param.feature_config.name, self.param.feature_config)
             self.feature_channels = {}
-            for i, (chan, fusion) in enumerate(
-                zip(self.param.channels, self.param.fusion)
-            ):
+            for i, (chan, fusion) in enumerate(zip(self.param.channels, self.param.fusion)):
                 if fusion in ["average"]:
                     self.feature_channels[chan] = fusion
             assert len(self.feature_channels.keys()) > 0
@@ -92,9 +82,7 @@ class PointcloudNode:
         rgb_sub = message_filters.Subscriber(self.param.image_topic, Image)
         depth_sub = message_filters.Subscriber(self.param.depth_topic, Image)
         if self.param.confidence:
-            confidence_sub = message_filters.Subscriber(
-                self.param.confidence_topic, Image
-            )
+            confidence_sub = message_filters.Subscriber(self.param.confidence_topic, Image)
             ts = message_filters.ApproximateTimeSynchronizer(
                 [
                     rgb_sub,
@@ -119,9 +107,7 @@ class PointcloudNode:
         # publishers
         if self.param.semantic_segmentation:
             if self.param.publish_segmentation_image:
-                self.seg_pub = rospy.Publisher(
-                    self.param.segmentation_image_topic, Image, queue_size=2
-                )
+                self.seg_pub = rospy.Publisher(self.param.segmentation_image_topic, Image, queue_size=2)
             if "class_max" in self.param.fusion:
                 self.labels = self.semantic_model["model"].get_classes()
             else:
@@ -163,9 +149,7 @@ class PointcloudNode:
         row_size = 50
         col_size = 500
         cmap = self.semseg_color_map
-        array = np.empty(
-            (row_size * (nclasses), col_size, cmap.shape[1]), dtype=cmap.dtype
-        )
+        array = np.empty((row_size * (nclasses), col_size, cmap.shape[1]), dtype=cmap.dtype)
         for i in range(nclasses):
             array[i * row_size : i * row_size + row_size, :] = cmap[i]
         imshow(array)
@@ -203,18 +187,10 @@ class PointcloudNode:
         confidence = None
         if self.P is None:
             return
-        image = cp.asarray(
-            self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
-        )
-        depth = cp.asarray(
-            self.cv_bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
-        )
+        image = cp.asarray(self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8"))
+        depth = cp.asarray(self.cv_bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough"))
         if confidence_msg is not None:
-            confidence = cp.asarray(
-                self.cv_bridge.imgmsg_to_cv2(
-                    confidence_msg, desired_encoding="passthrough"
-                )
-            )
+            confidence = cp.asarray(self.cv_bridge.imgmsg_to_cv2(confidence_msg, desired_encoding="passthrough"))
 
         pcl = self.create_pcl_from_image(image, depth, confidence)
         if self.param.publish_segmentation_image:
@@ -331,9 +307,7 @@ class PointcloudNode:
         if "class_max" in self.param.fusion:
             # decode, create an array with all possible classes and insert probabilities
             it = 0
-            for iit, (chan, fuse) in enumerate(
-                zip(self.param.channels, self.param.fusion)
-            ):
+            for iit, (chan, fuse) in enumerate(zip(self.param.channels, self.param.fusion)):
                 if fuse in ["class_max"]:
                     temp = probabilities[it]
                     temp_p, temp_i = decode_max(temp)
@@ -344,9 +318,7 @@ class PointcloudNode:
                 elif fuse in ["class_bayesian", "class_average"]:
                     # assign fixed probability to correct index
                     if chan in self.semantic_model["model"].segmentation_channels:
-                        prob[
-                            self.semantic_model["model"].segmentation_channels[chan]
-                        ] = probabilities[it]
+                        prob[self.semantic_model["model"].segmentation_channels[chan]] = probabilities[it]
                         it += 1
             img = cp.argmax(prob, axis=0)
 
