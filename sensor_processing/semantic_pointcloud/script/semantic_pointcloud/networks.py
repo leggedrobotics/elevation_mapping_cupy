@@ -27,6 +27,7 @@ from semantic_pointcloud.pointcloud_parameters import (
 )
 from semantic_pointcloud.utils import encode_max
 
+
 def resolve_model(name, config=None):
     """Get the model class based on the name of the pretrained model.
 
