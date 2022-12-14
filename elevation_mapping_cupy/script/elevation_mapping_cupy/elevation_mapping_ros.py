@@ -104,6 +104,7 @@ class ElevationMapWrapper:
             self._publishers_timers.append(rospy.Timer(rospy.Duration(1 / v["fps"]), partial(self.publish_map, k)))
 
     def publish_map(self, k, t):
+        print("publish_map")
         if self._map_q is None:
             return
         gm = GridMap()
@@ -120,19 +121,24 @@ class ElevationMapWrapper:
         gm.info.pose.orientation.x = 0.0  # self._map_q.x
         gm.info.pose.orientation.y = 0.0  # self._map_q.y
         gm.info.pose.orientation.z = 0.0  # self._map_q.z
-        gm.layers = self.publishers[k]["layers"]
+        gm.layers = []
         gm.basic_layers = self.publishers[k]["basic_layers"]
-        for i, layer in enumerate(gm.layers):
-            self._map.get_map_with_name_ref(layer, self._map_data)
-            # self._map_data = np.nan_to_num(self._map_data, False, 0)
-            data = self._map_data.copy()
-            arr = Float32MultiArray()
-            arr.layout = MAL()
-            N = self._map_data.shape[0]
-            arr.layout.dim.append(MAD(label="column_index", size=N, stride=int(N * N)))
-            arr.layout.dim.append(MAD(label="row_index", size=N, stride=N))
-            arr.data = tuple(np.ascontiguousarray(data.T).reshape(-1))
-            gm.data.append(arr)
+        for i, layer in enumerate(self.publishers[k]["layers"]):
+            gm.layers.append(layer)
+            try:
+                self._map.get_map_with_name_ref(layer, self._map_data)
+                data = self._map_data.copy()
+                arr = Float32MultiArray()
+                arr.layout = MAL()
+                N = self._map_data.shape[0]
+                arr.layout.dim.append(MAD(label="column_index", size=N, stride=int(N * N)))
+                arr.layout.dim.append(MAD(label="row_index", size=N, stride=N))
+                arr.data = tuple(np.ascontiguousarray(data.T).reshape(-1))
+                gm.data.append(arr)
+            except:
+                if layer in gm.basic_layers:
+                    print("Error: Missed Layer in basic layers")
+
         gm.outer_start_index = 0
         gm.inner_start_index = 0
 
@@ -152,7 +158,7 @@ class ElevationMapWrapper:
                 camera_msg.header.frame_id, self.map_frame, ti, rospy.Duration(1.0)
             )
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            print("pointcloud_callback error:", e)
+            print("Error: image_callback:", e)
             return
 
         t = transform.transform.translation
@@ -161,7 +167,12 @@ class ElevationMapWrapper:
         R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3]
 
         semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
-        semantic_img = [semantic_img[:, :, k] for k in range(3)]
+
+        if len(semantic_img.shape) != 2:
+            semantic_img = [semantic_img[:, :, k] for k in range(3)]
+
+        else:
+            semantic_img = [semantic_img]
 
         assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
@@ -175,7 +186,10 @@ class ElevationMapWrapper:
         points = ros_numpy.numpify(msg)
         pts = np.empty((points.shape[0], 0))
         for ch in channels:
-            pts = np.append(pts, np.expand_dims(points[ch], 1), axis=1)
+            p = points[ch]
+            if len(p.shape) == 1:
+                p = p[:, None]
+            pts = np.append(pts, p, axis=1)
 
         # get pose of pointcloud
         ti = rospy.Time(secs=msg.header.stamp.secs, nsecs=msg.header.stamp.nsecs)
@@ -183,7 +197,7 @@ class ElevationMapWrapper:
         try:
             transform = self._tf_buffer.lookup_transform(self.map_frame, msg.header.frame_id, ti, rospy.Duration(1.0))
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            print("pointcloud_callback error:", e)
+            print("Error: pointcloud_callback: ", e)
             return
 
         t = transform.transform.translation
@@ -206,7 +220,7 @@ class ElevationMapWrapper:
                 self.map_frame, self.base_frame, self._last_t, rospy.Duration(1.0)
             )
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            print("update_pose error: ", e)
+            print("Error: update_pose error: ", e)
             return
         t = transform.transform.translation
         trans = np.array([t.x, t.y, t.z])
@@ -226,11 +240,16 @@ class ElevationMapWrapper:
     def get_ros_params(self):
         # TODO fix this here when later launching with launch-file
         # This is currently {p} elevation_mapping")
-        para = os.path.join(self.root, "config/parameters.yaml")
-        sens = os.path.join(self.root, "config/sensor_parameter.yaml")
+        typ = "sim"
+        para = os.path.join(self.root, f"config/{typ}_parameters.yaml")
+        sens = os.path.join(self.root, f"config/{typ}_sensor_parameter.yaml")
+        plugin = os.path.join(self.root, f"config/{typ}_plugin_config.yaml")
+
         os.system(f"rosparam delete /{self.node_name}")
         os.system(f"rosparam load {para} elevation_mapping")
         os.system(f"rosparam load {sens} elevation_mapping")
+        os.system(f"rosparam load {plugin} elevation_mapping")
+
         self.subscribers = rospy.get_param("~subscribers")
         self.publishers = rospy.get_param("~publishers")
         self.initialize_frame_id = rospy.get_param("~initialize_frame_id", "base")

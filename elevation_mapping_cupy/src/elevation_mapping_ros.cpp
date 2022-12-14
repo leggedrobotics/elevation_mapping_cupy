@@ -80,8 +80,17 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
     // Initialize subscribers depending on the type
     if (type == "pointcloud") {
       std::string pointcloud_topic = subscriber.second["topic_name"];
-      ros::Subscriber sub = nh_.subscribe(pointcloud_topic, 1, &ElevationMappingNode::pointcloudCallback, this);
+      boost::function<void (const sensor_msgs::PointCloud2 &)> f = boost::bind(&ElevationMappingNode::pointcloudCallback,this, _1, key);
+      ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1,f);
       pointcloudSubs_.push_back(sub);
+      const auto & channels = subscriber.second["channels"];
+      channels_[key].push_back("x");
+      channels_[key].push_back("y");
+      channels_[key].push_back("z");
+      for (int32_t i = 0; i < channels.size(); ++i) {
+        auto elem = static_cast<std::string>(channels[i]);
+        channels_[key].push_back(elem);
+        }
 
     } else if (type == "image") {
       std::string camera_topic = subscriber.second["topic_name_camera"];
@@ -97,7 +106,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       cameraSyncs_.push_back(sync);
 
     } else {
-      ROS_WARN_STREAM("Subscriber type [" << type << "] Not valid. Supported types: pointcloud, image");
+      ROS_WARN_STREAM("Subscriber data_type [" << type << "] Not valid. Supported types: pointcloud, image");
       continue;
     }
   }
@@ -251,30 +260,41 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
   mapPubs_[index].publish(msg);
 }
 
-void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud) {
+void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key) {
   auto start = ros::Time::now();
 //  transform pointcloud into matrix
   auto* pcl_pc = new pcl::PCLPointCloud2;
   pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
   pcl_conversions::toPCL(cloud, *pcl_pc);
 
-  uint array_dim = pcl_pc->point_step/4;// we assume that they are all float32 or at least 32bits
+  //  get channels
+  auto fields = cloud.fields;
+  std::vector<std::string> channels;
+  std::vector<bool> add_element;
+
+  for(int it =0;it<fields.size();it++){
+    auto & field = fields[it];
+    if( (std::find(channels_[key].begin(),channels_[key].end(),field.name)!=channels_[key].end())&& (field.datatype == 7)){
+      add_element.push_back(true);
+      channels.push_back(field.name);
+    }
+    else add_element.push_back(false);
+  }
+  uint array_dim = channels.size();
+
   RowMatrixXd points = RowMatrixXd(pcl_pc->width,array_dim);
 
   for (unsigned int i = 0; i < pcl_pc->width; ++i) {
-    for(unsigned  int j = 0; j<array_dim;++j){
-      float temp;
-      uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
-      memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
-      points(i, j) = static_cast<double>(temp);
+    int jit = 0;
+    for(unsigned  int j = 0; j<add_element.size();++j){
+        if(add_element[j]){
+          float temp;
+          uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
+          memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
+          points(i, jit) = static_cast<double>(temp);
+          jit++;
+        }
     }
-  }
-//  get channels
-  auto fields = cloud.fields;
-  std::vector<std::string> channels;
-  for(auto & field: fields){
-     channels.push_back(field.name);
-    ROS_ASSERT(field.datatype == 7);
   }
 //  get pose of sensor in map frame
   tf::StampedTransform transformTf;
@@ -317,6 +337,13 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   // Get image
   cv::Mat image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
 
+  // Change encoding to RGB/RGBA
+  if (image_msg->encoding == "bgr8") {
+    cv::cvtColor(image, image, CV_BGR2RGB);
+  } else if (image_msg->encoding == "bgra8") {
+    cv::cvtColor(image, image, CV_BGRA2RGBA);
+  }
+
   // Extract camera matrix
   Eigen::Map<const Eigen::Matrix<double,3,3,Eigen::RowMajor>> cameraMatrix(&camera_info_msg->K[0]);
 
@@ -324,57 +351,28 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   tf::StampedTransform transformTf;
   std::string sensorFrameId = image_msg->header.frame_id;
   auto timeStamp = image_msg->header.stamp;
-  Eigen::Affine3d transformationSensorToMap;
+  Eigen::Affine3d transformationMapToSensor;
   try {
-    transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
-    transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
-    poseTFToEigen(transformTf, transformationSensorToMap);
+    transformListener_.waitForTransform(sensorFrameId, mapFrameId_, timeStamp, ros::Duration(1.0));
+    transformListener_.lookupTransform(sensorFrameId, mapFrameId_, timeStamp, transformTf);
+    poseTFToEigen(transformTf, transformationMapToSensor);
   } catch (tf::TransformException& ex) {
     ROS_ERROR("%s", ex.what());
     return;
   }
 
-  // Transform to vector of Eigen matrices
+  // Transform image to vector of Eigen matrices for easy pybind conversion
+  std::vector<cv::Mat> image_split;
   std::vector<ColMatrixXf> multichannel_image;
-  if (image.channels() == 1) {
-    ColMatrixXf eigen_image;
-    cv::cv2eigen(image, eigen_image);
-    multichannel_image.push_back(eigen_image);
-
-  } else if (image.channels() == 3) {
-    cv::Mat bgr[3];
-    cv::split(image, bgr);
-    ColMatrixXf eigen_image_b;
-    cv::cv2eigen(bgr[0], eigen_image_b);
-    ColMatrixXf eigen_image_g;
-    cv::cv2eigen(bgr[1], eigen_image_g);
-    ColMatrixXf eigen_image_r;    
-    cv::cv2eigen(bgr[2], eigen_image_r);
-
-    multichannel_image.push_back(eigen_image_r);
-    multichannel_image.push_back(eigen_image_g);
-    multichannel_image.push_back(eigen_image_b);
-
-  } else if (image.channels() == 4) {
-    cv::Mat bgr[4];
-    cv::split(image, bgr);
-    ColMatrixXf eigen_image_b;
-    cv::cv2eigen(bgr[0], eigen_image_b);
-    ColMatrixXf eigen_image_g;
-    cv::cv2eigen(bgr[1], eigen_image_g);
-    ColMatrixXf eigen_image_r;
-    cv::cv2eigen(bgr[2], eigen_image_r);
-
-    multichannel_image.push_back(eigen_image_r);
-    multichannel_image.push_back(eigen_image_g);
-    multichannel_image.push_back(eigen_image_b);
-
-  } else {
-    ROS_WARN_STREAM("Invalid number of channels [" << image.channels() << "]. Only allowed 1 (mono) or 3 (rgb)");
+  cv::split(image, image_split);
+  for (auto img : image_split) {
+    ColMatrixXf eigen_img;
+    cv::cv2eigen(img, eigen_img);
+    multichannel_image.push_back(eigen_img);
   }
 
   // Pass image to pipeline
-  map_.input_image(key, multichannel_image, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), cameraMatrix, image.rows, image.cols);
+  map_.input_image(key, multichannel_image, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix, image.rows, image.cols);
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
