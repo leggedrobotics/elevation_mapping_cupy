@@ -13,10 +13,7 @@ class FeatureExtractorParameter(Serializable):
     dropout: bool = False
     dino_feat_type: str = "feat"
     projection_type: str = "nonlinear"
-    # input_size: list = field(default_factory=[80, 160].copy)
-    input_size: list = field(
-        default_factory=lambda: [80, 160]
-    )
+    input_size: list = field(default_factory=lambda: [80, 160])
 
 
 @dataclass
@@ -37,7 +34,7 @@ class PointcloudParameter(Serializable):
     )
 
     semantic_segmentation: bool = True
-    segmentation_model: str = "detectron_coco_panoptic_fpn_R_101_3x"
+    segmentation_model: str = "lraspp_mobilenet_v3_large"
     publish_segmentation_image: bool = True
     segmentation_image_topic: str = "/semantic_pointcloud/sem_seg"
     pub_all: bool = False
@@ -53,3 +50,4 @@ class PointcloudParameter(Serializable):
 
     feature_extractor: bool = False
     feature_config: FeatureExtractorParameter = FeatureExtractorParameter
+    feature_config.input_size: list = field(default_factory=lambda: [80, 160])

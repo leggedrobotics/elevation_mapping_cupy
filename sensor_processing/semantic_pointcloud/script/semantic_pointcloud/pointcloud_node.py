@@ -18,20 +18,20 @@ from semantic_pointcloud.utils import resolve_model, decode_max
 
 class PointcloudNode:
     def __init__(self, sensor_name):
-        """ Get parameter from server, initialize variables and semantics, register publishers and subscribers.
+        """Get parameter from server, initialize variables and semantics, register publishers and subscribers.
 
         Args:
             sensor_name (str): Name of the sensor in the ros param server.
         """
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: PointcloudParameter = PointcloudParameter()
-        # try catch for pytests
-        try:
+        if rospy.has_param("/semantic_pointcloud/subscribers"):
             config = rospy.get_param("/semantic_pointcloud/subscribers")
             self.param: PointcloudParameter = PointcloudParameter.from_dict(
                 config[sensor_name]
             )
-        except:
+        else:
+            self.param.feature_config.input_size = [80, 160]
             print("NO ROS ENV found.")
 
         self.param.sensor_name = sensor_name
@@ -53,6 +53,7 @@ class PointcloudNode:
         self.P = None
         self.header = None
         self.register_sub_pub()
+        self.prediction_img = None
 
     def initialize_semantics(self):
         """Resolve the feature and segmentation mode and create segmentation_channel and feature_channels.
@@ -66,7 +67,7 @@ class PointcloudNode:
             )
             self.segmentation_channels = {}
             for i, (chan, fusion) in enumerate(
-                    zip(self.param.channels, self.param.fusion)
+                zip(self.param.channels, self.param.fusion)
             ):
                 if fusion in ["class_bayesian", "class_average", "class_max"]:
                     self.segmentation_channels[chan] = fusion
@@ -77,16 +78,14 @@ class PointcloudNode:
             )
             self.feature_channels = {}
             for i, (chan, fusion) in enumerate(
-                    zip(self.param.channels, self.param.fusion)
+                zip(self.param.channels, self.param.fusion)
             ):
                 if fusion in ["average"]:
                     self.feature_channels[chan] = fusion
             assert len(self.feature_channels.keys()) > 0
 
     def register_sub_pub(self):
-        """Register publishers and subscribers.
-
-        """
+        """Register publishers and subscribers."""
         # subscribers
         rospy.Subscriber(self.param.cam_info_topic, CameraInfo, self.cam_info_callback)
         rgb_sub = message_filters.Subscriber(self.param.image_topic, Image)
@@ -131,6 +130,13 @@ class PointcloudNode:
                 self.color_map_viz()
 
     def color_map(self, N=256, normalized=False):
+        """Create a color map for the class labels.
+
+        Args:
+            N (int):
+            normalized (bool):
+        """
+
         def bitget(byteval, idx):
             return (byteval & (1 << idx)) != 0
 
@@ -151,6 +157,7 @@ class PointcloudNode:
         return cmap[1:]
 
     def color_map_viz(self):
+        """Display the color map of the classes."""
         nclasses = len(self.labels)
         row_size = 50
         col_size = 500
@@ -159,13 +166,17 @@ class PointcloudNode:
             (row_size * (nclasses), col_size, cmap.shape[1]), dtype=cmap.dtype
         )
         for i in range(nclasses):
-            array[i * row_size: i * row_size + row_size, :] = cmap[i]
+            array[i * row_size : i * row_size + row_size, :] = cmap[i]
         imshow(array)
         plt.yticks([row_size * i + row_size / 2 for i in range(nclasses)], self.labels)
         plt.xticks([])
         plt.show()
 
     def create_custom_dtype(self):
+        """Generate a new dtype according to the channels in the params.
+
+        Some channels might remain empty.
+        """
         self.dtype = [
             ("x", np.float32),
             ("y", np.float32),
@@ -176,6 +187,11 @@ class PointcloudNode:
         print(self.dtype)
 
     def cam_info_callback(self, msg):
+        """Subscribe to the camera infos to get projection matrix and header.
+
+        Args:
+            msg:
+        """
         a = cp.asarray(msg.P)
         self.P = cp.resize(a, (3, 4))
         self.height = msg.height
@@ -200,10 +216,21 @@ class PointcloudNode:
             )
 
         pcl = self.create_pcl_from_image(image, depth, confidence)
-
+        if self.param.publish_segmentation_image:
+            self.publish_segmentation_image(self.prediction_img)
         self.publish_pointcloud(pcl, depth_msg.header)
 
     def create_pcl_from_image(self, image, depth, confidence):
+        """Generate the pointcloud from the depth map and process the image.
+
+        Args:
+            image:
+            depth:
+            confidence:
+
+        Returns:
+
+        """
         u, v = self.get_coordinates(depth, confidence)
 
         # create pointcloud
@@ -218,6 +245,15 @@ class PointcloudNode:
         return points
 
     def get_coordinates(self, depth, confidence):
+        """Define which pixels are valid to generate the pointcloud.
+
+        Args:
+            depth:
+            confidence:
+
+        Returns:
+
+        """
         pos = cp.where(depth > 0, 1, 0)
         low = cp.where(depth < 8, 1, 0)
         if confidence is not None:
@@ -231,13 +267,15 @@ class PointcloudNode:
         v = mask[0]
         return u, v
 
-    def publish_pointcloud(self, pcl, header):
-        pc2 = ros_numpy.msgify(PointCloud2, pcl)
-        pc2.header = header
-        pc2.header.frame_id = self.param.cam_frame
-        self.pcl_pub.publish(pc2)
-
     def process_image(self, image, u, v, points):
+        """Depending on setting generate color, semantic segmentation or feature channels.
+
+        Args:
+            image:
+            u:
+            v:
+            points:
+        """
         if "color" in self.param.fusion:
             valid_rgb = image[v, u].get()
             r = np.asarray(valid_rgb[:, 0], dtype=np.uint32)
@@ -254,14 +292,30 @@ class PointcloudNode:
             self.extract_features(image, points, u, v)
 
     def perform_segmentation(self, image, points, u, v):
+        """Feedforward image through semseg NN and then append pixels to pcl and save image for publication.
+
+        Args:
+            image:
+            points:
+            u:
+            v:
+        """
         prediction = self.semantic_model["model"](image)
         values = prediction[:, v.get(), u.get()].get()
-        for it, channel in enumerate(self.segmentation_channels.keys()):
+        for it, channel in enumerate(self.semantic_model["model"].actual_channels):
             points[channel] = values[it]
         if self.param.publish_segmentation_image:
-            self.publish_segmentation_image(prediction)
+            self.prediction_img = prediction
 
     def extract_features(self, image, points, u, v):
+        """Feedforward image through feature extraction NN and then append pixels to pcl.
+
+        Args:
+            image:
+            points:
+            u:
+            v:
+        """
         prediction = self.feature_extractor["model"](image)
         values = prediction[:, v.get(), u.get()].cpu().detach().numpy()
         for it, channel in enumerate(self.feature_channels.keys()):
@@ -277,13 +331,13 @@ class PointcloudNode:
             # decode, create an array with all possible classes and insert probabilities
             it = 0
             for iit, (chan, fuse) in enumerate(
-                    zip(self.param.channels, self.param.fusion)
+                zip(self.param.channels, self.param.fusion)
             ):
                 if fuse in ["class_max"]:
                     temp = probabilities[it]
                     temp_p, temp_i = decode_max(temp)
                     temp_i.choose(prob)
-                    c = cp.mgrid[0: temp_i.shape[0], 0: temp_i.shape[1]]
+                    c = cp.mgrid[0 : temp_i.shape[0], 0 : temp_i.shape[1]]
                     prob[temp_i, c[0], c[1]] = temp_p
                     it += 1
                 elif fuse in ["class_bayesian", "class_average"]:
@@ -302,6 +356,12 @@ class PointcloudNode:
         seg_msg = self.cv_bridge.cv2_to_imgmsg(img, encoding="rgb8")
         seg_msg.header.frame_id = self.header.frame_id
         self.seg_pub.publish(seg_msg)
+
+    def publish_pointcloud(self, pcl, header):
+        pc2 = ros_numpy.msgify(PointCloud2, pcl)
+        pc2.header = header
+        pc2.header.frame_id = self.param.cam_frame
+        self.pcl_pub.publish(pc2)
 
 
 if __name__ == "__main__":

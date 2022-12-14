@@ -9,14 +9,14 @@ from semantic_pointcloud.pointcloud_parameters import (
 
 
 @pytest.mark.parametrize(
-    "model_name",
+    "model_name,channels, fusion",
     [
-        "fcn_resnet50",
-        "lraspp_mobilenet_v3_large",
-        "detectron_coco_panoptic_fpn_R_101_3x",
+        ("fcn_resnet50",[],[]),
+        ("lraspp_mobilenet_v3_large",[],[]),
+        ("detectron_coco_panoptic_fpn_R_101_3x",[],[]),
     ],
 )
-def test_semantic_segmentation(model_name):
+def test_semantic_segmentation(model_name,channels, fusion):
     param = PointcloudParameter()
     param.segmentation_model = model_name
     m = resolve_model(model_name, param)

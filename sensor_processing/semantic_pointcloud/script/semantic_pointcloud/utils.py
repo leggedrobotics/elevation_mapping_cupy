@@ -103,6 +103,11 @@ def resolve_model(name, config=None):
 
 
 class PytorchModel:
+    """
+
+    segemntation_cahnnels contains only classes
+    actual_channels: array of all channels of output
+    """
     def __init__(self, net, weights, param):
         self.model = net(weights=weights)
         self.weights = weights
@@ -113,6 +118,10 @@ class PytorchModel:
         self.resolve_categories()
 
     def resolve_categories(self):
+        """ Create a segmentation_channels containing the actual values that are processed.
+
+        """
+        # get all classes
         class_to_idx = {cls: idx for (idx, cls) in enumerate(self.get_classes())}
         print(
             "Semantic Segmentation possible channels: ",
@@ -120,27 +129,26 @@ class PytorchModel:
         )
         indices = []
         channels = []
+        self.actual_channels= []
+        # check correspondence of semseg and paramter classes, class_max
         for it, chan in enumerate(self.param.channels):
             if chan in [cls for cls in list(class_to_idx.keys())]:
                 indices.append(class_to_idx[chan])
                 channels.append(chan)
+                self.actual_channels.append(chan)
             elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
                 print(chan, " is not in the semantic segmentation model.")
         for it, chan in enumerate(self.param.channels):
-            if chan in [cls for cls in list(class_to_idx.keys())]:
-                indices.append(class_to_idx[chan])
-                channels.append(chan)
-            elif self.param.fusion[it] in ["class_max"]:
-                pass
+            if self.param.fusion[it] in ["class_max"]:
+                self.actual_channels.append(chan)
                 print(chan, " is not in the semantic segmentation model but is a max channel.")
             else:
-                print(chan, " is not in the semantic segmentation model.")
-
+                pass
         self.stuff_categories = dict(zip(channels, indices))
-        self.segmentation_channels = self.stuff_categories
+        self.segmentation_channels = dict(zip(channels, indices))
 
     def __call__(self, image, *args, **kwargs):
-        """Feewforward image through model.
+        """Feewforward image through model and then create channels
 
         Args:
             image (cupy._core.core.ndarray):
@@ -171,6 +179,7 @@ class PytorchModel:
                 y = torch.arange(0, index.shape[1])
                 c = torch.meshgrid(x, y, indexing='ij')
                 normalized_masks[index, c[0], c[1]] = 0
+            assert len(self.actual_channels) == selected_masks.shape[0]
         return cp.asarray(selected_masks)
 
     def get_classes(self):
@@ -205,7 +214,7 @@ class DetectronModel:
             else:
                 # remove it
                 pass
-
+        self.actual_channels = self.segmentation_channels.keys()
     def resolve_categories(self, name):
         classes = self.get_cat(name)
         class_to_idx = {cls: idx for (idx, cls) in enumerate(classes)}
