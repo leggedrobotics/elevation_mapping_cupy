@@ -13,7 +13,8 @@ from sensor_msgs.msg import PointCloud2, Image
 from cv_bridge import CvBridge
 
 from semantic_pointcloud.pointcloud_parameters import PointcloudParameter
-from semantic_pointcloud.utils import resolve_model, decode_max
+from semantic_pointcloud.networks import resolve_model
+from semantic_pointcloud.utils import decode_max
 
 
 class PointcloudNode:

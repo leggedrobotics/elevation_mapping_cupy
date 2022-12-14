@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from simple_parsing.helpers import Serializable
-from typing import Tuple, List
 
 
 @dataclass

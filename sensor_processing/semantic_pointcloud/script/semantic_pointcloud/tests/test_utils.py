@@ -1,5 +1,5 @@
 import pytest
-from semantic_pointcloud.utils import resolve_model
+from semantic_pointcloud.networks import resolve_model
 import cupy as cp
 import torch
 from semantic_pointcloud.pointcloud_parameters import (
