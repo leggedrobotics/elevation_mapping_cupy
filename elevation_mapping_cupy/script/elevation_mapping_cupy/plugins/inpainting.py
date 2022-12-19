@@ -8,7 +8,6 @@ import cupyx.scipy.ndimage as ndimage
 import numpy as np
 import cv2 as cv
 
-
 from .plugin_manager import PluginBase
 
 
