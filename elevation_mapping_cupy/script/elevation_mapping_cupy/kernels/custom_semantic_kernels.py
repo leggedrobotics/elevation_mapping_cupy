@@ -99,9 +99,8 @@ def sum_max_kernel(
             U inside = p[i * pcl_channels[0] + 2];
             if (valid) {
                 if (inside) {
-                // for every max value
+                    // for every max value
                     for ( W it=0;it<pcl_channels[2];it++){
-                        //U feat = p[i * pcl_channels[0] + pcl_chan[it]];
                         U prob = max_pt[i * pcl_channels[2] + it];
                         T id = max_id[i * pcl_channels[2] + it];
                         atomicAdd(&newmap[get_map_idx(idx, id)], prob);

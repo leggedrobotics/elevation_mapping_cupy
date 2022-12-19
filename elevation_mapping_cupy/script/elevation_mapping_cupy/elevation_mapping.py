@@ -890,8 +890,8 @@ if __name__ == "__main__":
         weight_file="../config/weights.dat",
         plugin_config_file="../config/plugin_config.yaml",
     )
-    param.additional_layers = ["feat_0", "feat_1", "rgb", "people"]
-    param.fusion_algorithms = ["average", "average", "color", "class_average"]
+    param.additional_layers = ["rgb", "grass", "tree", "people"]
+    param.fusion_algorithms = ["color", "class_bayesian", "class_bayesian", "class_bayesian"]
     param.update()
     elevation = ElevationMap(param)
     layers = [
@@ -908,7 +908,7 @@ if __name__ == "__main__":
     channels = ["x", "y", "z"] + param.additional_layers
     print(channels)
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
-    for i in range(20):
+    for i in range(50):
         elevation.input(points, channels, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
         pos = np.array([i * 0.01, i * 0.02, i * 0.01])
