@@ -73,7 +73,7 @@ class ElevationMappingNode {
  private:
   void readParameters();
   void setupMapPublishers();
-  void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
+  void pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key);
   void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key);
   void publishAsPointCloud(const grid_map::GridMap& map) const;
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
@@ -133,6 +133,8 @@ class ElevationMappingNode {
   std::vector<double> map_fps_;
   std::set<double> map_fps_unique_;
   std::vector<ros::Timer> mapTimers_;
+  std::map<std::string,std::vector<std::string>> channels_;
+
 
   std::vector<std::string> initialize_frame_id_;
   std::vector<double> initialize_tf_offset_;

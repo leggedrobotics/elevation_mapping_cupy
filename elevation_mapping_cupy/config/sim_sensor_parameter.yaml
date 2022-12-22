@@ -31,42 +31,42 @@ subscribers:
   #   channels: ["single_channel_semantic"]    
   #   data_type: image
     
-  # front_cam:
-  #   channels: ['rgb']
-  #   fusion: ['color']
-  #   topic_name: '/elevation_mapping/pointcloud_semantic'
-  #   data_type: pointcloud
+#  front_cam:
+#    channels: ['rgb']
+#    fusion: ['color']
+#    topic_name: '/elevation_mapping/pointcloud_semantic'
+#    data_type: pointcloud
   
-  alphasense_front_rgb:
-    fusion: ['image_color']
-    topic_name_camera: /alphasense_driver_ros/cam4/debayered/compressed
-    topic_name_camera_info: /alphasense_driver_ros/cam4/camera_info
-    channels: ["rgb_image"]
-    data_type: image
+  # alphasense_front_rgb:
+  #   fusion: ['image_color']
+  #   topic_name_camera: /alphasense_driver_ros/cam4/debayered
+  #   topic_name_camera_info: /alphasense_driver_ros/cam4/camera_info
+  #   channels: ["rgb_image"]
+  #   data_type: image
 
   
-  alphasense_left_rgb:
-    fusion: ['image_color']
-    topic_name_camera: /alphasense_driver_ros/cam3/debayered/compressed
-    topic_name_camera_info: /alphasense_driver_ros/cam3/camera_info
-    channels: ["rgb_image"]
-    data_type: image
+  # alphasense_left_rgb:
+  #   fusion: ['image_color']
+  #   topic_name_camera: /alphasense_driver_ros/cam3/debayered
+  #   topic_name_camera_info: /alphasense_driver_ros/cam3/camera_info
+  #   channels: ["rgb_image"]    
+  #   data_type: image
 
 
-  alphasense_right_rgb:
-    fusion: ['image_color']
-    topic_name_camera: /alphasense_driver_ros/cam5/debayered/compressed
-    topic_name_camera_info: /alphasense_driver_ros/cam5/camera_info
-    channels: ["rgb_image"]
-    data_type: image
+  # alphasense_right_rgb:
+  #   fusion: ['image_color']
+  #   topic_name_camera: /alphasense_driver_ros/cam5/debayered
+  #   topic_name_camera_info: /alphasense_driver_ros/cam5/camera_info
+  #   channels: ["rgb_image"]    
+  #   data_type: image
 
 
-  wvn_prediction:
-    fusion: ['image_exponential']
-    topic_name_camera: '/wild_visual_navigation_node/traversability_raw'
-    topic_name_camera_info: '/wild_visual_navigation_node/camera_info'
-    channels: ["visual_traversability"]
-    data_type: image
+  # wvn_prediction:
+  #   fusion: ['image_exponential']
+  #   topic_name_camera: '/wild_visual_navigation_node/current_prediction'
+  #   topic_name_camera_info: '/wild_visual_navigation_node/camera_info'
+  #   channels: ["visual_traversability"]
+  #   data_type: image
     
   # front_cam:
   #   channels: ['rgb','feat_0','feat_1','grass','tree','fence','person']
@@ -94,11 +94,11 @@ subscribers:
   #   confidence_threshold: 10
   #   feature_extractor: False
     
-  # front_bpearl:
-  #   channels: []
-  #   fusion: []
-  #   topic_name: /point_cloud_filter_rsl/filter_and_merger_rsl
-  #   data_type: pointcloud
+  front_bpearl:
+    channels: []
+    fusion: []
+    topic_name: /point_cloud_filter_rsl/filter_and_merger_rsl
+    data_type: pointcloud
   
   # rear_bpearl:
   #   channels: []
@@ -106,32 +106,26 @@ subscribers:
   #   topic_name: /robot_self_filter/bpearl_rear/point_cloud
   #   data_type: pointcloud
   
-  front_depth:
-    channels: []
-    fusion: []
-    topic_name: /depth_camera_front/point_cloud_self_filtered
-    data_type: pointcloud
+  # front_depth:
+  #   channels: []
+  #   fusion: []
+  #   topic_name: /depth_camera_front/point_cloud_self_filtered
+  #   data_type: pointcloud
 
-  rear_depth:
-    channels: []
-    fusion: []
-    topic_name: /depth_camera_rear/point_cloud_self_filtered
-    data_type: pointcloud
+  # rear_depth:
+  #   channels: []
+  #   fusion: []
+  #   topic_name: /depth_camera_rear/point_cloud_self_filtered
+  #   data_type: pointcloud
 
-  left_depth:
-    channels: []
-    fusion: []
-    topic_name: /depth_camera_left/point_cloud_self_filtered
-    data_type: pointcloud
+  # left_depth:
+  #   channels: []
+  #   fusion: []
+  #   topic_name: /depth_camera_left/point_cloud_self_filtered
+  #   data_type: pointcloud
 
-  right_depth:
-    channels: []
-    fusion: []
-    topic_name: /depth_camera_right/point_cloud_self_filtered
-    data_type: pointcloud
-  
-  velodyne:
-    channels: []
-    fusion: []
-    topic_name: /point_cloud_filter/lidar/point_cloud_filtered
-    data_type: pointcloud
+  # right_depth:
+  #   channels: []
+  #   fusion: []
+  #   topic_name: /depth_camera_right/point_cloud_self_filtered
+  #   data_type: pointcloud

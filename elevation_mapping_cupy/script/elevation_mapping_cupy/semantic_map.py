@@ -392,9 +392,7 @@ class SemanticMap:
             sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
             # do not divide by zero
             sum_alpha[sum_alpha == 0] = 1
-            self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(
-                sum_alpha, axis=0
-            )
+            self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
 
         if "color" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "color")

@@ -1,9 +1,9 @@
 subscribers:
   front_cam:
-    channels: [ 'rgb','feat_0','feat_1','__background__','car',"max" ]
-    fusion: [ 'color','bayesian_inference','bayesian_inference','class_average','class_average',"class_max" ]
+    channels: [ 'rgb','feat_0','feat_1']
+    fusion: [ 'color','bayesian_inference','bayesian_inference']
     topic_name: '/elvation_mapping/pointcloud_semantic'
-    semantic_segmentation: True
+    semantic_segmentation: False
     segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
     show_label_legend: True
     data_type: pointcloud

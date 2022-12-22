@@ -61,7 +61,7 @@ weight_file: '$(rospack find elevation_mapping_cupy)/config/weights.dat'        
 use_only_above_for_upper_bound: false
 
 #### Plugins ########
-plugin_config_file: '$(rospack find lonomy_configuration)/elevation_map/config/plugin_config.yaml'
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/lonomy_plugin_config.yaml'
 
 #### Subscribers ########
 
@@ -73,7 +73,7 @@ plugin_config_file: '$(rospack find lonomy_configuration)/elevation_map/config/p
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance','sem_fil']
+    layers: ['elevation', 'traversability', 'variance']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
   elevation_map_recordable:
@@ -81,8 +81,8 @@ publishers:
     basic_layers: ['elevation', 'traversability']
     fps: 2.0
   elevation_map_filter:
-    layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound','rgb','robot_centric_elevation','sem_fil','sem_traversability','rgb_image','gray_image']
-    basic_layers: ['min_filter']
+    layers: [elevation, 'min_filter', 'smooth', 'inpaint', 'upper_bound','rgb_image', 'gray_image']
+    basic_layers: [elevation, 'min_filter']
     fps: 3.0
 
 #### Initializer ########
