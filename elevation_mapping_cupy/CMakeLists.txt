@@ -25,6 +25,7 @@ find_package(catkin REQUIRED
   elevation_map_msgs
   grid_map_msgs
   grid_map_ros
+  image_transport
   pcl_ros
   pybind11_catkin
 )
@@ -43,6 +44,7 @@ catkin_package(
     geometry_msgs
     elevation_map_msgs
     grid_map_ros
+    image_transport
     pcl_ros
     pybind11_catkin
 )

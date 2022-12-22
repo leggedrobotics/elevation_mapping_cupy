@@ -18,6 +18,7 @@
 // ROS
 #include <geometry_msgs/PolygonStamped.h>
 #include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -61,7 +62,7 @@ class ElevationMappingNode {
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
   
-  using ImageSubscriber = message_filters::Subscriber<sensor_msgs::Image>;
+  using ImageSubscriber = image_transport::SubscriberFilter;
   using ImageSubscriberPtr = std::shared_ptr<ImageSubscriber>;
   using CameraInfoSubscriber = message_filters::Subscriber<sensor_msgs::CameraInfo>;
   using CameraInfoSubscriberPtr = std::shared_ptr<CameraInfoSubscriber>;
@@ -94,6 +95,7 @@ class ElevationMappingNode {
   visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) const;
 
   ros::NodeHandle nh_;
+  image_transport::ImageTransport it_;
   std::vector<ros::Subscriber> pointcloudSubs_;
   std::vector<ImageSubscriberPtr> imageSubs_;
   std::vector<CameraInfoSubscriberPtr> cameraInfoSubs_;

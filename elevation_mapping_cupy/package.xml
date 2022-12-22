@@ -19,6 +19,7 @@
   <depend>grid_map_msgs</depend>
   <depend>elevation_map_msgs</depend>
   <depend>grid_map_ros</depend>
+  <depend>image_transport</depend>
   <depend>pcl_ros</depend>
   <depend>pybind11_catkin</depend>
 
