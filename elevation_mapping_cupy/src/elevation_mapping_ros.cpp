@@ -87,7 +87,24 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       std::string camera_topic = subscriber.second["topic_name_camera"];
       std::string info_topic = subscriber.second["topic_name_camera_info"];
 
-      ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(nh_, camera_topic, 1);
+      std::cout << "pre camera_topic: " << camera_topic << std::endl;
+
+      // Handle compressed images
+      std::string image_transport_hint = "compressed";
+      std::size_t ind = camera_topic.find(image_transport_hint);
+      if (ind != std::string::npos) {
+        image_transport_hint = camera_topic.substr(ind, camera_topic.length()); 
+        camera_topic.erase(ind-1, camera_topic.length());
+      } else {
+        image_transport_hint = "raw";
+      }
+
+      std::cout << "post camera_topic: " << camera_topic << std::endl;
+      std::cout << "image_transport_hint: " << image_transport_hint << std::endl;
+
+      // Setup subscriber
+      const auto hint = image_transport::TransportHints(image_transport_hint, ros::TransportHints(), ros::NodeHandle(camera_topic));
+      ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(nh_, camera_topic, 1, hint.getRosHints());
       CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(nh_, info_topic, 1);
       imageSubs_.push_back(image_sub);
       cameraInfoSubs_.push_back(cam_info_sub);
