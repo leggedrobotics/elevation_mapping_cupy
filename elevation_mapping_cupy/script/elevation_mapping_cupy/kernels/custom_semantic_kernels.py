@@ -1,6 +1,7 @@
 import cupy as cp
 import string
 
+
 def sum_kernel(
     resolution,
     width,
@@ -37,11 +38,12 @@ def sum_kernel(
     )
     return sum_kernel
 
+
 def sum_compact_kernel(
-        resolution,
-        width,
-        height,
-    ):
+    resolution,
+    width,
+    height,
+):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_compact_kernel = cp.ElementwiseKernel(
         in_params="raw U p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -53,7 +55,7 @@ def sum_compact_kernel(
                     return layer * layer_n + idx;
                 }
             """
-        ).substitute(resolution=resolution,width=width, height=height),
+        ).substitute(resolution=resolution, width=width, height=height),
         operation=string.Template(
             """
             U idx = p[i * pcl_channels[0]];
@@ -68,18 +70,17 @@ def sum_compact_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="sum_compact_kernel",
     )
     return sum_compact_kernel
 
 
 def sum_max_kernel(
-        resolution,
-        width,
-        height,
-    ):
+    resolution,
+    width,
+    height,
+):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_max_kernel = cp.ElementwiseKernel(
         in_params="raw U p, raw U max_pt, raw T max_id, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -91,7 +92,7 @@ def sum_max_kernel(
                     return layer * layer_n + idx;
                 }
             """
-        ).substitute(resolution=resolution,width=width, height=height),
+        ).substitute(resolution=resolution, width=width, height=height),
         operation=string.Template(
             """
             U idx = p[i * pcl_channels[0]];
@@ -108,11 +109,11 @@ def sum_max_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="sum_max_kernel",
     )
     return sum_max_kernel
+
 
 def alpha_kernel(
     resolution,
@@ -189,8 +190,8 @@ def average_kernel(
 
 
 def bayesian_inference_kernel(
-        width,
-        height,
+    width,
+    height,
 ):
     bayesian_inference_kernel = cp.ElementwiseKernel(
         in_params=" raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -219,16 +220,16 @@ def bayesian_inference_kernel(
                 }
             }
             """
-        ).substitute(
-        ),
+        ).substitute(),
         name="bayesian_inference_kernel",
     )
     return bayesian_inference_kernel
 
+
 def class_average_kernel(
-        width,
-        height,
-        alpha,
+    width,
+    height,
+    alpha,
 ):
     class_average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -258,7 +259,8 @@ def class_average_kernel(
                 }
             }
             """
-        ).substitute(alpha=alpha,
+        ).substitute(
+            alpha=alpha,
         ),
         name="class_average_kernel",
     )

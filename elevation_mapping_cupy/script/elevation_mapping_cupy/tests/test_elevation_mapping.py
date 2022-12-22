@@ -5,9 +5,7 @@ import numpy as np
 
 
 def encode_max(maxim, index):
-    maxim, index = cp.asarray(maxim, dtype=cp.float32), cp.asarray(
-        index, dtype=cp.uint32
-    )
+    maxim, index = cp.asarray(maxim, dtype=cp.float32), cp.asarray(index, dtype=cp.uint32)
     # fuse them
     maxim = maxim.astype(cp.float16)
     maxim = maxim.view(cp.uint16)
@@ -57,9 +55,7 @@ class TestElevationMap:
             ind = cp.random.randint(0, 2, (100000, len(channels)), dtype=cp.uint32).astype(cp.float32)
             points = encode_max(val, ind)
         else:
-            points = cp.random.rand(
-                100000, len(channels), dtype=elmap_ex.param.data_type
-            )
+            points = cp.random.rand(100000, len(channels), dtype=elmap_ex.param.data_type)
         R = cp.random.rand(3, 3, dtype=elmap_ex.param.data_type)
         t = cp.random.rand(3, dtype=elmap_ex.param.data_type)
         elmap_ex.input(points, channels, R, t, 0, 0)

@@ -12,8 +12,8 @@
     <!-- Elevation mapping node -->
     <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen" >
         <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)" />
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_parameters.yaml" />
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_sensor_parameter.yaml" />
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/sim_parameters.yaml" />
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/sim_sensor_parameter.yaml" />
     </node>
 
       <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/anymal.rviz"/>

@@ -68,9 +68,7 @@ class SemanticTraversability(PluginBase):
                 idx = plugin_layer_names.index(name)
                 tempo = plugin_layers[idx]
             else:
-                print(
-                    "Layer {} is not in the map, returning traversabiltiy!".format(name)
-                )
+                print("Layer {} is not in the map, returning traversabiltiy!".format(name))
                 return
             if self.type[it] == "traversability":
                 tempo = cp.where(tempo <= self.thresholds[it], 1, 0)

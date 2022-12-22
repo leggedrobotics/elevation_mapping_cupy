@@ -9,8 +9,6 @@
         <rosparam command="load" file="$(find elevation_mapping_cupy)/config/lonomy_sensor_parameter.yaml" />
     </node>
 
-
-
-     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/lonomy_single.rviz"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/lonomy_single.rviz"/>
 </launch>
 <!--        launch-prefix="gdb -ex run - -args"-->
