@@ -39,7 +39,7 @@ subscribers:
   
   alphasense_front_rgb:
     fusion: ['image_color']
-    topic_name_camera: /alphasense_driver_ros/cam4/debayered/compressed
+    topic_name_camera: /alphasense_driver_ros/cam4/debayered
     topic_name_camera_info: /alphasense_driver_ros/cam4/camera_info
     channels: ["rgb_image"]
     data_type: image
@@ -47,7 +47,7 @@ subscribers:
   
   alphasense_left_rgb:
     fusion: ['image_color']
-    topic_name_camera: /alphasense_driver_ros/cam3/debayered/compressed
+    topic_name_camera: /alphasense_driver_ros/cam3/debayered
     topic_name_camera_info: /alphasense_driver_ros/cam3/camera_info
     channels: ["rgb_image"]
     data_type: image
@@ -55,7 +55,7 @@ subscribers:
 
   alphasense_right_rgb:
     fusion: ['image_color']
-    topic_name_camera: /alphasense_driver_ros/cam5/debayered/compressed
+    topic_name_camera: /alphasense_driver_ros/cam5/debayered
     topic_name_camera_info: /alphasense_driver_ros/cam5/camera_info
     channels: ["rgb_image"]
     data_type: image
