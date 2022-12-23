@@ -21,7 +21,8 @@
 namespace elevation_mapping_cupy {
 
 ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
-    : lowpassPosition_(0, 0, 0),
+    : it_(nh),
+      lowpassPosition_(0, 0, 0),
       lowpassOrientation_(0, 0, 0, 1),
       positionError_(0),
       orientationError_(0),
@@ -96,9 +97,25 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       std::string camera_topic = subscriber.second["topic_name_camera"];
       std::string info_topic = subscriber.second["topic_name_camera_info"];
 
-      ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(nh_, camera_topic, 1);
-      CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(nh_, info_topic, 1);
+      // Handle compressed images with transport hints
+      // We obtain the hint from the last part of the topic name
+      std::string transport_hint = "compressed";
+      std::size_t ind = camera_topic.find(transport_hint); // Find if compressed is in the topic name
+      if (ind != std::string::npos) {
+        transport_hint = camera_topic.substr(ind, camera_topic.length()); // Get the hint as the last part 
+        camera_topic.erase(ind - 1, camera_topic.length()); // We remove the hint from the topic
+      } else {
+        transport_hint = "raw"; // In the default case we assume raw topic
+      }
+
+      // Setup subscriber
+      const auto hint = image_transport::TransportHints(transport_hint, ros::TransportHints(), ros::NodeHandle(camera_topic));
+      ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>();
+      image_sub->subscribe(it_, camera_topic, 1, hint);
       imageSubs_.push_back(image_sub);
+
+      CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>();
+      cam_info_sub->subscribe(nh_, info_topic, 1);
       cameraInfoSubs_.push_back(cam_info_sub);
 
       CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
