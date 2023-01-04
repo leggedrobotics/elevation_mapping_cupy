@@ -48,9 +48,7 @@ cp.cuda.set_allocator(pool.malloc)
 
 
 class ElevationMap:
-    """
-    Core elevation mapping class.
-    """
+    """Core elevation mapping class."""
 
     def __init__(self, param: Parameter):
         """
@@ -230,7 +228,7 @@ class ElevationMap:
 
     def compile_kernels(self):
         """Compile all kernels belonging to the elevation map."""
-        # Compile custom cuda kernels.
+
         self.new_map = cp.zeros(
             (self.elevation_map.shape[0], self.cell_n, self.cell_n),
             dtype=self.data_type,
@@ -285,6 +283,8 @@ class ElevationMap:
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
     def compile_image_kernels(self):
+        """Compile kernels related to processing image messages."""
+
         for config in self.param.subscriber_cfg.values():
             if config["data_type"] == "image":
                 self.valid_correspondence = cp.asarray(
@@ -390,7 +390,12 @@ class ElevationMap:
         self.update_normal(self.traversability_input)
 
     def clear_overlap_map(self, t):
-        # Clear overlapping area around center
+        """Clear overlapping areas around the map center.
+
+        Args:
+            t (cupy._core.core.ndarray): Absolute point position
+        """
+
         height_min = t[2] - self.param.overlap_clear_range_z
         height_max = t[2] + self.param.overlap_clear_range_z
         near_map = self.elevation_map[:, self.cell_min : self.cell_max, self.cell_min : self.cell_max]
@@ -439,7 +444,6 @@ class ElevationMap:
         Returns:
             None:
         """
-        # Update elevation map using point cloud input.
         raw_points = cp.asarray(raw_points, dtype=self.data_type)
         additional_channels = channels[3:]
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
@@ -455,13 +459,27 @@ class ElevationMap:
     def input_image(
         self,
         sub_key: str,
-        image: cp._core.core.ndarray,
+        image: List[cp._core.core.ndarray],
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
         K: cp._core.core.ndarray,
         image_height: int,
         image_width: int,
     ):
+        """Input image and fuse the new measurements to update the elevation map.
+
+        Args:
+            sub_key (str): Key used to identify the subscriber configuration
+            image (List[cupy._core.core.ndarray]): List of array containing the individual image input channels
+            R (cupy._core.core.ndarray): Camera optical center rotation
+            t (cupy._core.core.ndarray): Camera optical center translation
+            K (cupy._core.core.ndarray): Camera intrinsics
+            image_height (int): Image height
+            image_width (int): Image width
+
+        Returns:
+            None:
+        """
         image = np.stack(image, axis=0)
         if len(image.shape) == 2:
             image = image[None]
@@ -619,10 +637,10 @@ class ElevationMap:
         """Check if the layer exists in elevation map or in the semantic map.
 
         Args:
-            name (str):
+            name (str): Layer name
 
         Returns:
-            bool:
+            bool: Indicates if layer exists.
         """
         if name in self.layer_names:
             return True
