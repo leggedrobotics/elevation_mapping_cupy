@@ -32,8 +32,7 @@ def semmap_ex(add_lay, fusion_alg):
         ),
         (["grass", "tree"], ["class_average", "class_average"], ["grass"]),
         (["grass", "tree"], ["class_average", "class_max"], ["tree"]),
-        (["max1","max2"], ["class_max", "class_max"], ["max1","max2"]),
-
+        (["max1", "max2"], ["class_max", "class_max"], ["max1", "max2"]),
     ],
 )
 def test_plugin_manager(semmap_ex, channels):

@@ -18,13 +18,12 @@ class ImageDebugNode:
         self.cv_bridge = CvBridge()
         # rospy.Subscriber("", CameraInfo, self.cam_info_callback)
         rospy.Subscriber("/zed2i/zed_node/right/image_rect_color", Image, self.image_callback)
-        self.debug_pub = rospy.Publisher("/debug_image" , Image, queue_size=2)
-        
-        
+        self.debug_pub = rospy.Publisher("/debug_image", Image, queue_size=2)
+
     def image_callback(self, rgb_msg):
-        img =  self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
-        out = np.zeros((img.shape[0],img.shape[1]), dtype=np.uint16)
-        out[:, :int(img.shape[1]/2)] = 1
+        img = self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
+        out = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint16)
+        out[:, : int(img.shape[1] / 2)] = 1
         seg_msg = self.cv_bridge.cv2_to_imgmsg(out, encoding="mono16")
         seg_msg.header = rgb_msg.header
         self.debug_pub.publish(seg_msg)
