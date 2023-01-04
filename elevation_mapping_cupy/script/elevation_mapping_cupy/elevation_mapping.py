@@ -312,11 +312,11 @@ class ElevationMap(object):
         self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
 
-    def input(self, raw_points,channels, R, t, position_noise, orientation_noise):
+    def input(self, raw_points, channels, R, t, position_noise, orientation_noise):
         # Update elevation map using point cloud input.
         raw_points = cp.asarray(raw_points)
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
-        self.update_map_with_kernel(raw_points[:,:3], cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
+        self.update_map_with_kernel(raw_points[:, :3], cp.asarray(R), cp.asarray(t), position_noise, orientation_noise)
 
     def update_normal(self, dilated_map):
         with self.map_lock:
