@@ -299,9 +299,9 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   }
   uint array_dim = channels.size();
 
-  RowMatrixXd points = RowMatrixXd(pcl_pc->width,array_dim);
+  RowMatrixXd points = RowMatrixXd(pcl_pc->width*pcl_pc->height,array_dim);
 
-  for (unsigned int i = 0; i < pcl_pc->width; ++i) {
+  for (unsigned int i = 0; i < pcl_pc->width*pcl_pc->height; ++i) {
     int jit = 0;
     for(unsigned  int j = 0; j<add_element.size();++j){
         if(add_element[j]){

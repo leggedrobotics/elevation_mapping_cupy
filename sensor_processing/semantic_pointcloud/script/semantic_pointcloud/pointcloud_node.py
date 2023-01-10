@@ -37,7 +37,7 @@ class PointcloudNode:
         print("--------------Pointcloud Parameters-------------------")
         print(self.param.dumps_yaml())
         print("--------------End of Parameters-----------------------")
-
+        self.semseg_color_map = None
         # setup custom dtype
         self.create_custom_dtype()
         # setup semantics
@@ -148,7 +148,8 @@ class PointcloudNode:
         nclasses = len(self.labels)
         row_size = 50
         col_size = 500
-        cmap = self.semseg_color_map
+        if self.param.semantic_segmentation:
+            cmap = self.semseg_color_map
         array = np.empty((row_size * (nclasses), col_size, cmap.shape[1]), dtype=cmap.dtype)
         for i in range(nclasses):
             array[i * row_size : i * row_size + row_size, :] = cmap[i]
@@ -281,7 +282,7 @@ class PointcloudNode:
         values = prediction[:, v.get(), u.get()].get()
         for it, channel in enumerate(self.semantic_model["model"].actual_channels):
             points[channel] = values[it]
-        if self.param.publish_segmentation_image:
+        if self.param.publish_segmentation_image and self.param.semantic_segmentation:
             self.prediction_img = prediction
 
     def extract_features(self, image, points, u, v):
@@ -299,8 +300,9 @@ class PointcloudNode:
             points[channel] = values[it]
 
     def publish_segmentation_image(self, probabilities):
-        colors = cp.asarray(self.semseg_color_map)
-        assert colors.ndim == 2 and colors.shape[1] == 3
+        if self.param.semantic_segmentation:
+            colors = cp.asarray(self.semseg_color_map)
+            assert colors.ndim == 2 and colors.shape[1] == 3
         if self.P is None:
             return
         prob = cp.zeros((len(self.labels),) + probabilities.shape[1:])
