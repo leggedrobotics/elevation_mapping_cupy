@@ -30,9 +30,9 @@ class PointcloudParameter(Serializable):
         ]
     )
 
-    semantic_segmentation: bool = True
+    semantic_segmentation: bool = False
     segmentation_model: str = "lraspp_mobilenet_v3_large"
-    publish_segmentation_image: bool = True
+    publish_segmentation_image: bool = False
     segmentation_image_topic: str = "/semantic_pointcloud/sem_seg"
     pub_all: bool = False
     show_label_legend: bool = False
@@ -41,7 +41,7 @@ class PointcloudParameter(Serializable):
     image_topic: str = "/zed2i/zed_node/left/image_rect_color"
     depth_topic: str = "/zed2i/zed_node/depth/depth_registered"
     cam_frame: str = "zed2i_right_camera_optical_frame"
-    confidence: bool = True
+    confidence: bool = False
     confidence_topic: str = "/zed2i/zed_node/confidence/confidence_map"
     confidence_threshold: int = 10
 

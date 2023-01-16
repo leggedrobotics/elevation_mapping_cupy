@@ -3,6 +3,7 @@ from torchvision.models.segmentation import (
     lraspp_mobilenet_v3_large,
     LRASPP_MobileNet_V3_Large_Weights,
 )
+from torchvision.models.segmentation import (deeplabv3_mobilenet_v3_large, DeepLabV3_MobileNet_V3_Large_Weights )
 import torch
 import torchvision.transforms.functional as TF
 from torchvision.transforms import Resize
@@ -52,6 +53,14 @@ def resolve_model(name, config=None):
         model = PytorchModel(net, weights, config)
         return {
             "name": "lraspp_mobilenet_v3_large",
+            "model": model,
+        }
+    elif name == "deeplabv3_mobilenet_v3_large":
+        weights = DeepLabV3_MobileNet_V3_Large_Weights.COCO_WITH_VOC_LABELS_V1
+        net = deeplabv3_mobilenet_v3_large
+        model = PytorchModel(net, weights, config)
+        return {
+            "name": "deeplabv3_mobilenet_v3_large",
             "model": model,
         }
     elif name == "detectron_coco_panoptic_fpn_R_101_3x":

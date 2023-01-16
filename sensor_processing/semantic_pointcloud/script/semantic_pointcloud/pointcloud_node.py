@@ -26,11 +26,11 @@ class PointcloudNode:
         """
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: PointcloudParameter = PointcloudParameter()
+        self.param.feature_config.input_size = [80, 160]
         if rospy.has_param("/semantic_pointcloud/subscribers"):
             config = rospy.get_param("/semantic_pointcloud/subscribers")
             self.param: PointcloudParameter = PointcloudParameter.from_dict(config[sensor_name])
         else:
-            self.param.feature_config.input_size = [80, 160]
             print("NO ROS ENV found.")
 
         self.param.sensor_name = sensor_name
@@ -85,8 +85,8 @@ class PointcloudNode:
             confidence_sub = message_filters.Subscriber(self.param.confidence_topic, Image)
             ts = message_filters.ApproximateTimeSynchronizer(
                 [
-                    rgb_sub,
                     depth_sub,
+                    rgb_sub,
                     confidence_sub,
                 ],
                 queue_size=10,
@@ -95,8 +95,8 @@ class PointcloudNode:
         else:
             ts = message_filters.ApproximateTimeSynchronizer(
                 [
-                    rgb_sub,
                     depth_sub,
+                    rgb_sub,
                 ],
                 queue_size=10,
                 slop=0.5,
@@ -184,11 +184,13 @@ class PointcloudNode:
         self.width = msg.width
         self.header = msg.header
 
-    def image_callback(self, rgb_msg, depth_msg, confidence_msg=None):
+    def image_callback(self,  depth_msg, rgb_msg=None,confidence_msg=None):
         confidence = None
+        image = None
         if self.P is None:
             return
-        image = cp.asarray(self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8"))
+        if rgb_msg is not None:
+            image = cp.asarray(self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8"))
         depth = cp.asarray(self.cv_bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough"))
         if confidence_msg is not None:
             confidence = cp.asarray(self.cv_bridge.imgmsg_to_cv2(confidence_msg, desired_encoding="passthrough"))
@@ -335,7 +337,7 @@ class PointcloudNode:
     def publish_pointcloud(self, pcl, header):
         pc2 = ros_numpy.msgify(PointCloud2, pcl)
         pc2.header = header
-        pc2.header.frame_id = self.param.cam_frame
+        # pc2.header.frame_id = self.param.cam_frame
         self.pcl_pub.publish(pc2)
 
 

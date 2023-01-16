@@ -1,7 +1,14 @@
 <launch>
     <arg name="use_sim_time" default="true" />
     <arg name="rviz" default="true"/>
+    <!-- Give the robot description parameter a name -->
+    <arg name="description_name"           default="anymal_description"/>
+    <!-- Set robot description path -->
+    <arg name="description_file"           default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
 
+
+    <!-- Run xacro script to generate ANYmal description -->
+    <param name="$(arg description_name)" textfile="$(arg description_file)"/>
     <!-- Define parameters -->
     <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)" />
 
