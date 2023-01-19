@@ -28,7 +28,6 @@ from elevation_mapping_cupy.kernels import normal_filter_kernel
 from elevation_mapping_cupy.kernels import polygon_mask_kernel
 from elevation_mapping_cupy.kernels import image_to_map_correspondence_kernel
 
-
 from elevation_mapping_cupy.map_initializer import MapInitializer
 from elevation_mapping_cupy.plugins.plugin_manager import PluginManager
 from elevation_mapping_cupy.semantic_map import SemanticMap
@@ -366,7 +365,6 @@ class ElevationMap:
             )
             self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
-            # self.update_additional_layers(additional_fusion, points_all, channels, R, t)
             self.semantic_map.update_layers_pointcloud(points_all, channels, R, t, self.new_map)
 
             if self.param.enable_overlap_clearance:
@@ -428,8 +426,8 @@ class ElevationMap:
         channels: List[str],
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
-        position_noise: int,
-        orientation_noise: int,
+        position_noise: float,
+        orientation_noise: float,
     ):
         """Input the pointcloud and fuse the new measurements to update the elevation map.
 
@@ -438,8 +436,8 @@ class ElevationMap:
             channels (List[str]):
             R  (cupy._core.core.ndarray):
             t (cupy._core.core.ndarray):
-            position_noise (int):
-            orientation_noise (int):
+            position_noise (float):
+            orientation_noise (float):
 
         Returns:
             None:

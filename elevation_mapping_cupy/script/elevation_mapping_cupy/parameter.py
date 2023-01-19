@@ -8,7 +8,8 @@ import numpy as np
 from simple_parsing.helpers import Serializable
 from dataclasses import field
 
-# todo add this for the future
+
+# todo add these dataclasses
 @dataclass
 class Subscriber(Serializable):
     channels: list = field(default_factory=lambda: ["feat_0"])

@@ -90,7 +90,6 @@ class SemanticFilter(PluginBase):
                 max_idcs = cp.append(max_idcs, it).astype(cp.int32)
 
         # check which has the highest value
-        # todo we are using the new_map because of the bayesian
         if len(layer_indices) > 0:
             class_map = cp.amax(semantic_map.semantic_map[layer_indices], axis=0)
             class_map_id = cp.argmax(semantic_map.semantic_map[layer_indices], axis=0)

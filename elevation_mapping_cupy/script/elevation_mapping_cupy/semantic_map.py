@@ -32,7 +32,6 @@ class SemanticMap:
 
         self.param = param
 
-        # TODO: maps channel to fusion strategy (maybe rename)
         self.layer_specs = {}
         self.layer_names = []
         self.unique_fusion = []
@@ -45,7 +44,6 @@ class SemanticMap:
                     self.layer_specs[c] = f
                 else:
                     assert self.layer_specs[c] == f, "Error: Single layer has multiple fusion algorithms!"
-
                 if f not in self.unique_fusion:
                     self.unique_fusion.append(f)
 
@@ -59,8 +57,8 @@ class SemanticMap:
             (self.amount_layer_names, self.param.cell_n, self.param.cell_n),
             param.data_type,
         )
-        # which layers should be deleted at each measurement, per default everyone, if a layer should be kept then
-        # set it at compile kernels
+        # which layers should be reset to zero at each update, per default everyone,
+        # if a layer should not be reset, it is defined in compile_kernels function
         self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool8)
 
     def clear(self):
@@ -71,11 +69,7 @@ class SemanticMap:
         Returns:
             None:
         """
-        # TODO: maybe this could be improved by creating functions for each single
-        # create a base class containing compile kernel as well as update and this then can be created for various
-        # then for each method this two functions canbe overloaded. and called through a list of all the algporithms
-        # that need to be called
-        # but I am not sure as we would need to pass a lot of arguments... check plugin
+        # TODO: maybe this could be improved by creating functions for each single fusion algorithm
         if "average" in self.unique_fusion:
             print("Initialize fusion kernel")
             self.sum_kernel = sum_kernel(
@@ -97,7 +91,7 @@ class SemanticMap:
                 ),
                 self.param.data_type,
             )
-            # todo initialize the variance with a value different than 0
+            # TODO initialize the variance with a value different than 0
             self.sum_compact_kernel = sum_compact_kernel(
                 self.param.resolution,
                 self.param.cell_n,
@@ -238,12 +232,12 @@ class SemanticMap:
         """
         # this contains exactly the fusion alg type for each channel of the pcl
         pcl_val_list = [self.layer_specs[x] for x in pcl_channels]
-        # this contains the indeces of the pointcloud where we have to perform a certain fusion
+        # this contains the indices of the point cloud where we have to perform a certain fusion
         pcl_indices = cp.array(
             [idp + 3 for idp, x in enumerate(pcl_val_list) if x == fusion_alg],
             dtype=np.int32,
         )
-        # create a list of indeces of the layers that will be updated by the pointcloud with specific fusion alg
+        # create a list of indices of the layers that will be updated by the point cloud with specific fusion alg
         layer_indices = cp.array([], dtype=np.int32)
         for it, (key, val) in enumerate(self.layer_specs.items()):
             if key in pcl_channels and val == fusion_alg:
@@ -339,8 +333,6 @@ class SemanticMap:
             sum_alpha[sum_alpha == 0] = 1
             self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
 
-            # assert  cp.unique(cp.sum(self.map[layer_ids], axis=0)) equal to zero or to nan
-
         if "class_max" in additional_fusion:
             # get indices that are of type class_max in pointclopud and in layers
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "class_max")
@@ -379,7 +371,7 @@ class SemanticMap:
             for i, lay in enumerate(layer_ids):
                 c = cp.mgrid[0 : self.new_map.shape[1], 0 : self.new_map.shape[2]]
                 # self.prob_sum[self.elements_to_shift["id_max"][i], c[0], c[1]] += self.new_map[lay]
-                # todo add residual of prev alpha to the prob_sum
+                # TODO add residual of prev alpha to the prob_sum
                 # res = 1- self.new_map[lay]
                 # res /= (len(self.unique_id)-1)
 
@@ -466,7 +458,7 @@ class SemanticMap:
                 self.semantic_map[sem_map_idx] = self.new_map[sem_map_idx]
 
             else:
-                raise ValueError("Fusion for image is unkown.")
+                raise ValueError("Fusion for image is unknown.")
 
     def decode_max(self, mer):
         mer = mer.astype(cp.float32)
@@ -489,8 +481,6 @@ class SemanticMap:
         idx = self.layer_names.index(name)
         c = self.process_map_for_publish(self.semantic_map[idx])
         c = c.astype(np.float32)
-        # c = xp.uint32(c.get())
-        # c.dtype = np.float32
         return c
 
     def get_semantic(self, name):
