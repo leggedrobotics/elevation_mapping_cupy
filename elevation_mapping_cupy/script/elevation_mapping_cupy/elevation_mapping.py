@@ -318,8 +318,8 @@ class ElevationMap:
             channels (List[str]):
             R (cupy._core.core.ndarray):
             t (cupy._core.core.ndarray):
-            position_noise (int):
-            orientation_noise (int):
+            position_noise (float):
+            orientation_noise (float):
         """
         self.new_map *= 0.0
         error = cp.array([0.0], dtype=cp.float32)

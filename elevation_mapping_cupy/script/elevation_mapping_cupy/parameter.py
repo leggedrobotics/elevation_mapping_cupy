@@ -32,7 +32,7 @@ class Subscriber(Serializable):
 @dataclass
 class Subscribers(Serializable):
     front_cam: Subscriber = Subscriber
-
+    
 
 @dataclass
 class Parameter(Serializable):
