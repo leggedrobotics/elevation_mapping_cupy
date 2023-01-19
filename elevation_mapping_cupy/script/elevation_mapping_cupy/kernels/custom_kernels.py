@@ -141,7 +141,6 @@ def add_points_kernel(
     enable_edge_shaped=True,
     enable_visibility_cleanup=True,
 ):
-
     add_points_kernel = cp.ElementwiseKernel(
         in_params="raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
         out_params="raw U p, raw U map, raw T newmap",
@@ -292,7 +291,6 @@ def error_counting_kernel(
     ramped_height_range_b,
     ramped_height_range_c,
 ):
-
     error_counting_kernel = cp.ElementwiseKernel(
         in_params="raw U map, raw U p, raw U center_x, raw U center_y, raw U R, raw U t",
         out_params="raw U newmap, raw T error, raw T error_cnt",
