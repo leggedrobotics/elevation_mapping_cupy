@@ -151,6 +151,35 @@ def average_correspondences_to_map_kernel(resolution, width, height):
     return average_correspondences_to_map_kernel
 
 
+def exponential_correspondences_to_map_kernel(resolution, width, height, alpha):
+    exponential_correspondences_to_map_kernel = cp.ElementwiseKernel(
+        in_params="raw U sem_map, raw U map_idx, raw U image_mono, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
+        out_params="raw U new_sem_map",
+        preamble=string.Template(
+            """
+            __device__ int get_map_idx(int idx, int layer_n) {
+                const int layer = ${width} * ${height};
+                return layer * layer_n + idx;
+            }
+            """
+        ).substitute(width=width, height=height),
+        operation=string.Template(
+            """
+            int cell_idx = get_map_idx(i, 0);
+            if (valid_correspondence[cell_idx]){
+                int cell_idx_2 = get_map_idx(i, 1);
+                int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
+                new_sem_map[get_map_idx(i, map_idx)] = new_sem_map[get_map_idx(i, map_idx)] * (1-${alpha}) +  ${alpha} * image_mono[idx];
+            }else{
+                new_sem_map[get_map_idx(i, map_idx)] = sem_map[get_map_idx(i, map_idx)];
+            }
+            
+            """
+        ).substitute(alpha=alpha),
+        name="exponential_correspondences_to_map_kernel",
+    )
+    return exponential_correspondences_to_map_kernel
+
 def color_correspondences_to_map_kernel(resolution, width, height):
     color_correspondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
