@@ -82,7 +82,7 @@ class PluginManager(object):
             for name, obj in inspect.getmembers(m):
                 if (
                     inspect.isclass(obj)
-                    # and issubclass(obj, PluginBase)
+                    and issubclass(obj, PluginBase)
                     and name != "PluginBase"
                 ):
                     # Add cell_n to params
