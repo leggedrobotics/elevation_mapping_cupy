@@ -429,7 +429,7 @@ class ElevationMap:
         position_noise: float,
         orientation_noise: float,
     ):
-        """Input the pointcloud and fuse the new measurements to update the elevation map.
+        """Input the point cloud and fuse the new measurements to update the elevation map.
 
         Args:
             raw_points (cupy._core.core.ndarray):

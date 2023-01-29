@@ -142,7 +142,7 @@ class SemanticMap:
             layer_cnt = self.param.fusion_algorithms.count("class_max")
             id_max = cp.zeros(
                 (layer_cnt, self.param.cell_n, self.param.cell_n),
-                dtype=np.uint32,
+                dtype=cp.uint32,
             )
             self.elements_to_shift["id_max"] = id_max
             self.unique_id = cp.array([0])
@@ -212,10 +212,10 @@ class SemanticMap:
         return fusion_list
 
     def get_layer_indices(self, fusion_alg):
-        layer_indices = cp.array([], dtype=np.int32)
+        layer_indices = cp.array([], dtype=cp.int32)
         for it, (key, val) in enumerate(self.layer_specs.items()):
             if key in val == fusion_alg:
-                layer_indices = cp.append(layer_indices, it).astype(np.int32)
+                layer_indices = cp.append(layer_indices, it).astype(cp.int32)
         return layer_indices
 
     def get_indices_fusion(self, pcl_channels: List[str], fusion_alg: str):
@@ -235,13 +235,13 @@ class SemanticMap:
         # this contains the indices of the point cloud where we have to perform a certain fusion
         pcl_indices = cp.array(
             [idp + 3 for idp, x in enumerate(pcl_val_list) if x == fusion_alg],
-            dtype=np.int32,
+            dtype=cp.int32,
         )
         # create a list of indices of the layers that will be updated by the point cloud with specific fusion alg
-        layer_indices = cp.array([], dtype=np.int32)
+        layer_indices = cp.array([], dtype=cp.int32)
         for it, (key, val) in enumerate(self.layer_specs.items()):
             if key in pcl_channels and val == fusion_alg:
-                layer_indices = cp.append(layer_indices, it).astype(np.int32)
+                layer_indices = cp.append(layer_indices, it).astype(cp.int32)
         return pcl_indices, layer_indices
 
     def update_layers_pointcloud(self, points_all, channels, R, t, elevation_map):
@@ -255,7 +255,7 @@ class SemanticMap:
                 t,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.semantic_map,
                 self.new_map,
                 size=(points_all.shape[0]),
@@ -264,7 +264,7 @@ class SemanticMap:
                 self.new_map,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 elevation_map,
                 self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n),
@@ -278,14 +278,14 @@ class SemanticMap:
                 t,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.sum_mean,
                 size=(points_all.shape[0]),
             )
             self.bayesian_inference_kernel(
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 elevation_map,
                 self.new_map,
                 self.sum_mean,
@@ -300,19 +300,19 @@ class SemanticMap:
                 t,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.semantic_map,
                 self.new_map,
-                size=(points_all.shape[0]),
+                size=(points_all.shape[0]*pcl_ids.shape[0]),
             )
             self.class_average_kernel(
                 self.new_map,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 elevation_map,
                 self.semantic_map,
-                size=(self.param.cell_n * self.param.cell_n),
+                size=(self.param.cell_n * self.param.cell_n*pcl_ids.shape[0]),
             )
 
         if "class_bayesian" in additional_fusion:
@@ -323,7 +323,7 @@ class SemanticMap:
                 points_all,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.new_map,
                 size=(points_all.shape[0]),
             )
@@ -362,7 +362,7 @@ class SemanticMap:
                 layer_ids,
                 cp.array(
                     [points_all.shape[1], pcl_ids.shape[0], pt_id.shape[1]],
-                    dtype=np.int32,
+                    dtype=cp.int32,
                 ),
                 self.prob_sum,
                 size=(points_all.shape[0]),
@@ -390,7 +390,7 @@ class SemanticMap:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "color")
             self.color_map = cp.zeros(
                 (1 + 3 * layer_ids.shape[0], self.param.cell_n, self.param.cell_n),
-                dtype=np.uint32,
+                dtype=cp.uint32,
             )
 
             points_all = points_all.astype(cp.float32)
@@ -400,7 +400,7 @@ class SemanticMap:
                 t,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.color_map,
                 size=(points_all.shape[0]),
             )
@@ -408,7 +408,7 @@ class SemanticMap:
                 self.color_map,
                 pcl_ids,
                 layer_ids,
-                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=np.int32),
+                cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n),
             )
