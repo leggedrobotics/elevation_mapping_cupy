@@ -264,7 +264,7 @@ def class_average_kernel(
                     map[get_map_idx(id,  map_lay[layer])] = val;
                 }
                 else{
-                    U val = ${alpha} *prev_val + ${alpha} * newmap[get_map_idx(id, map_lay[layer])]/(cnt);
+                    U val = ${alpha} *prev_val + (1-${alpha}) * newmap[get_map_idx(id, map_lay[layer])]/(cnt);
                     map[get_map_idx(id,  map_lay[layer])] = val;
                 }
             }
