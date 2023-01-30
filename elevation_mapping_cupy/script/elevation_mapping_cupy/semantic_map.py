@@ -16,6 +16,7 @@ from elevation_mapping_cupy.kernels import (
 )
 from elevation_mapping_cupy.kernels import (
     average_correspondences_to_map_kernel,
+    exponential_correspondences_to_map_kernel,
     color_correspondences_to_map_kernel,
 )
 
@@ -148,10 +149,11 @@ class SemanticMap:
             self.unique_id = cp.array([0])
 
         if "image_exponential" in self.unique_fusion:
-            self.average_correspondences_to_map_kernel = average_correspondences_to_map_kernel(
+            self.exponential_correspondences_to_map_kernel = exponential_correspondences_to_map_kernel(
                 resolution=self.param.resolution,
                 width=self.param.cell_n,
                 height=self.param.cell_n,
+                alpha=0.7
             )
 
         if "image_color" in self.unique_fusion:
@@ -430,7 +432,7 @@ class SemanticMap:
             sem_map_idx = self.get_index(channel)
 
             if fusion == "image_exponential":
-                self.average_correspondences_to_map_kernel(
+                self.exponential_correspondences_to_map_kernel(
                     self.semantic_map,
                     cp.uint64(sem_map_idx),
                     image[j],
