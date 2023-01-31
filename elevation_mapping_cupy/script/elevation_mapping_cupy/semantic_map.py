@@ -63,6 +63,9 @@ class SemanticMap:
         self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool8)
 
     def clear(self):
+        """Clear the semantic map.
+
+        """
         self.semantic_map *= 0.0
 
     def compile_kernels(self) -> None:
@@ -192,6 +195,11 @@ class SemanticMap:
                 x[idx, :, shift_value[1] :] = value
 
     def shift_map_xy(self, shift_value):
+        """Shift the map along x,y-axis according to shift values.
+
+        Args:
+            shift_value:
+        """
         self.semantic_map = cp.roll(self.semantic_map, shift_value, axis=(1, 2))
         self.pad_value(self.semantic_map, shift_value, value=0.0)
         self.new_map = cp.roll(self.new_map, shift_value, axis=(1, 2))
@@ -201,7 +209,7 @@ class SemanticMap:
             self.pad_value(el, shift_value, value=0.0)
 
     def get_fusion_of_pcl(self, channels: List[str]) -> List[str]:
-        """Get all fusion algorithms that need to be applied to a specific pointcloud
+        """Get all fusion algorithms that need to be applied to a specific pointcloud.
 
         Args:
             channels (List[str]):
@@ -214,6 +222,14 @@ class SemanticMap:
         return fusion_list
 
     def get_layer_indices(self, fusion_alg):
+        """Get the indices of the layers that are used for a specific fusion algorithm.
+
+        Args:
+            fusion_alg(str): fusion algorithm name
+
+        Returns:
+            cp.array: indices of the layers
+        """
         layer_indices = cp.array([], dtype=cp.int32)
         for it, (key, val) in enumerate(self.layer_specs.items()):
             if key in val == fusion_alg:
@@ -247,6 +263,15 @@ class SemanticMap:
         return pcl_indices, layer_indices
 
     def update_layers_pointcloud(self, points_all, channels, R, t, elevation_map):
+        """Update the semantic map with the pointcloud.
+
+        Args:
+            points_all: semantic point cloud
+            channels: list of channel names
+            R: rotation matrix
+            t: translation vector
+            elevation_map: elevation map object
+        """
         additional_fusion = self.get_fusion_of_pcl(channels)
         self.new_map[self.delete_new_layers] = 0.0
         if "average" in additional_fusion:
@@ -424,7 +449,16 @@ class SemanticMap:
         image_height: cp._core.core.ndarray,
         image_width: cp._core.core.ndarray,
     ):
+        """Update the semantic map with the new image.
 
+        Args:
+            sub_key:
+            image:
+            uv_correspondence:
+            valid_correspondence:
+            image_height:
+            image_width:
+        """
         self.new_map *= 0
         config = self.param.subscriber_cfg[sub_key]
 
@@ -463,6 +497,15 @@ class SemanticMap:
                 raise ValueError("Fusion for image is unknown.")
 
     def decode_max(self, mer):
+        """Decode the float32 value into two 16 bit value containing the class probability and the class id.
+
+        Args:
+            mer:
+
+        Returns:
+            cp.array: probability
+            cp.array: class id
+        """
         mer = mer.astype(cp.float32)
         mer = mer.view(dtype=cp.uint32)
         ma = cp.bitwise_and(mer, 0xFFFF, dtype=np.uint16)
@@ -472,6 +515,14 @@ class SemanticMap:
         return ma, ind
 
     def get_map_with_name(self, name):
+        """Return the map with the given name.
+
+        Args:
+            name: layer name
+
+        Returns:
+            cp.array: map
+        """
         if self.layer_specs[name] == "color":
             m = self.get_rgb(name)
             return m
@@ -480,19 +531,51 @@ class SemanticMap:
             return m
 
     def get_rgb(self, name):
+        """Return the rgb map with the given name.
+
+        Args:
+            name:
+
+        Returns:
+            cp.array: rgb map
+        """
         idx = self.layer_names.index(name)
         c = self.process_map_for_publish(self.semantic_map[idx])
         c = c.astype(np.float32)
         return c
 
     def get_semantic(self, name):
+        """Return the semantic map layer with the given name.
+
+        Args:
+            name(str): layer name
+
+        Returns:
+            cp.array: semantic map layer
+        """
         idx = self.layer_names.index(name)
         c = self.process_map_for_publish(self.semantic_map[idx])
         return c
 
     def process_map_for_publish(self, input_map):
+        """Remove padding.
+
+        Args:
+            input_map(cp.array): map layer
+
+        Returns:
+            cp.array: map layer without padding
+        """
         m = input_map.copy()
         return m[1:-1, 1:-1]
 
     def get_index(self, name):
+        """Return the index of the layer with the given name.
+
+        Args:
+            name(str):
+
+        Returns:
+            int: index
+        """
         return self.layer_names.index(name)

@@ -9,34 +9,8 @@ from simple_parsing.helpers import Serializable
 from dataclasses import field
 
 
-# todo add these dataclasses
-@dataclass
-class Subscriber(Serializable):
-    channels: list = field(default_factory=lambda: ["feat_0"])
-    fusion: list = field(default_factory=lambda: ["average"])
-    topic_name: str = "/elevation_mapping/pointcloud_semantic"
-    cam_frame: str = "zed2i_right_camera_optical_frame"
-    cam_info_topic: str = "/zed2i/zed_node/depth/camera_info"
-    confidence: bool = True
-    confidence_threshold: int = 10
-    confidence_topic: str = "/zed2i/zed_node/confidence/confidence_map"
-    depth_topic: str = "/zed2i/zed_node/depth/depth_registered"
-    feature_extractor: bool = False
-    image_topic: str = "/zed2i/zed_node/left/image_rect_color"
-    segmentation_model: str = "lraspp_mobilenet_v3_large"
-    semantic_segmentation: bool = True
-    show_label_legend: bool = True
-    data_type: str = "pointcloud"
-
-
-@dataclass
-class Subscribers(Serializable):
-    front_cam: Subscriber = Subscriber
-
-
 @dataclass
 class Parameter(Serializable):
-    # todo: fix subscriber
     resolution: float = 0.04
     subscriber_cfg: dict = field(
         default_factory=lambda: {

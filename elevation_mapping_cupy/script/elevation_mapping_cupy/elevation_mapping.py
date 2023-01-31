@@ -407,15 +407,26 @@ class ElevationMap:
         self.elevation_map[:, self.cell_min : self.cell_max, self.cell_min : self.cell_max] = near_map
 
     def get_additive_mean_error(self):
+        """Returns the additive mean error.
+
+        Returns:
+
+        """
         return self.additive_mean_error
 
     def update_variance(self):
+        """Adds the time variacne to the valid cells.
+        """
         self.elevation_map[1] += self.param.time_variance * self.elevation_map[2]
 
     def update_time(self):
+        """adds the time interval to the time layer.
+        """
         self.elevation_map[4] += self.param.time_interval
 
     def update_upper_bound_with_valid_elevation(self):
+        """Filters all invalid cell's upper_bound and is_upper_bound layers.
+        """
         mask = self.elevation_map[2] > 0.5
         self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
@@ -559,12 +570,28 @@ class ElevationMap:
         return m[1:-1, 1:-1]
 
     def get_elevation(self):
+        """Get the elevation layer.
+
+        Returns:
+            elevation layer
+
+        """
         return self.process_map_for_publish(self.elevation_map[0], fill_nan=True, add_z=True)
 
     def get_variance(self):
+        """Get the variance layer.
+
+        Returns:
+            variance layer
+        """
         return self.process_map_for_publish(self.elevation_map[1], fill_nan=False, add_z=False)
 
     def get_traversability(self):
+        """Get the traversability layer.
+
+        Returns:
+            traversability layer
+        """
         traversability = cp.where(
             (self.elevation_map[2] + self.elevation_map[6]) > 0.5,
             self.elevation_map[3].copy(),
@@ -575,9 +602,19 @@ class ElevationMap:
         return traversability
 
     def get_time(self):
+        """Get the time layer.
+
+        Returns:
+            time layer
+        """
         return self.process_map_for_publish(self.elevation_map[4], fill_nan=False, add_z=False)
 
     def get_upper_bound(self):
+        """Get the upper bound layer.
+
+        Returns:
+            upper_bound: upper bound layer
+        """
         if self.param.use_only_above_for_upper_bound:
             valid = cp.logical_or(
                 cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5),
@@ -590,6 +627,11 @@ class ElevationMap:
         return upper_bound
 
     def get_is_upper_bound(self):
+        """Get the is upper bound layer.
+
+        Returns:
+            is_upper_bound: layer
+        """
         if self.param.use_only_above_for_upper_bound:
             valid = cp.logical_or(
                 cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5),
@@ -608,7 +650,7 @@ class ElevationMap:
             array (cupy._core.core.ndarray):
 
         Returns:
-            module:
+            module: either np or cp
         """
         if type(array) == cp.ndarray:
             return cp
@@ -705,6 +747,11 @@ class ElevationMap:
         self.copy_to_cpu(m, data, stream=stream)
 
     def get_normal_maps(self):
+        """Get the normal maps.
+
+        Returns:
+            maps: the three normal values for each cell
+        """
         normal = self.normal_map.copy()
         normal_x = normal[0, 1:-1, 1:-1]
         normal_y = normal[1, 1:-1, 1:-1]
@@ -716,6 +763,13 @@ class ElevationMap:
         return maps
 
     def get_normal_ref(self, normal_x_data, normal_y_data, normal_z_data):
+        """Get the normal maps as reference.
+
+        Args:
+            normal_x_data:
+            normal_y_data:
+            normal_z_data:
+        """
         maps = self.get_normal_maps()
         self.stream = cp.cuda.Stream(non_blocking=True)
         normal_x_data[...] = xp.asnumpy(maps[0], stream=self.stream)
@@ -723,6 +777,15 @@ class ElevationMap:
         normal_z_data[...] = xp.asnumpy(maps[2], stream=self.stream)
 
     def get_layer(self, name):
+        """Return the layer with the name input.
+
+        Args:
+            name: The layers name.
+
+        Returns:
+            return_map: The rqeuested layer.
+
+        """
         if name in self.layer_names:
             idx = self.layer_names.index(name)
             return_map = self.elevation_map[idx]
