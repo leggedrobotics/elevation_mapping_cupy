@@ -83,7 +83,7 @@ class SemanticFilter(PluginBase):
         layer_indices = cp.array([], dtype=cp.int32)
         max_idcs = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
-            if fusion_alg in ["class_bayesian", "class_average"]:
+            if fusion_alg in ["class_bayesian", "class_average", "image_exponential"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
             # we care only for the first max in the display
             if fusion_alg in ["class_max"] and len(max_idcs) < 1:
