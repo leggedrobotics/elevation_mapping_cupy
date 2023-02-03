@@ -13,6 +13,7 @@ class FeatureExtractorParameter(Serializable):
     dino_feat_type: str = "feat"
     projection_type: str = "nonlinear"
     input_size: list = field(default_factory=lambda: [80, 160])
+    feature_image_topic: str = "/semantic_pointcloud/feature_image"
 
 
 @dataclass
