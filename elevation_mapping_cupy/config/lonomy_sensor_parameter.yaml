@@ -1,7 +1,7 @@
 subscribers:
   front_cam:
-    channels: [ 'rgb','feat_0','feat_1']
-    fusion: [ 'color','bayesian_inference','bayesian_inference']
+    channels: [ 'rgb','feat_0','feat_1' ]
+    fusion: [ 'color','bayesian_inference','bayesian_inference' ]
     topic_name: '/elvation_mapping/pointcloud_semantic'
     semantic_segmentation: False
     segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
@@ -11,11 +11,11 @@ subscribers:
       name: 'DINO'
       interpolation: 'bilinear'
       model: "vit_small"
-      patch_size:  16
+      patch_size: 16
       dim: 5
       dropout: False
       dino_feat_type: "feat"
-      input_size: [80, 160]
+      input_size: [ 80, 160 ]
       projection_type: "nonlinear"
 
     cam_info_topic: "/zed2i/zed_node/depth/camera_info"

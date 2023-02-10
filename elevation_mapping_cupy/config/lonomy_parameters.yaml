@@ -73,22 +73,22 @@ plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/lonomy_plugin
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance']
-    basic_layers: ['elevation', 'traversability']
+    layers: [ 'elevation', 'traversability', 'variance' ]
+    basic_layers: [ 'elevation', 'traversability' ]
     fps: 5.0
   elevation_map_recordable:
-    layers: ['elevation', 'traversability']
-    basic_layers: ['elevation', 'traversability']
+    layers: [ 'elevation', 'traversability' ]
+    basic_layers: [ 'elevation', 'traversability' ]
     fps: 2.0
   elevation_map_filter:
-    layers: [elevation, 'min_filter', 'smooth', 'inpaint', 'upper_bound','rgb_image', 'gray_image']
-    basic_layers: [elevation, 'min_filter']
+    layers: [ elevation, 'min_filter', 'smooth', 'inpaint', 'upper_bound','rgb_image', 'gray_image' ]
+    basic_layers: [ elevation, 'min_filter' ]
     fps: 3.0
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
-initialize_frame_id: ['base_footprint']   # One tf (like ['footprint'] ) initializes a square around it.
-initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
+initialize_frame_id: [ 'base_footprint' ]   # One tf (like ['footprint'] ) initializes a square around it.
+initialize_tf_offset: [ 0.0, 0.0, 0.0, 0.0 ]                          # z direction. Should be same number as initialize_frame_id.
 dilation_size_initialize: 5                                         # dilation size after the init.
 initialize_tf_grid_size: 2                                        # This is not used if number of tf is more than 3.
 use_initializer_at_start: true                                      # Use initializer when the node starts.

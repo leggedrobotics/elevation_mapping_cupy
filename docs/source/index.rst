@@ -1,4 +1,3 @@
-
 .. include:: documentation.rst
    
 .. toctree::

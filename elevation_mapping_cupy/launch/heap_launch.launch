@@ -1,18 +1,17 @@
 <launch>
-    <arg name="use_sim_time" default="true" />
-<!--    <arg name="model" default="$(find heap_urdf)/urdf/m545.urdf.xacro"/>-->
+    <arg name="use_sim_time" default="true"/>
+    <!--    <arg name="model" default="$(find heap_urdf)/urdf/m545.urdf.xacro"/>-->
 
-    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)" />
-<!--    <param name="robot_description" command="$(find xacro)/xacro '&#45;&#45;inorder' $(arg model)" />-->
-
+    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+    <!--    <param name="robot_description" command="$(find xacro)/xacro '&#45;&#45;inorder' $(arg model)" />-->
 
 
     <!-- Elevation mapping node -->
-    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen" >
-        <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)" />
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/heap_parameters.yaml" />
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/heap_sensor_parameter.yaml" />
+    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen">
+        <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/heap_parameters.yaml"/>
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/heap_sensor_parameter.yaml"/>
     </node>
 
-     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/heap.rviz"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/heap.rviz"/>
 </launch>

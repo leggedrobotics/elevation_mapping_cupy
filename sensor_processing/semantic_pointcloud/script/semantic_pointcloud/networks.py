@@ -3,7 +3,7 @@ from torchvision.models.segmentation import (
     lraspp_mobilenet_v3_large,
     LRASPP_MobileNet_V3_Large_Weights,
 )
-from torchvision.models.segmentation import (deeplabv3_mobilenet_v3_large, DeepLabV3_MobileNet_V3_Large_Weights )
+from torchvision.models.segmentation import deeplabv3_mobilenet_v3_large, DeepLabV3_MobileNet_V3_Large_Weights
 import torch
 import torchvision.transforms.functional as TF
 from torchvision.transforms import Resize

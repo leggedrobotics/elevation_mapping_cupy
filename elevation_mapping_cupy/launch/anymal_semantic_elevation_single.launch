@@ -1,25 +1,26 @@
 <launch>
-    <arg name="use_sim_time" default="true" />
+    <arg name="use_sim_time" default="true"/>
     <arg name="rviz" default="true"/>
     <!-- Give the robot description parameter a name -->
-    <arg name="description_name"           default="anymal_description"/>
+    <arg name="description_name" default="anymal_description"/>
     <!-- Set robot description path -->
-    <arg name="description_file"           default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
+    <arg name="description_file" default="$(find anymal_c_simple_description)/urdf/anymal.urdf"/>
 
 
     <!-- Run xacro script to generate ANYmal description -->
     <param name="$(arg description_name)" textfile="$(arg description_file)"/>
     <!-- Define parameters -->
-    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)" />
+    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
 
     <!-- Elevation mapping node -->
-    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen" >
-        <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)" />
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_parameters.yaml" />
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_sensor_parameter.yaml" />
+    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen">
+        <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_parameters.yaml"/>
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/anymal_sensor_parameter.yaml"/>
     </node>
-    
+
     <!-- Rviz if required -->
-    <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/anymal.rviz"/>
+    <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find elevation_mapping_cupy)/rviz/anymal.rviz"/>
 </launch>
-<!--        launch-prefix="gdb -ex run - -args"-->
+        <!--        launch-prefix="gdb -ex run - -args"-->

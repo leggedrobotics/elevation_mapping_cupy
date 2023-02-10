@@ -42,10 +42,10 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   // Read parameters
   nh.getParam("subscribers", subscribers);
   nh.getParam("publishers", publishers);
-  if(!subscribers.valid()) {
+  if (!subscribers.valid()) {
     ROS_FATAL("There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
   }
-  if(!publishers.valid()) {
+  if (!publishers.valid()) {
     ROS_FATAL("There aren't any publishers to be configured, the elevation mapping cannot be configured. Exit");
   }
   nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
@@ -73,25 +73,24 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
 
   // Iterate all the subscribers
   // here we have to remove all the stuff
-  for (auto & subscriber : subscribers) {
+  for (auto& subscriber : subscribers) {
     std::string key = subscriber.first;
     auto type = static_cast<std::string>(subscriber.second["data_type"]);
-
 
     // Initialize subscribers depending on the type
     if (type == "pointcloud") {
       std::string pointcloud_topic = subscriber.second["topic_name"];
-      boost::function<void (const sensor_msgs::PointCloud2 &)> f = boost::bind(&ElevationMappingNode::pointcloudCallback,this, _1, key);
-      ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1,f);
+      boost::function<void(const sensor_msgs::PointCloud2&)> f = boost::bind(&ElevationMappingNode::pointcloudCallback, this, _1, key);
+      ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1, f);
       pointcloudSubs_.push_back(sub);
-      const auto & channels = subscriber.second["channels"];
+      const auto& channels = subscriber.second["channels"];
       channels_[key].push_back("x");
       channels_[key].push_back("y");
       channels_[key].push_back("z");
       for (int32_t i = 0; i < channels.size(); ++i) {
         auto elem = static_cast<std::string>(channels[i]);
         channels_[key].push_back(elem);
-        }
+      }
 
     } else if (type == "image") {
       std::string camera_topic = subscriber.second["topic_name_camera"];
@@ -100,12 +99,12 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       // Handle compressed images with transport hints
       // We obtain the hint from the last part of the topic name
       std::string transport_hint = "compressed";
-      std::size_t ind = camera_topic.find(transport_hint); // Find if compressed is in the topic name
+      std::size_t ind = camera_topic.find(transport_hint);  // Find if compressed is in the topic name
       if (ind != std::string::npos) {
-        transport_hint = camera_topic.substr(ind, camera_topic.length()); // Get the hint as the last part 
-        camera_topic.erase(ind - 1, camera_topic.length()); // We remove the hint from the topic
+        transport_hint = camera_topic.substr(ind, camera_topic.length());  // Get the hint as the last part
+        camera_topic.erase(ind - 1, camera_topic.length());                // We remove the hint from the topic
       } else {
-        transport_hint = "raw"; // In the default case we assume raw topic
+        transport_hint = "raw";  // In the default case we assume raw topic
       }
 
       // Setup subscriber
@@ -279,7 +278,7 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
 
 void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key) {
   auto start = ros::Time::now();
-//  transform pointcloud into matrix
+  //  transform pointcloud into matrix
   auto* pcl_pc = new pcl::PCLPointCloud2;
   pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
   pcl_conversions::toPCL(cloud, *pcl_pc);
@@ -289,31 +288,31 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   std::vector<std::string> channels;
   std::vector<bool> add_element;
 
-  for(int it =0;it<fields.size();it++){
-    auto & field = fields[it];
-    if( (std::find(channels_[key].begin(),channels_[key].end(),field.name)!=channels_[key].end())&& (field.datatype == 7)){
+  for (int it = 0; it < fields.size(); it++) {
+    auto& field = fields[it];
+    if ((std::find(channels_[key].begin(), channels_[key].end(), field.name) != channels_[key].end()) && (field.datatype == 7)) {
       add_element.push_back(true);
       channels.push_back(field.name);
-    }
-    else add_element.push_back(false);
+    } else
+      add_element.push_back(false);
   }
   uint array_dim = channels.size();
 
-  RowMatrixXd points = RowMatrixXd(pcl_pc->width*pcl_pc->height,array_dim);
+  RowMatrixXd points = RowMatrixXd(pcl_pc->width * pcl_pc->height, array_dim);
 
-  for (unsigned int i = 0; i < pcl_pc->width*pcl_pc->height; ++i) {
+  for (unsigned int i = 0; i < pcl_pc->width * pcl_pc->height; ++i) {
     int jit = 0;
-    for(unsigned  int j = 0; j<add_element.size();++j){
-        if(add_element[j]){
-          float temp;
-          uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
-          memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
-          points(i, jit) = static_cast<double>(temp);
-          jit++;
-        }
+    for (unsigned int j = 0; j < add_element.size(); ++j) {
+      if (add_element[j]) {
+        float temp;
+        uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
+        memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
+        points(i, jit) = static_cast<double>(temp);
+        jit++;
+      }
     }
   }
-//  get pose of sensor in map frame
+  //  get pose of sensor in map frame
   tf::StampedTransform transformTf;
   std::string sensorFrameId = cloud.header.frame_id;
   auto timeStamp = cloud.header.stamp;
@@ -334,7 +333,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
     positionError = positionError_;
     orientationError = orientationError_;
   }
-  map_.input(points, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError, orientationError);
+  map_.input(points, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError,
+             orientationError);
 
   if (enableDriftCorrectedTFPublishing_) {
     publishMapToOdom(map_.get_additive_mean_error());
@@ -348,7 +348,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pointCloudProcessCounter_++;
 }
 
-void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key) {
+void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
+                                         const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key) {
   auto start = ros::Time::now();
 
   // Get image
@@ -362,7 +363,7 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   }
 
   // Extract camera matrix
-  Eigen::Map<const Eigen::Matrix<double,3,3,Eigen::RowMajor>> cameraMatrix(&camera_info_msg->K[0]);
+  Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> cameraMatrix(&camera_info_msg->K[0]);
 
   // Get pose of sensor in map frame
   tf::StampedTransform transformTf;
@@ -389,7 +390,8 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   }
 
   // Pass image to pipeline
-  map_.input_image(key, multichannel_image, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix, image.rows, image.cols);
+  map_.input_image(key, multichannel_image, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix,
+                   image.rows, image.cols);
 
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
@@ -409,7 +411,7 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
 
   // This is to check if the robot is moving. If the robot is not moving, drift compensation is disabled to avoid creating artifacts.
   Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
-  map_.move_to(position,transformationBaseToMap.rotation().transpose());
+  map_.move_to(position, transformationBaseToMap.rotation().transpose());
   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
   Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(), transformTf.getRotation().z(),
                               transformTf.getRotation().w());

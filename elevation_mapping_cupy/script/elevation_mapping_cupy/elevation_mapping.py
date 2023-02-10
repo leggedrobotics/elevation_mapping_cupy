@@ -415,18 +415,15 @@ class ElevationMap:
         return self.additive_mean_error
 
     def update_variance(self):
-        """Adds the time variacne to the valid cells.
-        """
+        """Adds the time variacne to the valid cells."""
         self.elevation_map[1] += self.param.time_variance * self.elevation_map[2]
 
     def update_time(self):
-        """adds the time interval to the time layer.
-        """
+        """adds the time interval to the time layer."""
         self.elevation_map[4] += self.param.time_interval
 
     def update_upper_bound_with_valid_elevation(self):
-        """Filters all invalid cell's upper_bound and is_upper_bound layers.
-        """
+        """Filters all invalid cell's upper_bound and is_upper_bound layers."""
         mask = self.elevation_map[2] > 0.5
         self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])

@@ -80,11 +80,7 @@ class PluginManager(object):
         for param, extra_param in zip(plugin_params, extra_params):
             m = importlib.import_module("." + param.name, package="elevation_mapping_cupy.plugins")  # -> 'module'
             for name, obj in inspect.getmembers(m):
-                if (
-                    inspect.isclass(obj)
-                    and issubclass(obj, PluginBase)
-                    and name != "PluginBase"
-                ):
+                if inspect.isclass(obj) and issubclass(obj, PluginBase) and name != "PluginBase":
                     # Add cell_n to params
                     extra_param["cell_n"] = self.cell_n
                     self.plugins.append(obj(**extra_param))

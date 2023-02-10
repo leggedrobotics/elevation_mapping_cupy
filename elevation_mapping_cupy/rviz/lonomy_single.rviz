@@ -321,46 +321,46 @@ Visualization Manager:
         enu:
           base_link:
             base_footprint:
-              {}
+              { }
             base_inertial:
-              {}
+              { }
             estimator_imu:
               GPS_back:
-                {}
+                { }
               GPS_front:
-                {}
+                { }
               alphasense:
-                {}
+                { }
             left_back_wheel_sup:
               left_back_wheel:
-                {}
+                { }
             left_front_wheel_sup:
               left_front_wheel:
-                {}
+                { }
             rear_axle_center:
-              {}
+              { }
             right_back_wheel_sup:
               right_back_wheel:
-                {}
+                { }
             right_front_wheel_sup:
               right_front_wheel:
-                {}
+                { }
             zed2i_base_link:
               zed2i_camera_center:
                 zed2i_baro_link:
-                  {}
+                  { }
                 zed2i_left_camera_frame:
                   zed2i_left_camera_optical_frame:
-                    {}
+                    { }
                   zed2i_temp_left_link:
-                    {}
+                    { }
                 zed2i_mag_link:
-                  {}
+                  { }
                 zed2i_right_camera_frame:
                   zed2i_right_camera_optical_frame:
-                    {}
+                    { }
                   zed2i_temp_right_link:
-                    {}
+                    { }
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -392,7 +392,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_l
       Name: Marker
       Namespaces:
-        {}
+        { }
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -400,7 +400,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_r
       Name: Marker
       Namespaces:
-        {}
+        { }
       Queue Size: 100
       Value: true
     - Alpha: 1

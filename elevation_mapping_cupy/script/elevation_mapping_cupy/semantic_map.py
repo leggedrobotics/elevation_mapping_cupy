@@ -63,9 +63,7 @@ class SemanticMap:
         self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool8)
 
     def clear(self):
-        """Clear the semantic map.
-
-        """
+        """Clear the semantic map."""
         self.semantic_map *= 0.0
 
     def compile_kernels(self) -> None:
@@ -153,10 +151,7 @@ class SemanticMap:
 
         if "image_exponential" in self.unique_fusion:
             self.exponential_correspondences_to_map_kernel = exponential_correspondences_to_map_kernel(
-                resolution=self.param.resolution,
-                width=self.param.cell_n,
-                height=self.param.cell_n,
-                alpha=0.7
+                resolution=self.param.resolution, width=self.param.cell_n, height=self.param.cell_n, alpha=0.7
             )
 
         if "image_color" in self.unique_fusion:
@@ -330,7 +325,7 @@ class SemanticMap:
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.semantic_map,
                 self.new_map,
-                size=(points_all.shape[0]*pcl_ids.shape[0]),
+                size=(points_all.shape[0] * pcl_ids.shape[0]),
             )
             self.class_average_kernel(
                 self.new_map,
@@ -339,7 +334,7 @@ class SemanticMap:
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 elevation_map,
                 self.semantic_map,
-                size=(self.param.cell_n * self.param.cell_n*pcl_ids.shape[0]),
+                size=(self.param.cell_n * self.param.cell_n * pcl_ids.shape[0]),
             )
 
         if "class_bayesian" in additional_fusion:
