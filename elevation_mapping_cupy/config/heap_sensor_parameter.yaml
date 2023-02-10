@@ -1,0 +1,31 @@
+subscribers:
+
+  front_cam:
+    channels: [ ]
+    fusion: [ ]
+    topic_name: '/ouster_points_self_filtered'
+    data_type: pointcloud
+
+  #  camera_right_rgb:
+  #    fusion: ['image_color']
+  #    topic_name_camera: /camUSBRightView/Downsampled
+  #    topic_name_camera_info: /camera_info
+  #    channels: ["rgb_image"]
+  #    data_type: image
+
+  camera_main_rgb:
+    fusion: [ 'image_color' ]
+    topic_name_camera: /camMainView/Downsampled
+    topic_name_camera_info: /camera_info
+    channels: [ "rgb_image" ]
+    data_type: image
+
+
+#  camera_cnn:
+#    topic_name_camera: /src/image
+#    topic_name_camera_info: /camera_info
+#    channels: ["mono"]
+#    fusion: [ 'image_exponential' ]
+#    data_type: image
+
+

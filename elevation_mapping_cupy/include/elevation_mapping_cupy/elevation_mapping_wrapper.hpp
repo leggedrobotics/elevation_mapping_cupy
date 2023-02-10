@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 
 // Pybind
-#include <pybind11_catkin/pybind11/embed.h>  // everything needed for embedding
+#include <pybind11/embed.h>  // everything needed for embedding
 #include <pybind11/stl.h>
 
 // ROS
@@ -40,13 +40,16 @@ class ElevationMappingWrapper {
  public:
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using RowMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 
   ElevationMappingWrapper();
 
-  void initialize(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms);
+  void initialize(ros::NodeHandle& nh);
 
   void input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
              const double positionNoise, const double orientationNoise);
+  void input_image(const std::string& key, const std::vector<ColMatrixXf>& image, const RowMatrixXd& R, const Eigen::VectorXd& t,
+                   const RowMatrixXd& cameraMatrix, int height, int width);
   void move_to(const Eigen::VectorXd& p, const RowMatrixXd& R);
   void clear();
   void update_variance();
@@ -61,7 +64,7 @@ class ElevationMappingWrapper {
   void addNormalColorLayer(grid_map::GridMap& map);
 
  private:
-  void setParameters(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms);
+  void setParameters(ros::NodeHandle& nh);
   py::object map_;
   py::object param_;
   double resolution_;

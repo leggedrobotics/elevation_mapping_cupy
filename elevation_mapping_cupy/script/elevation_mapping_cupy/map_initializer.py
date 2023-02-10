@@ -23,14 +23,14 @@ class MapInitializer(object):
             return
 
     def points_initializer(self, elevation_map, points, method="linear"):
-        """
-        Initialize the map using interpolation between given poitns
-        Args:
-        elevation_map: elevation_map data.
-        points: points used to interpolate.
-        method: method for interpolation. (nearest, linear, cubic)
-        """
+        """Initialize the map using interpolation between given points
 
+        Args:
+            elevation_map (cupy._core.core.ndarray): elevation_map data.
+            points (cupy._core.core.ndarray): points used to interpolate.
+            method (str): method for interpolation. (nearest, linear, cubic)
+
+        """
         # points from existing map.
         points_idx = self.xp.where(elevation_map[2] > 0.5)
         values = elevation_map[0, points_idx[0], points_idx[1]]

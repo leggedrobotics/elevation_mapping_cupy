@@ -1,9 +1,12 @@
 ###### Requirements without Version Specifiers ######`
 numpy
-scipy
+scipy==1.7
 dataclasses
 ruamel.yaml
 opencv-python
+simple_parsing
+scikit-image
+matplotlib
 
 ###### Requirements with Version Specifiers ######`
 shapely==1.7.1

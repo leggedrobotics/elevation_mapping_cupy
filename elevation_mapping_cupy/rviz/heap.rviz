@@ -1,0 +1,600 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+    Tree Height: 288
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+      - /Publish Point1
+      - /Interact1
+    Name: Tool Properties
+    Splitter Ratio: 0.5886790156364441
+  - Class: rviz/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.4944238066673279
+  - Class: rviz/Time
+    Experimental: false
+    Name: Time
+    SyncMode: 0
+    SyncSource: Image
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: false
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
+      Value: false
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /camUSBRightView/Downsampled
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        BASE:
+          Value: true
+        BASE_inertia:
+          Value: true
+        BOOM:
+          Value: true
+        CABIN:
+          Value: true
+        DIPPER:
+          Value: true
+        ENDEFFECTOR:
+          Value: true
+        ENDEFFECTOR_CONTACT:
+          Value: true
+        GNSS_L:
+          Value: true
+        GNSS_R:
+          Value: true
+        IMU_base_link:
+          Value: true
+        IMU_link:
+          Value: true
+        LF_BEAM:
+          Value: true
+        LF_BEARING:
+          Value: true
+        LF_KNUCKLE:
+          Value: true
+        LF_PARALLEL:
+          Value: true
+        LF_SWIVEL:
+          Value: true
+        LF_WHEEL:
+          Value: true
+        LF_WHEEL_CONTACT:
+          Value: true
+        LH_BEAM:
+          Value: true
+        LH_KNUCKLE:
+          Value: true
+        LH_OUTRIGGER:
+          Value: true
+        LH_ROTATOR:
+          Value: true
+        LH_WHEEL:
+          Value: true
+        LH_WHEEL_CONTACT:
+          Value: true
+        RF_BEAM:
+          Value: true
+        RF_BEARING:
+          Value: true
+        RF_KNUCKLE:
+          Value: true
+        RF_PARALLEL:
+          Value: true
+        RF_SWIVEL:
+          Value: true
+        RF_WHEEL:
+          Value: true
+        RF_WHEEL_CONTACT:
+          Value: true
+        RH_BEAM:
+          Value: true
+        RH_KNUCKLE:
+          Value: true
+        RH_OUTRIGGER:
+          Value: true
+        RH_ROTATOR:
+          Value: true
+        RH_WHEEL:
+          Value: true
+        RH_WHEEL_CONTACT:
+          Value: true
+        ROTO:
+          Value: true
+        ROTO_BASE:
+          Value: true
+        SHOVEL:
+          Value: true
+        TELE:
+          Value: true
+        camMainView:
+          Value: true
+        compslam_lio/aft_mapped:
+          Value: true
+        compslam_lio/aft_mapped_to_init_CORRECTED:
+          Value: true
+        compslam_lio/camera:
+          Value: true
+        compslam_lio/camera_CORRECTED:
+          Value: true
+        compslam_lio/camera_init:
+          Value: true
+        compslam_lio/camera_init_CORRECTED:
+          Value: true
+        compslam_lio/camera_init_GRAVITY_ALIGNED:
+          Value: true
+        compslam_lio/laser_odom:
+          Value: true
+        compslam_lio/laser_odom_CORRECTED:
+          Value: true
+        imu_box_base_link:
+          Value: true
+        imu_box_link:
+          Value: true
+        livox_frame:
+          Value: true
+        map:
+          Value: true
+        odom:
+          Value: true
+        os_imu:
+          Value: true
+        os_lidar:
+          Value: true
+        os_sensor:
+          Value: true
+        roof_top_box:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        map:
+          compslam_lio/camera_init_CORRECTED:
+            compslam_lio/aft_mapped_to_init_CORRECTED:
+              { }
+            compslam_lio/camera_CORRECTED:
+              { }
+            compslam_lio/camera_init:
+              compslam_lio/aft_mapped:
+                { }
+              compslam_lio/camera:
+                { }
+              compslam_lio/laser_odom:
+                { }
+            compslam_lio/camera_init_GRAVITY_ALIGNED:
+              { }
+            compslam_lio/laser_odom_CORRECTED:
+              { }
+          odom:
+            BASE:
+              BASE_inertia:
+                { }
+              CABIN:
+                BOOM:
+                  DIPPER:
+                    TELE:
+                      ROTO_BASE:
+                        ROTO:
+                          ENDEFFECTOR:
+                            SHOVEL:
+                              ENDEFFECTOR_CONTACT:
+                                { }
+                GNSS_L:
+                  { }
+                GNSS_R:
+                  { }
+                camMainView:
+                  livox_frame:
+                    { }
+                  os_sensor:
+                    os_imu:
+                      { }
+                    os_lidar:
+                      { }
+                  roof_top_box:
+                    imu_box_base_link:
+                      imu_box_link:
+                        { }
+              IMU_base_link:
+                IMU_link:
+                  { }
+              LF_SWIVEL:
+                LF_BEAM:
+                  LF_BEARING:
+                    LF_KNUCKLE:
+                      LF_WHEEL:
+                        LF_WHEEL_CONTACT:
+                          { }
+                LF_PARALLEL:
+                  { }
+              LH_ROTATOR:
+                LH_BEAM:
+                  LH_KNUCKLE:
+                    LH_OUTRIGGER:
+                      { }
+                    LH_WHEEL:
+                      LH_WHEEL_CONTACT:
+                        { }
+              RF_SWIVEL:
+                RF_BEAM:
+                  RF_BEARING:
+                    RF_KNUCKLE:
+                      RF_WHEEL:
+                        RF_WHEEL_CONTACT:
+                          { }
+                RF_PARALLEL:
+                  { }
+              RH_ROTATOR:
+                RH_BEAM:
+                  RH_KNUCKLE:
+                    RH_OUTRIGGER:
+                      { }
+                    RH_WHEEL:
+                      RH_WHEEL_CONTACT:
+                        { }
+      Update Interval: 0
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /camMainView/Downsampled
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Class: grid_map_rviz_plugin/GridMap
+      Color: 200; 200; 200
+      Color Layer: rgb_image
+      Color Transformer: ColorLayer
+      ColorMap: default
+      Enabled: true
+      Grid Cell Decimation: 1
+      Grid Line Thickness: 0.10000000149011612
+      Height Layer: smooth
+      Height Transformer: GridMapLayer
+      History Length: 1
+      Invert ColorMap: false
+      Max Color: 255; 255; 255
+      Max Intensity: 10
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: GridMap
+      Show Grid Lines: true
+      Topic: /elevation_mapping/elevation_map_filter
+      Unreliable: false
+      Use ColorMap: true
+      Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        BASE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        BASE_inertia:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        BOOM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        CABIN:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        DIPPER:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ENDEFFECTOR:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ENDEFFECTOR_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        GNSS_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        GNSS_R:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        IMU_base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        IMU_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LF_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_BEARING:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_PARALLEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_SWIVEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LF_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        LH_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_OUTRIGGER:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_ROTATOR:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LH_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Link Tree Style: Links in Alphabetic Order
+        RF_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_BEARING:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_PARALLEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_SWIVEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RF_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        RH_BEAM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_KNUCKLE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_OUTRIGGER:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_ROTATOR:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_WHEEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        RH_WHEEL_CONTACT:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ROTO:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ROTO_BASE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        SHOVEL:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        TELE:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: mm_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+  Enabled: true
+  Global Options:
+    Background Color: 255; 255; 255
+    Default Light: true
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Select
+    - Class: rviz/SetInitialPose
+      Theta std deviation: 0.2617993950843811
+      Topic: /initialpose
+      X std deviation: 0.5
+      Y std deviation: 0.5
+    - Class: rviz/SetGoal
+      Topic: /move_base_simple/goal
+    - Class: rviz/PublishPoint
+      Single click: true
+      Topic: /clicked_point
+    - Class: rviz/MoveCamera
+    - Class: rviz/FocusCamera
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 27.363513946533203
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Field of View: 1
+      Focal Point:
+        X: 4.949670314788818
+        Y: 8.161603927612305
+        Z: -4.364292144775391
+      Focal Shape Fixed Size: false
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.7703982591629028
+      Target Frame: <Fixed Frame>
+      Yaw: 2.9804012775421143
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 1016
+  Hide Left Dock: false
+  Hide Right Dock: false
+  Image:
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd0000000400000000000001560000035afc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001ab000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006501000001ee0000012f0000001600fffffffb0000000a0049006d0061006700650100000323000000740000001600ffffff000000010000010f0000035afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d0000035a000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000003efc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000004c70000035a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  Time:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
+  Views:
+    collapsed: false
+  Width: 1848
+  X: 72
+  Y: 27

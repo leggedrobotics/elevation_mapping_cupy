@@ -1,0 +1,15 @@
+<launch>
+    <arg name="use_sim_time" default="true"/>
+    <!--    <arg name="model" default="$(find rowesys_description)/urdf/rowesys.urdf.xacro"/>-->
+
+    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+    <!--    <param name="robot_description" command="$(find xacro)/xacro '&#45;&#45;inorder' $(arg model)" />-->
+
+    <node pkg="semantic_pointcloud" type="pointcloud_node.py" name="semantic_pointcloud" args="front_cam"
+          output="screen">
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/lonomy_sensor_parameter.yaml"/>
+    </node>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find elevation_mapping_cupy)/rviz/lonomy_single.rviz"/>
+</launch>
+        <!--        launch-prefix="gdb -ex run - -args"-->

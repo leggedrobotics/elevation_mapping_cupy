@@ -10,23 +10,15 @@ from .plugin_manager import PluginBase
 
 
 class MinFilter(PluginBase):
-    """This is a filter to fill in invalid cells with minimum values around.
-
-    ...
-
-    Attributes
-    ----------
-    width: int
-        width of the elevation map.
-    height: int
-        height of the elevation map.
-    dilation_size: int
-        The size of the patch to search for minimum value for each iteration.
-    iteration_n: int
-        The number of iteration to repeat the same filter.
-    """
-
     def __init__(self, cell_n: int = 100, dilation_size: int = 5, iteration_n: int = 5, **kwargs):
+        """This is a filter to fill in invalid cells with minimum values around.
+
+        Args:
+            cell_n (int): width of the elevation map.
+            dilation_size (int): The size of the patch to search for minimum value for each iteration.
+            iteration_n (int): The number of iteration to repeat the same filter.
+            **kwargs ():
+        """
         super().__init__()
         self.iteration_n = iteration_n
         self.width = cell_n
@@ -94,7 +86,20 @@ class MinFilter(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        *args,
     ) -> cp.ndarray:
+        """
+
+        Args:
+            elevation_map (cupy._core.core.ndarray):
+            layer_names (List[str]):
+            plugin_layers (cupy._core.core.ndarray):
+            plugin_layer_names (List[str]):
+            *args ():
+
+        Returns:
+            cupy._core.core.ndarray:
+        """
         self.min_filtered = elevation_map[0].copy()
         self.min_filtered_mask = elevation_map[2].copy()
         for i in range(self.iteration_n):
