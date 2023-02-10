@@ -198,24 +198,24 @@ Visualization Manager:
         map:
           compslam_lio/camera_init_CORRECTED:
             compslam_lio/aft_mapped_to_init_CORRECTED:
-              {}
+              { }
             compslam_lio/camera_CORRECTED:
-              {}
+              { }
             compslam_lio/camera_init:
               compslam_lio/aft_mapped:
-                {}
+                { }
               compslam_lio/camera:
-                {}
+                { }
               compslam_lio/laser_odom:
-                {}
+                { }
             compslam_lio/camera_init_GRAVITY_ALIGNED:
-              {}
+              { }
             compslam_lio/laser_odom_CORRECTED:
-              {}
+              { }
           odom:
             BASE:
               BASE_inertia:
-                {}
+                { }
               CABIN:
                 BOOM:
                   DIPPER:
@@ -225,60 +225,60 @@ Visualization Manager:
                           ENDEFFECTOR:
                             SHOVEL:
                               ENDEFFECTOR_CONTACT:
-                                {}
+                                { }
                 GNSS_L:
-                  {}
+                  { }
                 GNSS_R:
-                  {}
+                  { }
                 camMainView:
                   livox_frame:
-                    {}
+                    { }
                   os_sensor:
                     os_imu:
-                      {}
+                      { }
                     os_lidar:
-                      {}
+                      { }
                   roof_top_box:
                     imu_box_base_link:
                       imu_box_link:
-                        {}
+                        { }
               IMU_base_link:
                 IMU_link:
-                  {}
+                  { }
               LF_SWIVEL:
                 LF_BEAM:
                   LF_BEARING:
                     LF_KNUCKLE:
                       LF_WHEEL:
                         LF_WHEEL_CONTACT:
-                          {}
+                          { }
                 LF_PARALLEL:
-                  {}
+                  { }
               LH_ROTATOR:
                 LH_BEAM:
                   LH_KNUCKLE:
                     LH_OUTRIGGER:
-                      {}
+                      { }
                     LH_WHEEL:
                       LH_WHEEL_CONTACT:
-                        {}
+                        { }
               RF_SWIVEL:
                 RF_BEAM:
                   RF_BEARING:
                     RF_KNUCKLE:
                       RF_WHEEL:
                         RF_WHEEL_CONTACT:
-                          {}
+                          { }
                 RF_PARALLEL:
-                  {}
+                  { }
               RH_ROTATOR:
                 RH_BEAM:
                   RH_KNUCKLE:
                     RH_OUTRIGGER:
-                      {}
+                      { }
                     RH_WHEEL:
                       RH_WHEEL_CONTACT:
-                        {}
+                        { }
       Update Interval: 0
       Value: true
     - Class: rviz/Image

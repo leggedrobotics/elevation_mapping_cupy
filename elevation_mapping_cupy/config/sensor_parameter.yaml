@@ -1,8 +1,8 @@
 #### Subscribers ########
 subscribers:
   front_cam:
-    channels: [ 'rgb']
-    fusion: [ 'color']
+    channels: [ 'rgb' ]
+    fusion: [ 'color' ]
     topic_name: '/elvation_mapping/pointcloud_semantic'
     semantic_segmentation: False
     segmentation_model: 'lraspp_mobilenet_v3_large'

@@ -324,7 +324,7 @@ Visualization Manager:
                           LF_SHANK:
                             LF_shank_fixed:
                               LF_FOOT:
-                                {}
+                                { }
             LH_HAA:
               LH_HIP:
                 LH_hip_fixed:
@@ -335,7 +335,7 @@ Visualization Manager:
                           LH_SHANK:
                             LH_shank_fixed:
                               LH_FOOT:
-                                {}
+                                { }
             RF_HAA:
               RF_HIP:
                 RF_hip_fixed:
@@ -346,7 +346,7 @@ Visualization Manager:
                           RF_SHANK:
                             RF_shank_fixed:
                               RF_FOOT:
-                                {}
+                                { }
             RH_HAA:
               RH_HIP:
                 RH_hip_fixed:
@@ -357,119 +357,119 @@ Visualization Manager:
                           RH_SHANK:
                             RH_shank_fixed:
                               RH_FOOT:
-                                {}
+                                { }
             alphasense_mesh:
-              {}
+              { }
             base_inertia:
-              {}
+              { }
             base_inverted:
-              {}
+              { }
             battery:
-              {}
+              { }
             body_top:
-              {}
+              { }
             bottom_shell:
-              {}
+              { }
             depth_camera_left_camera:
               depth_camera_left_camera_parent:
                 depth_camera_left_depth_frame:
                   depth_camera_left_depth_optical_frame:
-                    {}
+                    { }
                 depth_camera_left_infra1_frame:
                   depth_camera_left_infra1_optical_frame:
-                    {}
+                    { }
                 depth_camera_left_infra2_frame:
                   depth_camera_left_infra2_optical_frame:
-                    {}
+                    { }
             depth_camera_right_camera:
               depth_camera_right_camera_parent:
                 depth_camera_right_depth_frame:
                   depth_camera_right_depth_optical_frame:
-                    {}
+                    { }
                 depth_camera_right_infra1_frame:
                   depth_camera_right_infra1_optical_frame:
-                    {}
+                    { }
                 depth_camera_right_infra2_frame:
                   depth_camera_right_infra2_optical_frame:
-                    {}
+                    { }
             docking_hatch_cover:
-              {}
+              { }
             face_front:
               depth_camera_front_camera:
                 depth_camera_front_camera_parent:
                   depth_camera_front_depth_frame:
                     depth_camera_front_depth_optical_frame:
-                      {}
+                      { }
                   depth_camera_front_infra1_frame:
                     depth_camera_front_infra1_optical_frame:
-                      {}
+                      { }
                   depth_camera_front_infra2_frame:
                     depth_camera_front_infra2_optical_frame:
-                      {}
+                      { }
               wide_angle_camera_front_camera:
                 wide_angle_camera_front_camera_parent:
-                  {}
+                  { }
             face_rear:
               depth_camera_rear_camera:
                 depth_camera_rear_camera_parent:
                   depth_camera_rear_depth_frame:
                     depth_camera_rear_depth_optical_frame:
-                      {}
+                      { }
                   depth_camera_rear_infra1_frame:
                     depth_camera_rear_infra1_optical_frame:
-                      {}
+                      { }
                   depth_camera_rear_infra2_frame:
                     depth_camera_rear_infra2_optical_frame:
-                      {}
+                      { }
               wide_angle_camera_rear_camera:
                 wide_angle_camera_rear_camera_parent:
-                  {}
+                  { }
             front_handle:
-              {}
+              { }
             handle:
-              {}
+              { }
             imu_link:
-              {}
+              { }
             interface_hatch:
               hatch:
-                {}
+                { }
             mira_spectrometer:
-              {}
+              { }
             perception_head_cage:
               lidar:
                 imu_sensor_frame:
                   cam0_sensor_frame:
-                    {}
+                    { }
                   cam1_sensor_frame:
-                    {}
+                    { }
                   cam2_sensor_frame:
-                    {}
+                    { }
                   cam3_sensor_frame_helper:
                     cam3_sensor_frame:
-                      {}
+                      { }
                   cam4_sensor_frame_helper:
                     cam4_sensor_frame:
-                      {}
+                      { }
                   cam5_sensor_frame_helper:
                     cam5_sensor_frame:
-                      {}
+                      { }
                   cam6_sensor_frame_helper:
                     cam6_sensor_frame:
-                      {}
+                      { }
             remote:
-              {}
+              { }
             top_shell:
-              {}
+              { }
           feetcenter:
-            {}
+            { }
           footprint:
-            {}
+            { }
           map:
             camera_init_CORRECTED:
               camera_init:
-                {}
+                { }
           msf_body_imu_map:
-            {}
+            { }
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -489,7 +489,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_l
       Name: Marker
       Namespaces:
-        {}
+        { }
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -497,7 +497,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_r
       Name: Marker
       Namespaces:
-        {}
+        { }
       Queue Size: 100
       Value: true
   Enabled: true

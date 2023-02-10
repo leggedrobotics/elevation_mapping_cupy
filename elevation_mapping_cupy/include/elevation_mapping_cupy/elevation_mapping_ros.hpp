@@ -20,8 +20,8 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
 #include <ros/ros.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
@@ -61,7 +61,7 @@ class ElevationMappingNode {
   ElevationMappingNode(ros::NodeHandle& nh);
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
-  
+
   using ImageSubscriber = image_transport::SubscriberFilter;
   using ImageSubscriberPtr = std::shared_ptr<ImageSubscriber>;
   using CameraInfoSubscriber = message_filters::Subscriber<sensor_msgs::CameraInfo>;
@@ -74,7 +74,8 @@ class ElevationMappingNode {
   void readParameters();
   void setupMapPublishers();
   void pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key);
-  void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key);
+  void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
+                     const std::string& key);
   void publishAsPointCloud(const grid_map::GridMap& map) const;
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
@@ -133,8 +134,7 @@ class ElevationMappingNode {
   std::vector<double> map_fps_;
   std::set<double> map_fps_unique_;
   std::vector<ros::Timer> mapTimers_;
-  std::map<std::string,std::vector<std::string>> channels_;
-
+  std::map<std::string, std::vector<std::string>> channels_;
 
   std::vector<std::string> initialize_frame_id_;
   std::vector<double> initialize_tf_offset_;
@@ -147,7 +147,7 @@ class ElevationMappingNode {
   grid_map::GridMap gridMap_;
   std::atomic_bool isGridmapUpdated_;  // needs to be atomic (read is not protected by mapMutex_)
 
-  std::mutex errorMutex_; // protects positionError_, and orientationError_
+  std::mutex errorMutex_;  // protects positionError_, and orientationError_
   double positionError_;
   double orientationError_;
 

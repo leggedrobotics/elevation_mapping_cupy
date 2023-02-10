@@ -180,6 +180,7 @@ def exponential_correspondences_to_map_kernel(resolution, width, height, alpha):
     )
     return exponential_correspondences_to_map_kernel
 
+
 def color_correspondences_to_map_kernel(resolution, width, height):
     color_correspondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",

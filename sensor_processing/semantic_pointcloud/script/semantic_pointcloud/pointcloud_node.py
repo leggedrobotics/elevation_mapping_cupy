@@ -191,7 +191,7 @@ class PointcloudNode:
         self.width = msg.width
         self.header = msg.header
 
-    def image_callback(self,  depth_msg, rgb_msg=None,confidence_msg=None):
+    def image_callback(self, depth_msg, rgb_msg=None, confidence_msg=None):
         confidence = None
         image = None
         if self.P is None:
