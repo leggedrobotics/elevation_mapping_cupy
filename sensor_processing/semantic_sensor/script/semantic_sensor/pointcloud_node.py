@@ -12,9 +12,9 @@ from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud2, Image
 from cv_bridge import CvBridge
 
-from semantic_pointcloud.pointcloud_parameters import PointcloudParameter
-from semantic_pointcloud.networks import resolve_model
-from semantic_pointcloud.utils import decode_max
+from semantic_sensor.pointcloud_parameters import PointcloudParameter
+from semantic_sensor.networks import resolve_model
+from semantic_sensor.utils import decode_max
 from sklearn.decomposition import PCA
 
 
@@ -28,8 +28,8 @@ class PointcloudNode:
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: PointcloudParameter = PointcloudParameter()
         self.param.feature_config.input_size = [80, 160]
-        if rospy.has_param("/semantic_pointcloud/subscribers"):
-            config = rospy.get_param("/semantic_pointcloud/subscribers")
+        if rospy.has_param("/semantic_sensor/subscribers"):
+            config = rospy.get_param("/semantic_sensor/subscribers")
             self.param: PointcloudParameter = PointcloudParameter.from_dict(config[sensor_name])
         else:
             print("NO ROS ENV found.")

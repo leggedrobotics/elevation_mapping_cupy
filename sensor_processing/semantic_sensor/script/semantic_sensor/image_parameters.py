@@ -13,10 +13,11 @@ class FeatureExtractorParameter(Serializable):
     dino_feat_type: str = "feat"
     projection_type: str = "nonlinear"
     input_size: list = field(default_factory=lambda: [80, 160])
+    pcl: bool = False
 
 
 @dataclass
-class SemanticSegmentationParameter(Serializable):
+class ImageParameter(Serializable):
     image_topic: str = "/alphasense_driver_ros/cam4/debayered"
 
     semantic_segmentation: bool = True
@@ -32,4 +33,6 @@ class SemanticSegmentationParameter(Serializable):
     # feature_config.input_size: list = field(default_factory=lambda: [80, 160])
     feature_topic: str = "/elevation_mapping/semantic_seg_feat"
     feat_image_topic: str = "/elevation_mapping/semantic_seg_feat_im"
+    resize: float = None
+    image_info_topic: str = "/elevation_mapping/image_info"
 

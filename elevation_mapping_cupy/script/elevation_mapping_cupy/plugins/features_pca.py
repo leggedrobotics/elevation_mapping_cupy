@@ -59,7 +59,7 @@ class FeaturesPca(PluginBase):
         # check which has the highest value
         if len(layer_indices) > 0:
             data = cp.reshape(semantic_map.semantic_map[layer_indices], (len(layer_indices), -1)).T.get()
-            data = np.clip(data, -1, 1)
+            # data = np.clip(data, -1, 1)
             n_components = 3
             pca = PCA(n_components=n_components).fit(data)
             pca_descriptors = pca.transform(data)

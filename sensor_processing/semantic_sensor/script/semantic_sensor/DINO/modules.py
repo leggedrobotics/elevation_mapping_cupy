@@ -1,4 +1,4 @@
-import semantic_pointcloud.DINO.vision_transformer as vits
+import semantic_sensor.DINO.vision_transformer as vits
 import torch.nn as nn
 import torch
 

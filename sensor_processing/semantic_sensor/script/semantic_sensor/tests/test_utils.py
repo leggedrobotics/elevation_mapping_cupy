@@ -1,8 +1,8 @@
 import pytest
-from semantic_pointcloud.networks import resolve_model
+from semantic_sensor.networks import resolve_model
 import cupy as cp
 import torch
-from semantic_pointcloud.pointcloud_parameters import (
+from semantic_sensor.pointcloud_parameters import (
     FeatureExtractorParameter,
     PointcloudParameter,
 )

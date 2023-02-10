@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 import cupy as cp
+import cv2
 import ros_numpy
 import matplotlib.pyplot as plt
 from skimage.io import imshow
@@ -14,8 +15,8 @@ from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud2, Image, CompressedImage
 from cv_bridge import CvBridge
 
-from semantic_pointcloud.semantic_segmentation_parameters import SemanticSegmentationParameter
-from semantic_pointcloud.networks import resolve_model
+from semantic_sensor.image_parameters import ImageParameter
+from semantic_sensor.networks import resolve_model
 from sklearn.decomposition import PCA
 
 
@@ -27,12 +28,12 @@ class SemanticSegmentationNode:
             sensor_name (str): Name of the sensor in the ros param server.
         """
         # TODO: if this is going to be loaded from another package we might need to change namespace
-        self.param: SemanticSegmentationParameter = SemanticSegmentationParameter()
+        self.param: ImageParameter = ImageParameter()
         self.param.feature_config.input_size = [80, 160]
         namesp = rospy.get_name()
         if rospy.has_param(namesp + "/subscribers"):
             config = rospy.get_param(namesp + "/subscribers")
-            self.param: SemanticSegmentationParameter = SemanticSegmentationParameter.from_dict(config[sensor_name])
+            self.param: ImageParameter = ImageParameter.from_dict(config[sensor_name])
         else:
             print("NO ROS ENV found.")
 
@@ -63,11 +64,15 @@ class SemanticSegmentationNode:
     def register_sub_pub(self):
         """Register publishers and subscribers."""
         # subscribers
+        if self.param.image_info_topic is not None and self.param.resize is not None:
+            rospy.Subscriber(self.param.image_info_topic, CameraInfo, self.image_info_callback)
+            self.feat_im_info_pub = rospy.Publisher(self.param.image_info_topic + "_resized", CameraInfo, queue_size=2)
+
         if "compressed" in self.param.image_topic:
             self.compressed = True
-            self.subscriber = rospy.Subscriber(self.param.image_topic,
-                                               CompressedImage, self.image_callback, queue_size=2)
-            print("Subscribing to compressed image topic: {}".format(self.param.image_topic))
+            self.subscriber = rospy.Subscriber(
+                self.param.image_topic, CompressedImage, self.image_callback, queue_size=2
+            )
         else:
             self.compressed = False
             rospy.Subscriber(self.param.image_topic, Image, self.image_callback)
@@ -82,7 +87,6 @@ class SemanticSegmentationNode:
         if self.param.feature_extractor:
             self.feature_pub = rospy.Publisher(self.param.feature_topic, Image, queue_size=2)
             self.feat_im_pub = rospy.Publisher(self.param.feat_image_topic, Image, queue_size=2)
-
 
     def color_map(self, N=256, normalized=False):
         """Create a color map for the class labels.
@@ -126,11 +130,30 @@ class SemanticSegmentationNode:
         plt.xticks([])
         plt.show()
 
+    def image_info_callback(self, msg):
+        """Callback for camera info.
+
+        Args:
+            msg (CameraInfo):
+        """
+        self.P = np.array(msg.P).reshape(3, 4)
+        self.height = int(self.param.resize * msg.height)
+        self.width = int(self.param.resize * msg.width)
+        self.info = msg
+
     def image_callback(self, rgb_msg):
+        if self.P is None:
+            return
         if self.compressed:
-            image = cp.asarray(self.cv_bridge.compressed_imgmsg_to_cv2(rgb_msg))
+            image = self.cv_bridge.compressed_imgmsg_to_cv2(rgb_msg)
+            if self.param.resize is not None:
+                image = cv2.resize(image, dsize=(self.width, self.height))
+            image = cp.asarray(image)
         else:
-            image = cp.asarray(self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8"))
+            image = self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8")
+            if self.param.resize is not None:
+                image = cv2.resize(image, dsize=(self.width, self.height))
+            image = cp.asarray(image)
         self.header = rgb_msg.header
         self.process_image(image)
 
@@ -140,6 +163,17 @@ class SemanticSegmentationNode:
         if self.param.feature_extractor:
             self.publish_feature()
             self.publish_feature_image(self.features)
+        if self.param.resize is not None:
+            self.pub_info()
+
+    def pub_info(self):
+        info_msg = self.info
+        info_msg.height = self.height
+        info_msg.width = self.width
+        self.P[:2, :] *= self.param.resize
+        info_msg.K = self.P[:3, :3].flatten().tolist()
+        info_msg.P = self.P.flatten().tolist()
+        self.feat_im_info_pub.publish(info_msg)
 
     def process_image(self, image):
         """Depending on setting generate color, semantic segmentation or feature channels.
@@ -150,7 +184,6 @@ class SemanticSegmentationNode:
             v:
             points:
         """
-
         if self.param.semantic_segmentation:
             self.sem_seg = self.semantic_model["model"](image)
 
@@ -174,7 +207,6 @@ class SemanticSegmentationNode:
         feature_msg.header.frame_id = self.header.frame_id
         feature_msg.header.stamp = self.header.stamp
         self.feature_pub.publish(feature_msg)
-
 
     def publish_segmentation_image(self):
         colors = None
@@ -217,7 +249,7 @@ class SemanticSegmentationNode:
         pca = PCA(n_components=n_components).fit(data)
         pca_descriptors = pca.transform(data)
         img_pca = pca_descriptors.reshape(features.shape[1], features.shape[2], n_components)
-        comp = img_pca #[:, :, -3:]
+        comp = img_pca  # [:, :, -3:]
         comp_min = comp.min(axis=(0, 1))
         comp_max = comp.max(axis=(0, 1))
         comp_img = (comp - comp_min) / (comp_max - comp_min)
@@ -225,6 +257,7 @@ class SemanticSegmentationNode:
         feat_msg = self.cv_bridge.cv2_to_imgmsg(comp_img, encoding="passthrough")
         feat_msg.header.frame_id = self.header.frame_id
         self.feat_im_pub.publish(feat_msg)
+
 
 if __name__ == "__main__":
     arg = sys.argv[1]

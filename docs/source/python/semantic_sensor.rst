@@ -1,8 +1,8 @@
-.. _semantic_pointcloud:
+.. _semantic_sensor:
 
 Semantic Pointcloud
 ******************************************************************
 
 
-.. automodule:: semantic_pointcloud.pointcloud_node
+.. automodule:: semantic_sensor.pointcloud_node
     :members:

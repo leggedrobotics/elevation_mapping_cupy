@@ -13,7 +13,8 @@ class FeatureExtractorParameter(Serializable):
     dino_feat_type: str = "feat"
     projection_type: str = "nonlinear"
     input_size: list = field(default_factory=lambda: [80, 160])
-    feature_image_topic: str = "/semantic_pointcloud/feature_image"
+    feature_image_topic: str = "/semantic_sensor/feature_image"
+    pcl: bool = True
 
 
 @dataclass
@@ -34,7 +35,7 @@ class PointcloudParameter(Serializable):
     semantic_segmentation: bool = False
     segmentation_model: str = "lraspp_mobilenet_v3_large"
     publish_segmentation_image: bool = False
-    segmentation_image_topic: str = "/semantic_pointcloud/sem_seg"
+    segmentation_image_topic: str = "/semantic_sensor/sem_seg"
     pub_all: bool = False
     show_label_legend: bool = False
 

@@ -377,7 +377,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /semantic_pointcloud/sem_seg
+      Image Topic: /semantic_sensor/sem_seg
       Max Value: 1
       Median window: 5
       Min Value: 0

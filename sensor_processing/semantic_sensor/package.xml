@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>semantic_pointcloud</name>
+    <name>semantic_sensor</name>
     <version>0.0.0</version>
-    <description>The semantic_pointcloud package</description>
+    <description>The semantic_sensor package</description>
     <maintainer email="gerni@ethz.ch">Gian Erni</maintainer>
 
 
