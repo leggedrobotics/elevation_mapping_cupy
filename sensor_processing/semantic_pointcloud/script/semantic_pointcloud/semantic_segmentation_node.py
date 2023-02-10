@@ -11,12 +11,12 @@ from skimage.io import imshow
 
 import message_filters
 from sensor_msgs.msg import Image, CameraInfo
-from sensor_msgs.msg import PointCloud2, Image
+from sensor_msgs.msg import PointCloud2, Image, CompressedImage
 from cv_bridge import CvBridge
 
 from semantic_pointcloud.semantic_segmentation_parameters import SemanticSegmentationParameter
 from semantic_pointcloud.networks import resolve_model
-from semantic_pointcloud.utils import decode_max
+from sklearn.decomposition import PCA
 
 
 class SemanticSegmentationNode:
@@ -63,7 +63,14 @@ class SemanticSegmentationNode:
     def register_sub_pub(self):
         """Register publishers and subscribers."""
         # subscribers
-        rospy.Subscriber(self.param.image_topic, Image, self.image_callback)
+        if "compressed" in self.param.image_topic:
+            self.compressed = True
+            self.subscriber = rospy.Subscriber(self.param.image_topic,
+                                               CompressedImage, self.image_callback, queue_size=2)
+            print("Subscribing to compressed image topic: {}".format(self.param.image_topic))
+        else:
+            self.compressed = False
+            rospy.Subscriber(self.param.image_topic, Image, self.image_callback)
 
         # publishers
         if self.param.semantic_segmentation:
@@ -74,6 +81,8 @@ class SemanticSegmentationNode:
                 self.color_map_viz()
         if self.param.feature_extractor:
             self.feature_pub = rospy.Publisher(self.param.feature_topic, Image, queue_size=2)
+            self.feat_im_pub = rospy.Publisher(self.param.feat_image_topic, Image, queue_size=2)
+
 
     def color_map(self, N=256, normalized=False):
         """Create a color map for the class labels.
@@ -118,15 +127,19 @@ class SemanticSegmentationNode:
         plt.show()
 
     def image_callback(self, rgb_msg):
-        image = cp.asarray(self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8"))
+        if self.compressed:
+            image = cp.asarray(self.cv_bridge.compressed_imgmsg_to_cv2(rgb_msg))
+        else:
+            image = cp.asarray(self.cv_bridge.imgmsg_to_cv2(rgb_msg, desired_encoding="rgb8"))
         self.header = rgb_msg.header
         self.process_image(image)
 
         if self.param.semantic_segmentation:
             self.publish_segmentation()
             self.publish_segmentation_image()
-        # if self.param.feature_extractor:
-        #     self.publish_feature_image()
+        if self.param.feature_extractor:
+            self.publish_feature()
+            self.publish_feature_image(self.features)
 
     def process_image(self, image):
         """Depending on setting generate color, semantic segmentation or feature channels.
@@ -141,8 +154,8 @@ class SemanticSegmentationNode:
         if self.param.semantic_segmentation:
             self.sem_seg = self.semantic_model["model"](image)
 
-        # if self.feature_channels is not None:
-        #             prediction = self.feature_extractor["model"](image)
+        if self.param.feature_extractor:
+            self.features = self.feature_extractor["model"](image)
 
     def publish_segmentation(self):
         probabilities = self.sem_seg
@@ -152,6 +165,16 @@ class SemanticSegmentationNode:
         seg_msg.header.frame_id = self.header.frame_id
         seg_msg.header.stamp = self.header.stamp
         self.seg_pub.publish(seg_msg)
+
+    def publish_feature(self):
+        features = self.features
+        img = features.cpu().detach().numpy()
+        img = np.transpose(img, (1, 2, 0)).astype(np.float32)
+        feature_msg = self.cv_bridge.cv2_to_imgmsg(img, encoding="passthrough")
+        feature_msg.header.frame_id = self.header.frame_id
+        feature_msg.header.stamp = self.header.stamp
+        self.feature_pub.publish(feature_msg)
+
 
     def publish_segmentation_image(self):
         colors = None
@@ -188,6 +211,20 @@ class SemanticSegmentationNode:
         seg_msg.header.stamp = self.header.stamp
         self.seg_im_pub.publish(seg_msg)
 
+    def publish_feature_image(self, features):
+        data = np.reshape(features.cpu().detach().numpy(), (features.shape[0], -1)).T
+        n_components = 3
+        pca = PCA(n_components=n_components).fit(data)
+        pca_descriptors = pca.transform(data)
+        img_pca = pca_descriptors.reshape(features.shape[1], features.shape[2], n_components)
+        comp = img_pca #[:, :, -3:]
+        comp_min = comp.min(axis=(0, 1))
+        comp_max = comp.max(axis=(0, 1))
+        comp_img = (comp - comp_min) / (comp_max - comp_min)
+        comp_img = (comp_img * 255).astype(np.uint8)
+        feat_msg = self.cv_bridge.cv2_to_imgmsg(comp_img, encoding="passthrough")
+        feat_msg.header.frame_id = self.header.frame_id
+        self.feat_im_pub.publish(feat_msg)
 
 if __name__ == "__main__":
     arg = sys.argv[1]

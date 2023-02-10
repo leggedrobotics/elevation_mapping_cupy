@@ -8,7 +8,7 @@ class FeatureExtractorParameter(Serializable):
     interpolation: str = "bilinear"
     model: str = "vit_small"
     patch_size: int = 16
-    dim: int = 5
+    dim: int = 10
     dropout: bool = False
     dino_feat_type: str = "feat"
     projection_type: str = "nonlinear"
@@ -31,3 +31,5 @@ class SemanticSegmentationParameter(Serializable):
     feature_config: FeatureExtractorParameter = FeatureExtractorParameter
     # feature_config.input_size: list = field(default_factory=lambda: [80, 160])
     feature_topic: str = "/elevation_mapping/semantic_seg_feat"
+    feat_image_topic: str = "/elevation_mapping/semantic_seg_feat_im"
+

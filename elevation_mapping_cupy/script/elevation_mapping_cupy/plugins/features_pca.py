@@ -51,7 +51,7 @@ class FeaturesPca(PluginBase):
         # get indices of all layers that contain semantic features information
         layer_indices = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
-            if fusion_alg in ["average", "bayesian_inference"]:
+            if fusion_alg in ["average", "bayesian_inference","image_exponential"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
 
         n_c = semantic_map.semantic_map[layer_indices].shape[1]

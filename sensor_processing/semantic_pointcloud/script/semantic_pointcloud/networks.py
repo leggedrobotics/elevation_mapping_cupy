@@ -284,5 +284,6 @@ class STEGOModel:
         feat2, code2 = self.model(image.flip(dims=[3]))
         code = (code1 + code2.flip(dims=[3])) / 2
         code = NF.interpolate(code, image.shape[-2:], mode=self.cfg.interpolation, align_corners=False).detach()
-        code = torch.squeeze(reset_size(code), dim=0)
+        code = reset_size(code)
+        code = torch.squeeze(code , dim=0)
         return code
