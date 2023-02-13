@@ -5,7 +5,7 @@ from simple_parsing.helpers import Serializable
 @dataclass
 class FeatureExtractorParameter(Serializable):
     name: str = "DINO"
-    interpolation: str = "bilinear"
+    interpolation: str = "nearest-exact"
     model: str = "vit_small"
     patch_size: int = 16
     dim: int = 5

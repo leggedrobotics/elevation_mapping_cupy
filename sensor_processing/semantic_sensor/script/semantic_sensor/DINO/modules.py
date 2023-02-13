@@ -28,21 +28,6 @@ class DinoFeaturizer(nn.Module):
         else:
             raise ValueError("Unknown arch and patch size")
 
-        # if cfg.pretrained_weights is not None:
-        #     state_dict = torch.load(cfg.pretrained_weights, map_location="cpu")
-        #     state_dict = state_dict["teacher"]
-        #     # remove `module.` prefix
-        #     state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-        #     # remove `backbone.` prefix induced by multicrop wrapper
-        #     state_dict = {k.replace("backbone.", ""): v for k, v in state_dict.items()}
-        #
-        #     # state_dict = {k.replace("projection_head", "mlp"): v for k, v in state_dict.items()}
-        #     # state_dict = {k.replace("prototypes", "last_layer"): v for k, v in state_dict.items()}
-        #
-        #     msg = self.model.load_state_dict(state_dict, strict=False)
-        #     print('Pretrained weights found at {} and loaded with msg: {}'.format(cfg.pretrained_weights, msg))
-        # else:
-        #     print("Since no pretrained weights have been provided, we load the reference pretrained DINO weights.")
         state_dict = torch.hub.load_state_dict_from_url(url="https://dl.fbaipublicfiles.com/dino/" + url)
 
         self.model.load_state_dict(state_dict, strict=True)
@@ -57,9 +42,29 @@ class DinoFeaturizer(nn.Module):
             self.cluster2 = self.make_nonlinear_clusterer(self.n_feats)
 
     def make_clusterer(self, in_channels):
+        """
+        Function to make the clusterer model which consists of a single Conv2d layer.
+        The input channels are taken as the argument, and the output channels are equal to the `dim` of the model.
+
+        Parameters:
+        in_channels (int): The number of input channels.
+
+        Returns:
+        nn.Sequential: A sequential model consisting of a single Conv2d layer."""
+
         return torch.nn.Sequential(torch.nn.Conv2d(in_channels, self.dim, (1, 1)))  # ,
 
     def make_nonlinear_clusterer(self, in_channels):
+        """
+        Function to make the nonlinear clusterer model which consists of a series of Conv2d and ReLU layers.
+        The input channels are taken as the argument, and the output channels are equal to the `dim` of the model.
+
+        Parameters:
+        in_channels (int): The number of input channels.
+
+        Returns:
+        nn.Sequential: A sequential model consisting of a Conv2d layer, a ReLU layer, and another Conv2d layer.
+        """
         return torch.nn.Sequential(
             torch.nn.Conv2d(in_channels, in_channels, (1, 1)),
             torch.nn.ReLU(),
@@ -67,6 +72,22 @@ class DinoFeaturizer(nn.Module):
         )
 
     def forward(self, img, n=1, return_class_feat=False):
+        """
+        Forward pass of the model.
+        The input image is passed through the `model` to get the intermediate features.
+        The intermediate features are then processed to get the final image feature and code.
+        If `return_class_feat` is set to True, the class features are returned instead.
+
+        Parameters:
+        img (torch.Tensor): The input image tensor.
+        n (int, optional): The number of intermediate features to get. Default value is 1. 1 means only the features of the last block.
+        return_class_feat (bool, optional): Whether to return the class features. Default value is False.
+
+        Returns:
+        tuple: If `cfg.dropout` is True, a tuple containing the final image feature and code is returned.
+               Otherwise, only the final image feature is returned.
+               If `return_class_feat` is True, the class features are returned instead.
+        """
         self.model.eval()
         with torch.no_grad():
             assert img.shape[2] % self.cfg.patch_size == 0
@@ -80,6 +101,7 @@ class DinoFeaturizer(nn.Module):
             feat_w = img.shape[3] // self.cfg.patch_size
 
             if self.feat_type == "feat":
+                # deflatten
                 image_feat = feat[:, 1:, :].reshape(feat.shape[0], feat_h, feat_w, -1).permute(0, 3, 1, 2)
             elif self.feat_type == "KK":
                 image_k = qkv[1, :, :, 1:, :].reshape(feat.shape[0], 6, feat_h, feat_w, -1)

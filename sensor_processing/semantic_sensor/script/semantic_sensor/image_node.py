@@ -140,6 +140,12 @@ class SemanticSegmentationNode:
         self.height = int(self.param.resize * msg.height)
         self.width = int(self.param.resize * msg.width)
         self.info = msg
+        self.info.height = self.height
+        self.info.width = self.width
+        self.P = np.array(msg.P).reshape(3, 4)
+        self.P[:2,:3] = self.P[:2,:3]*self.param.resize
+        self.info.K = self.P[:3,:3].flatten().tolist()
+        self.info.P = self.P.flatten().tolist()
 
     def image_callback(self, rgb_msg):
         if self.P is None:
@@ -167,13 +173,7 @@ class SemanticSegmentationNode:
             self.pub_info()
 
     def pub_info(self):
-        info_msg = self.info
-        info_msg.height = self.height
-        info_msg.width = self.width
-        self.P[:2, :] *= self.param.resize
-        info_msg.K = self.P[:3, :3].flatten().tolist()
-        info_msg.P = self.P.flatten().tolist()
-        self.feat_im_info_pub.publish(info_msg)
+        self.feat_im_info_pub.publish(self.info)
 
     def process_image(self, image):
         """Depending on setting generate color, semantic segmentation or feature channels.
