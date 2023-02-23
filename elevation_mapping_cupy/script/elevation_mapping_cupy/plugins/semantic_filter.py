@@ -46,6 +46,9 @@ class SemanticFilter(PluginBase):
             cmap[i] = np.array([r, g, b])
 
         cmap = cmap / 255 if normalized else cmap
+        cmap[1] = np.array([81, 113, 162])
+        cmap[2] = np.array([81, 113, 162])
+        cmap[3] = np.array([188, 63, 59])
         return cmap[1:]
 
     def transform_color(self):

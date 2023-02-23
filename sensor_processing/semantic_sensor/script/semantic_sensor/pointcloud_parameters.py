@@ -48,5 +48,6 @@ class PointcloudParameter(Serializable):
     confidence_threshold: int = 10
 
     feature_extractor: bool = False
+    publish_feature_image: bool = False
     feature_config: FeatureExtractorParameter = FeatureExtractorParameter
     feature_config.input_size: list = field(default_factory=lambda: [80, 160])

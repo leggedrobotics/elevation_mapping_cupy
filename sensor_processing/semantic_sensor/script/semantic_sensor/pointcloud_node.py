@@ -28,8 +28,9 @@ class PointcloudNode:
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: PointcloudParameter = PointcloudParameter()
         self.param.feature_config.input_size = [80, 160]
-        if rospy.has_param("/semantic_sensor/subscribers"):
-            config = rospy.get_param("/semantic_sensor/subscribers")
+        namesp = rospy.get_name()
+        if rospy.has_param(namesp + "/subscribers"):
+            config = rospy.get_param(namesp + "/subscribers")
             self.param: PointcloudParameter = PointcloudParameter.from_dict(config[sensor_name])
         else:
             print("NO ROS ENV found.")
@@ -146,7 +147,9 @@ class PointcloudNode:
                 c = c >> 3
 
             cmap[i] = np.array([r, g, b])
-
+        cmap[1] = np.array([188,63,59])
+        cmap[2] = np.array([81,113,162])
+        cmap[3] = np.array([136,49,132])
         cmap = cmap / 255 if normalized else cmap
         return cmap[1:]
 
@@ -208,7 +211,7 @@ class PointcloudNode:
         if self.param.publish_segmentation_image:
             self.publish_segmentation_image(self.prediction_img)
             # todo
-        if False and self.param.feature_extractor:
+        if self.param.publish_feature_image and self.param.feature_extractor:
             self.publish_feature_image(self.feat_img)
 
     def create_pcl_from_image(self, image, depth, confidence):

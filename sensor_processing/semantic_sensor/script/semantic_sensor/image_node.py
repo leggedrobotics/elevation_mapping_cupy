@@ -111,7 +111,9 @@ class SemanticSegmentationNode:
                 c = c >> 3
 
             cmap[i] = np.array([r, g, b])
-
+        cmap[1] = np.array([81, 113, 162])
+        cmap[2] = np.array([81, 113, 162])
+        cmap[3] = np.array([188, 63, 59])
         cmap = cmap / 255 if normalized else cmap
         return cmap[1:]
 
@@ -143,8 +145,8 @@ class SemanticSegmentationNode:
         self.info.height = self.height
         self.info.width = self.width
         self.P = np.array(msg.P).reshape(3, 4)
-        self.P[:2,:3] = self.P[:2,:3]*self.param.resize
-        self.info.K = self.P[:3,:3].flatten().tolist()
+        self.P[:2, :3] = self.P[:2, :3] * self.param.resize
+        self.info.K = self.P[:3, :3].flatten().tolist()
         self.info.P = self.P.flatten().tolist()
 
     def image_callback(self, rgb_msg):
