@@ -34,7 +34,7 @@ max_filter:
   layer_name: "max_filter"                    # The layer name.
   extra_params:                               # This params are passed to the plugin class on initialization.
     dilation_size: 1                         # The patch size to apply
-    iteration_n: 5                           # The number of iterations
+    iteration_n: 15                           # The number of iterations
 inpainting:                                   
   enable: True
   fill_nan: False
