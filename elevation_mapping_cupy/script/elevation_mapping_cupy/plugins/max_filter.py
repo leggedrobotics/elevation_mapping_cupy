@@ -63,7 +63,6 @@ class MaxFilter(PluginBase):
             ).substitute(width=self.width, height=self.height),
             operation=string.Template(
                 """
-                U h = map[get_map_idx(i, 0)];
                 U valid = mask[get_map_idx(i, 0)];
                 if (valid < 0.5) {
                     U max_value = -1000000.0;
@@ -71,8 +70,8 @@ class MaxFilter(PluginBase):
                         for (int dx = -${dilation_size}; dx <= ${dilation_size}; dx++) {
                             int idx = get_relative_map_idx(i, dx, dy, 0);
                             if (!is_inside(idx)) {continue;}
-                            U valid = newmask[idx];
-                            U value = newmap[idx];
+                            U valid = mask[idx];
+                            U value = map[idx];
                             if(valid > 0.5 && value > max_value) {
                                 max_value = value;
                             }
@@ -99,8 +98,8 @@ class MaxFilter(PluginBase):
         self.max_filtered_mask = elevation_map[2].copy()
         for i in range(self.iteration_n):
             self.max_filter_kernel(
-                elevation_map[0],
-                elevation_map[2],
+                self.max_filtered.copy(),
+                self.max_filtered_mask.copy(),
                 self.max_filtered,
                 self.max_filtered_mask,
                 size=(self.width * self.height),
