@@ -291,7 +291,6 @@ class SemanticMap:
                 self.semantic_map,
                 size=(self.param.cell_n * self.param.cell_n*pcl_ids.shape[0]),
             )
-            np.save("features.npy",self.semantic_map[layer_ids])
         if "bayesian_inference" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "bayesian_inference")
             self.sum_mean *= 0
