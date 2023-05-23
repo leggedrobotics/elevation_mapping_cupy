@@ -7,7 +7,7 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-from semantic_pointcloud.DINO.utils import trunc_normal_
+from semantic_sensor.DINO.utils import trunc_normal_
 
 
 def drop_path(x, drop_prob: float = 0.0, training: bool = False):
@@ -69,28 +69,45 @@ class Attention(nn.Module):
         proj_drop=0.0,
     ):
         super().__init__()
+        # number of attention heads
         self.num_heads = num_heads
+        # dimension of each head
         head_dim = dim // num_heads
+        # scale factor for the attention scores
         self.scale = qk_scale or head_dim**-0.5
 
+        # linear layer to project the input to 3 times the dimension
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        # dropout layer to drop out activations in the attention mechanism
         self.attn_drop = nn.Dropout(attn_drop)
+        # linear layer to project the output back to the original dimension
         self.proj = nn.Linear(dim, dim)
+        # dropout layer to drop out activations in the projection layer
         self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x, return_qkv=False):
+        # get the batch size, sequence length, and input dimension
         B, N, C = x.shape
+        # project the input to 3 times the dimension, multiplication with W matrix
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        # separate the input into queries: info about word in relation to others, keys: how one word influences others, and values: how word sees itself
         q, k, v = qkv[0], qkv[1], qkv[2]
 
+        # compute the attention scores
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
+        # drop out activations in the attention mechanism
         attn = self.attn_drop(attn)
 
+        # compute the weighted sum of values
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        # project the output back to the original dimension
         x = self.proj(x)
+        # drop out activations in the projection layer
         x = self.proj_drop(x)
-        return x, attn, qkv
+
+        # return the attention mechanism and the projected input
+        return x, attn, qkv if return_qkv else x
 
 
 class Block(nn.Module):

@@ -280,7 +280,7 @@ class SemanticMap:
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 self.semantic_map,
                 self.new_map,
-                size=(points_all.shape[0]),
+                size=(points_all.shape[0]*pcl_ids.shape[0]),
             )
             self.average_kernel(
                 self.new_map,
@@ -289,7 +289,7 @@ class SemanticMap:
                 cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
                 elevation_map,
                 self.semantic_map,
-                size=(self.param.cell_n * self.param.cell_n),
+                size=(self.param.cell_n * self.param.cell_n*pcl_ids.shape[0]),
             )
         if "bayesian_inference" in additional_fusion:
             pcl_ids, layer_ids = self.get_indices_fusion(channels, "bayesian_inference")

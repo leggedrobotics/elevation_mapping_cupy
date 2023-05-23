@@ -9,7 +9,7 @@
 import os, sys
 
 sys.path.insert(0, os.path.abspath("../../elevation_mapping_cupy"))
-sys.path.insert(0, os.path.abspath("../../sensor_processing/semantic_pointcloud"))
+sys.path.insert(0, os.path.abspath("../../sensor_processing/semantic_sensor"))
 
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 

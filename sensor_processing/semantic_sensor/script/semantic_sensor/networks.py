@@ -20,13 +20,13 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog
 
-from semantic_pointcloud.DINO.modules import DinoFeaturizer
+from semantic_sensor.DINO.modules import DinoFeaturizer
 
-from semantic_pointcloud.pointcloud_parameters import (
+from semantic_sensor.pointcloud_parameters import (
     PointcloudParameter,
     FeatureExtractorParameter,
 )
-from semantic_pointcloud.utils import encode_max
+from semantic_sensor.utils import encode_max
 
 
 def resolve_model(name, config=None):
@@ -276,13 +276,21 @@ class STEGOModel:
     def __call__(self, image, *args, **kwargs):
         # image = torch.as_tensor(image, device="cuda").permute(2, 0, 1).unsqueeze(0)
         image = self.to_tensor(image).unsqueeze(0)
-        reset_size = Resize(image.shape[-2:])
+        # if self.cfg.pcl:
+        reset_size = Resize(image.shape[-2:], interpolation=TF.InterpolationMode.NEAREST)
+        im_size = image.shape[-2:]
         image = self.shrink(image)
         image = TF.normalize(image, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 
         feat1, code1 = self.model(image)
         feat2, code2 = self.model(image.flip(dims=[3]))
+
         code = (code1 + code2.flip(dims=[3])) / 2
-        code = NF.interpolate(code, image.shape[-2:], mode=self.cfg.interpolation, align_corners=False).detach()
-        code = torch.squeeze(reset_size(code), dim=0)
+        # code = NF.interpolate(code, image.shape[-2:], mode=self.cfg.interpolation, align_corners=False).detach()
+        # if we just use first ten
+        # code = (feat1[:,:10] + feat2[:,:10].flip(dims=[3])) / 2
+
+        # if self.cfg.pcl:
+        code = NF.interpolate(code, im_size, mode=self.cfg.interpolation, align_corners=False).detach()
+        code = torch.squeeze(code, dim=0)
         return code

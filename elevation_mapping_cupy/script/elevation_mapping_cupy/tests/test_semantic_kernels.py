@@ -72,12 +72,12 @@ def test_color_kernel():
     "map_shape, points_all,pcl_ids, layer_ids",
     [
         (
-            (3, 4, 4),
+            (4, 4, 4),
             cp.array(
                 [[0.1, 0.1, 0.1, 0.3, 0.3], [0.1, 0.1, 0.1, 0.1, 0.2], [0.1, 0.1, 0.1, 0.1, 0.2]], dtype=cp.float32
             ),
-            cp.array([3], dtype=cp.int32),
-            cp.array([0], dtype=cp.int32),
+            cp.array([3, 4], dtype=cp.int32),
+            cp.array([1, 2], dtype=cp.int32),
         ),
     ],
 )
@@ -121,12 +121,12 @@ def test_sum_kernel(map_shape, points_all, pcl_ids, layer_ids):
     "map_shape, points_all,pcl_ids, layer_ids",
     [
         (
-            (3, 4, 4),
+            (4, 4, 4),
             cp.array(
                 [[0.1, 0.1, 0.1, 0.3, 0.3], [0.1, 0.1, 0.1, 0.1, 0.2], [0.1, 0.1, 0.1, 0.1, 0.2]], dtype=cp.float32
             ),
-            cp.array([3], dtype=cp.int32),
-            cp.array([0], dtype=cp.int32),
+            cp.array([3, 4], dtype=cp.int32),
+            cp.array([1, 2], dtype=cp.int32),
         ),
     ],
 )

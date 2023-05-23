@@ -34,7 +34,7 @@ jobs:
         run: |
           cd elevation_mapping_cupy/script/elevation_mapping_cupy/tests/
           pytest
-      - name: Test semantic_pointcloud with pytest
+      - name: Test semantic_sensor with pytest
         run: |
-          cd sensor_processing/semantic_pointcloud/script/semantic_pointcloud/tests
+          cd sensor_processing/semantic_sensor/script/semantic_sensor/tests
           pytest test_utils.py

@@ -5,7 +5,7 @@
     <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
     <!--    <param name="robot_description" command="$(find xacro)/xacro '&#45;&#45;inorder' $(arg model)" />-->
 
-    <node pkg="semantic_pointcloud" type="pointcloud_node.py" name="semantic_pointcloud" args="front_cam"
+    <node pkg="semantic_sensor" type="pointcloud_node.py" name="semantic_sensor" args="front_cam"
           output="screen">
         <rosparam command="load" file="$(find elevation_mapping_cupy)/config/lonomy_sensor_parameter.yaml"/>
     </node>

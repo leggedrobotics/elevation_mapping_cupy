@@ -12,9 +12,10 @@ from sensor_msgs.msg import Image, CameraInfo
 from sensor_msgs.msg import PointCloud2, Image
 from cv_bridge import CvBridge
 
-from semantic_pointcloud.pointcloud_parameters import PointcloudParameter
-from semantic_pointcloud.networks import resolve_model
-from semantic_pointcloud.utils import decode_max
+from semantic_sensor.pointcloud_parameters import PointcloudParameter
+from semantic_sensor.networks import resolve_model
+from semantic_sensor.utils import decode_max
+from sklearn.decomposition import PCA
 
 
 class PointcloudNode:
@@ -27,8 +28,9 @@ class PointcloudNode:
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: PointcloudParameter = PointcloudParameter()
         self.param.feature_config.input_size = [80, 160]
-        if rospy.has_param("/semantic_pointcloud/subscribers"):
-            config = rospy.get_param("/semantic_pointcloud/subscribers")
+        namesp = rospy.get_name()
+        if rospy.has_param(namesp + "/subscribers"):
+            config = rospy.get_param(namesp + "/subscribers")
             self.param: PointcloudParameter = PointcloudParameter.from_dict(config[sensor_name])
         else:
             print("NO ROS ENV found.")
@@ -53,6 +55,8 @@ class PointcloudNode:
         self.header = None
         self.register_sub_pub()
         self.prediction_img = None
+        self.feat_img = None
+
 
     def initialize_semantics(self):
         """Resolve the feature and segmentation mode and create segmentation_channel and feature_channels.
@@ -115,6 +119,10 @@ class PointcloudNode:
             self.semseg_color_map = self.color_map(len(self.labels))
             if self.param.show_label_legend:
                 self.color_map_viz()
+        if self.param.feature_extractor:
+            # todo
+            if True:
+                self.feat_pub = rospy.Publisher(self.param.feature_config.feature_image_topic, Image, queue_size=2)
 
     def color_map(self, N=256, normalized=False):
         """Create a color map for the class labels.
@@ -139,7 +147,9 @@ class PointcloudNode:
                 c = c >> 3
 
             cmap[i] = np.array([r, g, b])
-
+        cmap[1] = np.array([188,63,59])
+        cmap[2] = np.array([81,113,162])
+        cmap[3] = np.array([136,49,132])
         cmap = cmap / 255 if normalized else cmap
         return cmap[1:]
 
@@ -196,9 +206,13 @@ class PointcloudNode:
             confidence = cp.asarray(self.cv_bridge.imgmsg_to_cv2(confidence_msg, desired_encoding="passthrough"))
 
         pcl = self.create_pcl_from_image(image, depth, confidence)
+        self.publish_pointcloud(pcl, depth_msg.header)
+
         if self.param.publish_segmentation_image:
             self.publish_segmentation_image(self.prediction_img)
-        self.publish_pointcloud(pcl, depth_msg.header)
+            # todo
+        if self.param.publish_feature_image and self.param.feature_extractor:
+            self.publish_feature_image(self.feat_img)
 
     def create_pcl_from_image(self, image, depth, confidence):
         """Generate the pointcloud from the depth map and process the image.
@@ -300,7 +314,9 @@ class PointcloudNode:
         values = prediction[:, v.get(), u.get()].cpu().detach().numpy()
         for it, channel in enumerate(self.feature_channels.keys()):
             points[channel] = values[it]
-
+            # todo
+        if False and self.param.feature_extractor:
+            self.feat_img = prediction
     def publish_segmentation_image(self, probabilities):
         if self.param.semantic_segmentation:
             colors = cp.asarray(self.semseg_color_map)
@@ -333,6 +349,22 @@ class PointcloudNode:
         seg_msg = self.cv_bridge.cv2_to_imgmsg(img, encoding="rgb8")
         seg_msg.header.frame_id = self.header.frame_id
         self.seg_pub.publish(seg_msg)
+
+    def publish_feature_image(self, features):
+        data = np.reshape(features.cpu().detach().numpy(), (features.shape[0], -1)).T
+        n_components = 3
+        pca = PCA(n_components=n_components).fit(data)
+        pca_descriptors = pca.transform(data)
+        img_pca = pca_descriptors.reshape(features.shape[1], features.shape[2], n_components)
+        comp = img_pca #[:, :, -3:]
+        comp_min = comp.min(axis=(0, 1))
+        comp_max = comp.max(axis=(0, 1))
+        comp_img = (comp - comp_min) / (comp_max - comp_min)
+        comp_img = (comp_img * 255).astype(np.uint8)
+        feat_msg = self.cv_bridge.cv2_to_imgmsg(comp_img, encoding="passthrough")
+        feat_msg.header.frame_id = self.header.frame_id
+        self.feat_pub.publish(feat_msg)
+
 
     def publish_pointcloud(self, pcl, header):
         pc2 = ros_numpy.msgify(PointCloud2, pcl)
