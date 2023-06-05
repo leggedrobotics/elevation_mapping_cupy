@@ -3,24 +3,8 @@ import cupy as cp
 import numpy as np
 from typing import List
 
-from elevation_mapping_cupy.kernels import (
-    average_kernel,
-    class_average_kernel,
-    alpha_kernel,
-    bayesian_inference_kernel,
-    add_color_kernel,
-    color_average_kernel,
-    sum_compact_kernel,
-    sum_max_kernel,
-    sum_kernel,
-)
-from elevation_mapping_cupy.kernels import (
-    average_correspondences_to_map_kernel,
-    exponential_correspondences_to_map_kernel,
-    color_correspondences_to_map_kernel,
-)
-
 from elevation_mapping_cupy.fusion.fusion_manager import FusionManager
+
 xp = cp
 
 
@@ -85,105 +69,6 @@ class SemanticMap:
                 )
                 self.elements_to_shift["id_max"] = id_max
             self.fusion_manager.register_plugin(fusion)
-
-    # def compile_kernels(self) -> None:
-    #     """
-    #     Returns:
-    #         None:
-    #     """
-    #     # TODO: maybe this could be improved by creating functions for each single fusion algorithm
-    #
-    #     if "average" in self.unique_fusion:
-    #         print("Initialize fusion kernel")
-    #         self.sum_kernel = sum_kernel(
-    #             self.param.resolution,
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #         self.average_kernel = average_kernel(
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #     if "bayesian_inference" in self.unique_fusion:
-    #         print("Initialize bayesian inference kernel")
-    #         self.sum_mean = xp.ones(
-    #             (
-    #                 self.param.fusion_algorithms.count("bayesian_inference"),
-    #                 self.param.cell_n,
-    #                 self.param.cell_n,
-    #             ),
-    #             self.param.data_type,
-    #         )
-    #         # TODO initialize the variance with a value different than 0
-    #         self.sum_compact_kernel = sum_compact_kernel(
-    #             self.param.resolution,
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #         self.bayesian_inference_kernel = bayesian_inference_kernel(
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #     if "color" in self.unique_fusion:
-    #         print("Initialize color kernel")
-    #
-    #         self.add_color_kernel = add_color_kernel(
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #         self.color_average_kernel = color_average_kernel(self.param.cell_n, self.param.cell_n)
-    #     if "class_average" in self.unique_fusion:
-    #         print("Initialize class average kernel")
-    #         self.sum_kernel = sum_kernel(
-    #             self.param.resolution,
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #         self.class_average_kernel = class_average_kernel(
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #             self.param.average_weight,
-    #         )
-    #     if "class_bayesian" in self.unique_fusion:
-    #         print("Initialize class bayesian kernel")
-    #         pcl_ids = self.get_layer_indices("class_bayesian")
-    #         self.delete_new_layers[pcl_ids] = 0
-    #         self.alpha_kernel = alpha_kernel(
-    #             self.param.resolution,
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #     if "class_max" in self.unique_fusion:
-    #         print("Initialize class max kernel")
-    #         pcl_ids = self.get_layer_indices("class_max")
-    #         self.delete_new_layers[pcl_ids] = 0
-    #         self.sum_max_kernel = sum_max_kernel(
-    #             self.param.resolution,
-    #             self.param.cell_n,
-    #             self.param.cell_n,
-    #         )
-    #         layer_cnt = self.param.fusion_algorithms.count("class_max")
-    #         id_max = cp.zeros(
-    #             (layer_cnt, self.param.cell_n, self.param.cell_n),
-    #             dtype=cp.uint32,
-    #         )
-    #         self.elements_to_shift["id_max"] = id_max
-    #         self.unique_id = cp.array([0])
-    #
-    #     if "image_exponential" in self.unique_fusion:
-    #         self.exponential_correspondences_to_map_kernel = exponential_correspondences_to_map_kernel(
-    #             resolution=self.param.resolution,
-    #             width=self.param.cell_n,
-    #             height=self.param.cell_n,
-    #             alpha=0.7,
-    #         )
-    #
-    #     if "image_color" in self.unique_fusion:
-    #         self.color_correspondences_to_map_kernel = color_correspondences_to_map_kernel(
-    #             resolution=self.param.resolution,
-    #             width=self.param.cell_n,
-    #             height=self.param.cell_n,
-    #         )
 
     def pad_value(self, x, shift_value, idx=None, value=0.0):
         """Create a padding of the map along x,y-axis according to amount that has shifted.
@@ -311,184 +196,6 @@ class SemanticMap:
                 self.elements_to_shift,
             )
 
-    # def update_layers_pointcloud_o(self, points_all, channels, R, t, elevation_map):
-    #     """Update the semantic map with the pointcloud.
-    #
-    #     Args:
-    #         points_all: semantic point cloud
-    #         channels: list of channel names
-    #         R: rotation matrix
-    #         t: translation vector
-    #         elevation_map: elevation map object
-    #     """
-    #     additional_fusion = self.get_fusion_of_pcl(channels)
-    #     self.new_map[self.delete_new_layers] = 0.0
-    #     if "average" in additional_fusion:
-    #         pcl_ids, layer_ids = self.get_indices_fusion(channels, "average")
-    #         self.sum_kernel(
-    #             points_all,
-    #             R,
-    #             t,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             self.semantic_map,
-    #             self.new_map,
-    #             size=(points_all.shape[0] * pcl_ids.shape[0]),
-    #         )
-    #         self.average_kernel(
-    #             self.new_map,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             elevation_map,
-    #             self.semantic_map,
-    #             size=(self.param.cell_n * self.param.cell_n * pcl_ids.shape[0]),
-    #         )
-    #     if "bayesian_inference" in additional_fusion:
-    #         pcl_ids, layer_ids = self.get_indices_fusion(channels, "bayesian_inference")
-    #         self.sum_mean *= 0
-    #         self.sum_compact_kernel(
-    #             points_all,
-    #             R,
-    #             t,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             self.sum_mean,
-    #             size=(points_all.shape[0]),
-    #         )
-    #         self.bayesian_inference_kernel(
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             elevation_map,
-    #             self.new_map,
-    #             self.sum_mean,
-    #             self.semantic_map,
-    #             size=(self.param.cell_n * self.param.cell_n),
-    #         )
-    #     if "class_average" in additional_fusion:
-    #         pcl_ids, layer_ids = self.get_indices_fusion(channels, "class_average")
-    #         self.sum_kernel(
-    #             points_all,
-    #             R,
-    #             t,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             self.semantic_map,
-    #             self.new_map,
-    #             size=(points_all.shape[0] * pcl_ids.shape[0]),
-    #         )
-    #         self.class_average_kernel(
-    #             self.new_map,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             elevation_map,
-    #             self.semantic_map,
-    #             size=(self.param.cell_n * self.param.cell_n * pcl_ids.shape[0]),
-    #         )
-    #
-    #     if "class_bayesian" in additional_fusion:
-    #         pcl_ids, layer_ids = self.get_indices_fusion(channels, "class_bayesian")
-    #         # alpha sum get points as input and calculate for each point to what cell it belongs and then
-    #         # adds to the right channel a one
-    #         self.alpha_kernel(
-    #             points_all,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             self.new_map,
-    #             size=(points_all.shape[0]),
-    #         )
-    #         # calculate new thetas
-    #         sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
-    #         # do not divide by zero
-    #         sum_alpha[sum_alpha == 0] = 1
-    #         self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
-    #
-    #     if "class_max" in additional_fusion:
-    #         # get indices that are of type class_max in pointclopud and in layers
-    #         pcl_ids, layer_ids = self.get_indices_fusion(channels, "class_max")
-    #         # decode float32 into to float16
-    #         max_pt, pt_id = self.decode_max(points_all[:, pcl_ids])
-    #         # find unique ids in new measurement and in existing map
-    #         unique_idm = cp.unique(pt_id)
-    #         unique_ida = cp.unique(self.unique_id[self.elements_to_shift["id_max"]])
-    #         # get all unique ids, where index is the position in the prob_sum and the value in the NN class
-    #         self.unique_id = cp.unique(cp.concatenate((unique_idm, unique_ida)))
-    #         # contains the sum of the new measurement probabilities
-    #         self.prob_sum = cp.zeros(
-    #             (len(self.unique_id), self.param.cell_n, self.param.cell_n),
-    #             dtype=np.float32,
-    #         )
-    #         # transform the index matrix of the classes to the index matrix of the prob_sum
-    #         pt_id_zero = pt_id.copy()
-    #         for it, val in enumerate(self.unique_id):
-    #             pt_id_zero[pt_id_zero == val] = it
-    #
-    #         # sum all measurements probabilities
-    #         self.sum_max_kernel(
-    #             points_all,
-    #             max_pt,
-    #             pt_id_zero,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array(
-    #                 [points_all.shape[1], pcl_ids.shape[0], pt_id.shape[1]],
-    #                 dtype=cp.int32,
-    #             ),
-    #             self.prob_sum,
-    #             size=(points_all.shape[0]),
-    #         )
-    #         # add the previous alpha
-    #         for i, lay in enumerate(layer_ids):
-    #             c = cp.mgrid[0 : self.new_map.shape[1], 0 : self.new_map.shape[2]]
-    #             # self.prob_sum[self.elements_to_shift["id_max"][i], c[0], c[1]] += self.new_map[lay]
-    #             # TODO add residual of prev alpha to the prob_sum
-    #             # res = 1- self.new_map[lay]
-    #             # res /= (len(self.unique_id)-1)
-    #
-    #         # find the alpha we want to keep
-    #         for i, lay in enumerate(layer_ids):
-    #             self.new_map[lay] = cp.amax(self.prob_sum, axis=0)
-    #             self.elements_to_shift["id_max"][lay] = self.unique_id[cp.argmax(self.prob_sum, axis=0)]
-    #             self.prob_sum[cp.argmax(self.prob_sum, axis=0)] = 0
-    #         # update map calculate new thetas
-    #         sum_alpha = cp.sum(self.new_map[layer_ids], axis=0)
-    #         # do not divide by zero
-    #         sum_alpha[sum_alpha == 0] = 1
-    #         self.semantic_map[layer_ids] = self.new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
-    #
-    #     if "color" in additional_fusion:
-    #         pcl_ids, layer_ids = self.get_indices_fusion(channels, "color")
-    #         self.color_map = cp.zeros(
-    #             (1 + 3 * layer_ids.shape[0], self.param.cell_n, self.param.cell_n),
-    #             dtype=cp.uint32,
-    #         )
-    #
-    #         points_all = points_all.astype(cp.float32)
-    #         self.add_color_kernel(
-    #             points_all,
-    #             R,
-    #             t,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             self.color_map,
-    #             size=(points_all.shape[0]),
-    #         )
-    #         self.color_average_kernel(
-    #             self.color_map,
-    #             pcl_ids,
-    #             layer_ids,
-    #             cp.array([points_all.shape[1], pcl_ids.shape[0]], dtype=cp.int32),
-    #             self.semantic_map,
-    #             size=(self.param.cell_n * self.param.cell_n),
-    #         )
-
     def update_layers_image(
         self,
         sub_key: str,
@@ -516,7 +223,6 @@ class SemanticMap:
         for j, (fusion, channel) in enumerate(zip(config["fusion"], config["channels"])):
             sem_map_idx = self.get_index(channel)
 
-
             # which layers need to be updated with this fusion algorithm
             # pcl_ids, layer_ids = self.get_indices_fusion(channels, fusion)
             # update the layers with the fusion algorithm
@@ -532,42 +238,6 @@ class SemanticMap:
                 self.semantic_map,
                 self.new_map,
             )
-        # self.new_map *= 0
-        # config = self.param.subscriber_cfg[sub_key]
-        #
-        # for j, (fusion, channel) in enumerate(zip(config["fusion"], config["channels"])):
-        #     sem_map_idx = self.get_index(channel)
-        #
-            # if fusion == "image_exponential":
-            #     self.exponential_correspondences_to_map_kernel(
-            #         self.semantic_map,
-            #         cp.uint64(sem_map_idx),
-            #         image[j],
-            #         uv_correspondence,
-            #         valid_correspondence,
-            #         image_height,
-            #         image_width,
-            #         self.new_map,
-            #         size=int(self.param.cell_n * self.param.cell_n),
-            #     )
-            #     self.semantic_map[sem_map_idx] = self.new_map[sem_map_idx]
-            #
-            # elif fusion == "image_color":
-            #     self.color_correspondences_to_map_kernel(
-            #         self.semantic_map,
-            #         cp.uint64(sem_map_idx),
-            #         image,
-            #         uv_correspondence,
-            #         valid_correspondence,
-            #         image_height,
-            #         image_width,
-            #         self.new_map,
-            #         size=int(self.param.cell_n * self.param.cell_n),
-            #     )
-            #     self.semantic_map[sem_map_idx] = self.new_map[sem_map_idx]
-            #
-            # else:
-            #     raise ValueError("Fusion for image is unknown.")
 
     def decode_max(self, mer):
         """Decode the float32 value into two 16 bit value containing the class probability and the class id.
