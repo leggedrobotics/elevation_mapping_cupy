@@ -1,7 +1,7 @@
 ##################################################
 Multi-modal elevation mapping's documentation
 ##################################################
-Weclome to elevation mapping documentation
+Welcome to elevation mapping documentation
 
 .. image:: https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg
     :target: https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg
