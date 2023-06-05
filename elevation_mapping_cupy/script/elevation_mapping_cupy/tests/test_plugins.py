@@ -18,7 +18,7 @@ def semmap_ex(add_lay, fusion_alg):
     p.subscriber_cfg["front_cam"]["fusion"] = fusion_alg
     p.update()
     e = semantic_map.SemanticMap(p)
-    e.compile_kernels()
+    e.initialize_fusion()
     return e
 
 

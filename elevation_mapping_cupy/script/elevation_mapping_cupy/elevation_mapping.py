@@ -98,7 +98,7 @@ class ElevationMap:
 
         self.compile_image_kernels()
 
-        self.semantic_map.compile_kernels()
+        self.semantic_map.initialize_fusion()
 
         weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
         param.load_weights(weight_file)
@@ -428,7 +428,7 @@ class ElevationMap:
         self.elevation_map[5] = cp.where(mask, self.elevation_map[0], self.elevation_map[5])
         self.elevation_map[6] = cp.where(mask, 0.0, self.elevation_map[6])
 
-    def input(
+    def input_pointcloud(
         self,
         raw_points: cp._core.core.ndarray,
         channels: List[str],
@@ -923,7 +923,7 @@ if __name__ == "__main__":
     print(channels)
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
     for i in range(50):
-        elevation.input(points, channels, R, t, 0, 0)
+        elevation.input_pointcloud(points, channels, R, t, 0, 0)
         elevation.update_normal(elevation.elevation_map[0])
         pos = np.array([i * 0.01, i * 0.02, i * 0.01])
         elevation.move_to(pos, R)

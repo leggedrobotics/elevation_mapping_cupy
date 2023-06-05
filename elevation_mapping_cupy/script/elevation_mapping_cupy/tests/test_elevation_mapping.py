@@ -58,7 +58,7 @@ class TestElevationMap:
             points = cp.random.rand(100000, len(channels), dtype=elmap_ex.param.data_type)
         R = cp.random.rand(3, 3, dtype=elmap_ex.param.data_type)
         t = cp.random.rand(3, dtype=elmap_ex.param.data_type)
-        elmap_ex.input(points, channels, R, t, 0, 0)
+        elmap_ex.input_pointcloud(points, channels, R, t, 0, 0)
 
     def test_update_normal(self, elmap_ex):
         elmap_ex.update_normal(elmap_ex.elevation_map[0])
