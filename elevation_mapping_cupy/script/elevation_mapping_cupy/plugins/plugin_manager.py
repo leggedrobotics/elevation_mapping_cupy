@@ -34,13 +34,13 @@ class PluginBase(ABC):
         """
 
     def __call__(
-        self,
-        elevation_map: cp.ndarray,
-        layer_names: List[str],
-        plugin_layers: cp.ndarray,
-        plugin_layer_names: List[str],
-        *args,
-        **kwargs,
+            self,
+            elevation_map: cp.ndarray,
+            layer_names: List[str],
+            plugin_layers: cp.ndarray,
+            plugin_layer_names: List[str],
+            *args,
+            **kwargs,
     ) -> cp.ndarray:
         """This gets the elevation map data and plugin layers as a cupy array.
 
@@ -136,25 +136,38 @@ class PluginManager(object):
             return None
 
     def update_with_name(
-        self,
-        name: str,
-        elevation_map: cp.ndarray,
-        layer_names: List[str],
-        semantic_map=None,
-        rotation=None,
+            self,
+            name: str,
+            elevation_map: cp.ndarray,
+            layer_names: List[str],
+            semantic_map=None,
+            semantic_params=None,
+            rotation=None,
+            elements_to_shift={},
     ):
         idx = self.get_layer_index_with_name(name)
         if idx is not None:
             n_param = len(signature(self.plugins[idx]).parameters)
             if n_param == 5:
                 self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)
-            elif n_param == 6:
+            elif n_param == 7:
                 self.layers[idx] = self.plugins[idx](
                     elevation_map,
                     layer_names,
                     self.layers,
                     self.layer_names,
                     semantic_map,
+                    semantic_params,
+                )
+            elif n_param == 8:
+                self.layers[idx] = self.plugins[idx](
+                    elevation_map,
+                    layer_names,
+                    self.layers,
+                    self.layer_names,
+                    semantic_map,
+                    semantic_params,
+                    rotation,
                 )
             else:
                 self.layers[idx] = self.plugins[idx](
@@ -163,7 +176,9 @@ class PluginManager(object):
                     self.layers,
                     self.layer_names,
                     semantic_map,
+                    semantic_params,
                     rotation,
+                    elements_to_shift,
                 )
 
     def get_map_with_name(self, name: str) -> cp.ndarray:

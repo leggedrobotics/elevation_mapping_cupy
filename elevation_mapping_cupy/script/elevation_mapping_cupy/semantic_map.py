@@ -180,7 +180,6 @@ class SemanticMap:
         additional_fusion = self.get_fusion_of_pcl(channels)
         self.new_map[self.delete_new_layers] = 0.0
         for fusion in list(set(additional_fusion)):
-            print(f"fusion: {fusion}")
             # which layers need to be updated with this fusion algorithm
             pcl_ids, layer_ids = self.get_indices_fusion(channels, fusion)
             # update the layers with the fusion algorithm

@@ -89,6 +89,7 @@ class RobotCentricElevation(PluginBase):
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
         semantic_map,
+        semantic_params,
         rotation,
         *args,
     ) -> cp.ndarray:

@@ -66,8 +66,12 @@ class SemanticFilter(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
-        semantic_map,
-        *args,
+        semantic_map: cp.ndarray,
+        semantic_params,
+        rotation,
+            elements_to_shift,
+            *args,
+
     ) -> cp.ndarray:
         """
 
@@ -85,8 +89,8 @@ class SemanticFilter(PluginBase):
         # get indices of all layers that contain semantic class information
         layer_indices = cp.array([], dtype=cp.int32)
         max_idcs = cp.array([], dtype=cp.int32)
-        for it, fusion_alg in enumerate(semantic_map.param.fusion_algorithms):
-            if fusion_alg in ["class_bayesian", "class_average", "image_exponential"]:
+        for it, fusion_alg in enumerate(semantic_params.fusion_algorithms):
+            if fusion_alg in ["class_bayesian", "class_average", "exponential"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
             # we care only for the first max in the display
             if fusion_alg in ["class_max"] and len(max_idcs) < 1:
@@ -94,15 +98,14 @@ class SemanticFilter(PluginBase):
 
         # check which has the highest value
         if len(layer_indices) > 0:
-            class_map = cp.amax(semantic_map.semantic_map[layer_indices], axis=0)
-            class_map_id = cp.argmax(semantic_map.semantic_map[layer_indices], axis=0)
+            class_map = cp.amax(semantic_map[layer_indices], axis=0)
+            class_map_id = cp.argmax(semantic_map[layer_indices], axis=0)
         else:
-            class_map = cp.zeros_like(semantic_map.semantic_map[0])
-            class_map_id = cp.zeros_like(semantic_map.semantic_map[0], dtype=cp.int32)
-
-        if "class_max" in semantic_map.param.fusion_algorithms:
-            max_map = cp.amax(semantic_map.semantic_map[max_idcs], axis=0)
-            max_map_id = semantic_map.elements_to_shift["id_max"][max_idcs]
+            class_map = cp.zeros_like(semantic_map[0])
+            class_map_id = cp.zeros_like(semantic_map[0], dtype=cp.int32)
+        if "class_max" in semantic_params.fusion_algorithms:
+            max_map = cp.amax(semantic_map[max_idcs], axis=0)
+            max_map_id = elements_to_shift["id_max"][max_idcs]
             map = cp.where(max_map > class_map, max_map_id, class_map_id)
         else:
             map = class_map_id

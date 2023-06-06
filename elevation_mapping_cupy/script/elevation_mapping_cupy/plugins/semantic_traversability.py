@@ -39,7 +39,9 @@ class SemanticTraversability(PluginBase):
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
         semantic_map,
-        *args,
+        semantic_params,
+            *args,
+
     ) -> cp.ndarray:
         """
 
@@ -61,9 +63,9 @@ class SemanticTraversability(PluginBase):
             if name in layer_names:
                 idx = layer_names.index(name)
                 tempo = elevation_map[idx]
-            elif name in semantic_map.param.additional_layers:
-                idx = semantic_map.param.additional_layers.index(name)
-                tempo = semantic_map.semantic_map[idx]
+            elif name in semantic_params.additional_layers:
+                idx = semantic_params.additional_layers.index(name)
+                tempo = semantic_map[idx]
             elif name in plugin_layer_names:
                 idx = plugin_layer_names.index(name)
                 tempo = plugin_layers[idx]
