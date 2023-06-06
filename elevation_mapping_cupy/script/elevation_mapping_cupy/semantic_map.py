@@ -21,6 +21,7 @@ class SemanticMap:
         self.layer_specs = {}
         self.layer_names = []
         self.unique_fusion = []
+        self.unique_data = []
         self.elements_to_shift = {}
 
         for k, config in self.param.subscriber_cfg.items():
@@ -31,7 +32,8 @@ class SemanticMap:
                 else:
                     assert self.layer_specs[c] == f, "Error: Single layer has multiple fusion algorithms!"
                 if f not in self.unique_fusion:
-                    self.unique_fusion.append(f)
+                    dt = config["data_type"]
+                    self.unique_fusion.append(dt+"_"+f)
 
         self.amount_layer_names = len(self.layer_names)
 
@@ -54,12 +56,11 @@ class SemanticMap:
 
     def initialize_fusion(self):
         """Initialize the fusion algorithms."""
-
         for fusion in self.unique_fusion:
-            if "class_bayesian" == fusion:
+            if "pointcloud_class_bayesian" == fusion:
                 pcl_ids = self.get_layer_indices("class_bayesian")
                 self.delete_new_layers[pcl_ids] = 0
-            if "class_max" == fusion:
+            if "pointcloud_class_max" == fusion:
                 pcl_ids = self.get_layer_indices("class_max")
                 self.delete_new_layers[pcl_ids] = 0
                 layer_cnt = self.param.fusion_algorithms.count("class_max")

@@ -54,7 +54,7 @@ class ClassBayesian(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
         print("Initialize fusion kernel")
-        self.name = "class_bayesian"
+        self.name = "pointcloud_class_bayesian"
         self.cell_n = params.cell_n
         self.resolution = params.resolution
         self.alpha_kernel = alpha_kernel(

@@ -87,7 +87,7 @@ class Average(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
         print("Initialize fusion kernel")
-        self.name = "average"
+        self.name = "pointcloud_average"
         self.cell_n = params.cell_n
         self.resolution = params.resolution
         self.sum_kernel = sum_kernel(

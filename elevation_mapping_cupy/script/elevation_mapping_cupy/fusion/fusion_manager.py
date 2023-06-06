@@ -50,14 +50,16 @@ class FusionManager(object):
             if inspect.isclass(obj) and issubclass(obj, FusionBase) and name != "FusionBase":
                 self.plugins.append(obj(self.params))
 
-    def get_plugin_idx(self, name: str):
+    def get_plugin_idx(self, name: str, data_type: str):
         """
         Get a registered fusion plugin
         """
+        name = data_type + "_" + name
         for idx, plugin in enumerate(self.plugins):
             if plugin.name == name:
                 return idx
-
+        print("Plugin {} is not in the list: {}".format(name, self.plugins))
+        return None
 
     def execute_plugin(
         self, name: str, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, elements_to_shift
@@ -65,7 +67,7 @@ class FusionManager(object):
         """
         Execute a registered fusion plugin
         """
-        idx = self.get_plugin_idx(name)
+        idx = self.get_plugin_idx(name, "pointcloud")
         if idx is not None:
             self.plugins[idx](
                 points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, elements_to_shift
@@ -89,7 +91,7 @@ class FusionManager(object):
         """
         Execute a registered fusion plugin
         """
-        idx = self.get_plugin_idx(name)
+        idx = self.get_plugin_idx(name, "image")
         if idx is not None:
             self.plugins[idx](
                 sem_map_idx,
