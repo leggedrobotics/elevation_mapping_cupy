@@ -1,6 +1,6 @@
 #### Basic parameters ########
 resolution: 0.04                                # resolution in m.
-map_length: 8                                  # map's size in m.
+map_length: 8.0                                 # map's size in m.
 sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
 outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
@@ -40,9 +40,9 @@ max_unsafe_n: 10                                # if the number of cells under s
 overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
 overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
 
-map_frame: 'odom'                               # The map frame where the odometry source uses.
-base_frame: 'base'                              # The robot's base frame. This frame will be a center of the map.
-corrected_map_frame: 'odom_corrected'
+map_frame: 'enu'                               # The map frame where the odometry source uses.
+base_frame: 'base_footprint'                              # The robot's base frame. This frame will be a center of the map.
+corrected_map_frame: 'enu'
 
 #### Feature toggles ########
 enable_edge_sharpen: true
@@ -61,7 +61,10 @@ weight_file: '$(rospack find elevation_mapping_cupy)/config/weights.dat'        
 use_only_above_for_upper_bound: false
 
 #### Plugins ########
-plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/plugin_config.yaml'
+plugin_config_file: '$(rospack find lonomy_configuration)/elevation_map/config/plugin_config.yaml'
+
+#### Subscribers ########
+
 
 #### Publishers ########
 # topic_name:
@@ -70,27 +73,22 @@ plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/plugin_config
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
   elevation_map_raw:
-    layers: [ 'elevation', 'traversability', 'variance' ]
-    basic_layers: [ 'elevation', 'traversability' ]
-    fps: 2.0
-  
-  semantic_map_raw:
-    layers: [ 'elevation', 'traversability', 'variance', 'rgb_image' ]
-    basic_layers: [ 'elevation', 'traversability' ]
-    fps: 2.0
-  # elevation_map_recordable:
-  #   layers: ['elevation', 'traversability']
-  #   basic_layers: ['elevation', 'traversability']
-  #   fps: 2.0
-  # elevation_map_filter:
-  #   layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound','rgb']
-  #   basic_layers: ['min_filter']
-  #   fps: 3.0
+    layers: ['elevation', 'traversability', 'variance','rgb','sem_fil']
+    basic_layers: ['elevation', 'traversability']
+    fps: 5.0
+#  elevation_map_recordable:
+#    layers: ['elevation', 'traversability']
+#    basic_layers: ['elevation', 'traversability']
+#    fps: 2.0
+#  elevation_map_filter:
+#    layers: ['min_filter', 'smooth', 'inpaint', 'elevation','rgb','robot_centric_elevation','sem_fil','sem_traversability']
+#    basic_layers: ['min_filter']
+#    fps: 3.0
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
-initialize_frame_id: [ 'base_footprint' ] # One tf (like ['footprint']   # One tf (like ['footprint'] ) initializes a square around it.
-initialize_tf_offset: [ 0.0 ]                          # z direction. Should be same number as initialize_frame_id.
+initialize_frame_id: ['base_footprint']   # One tf (like ['footprint'] ) initializes a square around it.
+initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
 dilation_size_initialize: 5                                         # dilation size after the init.
-initialize_tf_grid_size: 0.4                                        # This is not used if number of tf is more than 3.
+initialize_tf_grid_size: 2                                        # This is not used if number of tf is more than 3.
 use_initializer_at_start: true                                      # Use initializer when the node starts.

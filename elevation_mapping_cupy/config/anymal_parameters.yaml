@@ -50,7 +50,7 @@ enable_visibility_cleanup: true
 enable_drift_compensation: true
 enable_overlap_clearance: true
 enable_pointcloud_publishing: false
-enable_drift_corrected_TF_publishing: false
+enable_drift_corrected_TF_publishing: true
 enable_normal_color: false                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
 
 #### Traversability filter ########
@@ -61,7 +61,7 @@ weight_file: '$(rospack find elevation_mapping_cupy)/config/weights.dat'        
 use_only_above_for_upper_bound: false
 
 #### Plugins ########
-plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/anymal_plugin_config.yaml'
+plugin_config_file: '$(rospack find lonomy_configuration)/elevation_map/config/anymal_plugin_config.yaml'
 
 #### Publishers ########
 # topic_name:
@@ -70,22 +70,20 @@ plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/anymal_plugin
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 publishers:
   elevation_map_raw:
-    layers: [ 'elevation', 'traversability', 'variance' ]
+    layers: [ 'elevation', 'traversability', 'smooth','sem_fil' ]
     basic_layers: [ 'elevation', 'traversability' ]
     fps: 2.0
   
-  semantic_map_raw:
-    layers: [ 'elevation', 'traversability', 'variance', 'rgb_image', 'visual_traversability' ]
-    basic_layers: [ 'elevation', 'traversability' ]
+
+  elevation_map_recordable:
+    layers: ['elevation', 'traversability']
+    basic_layers: ['elevation', 'traversability']
     fps: 2.0
-  # elevation_map_recordable:
-  #   layers: ['elevation', 'traversability']
-  #   basic_layers: ['elevation', 'traversability']
-  #   fps: 2.0
-  # elevation_map_filter:
-  #   layers: ['min_filter', 'smooth', 'inpaint', 'upper_bound','rgb']
-  #   basic_layers: ['min_filter']
-  #   fps: 3.0
+  elevation_map_filter:
+    layers: [ 'min_filter', 'smooth', 'inpaint', 'upper_bound','sem_fil' ]
+    basic_layers: [ 'min_filter' ]
+    fps: 2.0
+
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'

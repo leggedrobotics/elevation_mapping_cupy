@@ -1,0 +1,26 @@
+<!--I was using this for the arche bags of the google drive-->
+
+<launch>
+    <arg name="use_sim_time" default="true"/>
+
+    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+
+        <node pkg="semantic_sensor" type="image_node.py" name="sem_seg_right" args="sem_right"
+              output="screen">
+            <rosparam command="load" file="$(find lonomy_configuration)/elevation_map/config/anymal_semantics.yaml"/>
+        </node>
+        <node pkg="semantic_sensor" type="image_node.py" name="sem_seg_left" args="sem_left"
+              output="screen">
+            <rosparam command="load" file="$(find lonomy_configuration)/elevation_map/config/anymal_semantics.yaml"/>
+        </node>
+
+    <!-- Elevation mapping node -->
+    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen" >
+        <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+        <rosparam command="load" file="$(find lonomy_configuration)/elevation_map/config/anymal_parameters.yaml"/>
+        <rosparam command="load" file="$(find lonomy_configuration)/elevation_map/config/anymal_sensor_parameter.yaml"/>
+    </node>
+
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find lonomy_configuration)/elevation_map/rviz/depth_any.rviz"/>
+</launch>
