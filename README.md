@@ -8,6 +8,8 @@ terrain can be efficiently generated.
 ![screenshot](doc/main_repo.png)
 ![gif](doc/convex_approximation.gif)
 
+Large update is coming soon. Stay tuned.
+
 ## Citing
 
 > Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
