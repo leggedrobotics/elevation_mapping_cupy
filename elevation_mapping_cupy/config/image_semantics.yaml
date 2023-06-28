@@ -1,0 +1,19 @@
+#### Subscribers ########
+subscribers:
+  front_cam:
+    channels: ['rgb']
+    fusion: [ 'color' ]
+    semantic_segmentation: False
+    publish_segmentation_image: True
+    segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
+    show_label_legend: False
+    data_type: image
+    image_info_topic: "/wide_angle_camera_front/camera_info"
+    resize: 0.5
+
+    cam_info_topic: "/camera/depth/camera_info"
+    image_topic: "/camera/rgb/image_raw"
+    depth_topic: "/camera/depth/image_raw"
+    cam_frame: "camera_rgb_optical_frame"
+    sem_seg_topic: "/elevation_mapping/semantic_wide_seg_f"
+    sem_seg_image_topic: "/elevation_mapping/semantic_wide_seg_im_f"

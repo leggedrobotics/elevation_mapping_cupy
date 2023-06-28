@@ -49,6 +49,13 @@ For the plane segmentation node
 
   roslaunch convex_plane_decomposition_ros convex_plane_decomposition.launch
 
+For the sensor node
+
+.. code-block:: bash
+
+  roslaunch elevation_mapping_cupy pointlcoud.launch
+  roslaunch elevation_mapping_cupy image.launch
+
 
 Errors
 """""""""""""
@@ -87,13 +94,36 @@ Then, you can run the examples. For the basic version:
   roslaunch elevation_mapping_cupy turtlesim_example.launch
 
 
+For fusing semantics into the map such as rgb from a multi modal pointcloud:
+
+.. image:: ../../media/turtlebot.png
+    :alt: Elevation map examples
+
+.. code-block:: bash
+
+  export TURTLEBOT3_MODEL=waffle
+  roslaunch elevation_mapping_cupy turtlesim_semantic_example.launch
+
+For fusing semantics into the map such as rgb from an image:
+
+.. code-block:: bash
+
+  export TURTLEBOT3_MODEL=waffle
+  roslaunch elevation_mapping_cupy turtlesim_semantic_image_example.launch
+
+
+
+
 Or, for the version including plane segmentation:
+
+
 
 .. code-block:: bash
 
   catkin build convex_plane_decomposition_ros
   export TURTLEBOT3_MODEL=waffle
   roslaunch elevation_mapping_cupy turtlesim_segmentation_example.launch
+
 
 
 To control the robot with a keyboard, a new terminal window needs to be opened.

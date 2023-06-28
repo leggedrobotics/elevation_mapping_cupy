@@ -5,16 +5,12 @@
 
 
     <!-- Start gazebo simulation. -->
-    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch"/>
+    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch" />
 
     <!-- Publish turtlebot3 tf's. -->
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="waffle_state_publisher"/>
 
-    <node pkg="semantic_sensor" type="pointcloud_node.py" name="semantic_pointcloud" args="front_cam"
-          output="screen">
-        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/sensor_parameter.yaml"/>
-    </node>
 
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)"/>
+<!--    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)"/>-->
 
 </launch>

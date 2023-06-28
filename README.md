@@ -45,7 +45,7 @@ Python wrapper:
 
 ````zsh
     python -m elevation_mapping_cupy.elevation_mapping_ros
-    roslaunch elevation_mapping_cupy lonomy_pointcloud.launch use_sim_time:=true
+    roslaunch elevation_mapping_cupy pointcloud.launch use_sim_time:=true
     rosbag play --clock ~/bags/good_working_wine_field_zed_topcom_rtk_person_9_2022-07-15-14-37-05.bag
 ````
 

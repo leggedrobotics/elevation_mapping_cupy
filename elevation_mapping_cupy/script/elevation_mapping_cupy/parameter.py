@@ -28,7 +28,7 @@ class Parameter(Serializable):
                 "segmentation_model": "lraspp_mobilenet_v3_large",
                 "semantic_segmentation": True,
                 "show_label_legend": True,
-                "topic_name": "/elvation_mapping/pointcloud_semantic",
+                "topic_name": "/elevation_mapping/pointcloud_semantic",
                 "data_type": "pointcloud",
             }
         }
