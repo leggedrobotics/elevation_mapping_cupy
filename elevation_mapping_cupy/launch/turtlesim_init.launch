@@ -11,6 +11,6 @@
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="waffle_state_publisher"/>
 
 
-<!--    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)"/>-->
+   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)"/>
 
 </launch>

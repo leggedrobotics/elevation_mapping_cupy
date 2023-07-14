@@ -204,7 +204,7 @@ class ElevationMap:
             delta_pixel (cupy._core.core.ndarray):
 
         """
-        shift_value = delta_pixel.astype(cp.int)
+        shift_value = delta_pixel.astype(cp.int32)
         if cp.abs(shift_value).sum() == 0:
             return
         with self.map_lock:

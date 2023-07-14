@@ -88,7 +88,7 @@ def test_pcl_creation(pointcloud_ex, channels, fusion, semseg, segpub, showlbl):
         ind = cp.random.randint(0, 2, (360, 640, amount), dtype=cp.uint32).astype(cp.float32)
         img = encode_max(val, ind)
     else:
-        img = (cp.random.rand(360, 640, amount) * 255).astype(cp.int)
+        img = (cp.random.rand(360, 640, amount) * 255).astype(cp.int32)
     pointcloud_ex.P = cp.random.rand(3, 4)
     depth = cp.random.rand(360, 640) * 8
     pointcloud_ex.create_pcl_from_image(img, depth, None)
