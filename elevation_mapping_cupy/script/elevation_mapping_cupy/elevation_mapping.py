@@ -149,7 +149,7 @@ class ElevationMap(object):
                 x[idx, :, shift_value[1] :] = value
 
     def shift_map_xy(self, delta_pixel):
-        shift_value = delta_pixel.astype(cp.int)
+        shift_value = delta_pixel.astype(cp.int32)
         if cp.abs(shift_value).sum() == 0:
             return
         with self.map_lock:
