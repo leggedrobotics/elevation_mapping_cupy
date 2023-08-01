@@ -33,7 +33,7 @@ class SemanticMap:
                     assert self.layer_specs[c] == f, "Error: Single layer has multiple fusion algorithms!"
                 if f not in self.unique_fusion:
                     dt = config["data_type"]
-                    self.unique_fusion.append(dt+"_"+f)
+                    self.unique_fusion.append(dt + "_" + f)
 
         self.amount_layer_names = len(self.layer_names)
 

@@ -42,7 +42,6 @@ def sum_compact_kernel(
     return sum_compact_kernel
 
 
-
 def bayesian_inference_kernel(
     width,
     height,
@@ -80,7 +79,6 @@ def bayesian_inference_kernel(
     return bayesian_inference_kernel
 
 
-
 class BayesianInference(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
@@ -109,9 +107,9 @@ class BayesianInference(FusionBase):
         self.bayesian_inference_kernel = bayesian_inference_kernel(
             self.cell_n,
             self.cell_n,
-    )
+        )
 
-    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map,semantic_map, new_map,*args):
+    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.sum_mean *= 0
         self.sum_compact_kernel(
             points_all,
@@ -133,5 +131,3 @@ class BayesianInference(FusionBase):
             semantic_map,
             size=(self.cell_n * self.cell_n),
         )
-
-

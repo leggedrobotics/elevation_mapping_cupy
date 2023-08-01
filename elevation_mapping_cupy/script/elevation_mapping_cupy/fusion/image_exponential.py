@@ -50,7 +50,18 @@ class ImageExponential(FusionBase):
             alpha=0.7,
         )
 
-    def __call__(self, sem_map_idx,image, j,uv_correspondence, valid_correspondence, image_height, image_width , semantic_map, new_map):
+    def __call__(
+        self,
+        sem_map_idx,
+        image,
+        j,
+        uv_correspondence,
+        valid_correspondence,
+        image_height,
+        image_width,
+        semantic_map,
+        new_map,
+    ):
         self.exponential_correspondences_to_map_kernel(
             semantic_map,
             sem_map_idx,
@@ -63,13 +74,3 @@ class ImageExponential(FusionBase):
             size=int(self.cell_n * self.cell_n),
         )
         semantic_map[sem_map_idx] = new_map[sem_map_idx]
-
-
-
-
-
-
-
-
-
-

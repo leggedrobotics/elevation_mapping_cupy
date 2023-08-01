@@ -40,8 +40,7 @@ class SemanticTraversability(PluginBase):
         plugin_layer_names: List[str],
         semantic_map,
         semantic_params,
-            *args,
-
+        *args,
     ) -> cp.ndarray:
         """
 

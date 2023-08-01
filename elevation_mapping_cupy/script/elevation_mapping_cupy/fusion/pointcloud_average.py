@@ -100,7 +100,7 @@ class Average(FusionBase):
             self.cell_n,
         )
 
-    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map,semantic_map, new_map,*args):
+    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.sum_kernel(
             points_all,
             R,

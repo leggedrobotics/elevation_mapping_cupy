@@ -5,7 +5,6 @@ import string
 from .fusion_manager import FusionBase
 
 
-
 def color_correspondences_to_map_kernel(resolution, width, height):
     color_correspondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
@@ -44,6 +43,7 @@ def color_correspondences_to_map_kernel(resolution, width, height):
     )
     return color_correspondences_to_map_kernel
 
+
 class ImageColor(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
@@ -58,8 +58,18 @@ class ImageColor(FusionBase):
             height=self.cell_n,
         )
 
-
-    def __call__(self, sem_map_idx,image, j,uv_correspondence, valid_correspondence, image_height, image_width , semantic_map, new_map):
+    def __call__(
+        self,
+        sem_map_idx,
+        image,
+        j,
+        uv_correspondence,
+        valid_correspondence,
+        image_height,
+        image_width,
+        semantic_map,
+        new_map,
+    ):
         self.color_correspondences_to_map_kernel(
             semantic_map,
             cp.uint64(sem_map_idx),
@@ -72,13 +82,3 @@ class ImageColor(FusionBase):
             size=int(self.cell_n * self.cell_n),
         )
         semantic_map[sem_map_idx] = new_map[sem_map_idx]
-
-
-
-
-
-
-
-
-
-

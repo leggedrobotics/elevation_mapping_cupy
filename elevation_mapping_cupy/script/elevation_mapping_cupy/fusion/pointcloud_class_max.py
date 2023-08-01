@@ -5,8 +5,6 @@ import string
 from .fusion_manager import FusionBase
 
 
-
-
 def sum_max_kernel(
     resolution,
     width,
@@ -82,7 +80,7 @@ class ClassMax(FusionBase):
         ind = cp.right_shift(mer, 16)
         return ma, ind
 
-    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map,semantic_map, new_map,elements_to_shift):
+    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, elements_to_shift):
         max_pt, pt_id = self.decode_max(points_all[:, pcl_ids])
         # find unique ids in new measurement and in existing map
         unique_idm = cp.unique(pt_id)
@@ -115,7 +113,7 @@ class ClassMax(FusionBase):
         )
         # add the previous alpha
         for i, lay in enumerate(layer_ids):
-            c = cp.mgrid[0: new_map.shape[1], 0: new_map.shape[2]]
+            c = cp.mgrid[0 : new_map.shape[1], 0 : new_map.shape[2]]
             # self.prob_sum[self.elements_to_shift["id_max"][i], c[0], c[1]] += self.new_map[lay]
             # TODO add residual of prev alpha to the prob_sum
             # res = 1- self.new_map[lay]
@@ -131,5 +129,3 @@ class ClassMax(FusionBase):
         # do not divide by zero
         sum_alpha[sum_alpha == 0] = 1
         semantic_map[layer_ids] = new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
-
-

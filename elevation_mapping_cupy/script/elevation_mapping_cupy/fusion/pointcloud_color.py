@@ -4,6 +4,7 @@ import string
 
 from .fusion_manager import FusionBase
 
+
 def add_color_kernel(
     width,
     height,
@@ -53,7 +54,6 @@ def add_color_kernel(
         name="add_color_kernel",
     )
     return add_color_kernel
-
 
 
 def color_average_kernel(
@@ -115,7 +115,6 @@ def color_average_kernel(
     return color_average_kernel
 
 
-
 class Color(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
@@ -130,7 +129,7 @@ class Color(FusionBase):
         )
         self.color_average_kernel = color_average_kernel(self.cell_n, self.cell_n)
 
-    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map,semantic_map, new_map,*args):
+    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.color_map = cp.zeros(
             (1 + 3 * layer_ids.shape[0], self.cell_n, self.cell_n),
             dtype=cp.uint32,
@@ -155,12 +154,3 @@ class Color(FusionBase):
             semantic_map,
             size=(self.cell_n * self.cell_n),
         )
-
-
-
-
-
-
-
-
-

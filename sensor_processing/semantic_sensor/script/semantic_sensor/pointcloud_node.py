@@ -57,7 +57,6 @@ class PointcloudNode:
         self.prediction_img = None
         self.feat_img = None
 
-
     def initialize_semantics(self):
         """Resolve the feature and segmentation mode and create segmentation_channel and feature_channels.
 
@@ -147,9 +146,9 @@ class PointcloudNode:
                 c = c >> 3
 
             cmap[i] = np.array([r, g, b])
-        cmap[1] = np.array([188,63,59])
-        cmap[2] = np.array([81,113,162])
-        cmap[3] = np.array([136,49,132])
+        cmap[1] = np.array([188, 63, 59])
+        cmap[2] = np.array([81, 113, 162])
+        cmap[3] = np.array([136, 49, 132])
         cmap = cmap / 255 if normalized else cmap
         return cmap[1:]
 
@@ -317,6 +316,7 @@ class PointcloudNode:
             # todo
         if False and self.param.feature_extractor:
             self.feat_img = prediction
+
     def publish_segmentation_image(self, probabilities):
         if self.param.semantic_segmentation:
             colors = cp.asarray(self.semseg_color_map)
@@ -356,7 +356,7 @@ class PointcloudNode:
         pca = PCA(n_components=n_components).fit(data)
         pca_descriptors = pca.transform(data)
         img_pca = pca_descriptors.reshape(features.shape[1], features.shape[2], n_components)
-        comp = img_pca #[:, :, -3:]
+        comp = img_pca  # [:, :, -3:]
         comp_min = comp.min(axis=(0, 1))
         comp_max = comp.max(axis=(0, 1))
         comp_img = (comp - comp_min) / (comp_max - comp_min)
@@ -364,7 +364,6 @@ class PointcloudNode:
         feat_msg = self.cv_bridge.cv2_to_imgmsg(comp_img, encoding="passthrough")
         feat_msg.header.frame_id = self.header.frame_id
         self.feat_pub.publish(feat_msg)
-
 
     def publish_pointcloud(self, pcl, header):
         pc2 = ros_numpy.msgify(PointCloud2, pcl)

@@ -93,7 +93,6 @@ def class_average_kernel(
     return class_average_kernel
 
 
-
 class ClassAverage(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
@@ -112,9 +111,9 @@ class ClassAverage(FusionBase):
             self.cell_n,
             self.cell_n,
             self.average_weight,
-    )
+        )
 
-    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map,semantic_map, new_map,*args):
+    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.sum_kernel(
             points_all,
             R,
@@ -135,5 +134,3 @@ class ClassAverage(FusionBase):
             semantic_map,
             size=(self.cell_n * self.cell_n * pcl_ids.shape[0]),
         )
-
-

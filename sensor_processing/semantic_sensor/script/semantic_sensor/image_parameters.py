@@ -35,4 +35,3 @@ class ImageParameter(Serializable):
     feat_image_topic: str = "/elevation_mapping/semantic_seg_feat_im"
     resize: float = None
     image_info_topic: str = "/elevation_mapping/image_info"
-

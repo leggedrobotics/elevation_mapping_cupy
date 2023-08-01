@@ -5,7 +5,6 @@ import string
 from .fusion_manager import FusionBase
 
 
-
 def alpha_kernel(
     resolution,
     width,
@@ -49,7 +48,6 @@ def alpha_kernel(
     return alpha_kernel
 
 
-
 class ClassBayesian(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
@@ -63,9 +61,7 @@ class ClassBayesian(FusionBase):
             self.cell_n,
         )
 
-
-
-    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map,semantic_map, new_map,*args):
+    def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.alpha_kernel(
             points_all,
             pcl_ids,
@@ -79,5 +75,3 @@ class ClassBayesian(FusionBase):
         # do not divide by zero
         sum_alpha[sum_alpha == 0] = 1
         semantic_map[layer_ids] = new_map[layer_ids] / cp.expand_dims(sum_alpha, axis=0)
-
-

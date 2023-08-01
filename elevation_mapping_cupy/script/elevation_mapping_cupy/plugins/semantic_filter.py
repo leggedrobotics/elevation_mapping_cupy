@@ -69,9 +69,8 @@ class SemanticFilter(PluginBase):
         semantic_map: cp.ndarray,
         semantic_params,
         rotation,
-            elements_to_shift,
-            *args,
-
+        elements_to_shift,
+        *args,
     ) -> cp.ndarray:
         """
 
