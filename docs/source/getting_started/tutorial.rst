@@ -111,7 +111,12 @@ For fusing semantics into the map such as rgb from an image:
   export TURTLEBOT3_MODEL=waffle
   roslaunch elevation_mapping_cupy turtlesim_semantic_image_example.launch
 
+For fusing features extracted with a feature extractor from an image:
 
+.. code-block:: bash
+
+  export TURTLEBOT3_MODEL=waffle
+  roslaunch elevation_mapping_cupy turtlesim_features_image_example.launch
 
 
 Or, for the version including plane segmentation:

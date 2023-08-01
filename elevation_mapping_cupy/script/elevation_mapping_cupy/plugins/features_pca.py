@@ -13,7 +13,6 @@ from sklearn.decomposition import PCA
 class FeaturesPca(PluginBase):
     def __init__(
         self,
-        cell_n: int = 100,
         **kwargs,
     ):
         """This is a filter to create a pca layer of the semantic features in the map.
@@ -52,7 +51,7 @@ class FeaturesPca(PluginBase):
         # get indices of all layers that contain semantic features information
         layer_indices = cp.array([], dtype=cp.int32)
         for it, fusion_alg in enumerate(semantic_params.fusion_algorithms):
-            if fusion_alg in ["average", "bayesian_inference", "image_exponential"]:
+            if fusion_alg in ["average", "bayesian_inference", "exponential"]:
                 layer_indices = cp.append(layer_indices, it).astype(cp.int32)
 
         n_c = semantic_map[layer_indices].shape[1]
