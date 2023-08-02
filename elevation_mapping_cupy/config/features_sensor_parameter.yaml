@@ -1,0 +1,13 @@
+subscribers:
+  feat_front:
+    fusion: [ 'exponential','exponential','exponential','exponential','exponential','exponential','exponential','exponential','exponential','exponential' ]
+    topic_name_camera: /elevation_mapping/feat_f
+    topic_name_camera_info: "/camera/depth/camera_info"
+    channels: [ 'feat_0','feat_1','feat_2','feat_3','feat_4','feat_5','feat_6','feat_7','feat_8','feat_9' ]
+    data_type: image
+  pointcloud:
+    channels: [ ]
+    fusion: [ ]
+    topic_name: '/camera/depth/points'
+    data_type: pointcloud
+

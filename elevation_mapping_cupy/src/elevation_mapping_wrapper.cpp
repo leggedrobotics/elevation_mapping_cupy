@@ -6,7 +6,7 @@
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
 // Pybind
-#include <pybind11_catkin/pybind11/eigen.h>
+#include <pybind11/eigen.h>
 
 // PCL
 #include <pcl/common/projection_matrix.h>
@@ -20,7 +20,7 @@ namespace elevation_mapping_cupy {
 
 ElevationMappingWrapper::ElevationMappingWrapper() {}
 
-void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms) {
+void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
   // Add the elevation_mapping_cupy path to sys.path
   auto threading = py::module::import("threading");
   py::gil_scoped_acquire acquire;
@@ -34,7 +34,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::s
   auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
   auto parameter = py::module::import("elevation_mapping_cupy.parameter");
   param_ = parameter.attr("Parameter")();
-  setParameters(nh, std::move(additional_layers),std::move(fusion_algorithms));
+  setParameters(nh);
   map_ = elevation_mapping.attr("ElevationMap")(param_);
 }
 
@@ -42,7 +42,7 @@ void ElevationMappingWrapper::initialize(ros::NodeHandle& nh, std::vector<std::s
  *  Load ros parameters into Parameter class.
  *  Search for the same name within the name space.
  */
-void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std::string> additional_layers, std::vector<std::string> fusion_algorithms) {
+void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   // Get all parameters names and types.
   py::list paramNames = param_.attr("get_names")();
   py::list paramTypes = param_.attr("get_types")();
@@ -76,28 +76,77 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh, std::vector<std
     }
   }
 
-  param_.attr("set_value")("additional_layers",additional_layers);
-  param_.attr("set_value")("fusion_algorithms",fusion_algorithms);
+  XmlRpc::XmlRpcValue subscribers;
+  nh.getParam("subscribers", subscribers);
 
+  py::dict sub_dict;
+  for (auto& subscriber : subscribers) {
+    const char* const name = subscriber.first.c_str();
+    const auto& subscriber_params = subscriber.second;
+    if (!sub_dict.contains(name)) {
+      sub_dict[name] = py::dict();
+    }
+    for (auto iterat : subscriber_params) {
+      const char* const key = iterat.first.c_str();
+      const auto val = iterat.second;
+      std::vector<std::string> arr;
+      switch (val.getType()) {
+        case XmlRpc::XmlRpcValue::TypeString:
+          sub_dict[name][key] = static_cast<std::string>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeInt:
+          sub_dict[name][key] = static_cast<int>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeDouble:
+          sub_dict[name][key] = static_cast<double>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeBoolean:
+          sub_dict[name][key] = static_cast<bool>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeArray:
+          for (int32_t i = 0; i < val.size(); ++i) {
+            auto elem = static_cast<std::string>(val[i]);
+            arr.push_back(elem);
+          }
+          sub_dict[name][key] = arr;
+          arr.clear();
+          break;
+        case XmlRpc::XmlRpcValue::TypeStruct:
+          break;
+        default:
+          sub_dict[name][key] = py::cast(val);
+          break;
+      }
+    }
+  }
+  param_.attr("subscriber_cfg") = sub_dict;
+
+  param_.attr("update")();
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
-  map_length_ = py::cast<float>(param_.attr("get_value")("map_length"));
-  map_n_ = static_cast<int>(round(map_length_ / resolution_));
-  map_length_ = resolution_ * map_n_;  // get true length after rounding
+  map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
+  map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
 
   nh.param<bool>("enable_normal", enable_normal_, false);
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);
 }
 
-void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
-                                    const double positionNoise, const double orientationNoise) {
+void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R,
+                                    const Eigen::VectorXd& t, const double positionNoise, const double orientationNoise) {
   py::gil_scoped_acquire acquire;
-  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points),channels, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
-                     positionNoise, orientationNoise);
+  map_.attr("input_pointcloud")(Eigen::Ref<const RowMatrixXd>(points), channels, Eigen::Ref<const RowMatrixXd>(R),
+                     Eigen::Ref<const Eigen::VectorXd>(t), positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p,  const RowMatrixXd& R) {
+void ElevationMappingWrapper::input_image(const std::string& key, const std::vector<ColMatrixXf>& multichannel_image, const RowMatrixXd& R,
+                                          const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, int height, int width) {
   py::gil_scoped_acquire acquire;
-  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p),  Eigen::Ref<const RowMatrixXd>(R));
+  map_.attr("input_image")(key, multichannel_image, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
+                           Eigen::Ref<const RowMatrixXd>(cameraMatrix), height, width);
+}
+
+void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p, const RowMatrixXd& R) {
+  py::gil_scoped_acquire acquire;
+  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p), Eigen::Ref<const RowMatrixXd>(R));
 }
 
 void ElevationMappingWrapper::clear() {
@@ -200,7 +249,6 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d>&
   py::gil_scoped_acquire acquire;
   map_.attr("initialize_map")(Eigen::Ref<const RowMatrixXd>(points_m), method);
 }
-
 
 void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map) {
   const auto& normalX = map["normal_x"];

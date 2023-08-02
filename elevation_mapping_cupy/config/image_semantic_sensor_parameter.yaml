@@ -1,0 +1,24 @@
+subscribers:
+#  sensor_name:
+#    channels: ['feat_0','feat_1']
+#    fusion: ['average','average']
+#    topic_name: '/elevation_mapping/pointcloud_semantic'
+  front_cam:
+    channels: [ 'grass','tree',"person" ]
+    fusion: [ 'exponential','exponential','exponential' ]
+    topic_name_camera: '/elevation_mapping/semantic_front'
+    topic_name_camera_info: '/camera/depth/camera_info'
+    data_type: image
+
+  color_cam: # for color camera
+    channels: ['rgb']
+    fusion: ['color']
+    topic_name_camera: '/camera/rgb/image_raw'
+    topic_name_camera_info: '/camera/depth/camera_info'
+    data_type: image
+
+  pointcloud:
+    channels: []
+    fusion: []
+    topic_name: '/camera/depth/points'
+    data_type: pointcloud

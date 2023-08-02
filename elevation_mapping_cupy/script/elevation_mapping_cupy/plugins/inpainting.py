@@ -8,22 +8,18 @@ import cupyx.scipy.ndimage as ndimage
 import numpy as np
 import cv2 as cv
 
-
 from .plugin_manager import PluginBase
 
 
 class Inpainting(PluginBase):
-    """This is a filter to smoothen
-
-    ...
-
-    Attributes
-    ----------
-    cell_n: int
-        width and height of the elevation map.
-    """
-
     def __init__(self, cell_n: int = 100, method: str = "telea", **kwargs):
+        """
+
+        Args:
+            cell_n (int):
+            method (str):
+            **kwargs ():
+        """
         super().__init__()
         if method == "telea":
             self.method = cv.INPAINT_TELEA
@@ -38,7 +34,20 @@ class Inpainting(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        *args,
     ) -> cp.ndarray:
+        """
+
+        Args:
+            elevation_map (cupy._core.core.ndarray):
+            layer_names (List[str]):
+            plugin_layers (cupy._core.core.ndarray):
+            plugin_layer_names (List[str]):
+            *args ():
+
+        Returns:
+            cupy._core.core.ndarray:
+        """
         mask = cp.asnumpy((elevation_map[2] < 0.5).astype("uint8"))
         if (mask < 1).any():
             h = elevation_map[0]

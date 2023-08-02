@@ -1,0 +1,19 @@
+subscribers:
+#  sensor_name:
+#    channels: ['feat_0','feat_1']
+#    fusion: ['average','average']
+#    topic_name: '/elevation_mapping/pointcloud_semantic'
+  front_cam:
+    channels: ['rgb', 'grass','tree',"person" ]
+    fusion: [ 'color','class_average','class_average','class_average' ]
+    topic_name: '/elevation_mapping/pointcloud_semantic'
+    semantic_segmentation: True
+    publish_segmentation_image: True
+    segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
+    show_label_legend: False
+    data_type: pointcloud
+
+    cam_info_topic: "/camera/depth/camera_info"
+    image_topic: "/camera/rgb/image_raw"
+    depth_topic: "/camera/depth/image_raw"
+    cam_frame: "camera_rgb_optical_frame"

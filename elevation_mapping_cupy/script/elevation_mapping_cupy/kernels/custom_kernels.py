@@ -141,10 +141,9 @@ def add_points_kernel(
     enable_edge_shaped=True,
     enable_visibility_cleanup=True,
 ):
-
     add_points_kernel = cp.ElementwiseKernel(
-        in_params="raw U p, raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
-        out_params="raw U map, raw T newmap",
+        in_params="raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
+        out_params="raw U p, raw U map, raw T newmap",
         preamble=map_utils(
             resolution,
             width,
@@ -165,8 +164,8 @@ def add_points_kernel(
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
             U v = z_noise(rz);
+            int idx = get_idx(x, y, center_x[0], center_y[0]);
             if (is_valid(x, y, z, t[0], t[1], t[2])) {
-                int idx = get_idx(x, y, center_x[0], center_y[0]);
                 if (is_inside(idx)) {
                     U map_h = map[get_map_idx(idx, 0)];
                     U map_v = map[get_map_idx(idx, 1)];
@@ -258,6 +257,9 @@ def add_points_kernel(
                     }
                 }
             }
+            p[i * 3]= idx;
+            p[i * 3 + 1] = is_valid(x, y, z, t[0], t[1], t[2]);
+            p[i * 3 + 2] = is_inside(idx);
             """
         ).substitute(
             mahalanobis_thresh=mahalanobis_thresh,
@@ -289,7 +291,6 @@ def error_counting_kernel(
     ramped_height_range_b,
     ramped_height_range_c,
 ):
-
     error_counting_kernel = cp.ElementwiseKernel(
         in_params="raw U map, raw U p, raw U center_x, raw U center_y, raw U R, raw U t",
         out_params="raw U newmap, raw T error, raw T error_cnt",

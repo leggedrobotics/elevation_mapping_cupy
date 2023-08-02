@@ -13,11 +13,18 @@
 #include <Eigen/Dense>
 
 // Pybind
-#include <pybind11_catkin/pybind11/embed.h>  // everything needed for embedding
+#include <pybind11/embed.h>  // everything needed for embedding
 
 // ROS
 #include <geometry_msgs/PolygonStamped.h>
+#include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
 #include <ros/ros.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
@@ -36,6 +43,10 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+// OpenCV
+#include <opencv2/core.hpp>
+#include <opencv2/core/eigen.hpp>
+
 #include <elevation_map_msgs/CheckSafety.h>
 #include <elevation_map_msgs/Initialize.h>
 
@@ -49,11 +60,22 @@ class ElevationMappingNode {
  public:
   ElevationMappingNode(ros::NodeHandle& nh);
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
+
+  using ImageSubscriber = image_transport::SubscriberFilter;
+  using ImageSubscriberPtr = std::shared_ptr<ImageSubscriber>;
+  using CameraInfoSubscriber = message_filters::Subscriber<sensor_msgs::CameraInfo>;
+  using CameraInfoSubscriberPtr = std::shared_ptr<CameraInfoSubscriber>;
+  using CameraPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo>;
+  using CameraSync = message_filters::Synchronizer<CameraPolicy>;
+  using CameraSyncPtr = std::shared_ptr<CameraSync>;
 
  private:
   void readParameters();
   void setupMapPublishers();
-  void pointcloudCallback(const sensor_msgs::PointCloud2& cloud);
+  void pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key);
+  void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
+                     const std::string& key);
   void publishAsPointCloud(const grid_map::GridMap& map) const;
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
@@ -72,8 +94,13 @@ class ElevationMappingNode {
   void publishMapOfIndex(int index);
 
   visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) const;
+
   ros::NodeHandle nh_;
+  image_transport::ImageTransport it_;
   std::vector<ros::Subscriber> pointcloudSubs_;
+  std::vector<ImageSubscriberPtr> imageSubs_;
+  std::vector<CameraInfoSubscriberPtr> cameraInfoSubs_;
+  std::vector<CameraSyncPtr> cameraSyncs_;
   std::vector<ros::Publisher> mapPubs_;
   tf::TransformBroadcaster tfBroadcaster_;
   ros::Publisher alivePub_;
@@ -107,6 +134,7 @@ class ElevationMappingNode {
   std::vector<double> map_fps_;
   std::set<double> map_fps_unique_;
   std::vector<ros::Timer> mapTimers_;
+  std::map<std::string, std::vector<std::string>> channels_;
 
   std::vector<std::string> initialize_frame_id_;
   std::vector<double> initialize_tf_offset_;
@@ -119,7 +147,7 @@ class ElevationMappingNode {
   grid_map::GridMap gridMap_;
   std::atomic_bool isGridmapUpdated_;  // needs to be atomic (read is not protected by mapMutex_)
 
-  std::mutex errorMutex_; // protects positionError_, and orientationError_
+  std::mutex errorMutex_;  // protects positionError_, and orientationError_
   double positionError_;
   double orientationError_;
 

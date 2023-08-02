@@ -1,0 +1,40 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+
+name: Python testing
+
+on:
+  push:
+    branches: [ "feature/2_semantic_python", "feature/**","dev/**" ]
+#  pull_request:
+#    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    #    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, Linux, X64 ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest cupy-cuda11x
+          python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+          pip install torch torchvision torchaudio
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Test elevation mapping with pytest
+        run: |
+          cd elevation_mapping_cupy/script/elevation_mapping_cupy/tests/
+          pytest
+      - name: Test semantic_sensor with pytest
+        run: |
+          cd sensor_processing/semantic_sensor/script/semantic_sensor/tests
+          pytest test_utils.py
