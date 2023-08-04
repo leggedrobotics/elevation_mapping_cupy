@@ -1,0 +1,43 @@
+#### Subscribers ########
+subscribers:
+  front_depth:
+    channels: []
+    fusion: []
+    topic_name: /depth_camera_front/point_cloud_self_filtered
+    data_type: pointcloud
+
+  rear_depth:
+    channels: []
+    fusion: []
+    topic_name: /depth_camera_rear/point_cloud_self_filtered
+    data_type: pointcloud
+
+  left_depth:
+    channels: []
+    fusion: []
+    topic_name: /depth_camera_left/point_cloud_self_filtered
+    data_type: pointcloud
+
+  right_depth:
+    channels: []
+    fusion: []
+    topic_name: /depth_camera_right/point_cloud_self_filtered
+    data_type: pointcloud
+
+  velodyne:
+    channels: []
+    fusion: []
+    topic_name: /point_cloud_filter/lidar/point_cloud_filtered
+    data_type: pointcloud
+
+  front_bpearl:
+    channels: []
+    fusion: []
+    topic_name: /robot_self_filter/bpearl_front/point_cloud
+    data_type: pointcloud
+
+  rear_bpearl:
+    channels: []
+    fusion: []
+    topic_name: /robot_self_filter/bpearl_rear/point_cloud
+    data_type: pointcloud
