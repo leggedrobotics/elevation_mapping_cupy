@@ -5,6 +5,10 @@ setup_args = generate_distutils_setup(
     packages=[
         "semantic_sensor",
     ],
+    install_requires=[
+        "torch",
+        "torchvision",
+    ],
     package_dir={"": "script"},
 )
 
