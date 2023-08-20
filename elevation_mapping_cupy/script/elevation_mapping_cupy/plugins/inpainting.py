@@ -12,14 +12,15 @@ from .plugin_manager import PluginBase
 
 
 class Inpainting(PluginBase):
-    def __init__(self, cell_n: int = 100, method: str = "telea", **kwargs):
-        """
+    """
+    This class is used for inpainting, a process of reconstructing lost or deteriorated parts of images and videos.
 
-        Args:
-            cell_n (int):
-            method (str):
-            **kwargs ():
-        """
+    Args:
+        cell_n (int): The number of cells. Default is 100.
+        method (str): The inpainting method. Options are 'telea' or 'ns' (Navier-Stokes). Default is 'telea'.
+        **kwargs (): Additional keyword arguments.
+    """
+    def __init__(self, cell_n: int = 100, method: str = "telea", **kwargs):
         super().__init__()
         if method == "telea":
             self.method = cv.INPAINT_TELEA
@@ -53,7 +54,9 @@ class Inpainting(PluginBase):
             h = elevation_map[0]
             h_max = float(h[mask < 1].max())
             h_min = float(h[mask < 1].min())
-            h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype("uint8")
+            h = cp.asnumpy((elevation_map[0] - h_min) * 255 / (h_max - h_min)).astype(
+                "uint8"
+            )
             dst = np.array(cv.inpaint(h, mask, 1, self.method))
             h_inpainted = dst.astype(np.float32) * (h_max - h_min) / 255 + h_min
             return cp.asarray(h_inpainted).astype(np.float64)

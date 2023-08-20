@@ -10,15 +10,15 @@ from .plugin_manager import PluginBase
 
 
 class MinFilter(PluginBase):
-    def __init__(self, cell_n: int = 100, dilation_size: int = 5, iteration_n: int = 5, **kwargs):
-        """This is a filter to fill in invalid cells with minimum values around.
+    """This is a filter to fill in invalid cells with minimum values around.
 
-        Args:
-            cell_n (int): width of the elevation map.
-            dilation_size (int): The size of the patch to search for minimum value for each iteration.
-            iteration_n (int): The number of iteration to repeat the same filter.
-            **kwargs ():
-        """
+    Args:
+        cell_n (int): width of the elevation map.
+        dilation_size (int): The size of the patch to search for minimum value for each iteration.
+        iteration_n (int): The number of iteration to repeat the same filter.
+        **kwargs ():
+    """
+    def __init__(self, cell_n: int = 100, dilation_size: int = 5, iteration_n: int = 5, **kwargs):
         super().__init__()
         self.iteration_n = iteration_n
         self.width = cell_n

@@ -10,14 +10,20 @@ from .plugin_manager import PluginBase
 
 
 class SmoothFilter(PluginBase):
-    def __init__(self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs):
-        """This filters smoothees elevation map.
+    """
+    SmoothFilter is a class that applies a smoothing filter
+    to the elevation map. The filter is applied to the layer specified by the input_layer_name parameter.
+    If the specified layer is not found, the filter is applied to the elevation layer.
 
-        Args:
-            cell_n (int):
-            input_layer_name (str):
-            **kwargs ():
-        """
+    Args:
+        cell_n (int): The width and height of the elevation map. Default is 100.
+        input_layer_name (str): The name of the layer to which the filter should be applied. Default is "elevation".
+        **kwargs: Additional keyword arguments.
+    """
+
+    def __init__(
+        self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs
+    ):
         super().__init__()
         self.input_layer_name = input_layer_name
 
@@ -48,7 +54,11 @@ class SmoothFilter(PluginBase):
             idx = plugin_layer_names.index(self.input_layer_name)
             h = plugin_layers[idx]
         else:
-            print("layer name {} was not found. Using elevation layer.".format(self.input_layer_name))
+            print(
+                "layer name {} was not found. Using elevation layer.".format(
+                    self.input_layer_name
+                )
+            )
             h = elevation_map[0]
         hs1 = ndimage.uniform_filter(h, size=3)
         hs1 = ndimage.uniform_filter(hs1, size=3)

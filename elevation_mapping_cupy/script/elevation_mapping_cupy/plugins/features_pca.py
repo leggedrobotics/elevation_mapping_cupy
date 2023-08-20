@@ -11,17 +11,17 @@ from sklearn.decomposition import PCA
 
 
 class FeaturesPca(PluginBase):
+    """This is a filter to create a pca layer of the semantic features in the map.
+
+    Args:
+        cell_n (int): width and height of the elevation map.
+        classes (ruamel.yaml.comments.CommentedSeq):
+        **kwargs ():
+    """
     def __init__(
         self,
         **kwargs,
     ):
-        """This is a filter to create a pca layer of the semantic features in the map.
-
-        Args:
-            cell_n (int): width and height of the elevation map.
-            classes (ruamel.yaml.comments.CommentedSeq):
-            **kwargs ():
-        """
         super().__init__()
         self.indices = []
 

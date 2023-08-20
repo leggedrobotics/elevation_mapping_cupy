@@ -10,19 +10,19 @@ from elevation_mapping_cupy.plugins.plugin_manager import PluginBase
 
 
 class SemanticFilter(PluginBase):
+    """This is a filter to create a one hot encoded map of the class probabilities.
+
+    Args:
+        cell_n (int): width and height of the elevation map.
+        classes (list): List of classes for semantic filtering. Default is ["person", "grass"].
+        **kwargs: Additional keyword arguments.
+    """
     def __init__(
         self,
         cell_n: int = 100,
         classes: list = ["person", "grass"],
         **kwargs,
     ):
-        """This is a filter to create a one hot encoded map of the class probabilities.
-
-        Args:
-            cell_n (int): width and height of the elevation map.
-            classes (ruamel.yaml.comments.CommentedSeq):
-            **kwargs ():
-        """
         super().__init__()
         self.indices = []
         self.classes = classes

@@ -10,6 +10,15 @@ from elevation_mapping_cupy.plugins.plugin_manager import PluginBase
 
 
 class SemanticTraversability(PluginBase):
+    """Extracts traversability and elevations from layers and generates an updated traversability that can be used by checker.
+
+    Args:
+        cell_n (int): The width and height of the elevation map.
+        layers (list): List of layers for semantic traversability. Default is ["traversability"].
+        thresholds (list): List of thresholds for each layer. Default is [0.5].
+        type (list): List of types for each layer. Default is ["traversability"].
+        **kwargs: Additional keyword arguments.
+    """
     def __init__(
         self,
         cell_n: int = 100,
@@ -18,15 +27,6 @@ class SemanticTraversability(PluginBase):
         type: list = ["traversability"],
         **kwargs,
     ):
-        """Extracts traversability and elevations from layers and generates an updated traversability that can be used by checker.
-
-        Args:
-            cell_n (int):
-            layers (ruamel.yaml.comments.CommentedSeq):
-            thresholds (ruamel.yaml.comments.CommentedSeq):
-            type (ruamel.yaml.comments.CommentedSeq):
-            **kwargs ():
-        """
         super().__init__()
         self.layers = layers
         self.thresholds = cp.asarray(thresholds)
@@ -69,7 +69,9 @@ class SemanticTraversability(PluginBase):
                 idx = plugin_layer_names.index(name)
                 tempo = plugin_layers[idx]
             else:
-                print("Layer {} is not in the map, returning traversabiltiy!".format(name))
+                print(
+                    "Layer {} is not in the map, returning traversabiltiy!".format(name)
+                )
                 return
             if self.type[it] == "traversability":
                 tempo = cp.where(tempo <= self.thresholds[it], 1, 0)

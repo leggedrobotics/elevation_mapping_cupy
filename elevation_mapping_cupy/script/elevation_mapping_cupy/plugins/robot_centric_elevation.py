@@ -5,18 +5,18 @@ from .plugin_manager import PluginBase
 
 
 class RobotCentricElevation(PluginBase):
+    """Generates an elevation map with respect to the robot frame.
+
+    Args:
+        cell_n (int):
+        resolution (ruamel.yaml.scalarfloat.ScalarFloat):
+        threshold (ruamel.yaml.scalarfloat.ScalarFloat):
+        use_threshold (bool):
+        **kwargs ():
+    """
     def __init__(
         self, cell_n: int = 100, resolution: float = 0.05, threshold: float = 0.4, use_threshold: bool = 0, **kwargs
     ):
-        """Generates an elevation map with respect to the robot frame.
-
-        Args:
-            cell_n (int):
-            resolution (ruamel.yaml.scalarfloat.ScalarFloat):
-            threshold (ruamel.yaml.scalarfloat.ScalarFloat):
-            use_threshold (bool):
-            **kwargs ():
-        """
         super().__init__()
         self.width = cell_n
         self.height = cell_n
