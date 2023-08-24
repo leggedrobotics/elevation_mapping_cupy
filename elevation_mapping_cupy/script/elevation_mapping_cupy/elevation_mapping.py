@@ -287,7 +287,7 @@ class ElevationMap:
         for config in self.param.subscriber_cfg.values():
             if config["data_type"] == "image":
                 self.valid_correspondence = cp.asarray(
-                    np.zeros((self.cell_n, self.cell_n), dtype=np.bool), dtype=np.bool
+                    np.zeros((self.cell_n, self.cell_n), dtype=np.bool_), dtype=np.bool_
                 )
                 self.uv_correspondence = cp.asarray(
                     np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32),

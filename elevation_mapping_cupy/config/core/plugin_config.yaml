@@ -1,0 +1,28 @@
+# Settings of the plugins. (The plugins should be stored in script/plugins)
+
+# min_filter fills in minimum value around the invalid cell.
+min_filter:                                   
+  enable: True                                # weather to load this plugin
+  fill_nan: False                             # Fill nans to invalid cells of elevation layer.
+  is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
+  layer_name: "min_filter"                    # The layer name.
+  extra_params:                               # This params are passed to the plugin class on initialization.
+    dilation_size: 1                         # The patch size to apply
+    iteration_n: 30                           # The number of iterations
+# Apply smoothing.
+smooth_filter:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "smooth"
+  extra_params:
+    input_layer_name: "min_filter"
+# Apply inpainting using opencv
+inpainting:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "inpaint"
+  extra_params:
+    method: "telea"                           # telea or ns
+# Apply smoothing for inpainted layer

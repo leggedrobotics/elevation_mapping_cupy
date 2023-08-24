@@ -1,0 +1,20 @@
+subscribers:
+#  sensor_name:
+#    channels: ['feat_0','feat_1']
+#    fusion: ['average','average']
+#    topic_name: '/elevation_mapping/pointcloud_semantic'
+  front_cam:
+    channels: ['rgb' ]
+    fusion: [ 'color']
+    topic_name: '/camera/depth/points'
+    data_type: pointcloud
+
+publishers:
+  elevation_map_raw:
+    layers: ['elevation', 'traversability', 'variance','rgb']
+    basic_layers: ['elevation']
+    fps: 5.0
+  elevation_map_filter:
+    layers: ['min_filter', 'smooth', 'inpaint', 'elevation']
+    basic_layers: ['min_filter']
+    fps: 3.0

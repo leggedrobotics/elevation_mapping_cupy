@@ -1,8 +1,8 @@
+#### Plugins ########
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/turtle_bot/plugin_config.yaml'
+
+#### Subscribers ########
 subscribers:
-#  sensor_name:
-#    channels: ['feat_0','feat_1']
-#    fusion: ['average','average']
-#    topic_name: '/elevation_mapping/pointcloud_semantic'
   front_cam:
     channels: ['rgb', 'grass','tree',"person" ]
     fusion: [ 'color','class_average','class_average','class_average' ]
@@ -17,3 +17,15 @@ subscribers:
     image_topic: "/camera/rgb/image_raw"
     depth_topic: "/camera/depth/image_raw"
     cam_frame: "camera_rgb_optical_frame"
+
+
+#### Publishers ########
+publishers:
+  elevation_map_raw:
+    layers: ['elevation', 'traversability', 'variance','rgb','sem_fil']
+    basic_layers: ['elevation']
+    fps: 5.0
+  elevation_map_filter:
+    layers: ['min_filter', 'smooth', 'inpaint', 'elevation','rgb','sem_fil']
+    basic_layers: ['min_filter']
+    fps: 3.0
