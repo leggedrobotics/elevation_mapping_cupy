@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 import cupy as cp
+np.float = np.float64  # temp fix for following import suggested at https://github.com/eric-wieser/ros_numpy/issues/37
 import ros_numpy
 import matplotlib.pyplot as plt
 from skimage.io import imshow
