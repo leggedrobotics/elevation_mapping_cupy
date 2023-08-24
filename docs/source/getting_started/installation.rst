@@ -219,3 +219,20 @@ have the third-party libaries installed on you machine:
   sudo apt install libboost-all-dev
 
 
+Semantic Sensors
+==================================================================
+Elevation mapping node can receive multi-modal point cloud and image topics.
+In this example, we use semantic segmentation models to process color images and publish those topics.
+
+Python dependencies
+-------------------------------------------------------------------
+
+.. code-block:: bash
+
+  pip3 install torchvision scikit-learn
+
+Detectron
+
+.. code-block:: bash
+
+  python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
