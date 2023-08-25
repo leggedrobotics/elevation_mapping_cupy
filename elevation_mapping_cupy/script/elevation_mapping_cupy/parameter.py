@@ -2,7 +2,7 @@
 # Copyright (c) 2022, Takahiro Miki. All rights reserved.
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pickle
 import numpy as np
 import os
@@ -64,10 +64,10 @@ class Parameter:
 
     initial_variance: float = 10.0
     initialized_variance: float = 10.0
-    w1: np.ndarray = np.zeros((4, 1, 3, 3))
-    w2: np.ndarray = np.zeros((4, 1, 3, 3))
-    w3: np.ndarray = np.zeros((4, 1, 3, 3))
-    w_out: np.ndarray = np.zeros((1, 12, 1, 1))
+    w1: np.ndarray = field(default_factory=lambda: np.zeros((4, 1, 3, 3)))
+    w2: np.ndarray = field(default_factory=lambda: np.zeros((4, 1, 3, 3)))
+    w3: np.ndarray = field(default_factory=lambda: np.zeros((4, 1, 3, 3)))
+    w_out: np.ndarray = field(default_factory=lambda: np.zeros((1, 12, 1, 1)))
 
     def load_weights(self, filename):
         with open(filename, "rb") as file:
