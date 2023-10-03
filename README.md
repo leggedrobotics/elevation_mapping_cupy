@@ -48,7 +48,7 @@ You will need
 - [cupy](https://cupy.chainer.org/)
 - [numpy](https://www.numpy.org/)
 - [scipy](https://www.scipy.org/)
-- [shapely==1.7.1](https://github.com/Toblerity/Shapely)
+- [shapely==1.7a1](https://github.com/Toblerity/Shapely)
 
 For traversability filter, either of
 
