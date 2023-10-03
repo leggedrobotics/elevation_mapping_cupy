@@ -12,6 +12,7 @@ terrain can be efficiently generated.
 We are preparing for merging the extended map with multi-modal layers such as semantics.  
 If you want to use the feature now, please checkout 'refactor/semantic_layers' branch.  
 Also check this [paper](https://arxiv.org/abs/2309.16818) about the new extention.  
+![screenshot](doc/overview.png)
 
 ## Citing
 
