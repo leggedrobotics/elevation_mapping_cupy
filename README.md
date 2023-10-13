@@ -11,7 +11,7 @@ terrain can be efficiently generated.
 ## MEM: Multi-Modal Elevation Mapping
 We are preparing for merging the extended map with multi-modal layers such as semantics.  
 If you want to use the feature now, please checkout `refactor/semantic_layers` branch.  
-Also check this [paper](https://arxiv.org/abs/2309.16818) about the new extention.  
+Also, check this [paper](https://arxiv.org/abs/2309.16818) about the new extension.  
 ![screenshot](doc/overview.png)
 
 ## Citing
@@ -27,6 +27,20 @@ Also check this [paper](https://arxiv.org/abs/2309.16818) about the new extentio
   title = {Elevation Mapping for Locomotion and Navigation using GPU},
   publisher = {International Conference on Intelligent Robots and Systems (IROS)},
   year = {2022},
+}
+```
+
+If you are using the semantic / multi-modal extension please also cite:
+> Erni Gian, Frey Jonas, Miki Takahiro, Mattamala Matias and Hutter, Marco  
+> MEM: Multi-Modal Elevation Mapping for Robotics and Learning [arXiv](https://arxiv.org/abs/2309.16818)
+
+```
+@INPROCEEDINGS{erni2023,
+	year = {2023},
+	type = {Conference Paper},
+	author = {Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco},
+	title = {MEM: Multi-Modal Elevation Mapping for Robotics and Learning},
+	journal = {36th IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS 2023)}
 }
 ```
 
