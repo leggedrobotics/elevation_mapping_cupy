@@ -175,11 +175,13 @@ class SemanticMap:
         process_channels = []
         for channel in channels:
             if channel not in self.layer_specs: 
+                # If the channel is not in the layer_specs, we use the default fusion algorithm
                 if "default" in self.param.pointcloud_channel_fusion:
                     default_fusion = self.param.pointcloud_channel_fusion["default"]
                     print(f"[WARNING] Layer {channel} not found in layer_specs. Using {default_fusion} algorithm as default.")
                     self.layer_specs[channel] = default_fusion
                     self.update_fusion_setting()
+                # If there's no default fusion algorithm, we skip this channel
                 else:
                     print(f"[WARNING] Layer {channel} not found in layer_specs. Skipping.")
                     continue
@@ -227,7 +229,8 @@ class SemanticMap:
         layer_indices = cp.array([], dtype=cp.int32)
         for it, (key, val) in enumerate(self.layer_specs.items()):
             if key in pcl_channels and val == fusion_alg:
-                layer_indices = cp.append(layer_indices, it).astype(cp.int32)
+                layer_idx = self.layer_names.index(key)
+                layer_indices = cp.append(layer_indices, layer_idx).astype(cp.int32)
         return pcl_indices, layer_indices
 
     def update_layers_pointcloud(self, points_all, channels, R, t, elevation_map):
@@ -241,10 +244,13 @@ class SemanticMap:
             elevation_map: elevation map object
         """
         process_channels, additional_fusion = self.get_fusion_of_pcl(channels)
+        # If channels has a new layer that is not in the semantic map, add it
         for channel in process_channels:
             if channel not in self.layer_names:
                 print(f"Layer {channel} not found, adding it to the semantic map")
                 self.add_layer(channel)
+
+        # Resetting new_map for the layers that are to be deleted
         self.new_map[self.delete_new_layers] = 0.0
         for fusion in list(set(additional_fusion)):
             # which layers need to be updated with this fusion algorithm
@@ -285,14 +291,9 @@ class SemanticMap:
             image_width:
         """
 
-        # print("sub_key", sub_key)
-        # print("delete_new_layers", self.delete_new_layers)
-
         # additional_fusion = self.get_fusion_of_pcl(channels)
         self.new_map[self.delete_new_layers] = 0.0
         # config = self.param.subscriber_cfg[sub_key]
-
-        # print("config", config)
 
         # for j, (fusion, channel) in enumerate(zip(config["fusion"], config["channels"])):
         for j, (fusion, channel) in enumerate(zip(fusion_methods, channels)):
@@ -348,9 +349,8 @@ class SemanticMap:
         Returns:
             cp.array: map
         """
-        print("[get_map_with_name] name", name, self.layer_specs)
+        # If the layer is a color layer, return the rgb map
         if name in self.layer_specs and (self.layer_specs[name] == "image_color" or self.layer_specs[name] == "pointcloud_color"):
-            print("this is a color map")
             m = self.get_rgb(name)
             return m
         else:
