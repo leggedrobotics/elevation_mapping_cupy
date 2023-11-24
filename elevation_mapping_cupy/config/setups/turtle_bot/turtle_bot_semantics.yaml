@@ -1,10 +1,17 @@
 #### Plugins ########
 plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/turtle_bot/plugin_config.yaml'
 
+pointcloud_channel_fusion:
+  rgb: 'pointcloud_color'
+  default: 'pointcloud_average'
+  sheep: 'pointcloud_average'
+  sofa: 'pointcloud_class_average'
+  person: 'pointcloud_class_average'
+
 #### Subscribers ########
 subscribers:
   front_cam:
-    channels: ['rgb', 'grass','tree',"person" ]
+    channels: ['rgb', 'sheep','sofa',"person" ]
     fusion: [ 'color','class_average','class_average','class_average' ]
     topic_name: '/elevation_mapping/pointcloud_semantic'
     semantic_segmentation: True
@@ -22,7 +29,7 @@ subscribers:
 #### Publishers ########
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance','rgb','sem_fil']
+    layers: ['elevation', 'traversability', 'variance','rgb','sem_fil', 'person', 'sheep', 'sofa']
     basic_layers: ['elevation']
     fps: 5.0
   elevation_map_filter:

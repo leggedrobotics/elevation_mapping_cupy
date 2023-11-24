@@ -452,6 +452,7 @@ class ElevationMap:
         """
         raw_points = cp.asarray(raw_points, dtype=self.data_type)
         additional_channels = channels[3:]
+        print("additional_channels", additional_channels)
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
         self.update_map_with_kernel(
             raw_points,
@@ -464,8 +465,9 @@ class ElevationMap:
 
     def input_image(
         self,
-        sub_key: str,
         image: List[cp._core.core.ndarray],
+        channels: List[str],
+        fusion_methods: List[str],
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
         K: cp._core.core.ndarray,
@@ -509,6 +511,9 @@ class ElevationMap:
         self.uv_correspondence *= 0
         self.valid_correspondence[:, :] = False
 
+        print("channels", channels)
+        print("fusion_methods", fusion_methods)
+
         with self.map_lock:
             self.image_to_map_correspondence_kernel(
                 self.elevation_map,
@@ -524,8 +529,10 @@ class ElevationMap:
                 size=int(self.cell_n * self.cell_n),
             )
             self.semantic_map.update_layers_image(
-                sub_key,
+                # sub_key,
                 image,
+                channels,
+                fusion_methods,
                 self.uv_correspondence,
                 self.valid_correspondence,
                 image_height,

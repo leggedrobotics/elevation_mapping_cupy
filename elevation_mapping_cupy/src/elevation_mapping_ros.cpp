@@ -118,7 +118,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       cameraInfoSubs_.push_back(cam_info_sub);
 
       CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-      sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2, key));
+      sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2));
       cameraSyncs_.push_back(sync);
 
     } else {
@@ -348,10 +348,10 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
   pointCloudProcessCounter_++;
 }
 
-void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
-                                         const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key) {
-  auto start = ros::Time::now();
-
+void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_msg,
+                                      const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
+                                      const std::vector<std::string>& channels,
+                                      const std::vector<std::string>& fusion_methods) {
   // Get image
   cv::Mat image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
 
@@ -390,9 +390,19 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   }
 
   // Pass image to pipeline
-  map_.input_image(key, multichannel_image, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix,
+  map_.input_image(multichannel_image, channels, fusion_methods, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix,
                    image.rows, image.cols);
+}
 
+void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
+                                         const sensor_msgs::CameraInfoConstPtr& camera_info_msg) {
+  auto start = ros::Time::now();
+  // Default channels and fusion methods for image is rgb and image_color
+  std::vector<std::string> channels;
+  std::vector<std::string> fusion_methods;
+  channels.push_back("rgb");
+  fusion_methods.push_back("image_color");
+  inputImage(image_msg, camera_info_msg, channels, fusion_methods);
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
 

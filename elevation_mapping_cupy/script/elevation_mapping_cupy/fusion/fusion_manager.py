@@ -54,11 +54,11 @@ class FusionManager(object):
         """
         Get a registered fusion plugin
         """
-        name = data_type + "_" + name
+        # name = data_type + "_" + name
         for idx, plugin in enumerate(self.plugins):
             if plugin.name == name:
                 return idx
-        print("Plugin {} is not in the list: {}".format(name, self.plugins))
+        print("[WARNING] Plugin {} is not in the list: {}".format(name, self.plugins))
         return None
 
     def execute_plugin(
@@ -72,8 +72,8 @@ class FusionManager(object):
             self.plugins[idx](
                 points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, elements_to_shift
             )
-        else:
-            raise ValueError("Plugin {} is not registered".format(name))
+        # else:
+        #     raise ValueError("Plugin {} is not registered".format(name))
 
     def execute_image_plugin(
         self,
@@ -104,5 +104,5 @@ class FusionManager(object):
                 semantic_map,
                 new_map,
             )
-        else:
-            raise ValueError("Plugin {} is not registered".format(name))
+        # else:
+        #     raise ValueError("Plugin {} is not registered".format(name))

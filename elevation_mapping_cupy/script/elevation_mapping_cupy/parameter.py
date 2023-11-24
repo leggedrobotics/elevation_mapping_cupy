@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 from simple_parsing.helpers import Serializable
 from dataclasses import field
+from typing import Tuple
 
 
 @dataclass
@@ -33,8 +34,19 @@ class Parameter(Serializable):
             }
         }
     )
-    additional_layers: list = field(default_factory=lambda: ["feat_0"])
-    fusion_algorithms: list = field(default_factory=lambda: ["average"])
+    # additional_layers: list = field(default_factory=lambda: ["feat_0"])
+    # fusion_algorithms: list = field(default_factory=lambda: ["average"])
+    additional_layers: list = field(default_factory=lambda: ["color"])
+    fusion_algorithms: list = field(default_factory=lambda: [
+        "image_color",
+        "image_exponential",
+        "pointcloud_average",
+        "pointcloud_bayesian_inference",
+        "pointcloud_class_average",
+        "pointcloud_class_bayesian",
+        "pointcloud_class_max",
+        "pointcloud_color"])
+    pointcloud_channel_fusion: dict = field(default_factory=lambda: {"rgb": "pointcloud_color", "default": "pointcloud_class_average"})
     data_type: str = np.float32
     average_weight: float = 0.5
 
@@ -126,18 +138,18 @@ class Parameter(Serializable):
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
         self.true_cell_n = round(self.map_length / self.resolution)
         self.true_map_length = self.true_cell_n * self.resolution
-        semantic_layers = []
-        fusion_algorithms = []
-        for subscriber, sub_val in self.subscriber_cfg.items():
-            channels = sub_val["channels"]
-            fusion = sub_val["fusion"]
-            for i in range(len(channels)):
-                name = channels[i]
-                if name not in semantic_layers:
-                    semantic_layers.append(name)
-                    fusion_algorithms.append(fusion[i])
-        self.additional_layers = semantic_layers
-        self.fusion_algorithms = fusion_algorithms
+        # semantic_layers = []
+        # fusion_algorithms = []
+        # for subscriber, sub_val in self.subscriber_cfg.items():
+        #     channels = sub_val["channels"]
+        #     fusion = sub_val["fusion"]
+        #     for i in range(len(channels)):
+        #         name = channels[i]
+        #         if name not in semantic_layers:
+        #             semantic_layers.append(name)
+        #             fusion_algorithms.append(fusion[i])
+        # self.additional_layers = semantic_layers
+        # self.fusion_algorithms = fusion_algorithms
 
 
 if __name__ == "__main__":

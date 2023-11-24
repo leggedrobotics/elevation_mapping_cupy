@@ -121,6 +121,24 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   }
   param_.attr("subscriber_cfg") = sub_dict;
 
+  if (!nh.hasParam("pointcloud_channel_fusion")) {
+    ROS_WARN("No pointcloud_channel_fusion parameter found. Using default values.");
+  }
+  else {
+    XmlRpc::XmlRpcValue pointcloud_channel_fusion;
+    nh.getParam("pointcloud_channel_fusion", pointcloud_channel_fusion);
+
+    py::dict pointcloud_channel_fusion_dict;
+    for (auto& channel_fusion : pointcloud_channel_fusion) {
+      const char* const name = channel_fusion.first.c_str();
+      std::string fusion = static_cast<std::string>(channel_fusion.second);
+      if (!pointcloud_channel_fusion_dict.contains(name)) {
+        pointcloud_channel_fusion_dict[name] = fusion;
+      }
+    }
+    param_.attr("pointcloud_channel_fusion") = pointcloud_channel_fusion_dict;
+  }
+
   param_.attr("update")();
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
   map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
@@ -137,10 +155,10 @@ void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector
                      Eigen::Ref<const Eigen::VectorXd>(t), positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::input_image(const std::string& key, const std::vector<ColMatrixXf>& multichannel_image, const RowMatrixXd& R,
+void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image, const std::vector<std::string>& channels, const std::vector<std::string>& fusion_methods, const RowMatrixXd& R,
                                           const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, int height, int width) {
   py::gil_scoped_acquire acquire;
-  map_.attr("input_image")(key, multichannel_image, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
+  map_.attr("input_image")(multichannel_image, channels, fusion_methods, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
                            Eigen::Ref<const RowMatrixXd>(cameraMatrix), height, width);
 }
 
@@ -189,9 +207,12 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   std::vector<Eigen::MatrixXf> maps;
 
   for (const auto& layerName : layerNames) {
-    RowMatrixXf map(map_n_, map_n_);
-    map_.attr("get_map_with_name_ref")(layerName, Eigen::Ref<RowMatrixXf>(map));
-    gridMap.add(layerName, map);
+    bool exists = map_.attr("exists_layer")(layerName).cast<bool>();
+    if (exists) {
+      RowMatrixXf map(map_n_, map_n_);
+      map_.attr("get_map_with_name_ref")(layerName, Eigen::Ref<RowMatrixXf>(map));
+      gridMap.add(layerName, map);
+    }
   }
   if (enable_normal_color_) {
     RowMatrixXf normal_x(map_n_, map_n_);
