@@ -82,7 +82,7 @@ def bayesian_inference_kernel(
 class BayesianInference(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
-        print("Initialize bayesian inference kernel")
+        # print("Initialize bayesian inference kernel")
         self.name = "pointcloud_bayesian_inference"
 
         self.cell_n = params.cell_n

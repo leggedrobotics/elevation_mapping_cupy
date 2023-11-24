@@ -47,7 +47,7 @@ def sum_max_kernel(
 class ClassMax(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
-        print("Initialize fusion kernel")
+        # print("Initialize fusion kernel")
         self.name = "pointcloud_class_max"
         self.cell_n = params.cell_n
         self.resolution = params.resolution

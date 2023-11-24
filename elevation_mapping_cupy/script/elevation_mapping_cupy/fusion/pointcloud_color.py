@@ -118,7 +118,7 @@ def color_average_kernel(
 class Color(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
-        print("Initialize fusion kernel")
+        # print("Initialize fusion kernel")
         self.name = "pointcloud_color"
         self.cell_n = params.cell_n
         self.resolution = params.resolution

@@ -47,7 +47,7 @@ def color_correspondences_to_map_kernel(resolution, width, height):
 class ImageColor(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
-        print("Initialize fusion kernel")
+        # print("Initialize fusion kernel")
         self.name = "image_color"
         self.cell_n = params.cell_n
         self.resolution = params.resolution

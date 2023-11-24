@@ -38,7 +38,7 @@ def exponential_correspondences_to_map_kernel(resolution, width, height, alpha):
 class ImageExponential(FusionBase):
     def __init__(self, params, *args, **kwargs):
         # super().__init__(fusion_params, *args, **kwargs)
-        print("Initialize fusion kernel")
+        # print("Initialize fusion kernel")
         self.name = "image_exponential"
         self.cell_n = params.cell_n
         self.resolution = params.resolution
