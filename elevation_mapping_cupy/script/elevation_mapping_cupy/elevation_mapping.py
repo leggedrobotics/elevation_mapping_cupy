@@ -452,7 +452,6 @@ class ElevationMap:
         """
         raw_points = cp.asarray(raw_points, dtype=self.data_type)
         additional_channels = channels[3:]
-        print("additional_channels", additional_channels)
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
         self.update_map_with_kernel(
             raw_points,
