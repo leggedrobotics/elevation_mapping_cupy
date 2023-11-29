@@ -1,32 +1,65 @@
-subscribers:
-  #  sensor_name:
-  #    channels: ['feat_0','feat_1']
-  #    fusion: ['average','average']
-  #    topic_name: '/elevation_mapping/pointcloud_semantic'
-  front_cam:
-    channels: [ 'rgb' ] #'feat_0','feat_1','person','grass']
-    fusion: [ 'color' ] #'average','average','class_average','class_average']
-    topic_name: '/elvation_mapping/pointcloud_semantic'
-    semantic_segmentation: False
-    segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x'
-    publish_segmentation_image: True
-    feature_extractor: False
-    feature_config:
-      name: 'DINO'
-      interpolation: 'bilinear'
-      model: "vit_small"
-      patch_size: 16
-      dim: 5
-      dropout: False
-      dino_feat_type: "feat"
-      input_size: [ 80, 160 ]
-      projection_type: "nonlinear"
+# subscribers:
+#   #  sensor_name:
+#   #    channels: ['feat_0','feat_1']
+#   #    fusion: ['average','average']
+#   #    topic_name: '/elevation_mapping/pointcloud_semantic'
+#   front_cam:
+#     channels: [ 'rgb' ] #'feat_0','feat_1','person','grass']
+#     fusion: [ 'color' ] #'average','average','class_average','class_average']
+#     topic_name: '/elvation_mapping/pointcloud_semantic'
+#     semantic_segmentation: False
+#     segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x'
+#     publish_segmentation_image: True
+#     feature_extractor: False
+#     feature_config:
+#       name: 'DINO'
+#       interpolation: 'bilinear'
+#       model: "vit_small"
+#       patch_size: 16
+#       dim: 5
+#       dropout: False
+#       dino_feat_type: "feat"
+#       input_size: [ 80, 160 ]
+#       projection_type: "nonlinear"
 
-    cam_info_topic: "/zed2i/zed_node/depth/camera_info"
-    image_topic: "/zed2i/zed_node/left/image_rect_color"
-    depth_topic: "/zed2i/zed_node/depth/depth_registered"
-    cam_frame: "zed2i_right_camera_optical_frame"
-    confidence_topic: "/zed2i/zed_node/confidence/confidence_map"
-    confidence_threshold: 10
+#     cam_info_topic: "/zed2i/zed_node/depth/camera_info"
+#     image_topic: "/zed2i/zed_node/left/image_rect_color"
+#     depth_topic: "/zed2i/zed_node/depth/depth_registered"
+#     cam_frame: "zed2i_right_camera_optical_frame"
+#     confidence_topic: "/zed2i/zed_node/confidence/confidence_map"
+#     confidence_threshold: 10
+front_cam_pointcloud:
+  channels: ['rgb', 'chair','sofa',"person" ]
+  fusion: ['color','class_average','class_average','class_average']
+  topic_name: 'front_camera/semantic_pointcloud'
+  semantic_segmentation: True
+  publish_segmentation_image: True
+  segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
+  show_label_legend: False
+  data_type: pointcloud
 
+  cam_info_topic: "/camera/depth/camera_info"
+  image_topic: "/camera/rgb/image_raw"
+  depth_topic: "/camera/depth/image_raw"
+  cam_frame: "camera_rgb_optical_frame"
+
+front_cam_image:
+  channels: ['chair','sofa',"person"]
+  fusion_methods: ['exponential','exponential','exponential']
+  publish_topic: 'semantic_image'
+  publish_image_topic: "semantic_image_debug"
+  publish_camera_info_topic: 'semantic_image_info'
+  publish_fusion_info_topic: 'semantic_image_fusion_info'
+  data_type: image
+
+  semantic_segmentation: True
+  # segmentation_model: 'detectron_coco_panoptic_fpn_R_101_3x' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
+  segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
+  show_label_legend: False
+  image_topic: "/camera/rgb/image_raw"
+  image_info_topic: "/camera/depth/camera_info"
+  resize: 0.5
+
+  # sem_seg_topic: "semantic_front"
+  # sem_seg_image_topic: "semantic_image_front"
 

@@ -54,7 +54,7 @@ class FusionManager(object):
         """
         Get a registered fusion plugin
         """
-        # name = data_type + "_" + name
+        name = data_type + "_" + name
         for idx, plugin in enumerate(self.plugins):
             if plugin.name == name:
                 return idx

@@ -118,10 +118,10 @@ class PytorchModel:
                 indices.append(class_to_idx[chan])
                 channels.append(chan)
                 self.actual_channels.append(chan)
-            elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
+            elif self.param.fusion_methods[it] in ["class_average", "class_bayesian"]:
                 print(chan, " is not in the semantic segmentation model.")
         for it, chan in enumerate(self.param.channels):
-            if self.param.fusion[it] in ["class_max"]:
+            if self.param.fusion_methods[it] in ["class_max"]:
                 self.actual_channels.append(chan)
                 print(
                     chan,
@@ -133,7 +133,7 @@ class PytorchModel:
         self.segmentation_channels = dict(zip(channels, indices))
 
     def __call__(self, image, *args, **kwargs):
-        """Feewforward image through model and then create channels
+        """Feedforward image through model and then create channels
 
         Args:
             image (cupy._core.core.ndarray):
@@ -152,7 +152,7 @@ class PytorchModel:
             selected_masks = cp.asarray(normalized_masks[list(self.stuff_categories.values())])
             # get values of max, first remove the ones we already have
             normalized_masks[list(self.stuff_categories.values())] = 0
-            for i in range(self.param.fusion.count("class_max")):
+            for i in range(self.param.fusion_methods.count("class_max")):
                 maxim, index = torch.max(normalized_masks, dim=0)
                 mer = encode_max(maxim, index)
                 selected_masks = cp.concatenate((selected_masks, cp.expand_dims(mer, axis=0)), axis=0)
@@ -183,7 +183,7 @@ class DetectronModel:
         # Find a model from detectron2's model zoo. You can use the https://dl.fbaipublicfiles... url as well
         self.cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(weights)
         self.predictor = DefaultPredictor(self.cfg)
-        self.meta = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0])
+        self.metadata = MetadataCatalog.get(self.cfg.DATASETS.TRAIN[0])
         self.stuff_categories, self.is_stuff = self.resolve_categories("stuff_classes")
         self.thing_categories, self.is_thing = self.resolve_categories("thing_classes")
         self.segmentation_channels = {}
@@ -198,7 +198,7 @@ class DetectronModel:
         self.actual_channels = self.segmentation_channels.keys()
 
     def resolve_categories(self, name):
-        classes = self.get_cat(name)
+        classes = self.get_category(name)
         class_to_idx = {cls: idx for (idx, cls) in enumerate(classes)}
         print(
             "Semantic Segmentation possible channels: ",
@@ -207,17 +207,17 @@ class DetectronModel:
         indices = []
         channels = []
         is_thing = []
-        for it, chan in enumerate(self.param.channels):
-            if chan in [cls for cls in list(class_to_idx.keys())]:
-                indices.append(class_to_idx[chan])
-                channels.append(chan)
+        for it, channel in enumerate(self.param.channels):
+            if channel in [cls for cls in list(class_to_idx.keys())]:
+                indices.append(class_to_idx[channel])
+                channels.append(channel)
                 is_thing.append(True)
-            elif self.param.fusion[it] in ["class_average", "class_bayesian"]:
+            elif self.param.fusion_methods[it] in ["class_average", "class_bayesian"]:
                 is_thing.append(False)
-                print(chan, " is not in the semantic segmentation model.")
+                print(channel, " is not in the semantic segmentation model.")
         categories = dict(zip(channels, indices))
-        cat_isthing = dict(zip(self.param.channels, is_thing))
-        return categories, cat_isthing
+        category_isthing = dict(zip(self.param.channels, is_thing))
+        return categories, category_isthing
 
     def __call__(self, image, *args, **kwargs):
         # TODO: there are some instruction on how to change input type
@@ -234,23 +234,23 @@ class DetectronModel:
         # add semseg
         output[cp.array(list(self.is_stuff.values()))] = probabilities[list(self.stuff_categories.values())]
         # add instances
-        indices, insta_info = prediction["panoptic_seg"]
+        indices, instance_info = prediction["panoptic_seg"]
         # TODO dont know why i need temp, look into how to avoid
         temp = output[cp.array(list(self.is_thing.values()))]
-        for i, insta in enumerate(insta_info):
-            if insta is None or not insta["isthing"]:
+        for i, instance in enumerate(instance_info):
+            if instance is None or not instance["isthing"]:
                 continue
-            mask = cp.asarray((indices == insta["id"]).int())
-            if insta["instance_id"] in self.thing_categories.values():
-                temp[i] = mask * insta["score"]
+            mask = cp.asarray((indices == instance["id"]).int())
+            if instance["instance_id"] in self.thing_categories.values():
+                temp[i] = mask * instance["score"]
         output[cp.array(list(self.is_thing.values()))] = temp
         return output
 
-    def get_cat(self, name):
-        return self.meta.get(name)
+    def get_category(self, name):
+        return self.metadata.get(name)
 
     def get_classes(self):
-        return self.get_cat("thing_classes") + self.get_cat("stuff_classes")
+        return self.get_category("thing_classes") + self.get_category("stuff_classes")
 
 
 class STEGOModel:

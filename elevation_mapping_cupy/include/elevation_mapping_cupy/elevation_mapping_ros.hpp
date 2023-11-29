@@ -49,6 +49,7 @@
 
 #include <elevation_map_msgs/CheckSafety.h>
 #include <elevation_map_msgs/Initialize.h>
+#include <elevation_map_msgs/FusionInfo.h>
 
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
@@ -70,6 +71,12 @@ class ElevationMappingNode {
   using CameraSync = message_filters::Synchronizer<CameraPolicy>;
   using CameraSyncPtr = std::shared_ptr<CameraSync>;
 
+  using FusionInfoSubscriber = message_filters::Subscriber<elevation_map_msgs::FusionInfo>;
+  using FusionInfoSubscriberPtr = std::shared_ptr<FusionInfoSubscriber>;
+  using CameraFusionPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, elevation_map_msgs::FusionInfo>;
+  using CameraFusionSync = message_filters::Synchronizer<CameraFusionPolicy>;
+  using CameraFusionSyncPtr = std::shared_ptr<CameraFusionSync>;
+
  private:
   void readParameters();
   void setupMapPublishers();
@@ -77,6 +84,8 @@ class ElevationMappingNode {
   void inputImage(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
                   const std::vector<std::string>& channels, const std::vector<std::string>& fusion_methods);
   void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
+  void imageFusionCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const elevation_map_msgs::FusionInfoConstPtr& fusion_info_msg);
+  // void multiLayerImageCallback(const elevation_map_msgs::MultiLayerImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
   void publishAsPointCloud(const grid_map::GridMap& map) const;
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
@@ -101,7 +110,9 @@ class ElevationMappingNode {
   std::vector<ros::Subscriber> pointcloudSubs_;
   std::vector<ImageSubscriberPtr> imageSubs_;
   std::vector<CameraInfoSubscriberPtr> cameraInfoSubs_;
+  std::vector<FusionInfoSubscriberPtr> fusionInfoSubs_;
   std::vector<CameraSyncPtr> cameraSyncs_;
+  std::vector<CameraFusionSyncPtr> cameraFusionSyncs_;
   std::vector<ros::Publisher> mapPubs_;
   tf::TransformBroadcaster tfBroadcaster_;
   ros::Publisher alivePub_;

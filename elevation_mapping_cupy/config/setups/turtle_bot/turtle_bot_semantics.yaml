@@ -2,34 +2,52 @@
 plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/turtle_bot/plugin_config.yaml'
 
 pointcloud_channel_fusion:
-  rgb: 'pointcloud_color'
-  default: 'pointcloud_average'
-  sheep: 'pointcloud_average'
-  sofa: 'pointcloud_class_average'
-  person: 'pointcloud_class_average'
+  rgb: 'color'
+  default: 'average'
+  sheep: 'average'
+  sofa: 'class_average'
+  person: 'class_average'
 
 #### Subscribers ########
 subscribers:
-  front_cam:
-    channels: ['rgb', 'sheep','sofa',"person" ]
-    fusion: [ 'color','class_average','class_average','class_average' ]
-    topic_name: '/elevation_mapping/pointcloud_semantic'
-    semantic_segmentation: True
-    publish_segmentation_image: True
-    segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
-    show_label_legend: False
-    data_type: pointcloud
+  color_cam: # for color camera
+    # channels: ['rgb']
+    # fusion: ['color']
+    topic_name: '/camera/rgb/image_raw'
+    camera_info_topic_name: '/camera/depth/camera_info'
+    data_type: image
+  # front_cam:
+    # channels: ['rgb', 'sheep','sofa',"person" ]
+    # fusion: [ 'color','class_average','class_average','class_average' ]
+    # topic_name: '/elevation_mapping/pointcloud_semantic'
+    # semantic_segmentation: True
+    # publish_segmentation_image: True
+    # segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
+    # show_label_legend: False
 
-    cam_info_topic: "/camera/depth/camera_info"
-    image_topic: "/camera/rgb/image_raw"
-    depth_topic: "/camera/depth/image_raw"
-    cam_frame: "camera_rgb_optical_frame"
+    # cam_info_topic: "/camera/rgb/camera_info"
+    # image_topic: "/camera/rgb/image_raw"
+    # cam_frame: "camera_rgb_optical_frame"
+    # data_type: image
+    # depth_topic: "/camera/depth/image_raw"
+  semantic_cam: # for color camera
+    # channels: ['rgb']
+    # fusion: ['color']
+    topic_name: '/front_cam/semantic_image'
+    camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
+    fusion_info_topic_name: '/front_cam/fusion_info'
+    data_type: image
+  front_cam_pointcloud:
+    channels: []
+    fusion: []
+    topic_name: '/camera/depth/points'
+    data_type: pointcloud
 
 
 #### Publishers ########
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance','rgb','sem_fil', 'person', 'sheep', 'sofa']
+    layers: ['elevation', 'traversability', 'variance','rgb','sem_fil', 'person', 'chair', 'sofa']
     basic_layers: ['elevation']
     fps: 5.0
   elevation_map_filter:

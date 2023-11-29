@@ -293,12 +293,15 @@ class ElevationMap:
                     np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32),
                     dtype=np.float32,
                 )
+                # self.distance_correspondence = cp.asarray(
+                #     np.zeros((self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32
+                # )
                 # TODO tolerance_z_collision add parameter
                 self.image_to_map_correspondence_kernel = image_to_map_correspondence_kernel(
                     resolution=self.resolution,
                     width=self.cell_n,
                     height=self.cell_n,
-                    tolerance_z_collision=0.1,
+                    tolerance_z_collision=0.10,
                 )
                 break
 
@@ -487,6 +490,9 @@ class ElevationMap:
         Returns:
             None:
         """
+        print("input_image")
+        print("channels", channels)
+        print("fusion_methods", fusion_methods)
         image = np.stack(image, axis=0)
         if len(image.shape) == 2:
             image = image[None]
@@ -509,6 +515,7 @@ class ElevationMap:
 
         self.uv_correspondence *= 0
         self.valid_correspondence[:, :] = False
+        # self.distance_correspondence *= 0.0
 
         print("channels", channels)
         print("fusion_methods", fusion_methods)
@@ -525,8 +532,10 @@ class ElevationMap:
                 self.center,
                 self.uv_correspondence,
                 self.valid_correspondence,
+                # self.distance_correspondence,
                 size=int(self.cell_n * self.cell_n),
             )
+            # print("distance_correspondence", self.distance_correspondence)
             self.semantic_map.update_layers_image(
                 # sub_key,
                 image,

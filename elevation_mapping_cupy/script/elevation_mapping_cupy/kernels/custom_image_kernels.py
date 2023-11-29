@@ -3,7 +3,12 @@ import string
 
 
 def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_collision):
-    image_to_map_correspondence_kernel = cp.ElementwiseKernel(
+    """
+    This function calculates the correspondence between the image and the map.
+    It takes in the resolution, width, height, and tolerance_z_collision as parameters.
+    The function returns a kernel that can be used to perform the correspondence calculation.
+    """
+    _image_to_map_correspondence_kernel = cp.ElementwiseKernel(
         in_params="raw U map, raw U x1, raw U y1, raw U z1, raw U P, raw U image_height, raw U image_width, raw U center",
         out_params="raw U uv_correspondence, raw B valid_correspondence",
         preamble=string.Template(
@@ -52,7 +57,7 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
             u = u/d;
             v = v/d;
             
-            // filter point nexto image plane
+            // filter point next to image plane
             if ((u < 0) || (v < 0) || (u >= image_width) || (v >= image_height)){
                 return;
             } 
@@ -71,6 +76,8 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
             int dy = -abs(y1 - y0);
             int sy = y0 < y1 ? 1 : -1;
             int error = dx + dy;
+
+            bool is_valid = true;
             
             // iterate over all cells along line
             while (1){
@@ -86,6 +93,7 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
                         float dis = get_l2_distance(x0_c, y0_c, x0, y0);
                         float rayheight = z0 + ( dis / total_dis * delta_z);
                         if ( map[idx] - ${tolerance_z_collision} > rayheight){
+                            is_valid = false;
                             break;
                         }
                     }
@@ -113,16 +121,21 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
             // mark the correspondence
             uv_correspondence[get_map_idx(i, 0)] = u;
             uv_correspondence[get_map_idx(i, 1)] = v;
-            valid_correspondence[get_map_idx(i, 0)] = 1;
+            valid_correspondence[get_map_idx(i, 0)] = is_valid;
             """
         ).substitute(height=height, width=width, resolution=resolution, tolerance_z_collision=tolerance_z_collision),
         name="image_to_map_correspondence_kernel",
     )
-    return image_to_map_correspondence_kernel
+    return _image_to_map_correspondence_kernel
 
 
-def average_correspondences_to_map_kernel(resolution, width, height):
-    average_correspondences_to_map_kernel = cp.ElementwiseKernel(
+def average_correspondences_to_map_kernel(width, height):
+    """
+    This function calculates the average correspondences to the map.
+    It takes in the width and height as parameters.
+    The function returns a kernel that can be used to perform the correspondence calculation.
+    """
+    _average_correspondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U map_idx, raw U image_mono, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
         preamble=string.Template(
@@ -148,11 +161,16 @@ def average_correspondences_to_map_kernel(resolution, width, height):
         ).substitute(),
         name="average_correspondences_to_map_kernel",
     )
-    return average_correspondences_to_map_kernel
+    return _average_correspondences_to_map_kernel
 
 
-def exponential_correspondences_to_map_kernel(resolution, width, height, alpha):
-    exponential_correspondences_to_map_kernel = cp.ElementwiseKernel(
+def exponential_correspondences_to_map_kernel(width, height, alpha):
+    """
+    This function calculates the exponential correspondences to the map.
+    It takes in the width, height, and alpha as parameters.
+    The function returns a kernel that can be used to perform the correspondence calculation.
+    """
+    _exponential_correspondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U map_idx, raw U image_mono, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
         preamble=string.Template(
@@ -178,11 +196,16 @@ def exponential_correspondences_to_map_kernel(resolution, width, height, alpha):
         ).substitute(alpha=alpha),
         name="exponential_correspondences_to_map_kernel",
     )
-    return exponential_correspondences_to_map_kernel
+    return _exponential_correspondences_to_map_kernel
 
 
-def color_correspondences_to_map_kernel(resolution, width, height):
-    color_correspondences_to_map_kernel = cp.ElementwiseKernel(
+def color_correspondences_to_map_kernel(width, height):
+    """
+    This function calculates the color correspondences to the map.
+    It takes in the width and height as parameters.
+    The function returns a kernel that can be used to perform the correspondence calculation.
+    """
+    _color_correspondences_to_map_kernel = cp.ElementwiseKernel(
         in_params="raw U sem_map, raw U map_idx, raw U image_rgb, raw U uv_correspondence, raw B valid_correspondence, raw U image_height, raw U image_width",
         out_params="raw U new_sem_map",
         preamble=string.Template(
@@ -217,4 +240,4 @@ def color_correspondences_to_map_kernel(resolution, width, height):
         ).substitute(),
         name="color_correspondences_to_map_kernel",
     )
-    return color_correspondences_to_map_kernel
+    return _color_correspondences_to_map_kernel

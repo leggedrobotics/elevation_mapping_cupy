@@ -22,6 +22,8 @@ from semantic_sensor.image_parameters import ImageParameter
 from semantic_sensor.networks import resolve_model
 from sklearn.decomposition import PCA
 
+from elevation_map_msgs.msg import FusionInfo
+
 
 class SemanticSegmentationNode:
     def __init__(self, sensor_name):
@@ -33,9 +35,9 @@ class SemanticSegmentationNode:
         # TODO: if this is going to be loaded from another package we might need to change namespace
         self.param: ImageParameter = ImageParameter()
         self.param.feature_config.input_size = [80, 160]
-        namesp = rospy.get_name()
-        if rospy.has_param(namesp + "/subscribers"):
-            config = rospy.get_param(namesp + "/subscribers")
+        namespace = rospy.get_name()
+        if rospy.has_param(namespace):
+            config = rospy.get_param(namespace)
             self.param: ImageParameter = ImageParameter.from_dict(config[sensor_name])
         else:
             print("NO ROS ENV found.")
@@ -66,10 +68,12 @@ class SemanticSegmentationNode:
 
     def register_sub_pub(self):
         """Register publishers and subscribers."""
+
+        node_name = rospy.get_name()
         # subscribers
         if self.param.image_info_topic is not None and self.param.resize is not None:
             rospy.Subscriber(self.param.image_info_topic, CameraInfo, self.image_info_callback)
-            self.feat_im_info_pub = rospy.Publisher(self.param.image_info_topic + "_resized", CameraInfo, queue_size=2)
+            self.feat_im_info_pub = rospy.Publisher(node_name + "/" + self.param.image_info_topic + "_resized", CameraInfo, queue_size=2)
 
         if "compressed" in self.param.image_topic:
             self.compressed = True
@@ -82,14 +86,16 @@ class SemanticSegmentationNode:
 
         # publishers
         if self.param.semantic_segmentation:
-            self.seg_pub = rospy.Publisher(self.param.sem_seg_topic, Image, queue_size=2)
-            self.seg_im_pub = rospy.Publisher(self.param.sem_seg_image_topic, Image, queue_size=2)
+            self.seg_pub = rospy.Publisher(node_name + "/" + self.param.publish_topic, Image, queue_size=2)
+            self.seg_im_pub = rospy.Publisher(node_name + "/" + self.param.publish_image_topic, Image, queue_size=2)
             self.semseg_color_map = self.color_map(len(self.param.channels))
             if self.param.show_label_legend:
                 self.color_map_viz()
         if self.param.feature_extractor:
-            self.feature_pub = rospy.Publisher(self.param.feature_topic, Image, queue_size=2)
-            self.feat_im_pub = rospy.Publisher(self.param.feat_image_topic, Image, queue_size=2)
+            self.feature_pub = rospy.Publisher(node_name + "/" + self.param.feature_topic, Image, queue_size=2)
+            self.feat_im_pub = rospy.Publisher(node_name + "/" + self.param.feat_image_topic, Image, queue_size=2)
+
+        self.fusion_info_pub = rospy.Publisher(node_name + "/" + self.param.fusion_info_topic, FusionInfo, queue_size=2)
 
     def color_map(self, N=256, normalized=False):
         """Create a color map for the class labels.
@@ -171,14 +177,24 @@ class SemanticSegmentationNode:
         if self.param.semantic_segmentation:
             self.publish_segmentation()
             self.publish_segmentation_image()
+            self.publish_fusion_info()
         if self.param.feature_extractor:
             self.publish_feature()
             self.publish_feature_image(self.features)
+            self.publish_fusion_info()
         if self.param.resize is not None:
             self.pub_info()
 
     def pub_info(self):
         self.feat_im_info_pub.publish(self.info)
+
+    def publish_fusion_info(self):
+        """Publish fusion info."""
+        info = FusionInfo()
+        info.header = self.header
+        info.channels = self.param.channels
+        info.fusion_methods = self.param.fusion_methods
+        self.fusion_info_pub.publish(info)
 
     def process_image(self, image):
         """Depending on setting generate color, semantic segmentation or feature channels.

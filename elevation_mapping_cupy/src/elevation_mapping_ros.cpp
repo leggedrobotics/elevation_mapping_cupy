@@ -93,8 +93,8 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       }
 
     } else if (type == "image") {
-      std::string camera_topic = subscriber.second["topic_name_camera"];
-      std::string info_topic = subscriber.second["topic_name_camera_info"];
+      std::string camera_topic = subscriber.second["topic_name"];
+      std::string info_topic = subscriber.second["camera_info_topic_name"];
 
       // Handle compressed images with transport hints
       // We obtain the hint from the last part of the topic name
@@ -117,9 +117,23 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       cam_info_sub->subscribe(nh_, info_topic, 1);
       cameraInfoSubs_.push_back(cam_info_sub);
 
-      CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-      sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2));
-      cameraSyncs_.push_back(sync);
+      std::string fusion_info_topic;
+      if (subscriber.second.hasMember("fusion_info_topic_name")) {
+        std::string fusion_info_topic = subscriber.second["fusion_info_topic_name"];
+        FusionInfoSubscriberPtr fusion_info_sub = std::make_shared<FusionInfoSubscriber>();
+        fusion_info_sub->subscribe(nh_, fusion_info_topic, 1);
+        fusionInfoSubs_.push_back(fusion_info_sub);
+        CameraFusionSyncPtr sync = std::make_shared<CameraFusionSync>(CameraFusionPolicy(10), *image_sub, *cam_info_sub, *fusion_info_sub);
+        sync->registerCallback(boost::bind(&ElevationMappingNode::imageFusionCallback, this, _1, _2, _3));
+        cameraFusionSyncs_.push_back(sync);
+      }
+      else {
+        ROS_INFO_STREAM("Fusion info topic not found");
+        CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
+        sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2));
+        cameraSyncs_.push_back(sync);
+      }
+
 
     } else {
       ROS_WARN_STREAM("Subscriber data_type [" << type << "] Not valid. Supported types: pointcloud, image");
@@ -401,7 +415,24 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image
   std::vector<std::string> channels;
   std::vector<std::string> fusion_methods;
   channels.push_back("rgb");
-  fusion_methods.push_back("image_color");
+  fusion_methods.push_back("color");
+  inputImage(image_msg, camera_info_msg, channels, fusion_methods);
+  ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
+}
+
+void ElevationMappingNode::imageFusionCallback(const sensor_msgs::ImageConstPtr& image_msg,
+                                         const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
+                                         const elevation_map_msgs::FusionInfoConstPtr& fusion_info_msg) {
+  auto start = ros::Time::now();
+  // Default channels and fusion methods for image is rgb and image_color
+  std::vector<std::string> channels;
+  std::vector<std::string> fusion_methods;
+  channels = fusion_info_msg->channels;
+  fusion_methods = fusion_info_msg->fusion_methods;
+  ROS_INFO_STREAM("Channels: " << boost::algorithm::join(channels, ", "));
+  ROS_INFO_STREAM("Fusion methods: " << boost::algorithm::join(fusion_methods, ", "));
+  // channels.push_back("rgb");
+  // fusion_methods.push_back("color");
   inputImage(image_msg, camera_info_msg, channels, fusion_methods);
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }

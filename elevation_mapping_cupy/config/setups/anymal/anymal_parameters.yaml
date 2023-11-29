@@ -55,13 +55,13 @@ enable_normal_color: false                      # If true, the map contains 'col
 
 #### Traversability filter ########
 use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
-weight_file: '$(rospack find elevation_mapping_cupy)/config/weights.dat'               # Weight file for traversability filter
+weight_file: '$(rospack find elevation_mapping_cupy)/config/core/weights.dat'               # Weight file for traversability filter
 
 #### Upper bound ########
 use_only_above_for_upper_bound: false
 
 #### Plugins ########
-plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/anymal_plugin_config.yaml'
+# plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/anymal_plugin_config.yaml'
 
 #### Publishers ########
 # topic_name:
@@ -69,16 +69,16 @@ plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/anymal_plugin
 #   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
 #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 
-publishers:
-  elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance']
-    basic_layers: ['elevation', 'traversability']
-    fps: 5.0
+# publishers:
+#   elevation_map_raw:
+#     layers: ['elevation', 'traversability', 'variance']
+#     basic_layers: ['elevation', 'traversability']
+#     fps: 5.0
 
-  semantic_map_raw:
-    layers: ['elevation', 'traversability']
-    basic_layers: ['elevation', 'traversability']
-    fps: 5.0
+#   semantic_map_raw:
+#     layers: ['elevation', 'traversability']
+#     basic_layers: ['elevation', 'traversability']
+#     fps: 5.0
 
 #### Initializer ########
 initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
