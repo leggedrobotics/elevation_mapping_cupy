@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Statistics.msg
+  FusionInfo.msg
 )
 
 ## Generate services in the 'srv' folder
