@@ -5,6 +5,7 @@
 import cupy as cp
 import numpy as np
 from typing import List
+import re
 
 from elevation_mapping_cupy.plugins.plugin_manager import PluginBase
 
@@ -28,7 +29,17 @@ class SemanticFilter(PluginBase):
         self.classes = classes
         self.color_encoding = self.transform_color()
 
-    def color_map(self, N=256, normalized=False):
+    def color_map(self, N:int =256, normalized: bool=False):
+        """
+        Creates a color map with N different colors.
+
+        Args:
+            N (int, optional): The number of colors in the map. Defaults to 256.
+            normalized (bool, optional): If True, the colors are normalized to the range [0,1]. Defaults to False.
+
+        Returns:
+            np.ndarray: The color map.
+        """
         def bitget(byteval, idx):
             return (byteval & (1 << idx)) != 0
 
@@ -52,6 +63,12 @@ class SemanticFilter(PluginBase):
         return cmap[1:]
 
     def transform_color(self):
+        """
+        Transforms the color map into a format that can be used for semantic filtering.
+
+        Returns:
+            cp.ndarray: The transformed color map.
+        """
         color_classes = self.color_map(255)
         r = np.asarray(color_classes[:, 0], dtype=np.uint32)
         g = np.asarray(color_classes[:, 1], dtype=np.uint32)
@@ -60,6 +77,19 @@ class SemanticFilter(PluginBase):
         rgb_arr.dtype = np.float32
         return cp.asarray(rgb_arr)
 
+    def get_layer_indices(self, layer_names: List[str]) -> List[int]:
+        """ Get the indices of the layers that are to be processed using regular expressions.
+        Args:
+            layer_names (List[str]): List of layer names.
+        Returns:
+            List[int]: List of layer indices.
+        """
+        indices = []
+        for i, layer_name in enumerate(layer_names):
+            if any(re.match(pattern, layer_name) for pattern in self.classes):
+                indices.append(i)
+        return indices
+
     def __call__(
         self,
         elevation_map: cp.ndarray,
@@ -67,7 +97,7 @@ class SemanticFilter(PluginBase):
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
         semantic_map: cp.ndarray,
-        semantic_params,
+        semantic_layer_names: List[str],
         rotation,
         elements_to_shift,
         *args,
@@ -86,28 +116,18 @@ class SemanticFilter(PluginBase):
             cupy._core.core.ndarray:
         """
         # get indices of all layers that contain semantic class information
-        layer_indices = cp.array([], dtype=cp.int32)
-        max_idcs = cp.array([], dtype=cp.int32)
-        for it, fusion_alg in enumerate(semantic_params.fusion_algorithms):
-            if fusion_alg in ["class_bayesian", "class_average", "exponential"]:
-                layer_indices = cp.append(layer_indices, it).astype(cp.int32)
-            # we care only for the first max in the display
-            if fusion_alg in ["class_max"] and len(max_idcs) < 1:
-                max_idcs = cp.append(max_idcs, it).astype(cp.int32)
-
-        # check which has the highest value
-        if len(layer_indices) > 0:
-            class_map = cp.amax(semantic_map[layer_indices], axis=0)
-            class_map_id = cp.argmax(semantic_map[layer_indices], axis=0)
+        data = []
+        for m, layer_names in zip([elevation_map, plugin_layers, semantic_map],
+                                 [layer_names, plugin_layer_names, semantic_layer_names]):
+            layer_indices = self.get_layer_indices(layer_names)
+            if len(layer_indices) > 0:
+                data.append(m[layer_indices])
+        if len(data) > 0:
+            data = cp.concatenate(data, axis=0)
+            class_map = cp.amax(data, axis=0)
+            class_map_id = cp.argmax(data, axis=0)
         else:
-            class_map = cp.zeros_like(semantic_map[0])
-            class_map_id = cp.zeros_like(semantic_map[0], dtype=cp.int32)
-        if "class_max" in semantic_params.fusion_algorithms:
-            max_map = cp.amax(semantic_map[max_idcs], axis=0)
-            max_map_id = elements_to_shift["id_max"][max_idcs]
-            map = cp.where(max_map > class_map, max_map_id, class_map_id)
-        else:
-            map = class_map_id
-        # create color coding
-        enc = self.color_encoding[map]
+            class_map = cp.zeros_like(elevation_map[0])
+            class_map_id = cp.zeros_like(elevation_map[0], dtype=cp.int32)
+        enc = self.color_encoding[class_map_id]
         return enc

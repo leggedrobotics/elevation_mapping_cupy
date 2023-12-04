@@ -731,7 +731,7 @@ class ElevationMap:
                     self.elevation_map,
                     self.layer_names,
                     self.semantic_map.semantic_map,
-                    self.semantic_map.param,
+                    self.semantic_map.layer_names,
                     self.base_rotation,
                     self.semantic_map.elements_to_shift,
                 )

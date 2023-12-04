@@ -86,6 +86,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       boost::function<void(const sensor_msgs::PointCloud2&)> f = boost::bind(&ElevationMappingNode::pointcloudCallback, this, _1, key);
       ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1, f);
       pointcloudSubs_.push_back(sub);
+      ROS_INFO_STREAM("Subscribed to PointCloud2 topic: " << pointcloud_topic);
     }
     else if (type == "image") {
       std::string camera_topic = subscriber.second["topic_name"];
@@ -122,6 +123,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
         CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
         sync->registerCallback(boost::bind(&ElevationMappingNode::imageChannelCallback, this, _1, _2, _3));
         cameraChannelSyncs_.push_back(sync);
+        ROS_INFO_STREAM("Subscribed to Image topic: " << camera_topic << ", Camera info topic: " << info_topic << ", Channel info topic: " << channel_info_topic);
       }
       else {
         // If there is channels setting, we use it. Otherwise, we use rgb as default.
@@ -135,7 +137,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
         else {
           channels_[key].push_back("rgb");
         }
-        ROS_INFO_STREAM("Channel info topic not found for " << camera_topic << ". Using channels: " << boost::algorithm::join(channels_[key], ", "));
+        ROS_INFO_STREAM("Subscribed to Image topic: " << camera_topic << ", Camera info topic: " << info_topic << ". Channel info topic: " << (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")) : channel_info_topic));
         CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
         sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2, key));
         cameraSyncs_.push_back(sync);

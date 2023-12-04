@@ -118,17 +118,20 @@ class PytorchModel:
                 indices.append(class_to_idx[chan])
                 channels.append(chan)
                 self.actual_channels.append(chan)
-            elif self.param.fusion_methods[it] in ["class_average", "class_bayesian"]:
-                print(chan, " is not in the semantic segmentation model.")
-        for it, chan in enumerate(self.param.channels):
-            if self.param.fusion_methods[it] in ["class_max"]:
-                self.actual_channels.append(chan)
-                print(
-                    chan,
-                    " is not in the semantic segmentation model but is a max channel.",
-                )
             else:
-                pass
+                self.actual_channels.append(chan)
+            # elif self.param.fusion_methods[it] in ["class_average", "class_bayesian"]:
+            #     print(chan, " is not in the semantic segmentation model.")
+        # for it, chan in enumerate(self.param.channels):
+        #     self.actual_channels.append(chan)
+            # if self.param.fusion_methods[it] in ["class_max"]:
+            #     self.actual_channels.append(chan)
+            #     print(
+            #         chan,
+            #         " is not in the semantic segmentation model but is a max channel.",
+            #     )
+            # else:
+            #     pass
         self.stuff_categories = dict(zip(channels, indices))
         self.segmentation_channels = dict(zip(channels, indices))
 
@@ -152,14 +155,14 @@ class PytorchModel:
             selected_masks = cp.asarray(normalized_masks[list(self.stuff_categories.values())])
             # get values of max, first remove the ones we already have
             normalized_masks[list(self.stuff_categories.values())] = 0
-            for i in range(self.param.fusion_methods.count("class_max")):
-                maxim, index = torch.max(normalized_masks, dim=0)
-                mer = encode_max(maxim, index)
-                selected_masks = cp.concatenate((selected_masks, cp.expand_dims(mer, axis=0)), axis=0)
-                x = torch.arange(0, index.shape[0])
-                y = torch.arange(0, index.shape[1])
-                c = torch.meshgrid(x, y, indexing="ij")
-                normalized_masks[index, c[0], c[1]] = 0
+            # for i in range(self.param.fusion_methods.count("class_max")):
+            #     maxim, index = torch.max(normalized_masks, dim=0)
+            #     mer = encode_max(maxim, index)
+            #     selected_masks = cp.concatenate((selected_masks, cp.expand_dims(mer, axis=0)), axis=0)
+            #     x = torch.arange(0, index.shape[0])
+            #     y = torch.arange(0, index.shape[1])
+            #     c = torch.meshgrid(x, y, indexing="ij")
+            #     normalized_masks[index, c[0], c[1]] = 0
             assert len(self.actual_channels) == selected_masks.shape[0]
         return cp.asarray(selected_masks)
 
@@ -260,7 +263,7 @@ class STEGOModel:
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.model.eval()
-        self.shrink = Resize(size=(self.cfg.input_size[0], self.cfg.input_size[1]))
+        self.shrink = Resize(size=(self.cfg.input_size[0], self.cfg.input_size[1]), antialias=True)
 
     def to_tensor(self, data):
         data = data.astype(np.float32)
@@ -277,7 +280,7 @@ class STEGOModel:
         # image = torch.as_tensor(image, device="cuda").permute(2, 0, 1).unsqueeze(0)
         image = self.to_tensor(image).unsqueeze(0)
         # if self.cfg.pcl:
-        reset_size = Resize(image.shape[-2:], interpolation=TF.InterpolationMode.NEAREST)
+        reset_size = Resize(image.shape[-2:], interpolation=TF.InterpolationMode.NEAREST, antialias=True)
         im_size = image.shape[-2:]
         image = self.shrink(image)
         image = TF.normalize(image, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))

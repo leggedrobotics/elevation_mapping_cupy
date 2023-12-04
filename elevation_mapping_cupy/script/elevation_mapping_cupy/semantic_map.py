@@ -173,8 +173,7 @@ class SemanticMap:
                     layer_specs[channel] = matched_fusion
                     self.update_fusion_setting()
             x = layer_specs[channel]
-            if x not in fusion_list:
-                fusion_list.append(x)
+            fusion_list.append(x)
             process_channels.append(channel)
         return process_channels, fusion_list
 
@@ -287,12 +286,8 @@ class SemanticMap:
             image_width:
         """
 
-        # additional_fusion = self.get_fusion_of_pcl(channels)
         process_channels, fusion_methods = self.get_fusion(channels, self.param.image_channel_fusions, self.layer_specs_image)
         self.new_map[self.delete_new_layers] = 0.0
-        # config = self.param.subscriber_cfg[sub_key]
-
-        # for j, (fusion, channel) in enumerate(zip(config["fusion"], config["channels"])):
         for j, (fusion, channel) in enumerate(zip(fusion_methods, process_channels)):
             if channel not in self.layer_names:
                 print(f"Layer {channel} not found, adding it to the semantic map")
@@ -303,8 +298,6 @@ class SemanticMap:
                 print(f"Layer {channel} not found!")
                 return
 
-            # which layers need to be updated with this fusion algorithm
-            # pcl_ids, layer_ids = self.get_indices_fusion(channels, fusion)
             # update the layers with the fusion algorithm
             self.fusion_manager.execute_image_plugin(
                 fusion,

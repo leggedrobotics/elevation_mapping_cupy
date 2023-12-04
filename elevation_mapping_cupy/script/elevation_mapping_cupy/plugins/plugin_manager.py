@@ -103,7 +103,7 @@ class PluginManager(object):
                         is_height_layer=v["is_height_layer"],
                     )
                 )
-            extra_params.append(v["extra_params"])
+                extra_params.append(v["extra_params"])
         self.init(plugin_params, extra_params)
         print("Loaded plugins are ", *self.plugin_names)
 

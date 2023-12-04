@@ -22,7 +22,7 @@ from semantic_sensor.image_parameters import ImageParameter
 from semantic_sensor.networks import resolve_model
 from sklearn.decomposition import PCA
 
-from elevation_map_msgs.msg import FusionInfo
+from elevation_map_msgs.msg import ChannelInfo
 
 
 class SemanticSegmentationNode:
@@ -71,9 +71,9 @@ class SemanticSegmentationNode:
 
         node_name = rospy.get_name()
         # subscribers
-        if self.param.image_info_topic is not None and self.param.resize is not None:
-            rospy.Subscriber(self.param.image_info_topic, CameraInfo, self.image_info_callback)
-            self.feat_im_info_pub = rospy.Publisher(node_name + "/" + self.param.image_info_topic + "_resized", CameraInfo, queue_size=2)
+        if self.param.camera_info_topic is not None and self.param.resize is not None:
+            rospy.Subscriber(self.param.camera_info_topic, CameraInfo, self.image_info_callback)
+            self.feat_im_info_pub = rospy.Publisher(node_name + "/" + self.param.camera_info_topic + "_resized", CameraInfo, queue_size=2)
 
         if "compressed" in self.param.image_topic:
             self.compressed = True
@@ -94,8 +94,9 @@ class SemanticSegmentationNode:
         if self.param.feature_extractor:
             self.feature_pub = rospy.Publisher(node_name + "/" + self.param.feature_topic, Image, queue_size=2)
             self.feat_im_pub = rospy.Publisher(node_name + "/" + self.param.feat_image_topic, Image, queue_size=2)
+            self.feat_channel_info_pub = rospy.Publisher(node_name + "/" + self.param.feat_channel_info_topic, ChannelInfo, queue_size=2)
 
-        self.fusion_info_pub = rospy.Publisher(node_name + "/" + self.param.fusion_info_topic, FusionInfo, queue_size=2)
+        self.channel_info_pub = rospy.Publisher(node_name + "/" + self.param.channel_info_topic, ChannelInfo, queue_size=2)
 
     def color_map(self, N=256, normalized=False):
         """Create a color map for the class labels.
@@ -177,24 +178,23 @@ class SemanticSegmentationNode:
         if self.param.semantic_segmentation:
             self.publish_segmentation()
             self.publish_segmentation_image()
-            self.publish_fusion_info()
+            self.publish_channel_info([f"sem_{c}" for c in self.param.channels], self.channel_info_pub)
         if self.param.feature_extractor:
             self.publish_feature()
             self.publish_feature_image(self.features)
-            self.publish_fusion_info()
+            self.publish_channel_info([f"feat_{i}" for i in range(self.features.shape[0])], self.feat_channel_info_pub)
         if self.param.resize is not None:
             self.pub_info()
 
     def pub_info(self):
         self.feat_im_info_pub.publish(self.info)
 
-    def publish_fusion_info(self):
+    def publish_channel_info(self, channels, pub):
         """Publish fusion info."""
-        info = FusionInfo()
+        info = ChannelInfo()
         info.header = self.header
-        info.channels = self.param.channels
-        info.fusion_methods = self.param.fusion_methods
-        self.fusion_info_pub.publish(info)
+        info.channels = channels
+        pub.publish(info)
 
     def process_image(self, image):
         """Depending on setting generate color, semantic segmentation or feature channels.
