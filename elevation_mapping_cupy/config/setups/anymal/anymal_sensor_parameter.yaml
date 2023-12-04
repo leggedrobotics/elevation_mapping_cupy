@@ -22,9 +22,9 @@ publishers:
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
 
-  semantic_map_raw:
-    layers: ['elevation', 'traversability']
-    basic_layers: ['elevation', 'traversability']
+  filtered_elevation_map:
+    layers: ['inpaint', 'smooth', 'min_filter']
+    basic_layers: ['inpaint']
     fps: 5.0
 
 #### Subscribers ########
@@ -54,18 +54,18 @@ subscribers:
     data_type: pointcloud
 
   front_wide_angle:
-    topic_name: /wide_angle_camera_front/image_raw
+    topic_name: /wide_angle_camera_front/image_color_rect/compressed
     camera_info_topic_name: /wide_angle_camera_front/camera_info
     data_type: image
 
   rear_wide_angle:
-    topic_name: /wide_angle_camera_rear/image_raw
+    topic_name: /wide_angle_camera_rear/image_color_rect/compressed
     camera_info_topic_name: /wide_angle_camera_rear/camera_info
     data_type: image
 
-  # velodyne:
-  #   topic_name: /point_cloud_filter/lidar/point_cloud_filtered
-  #   data_type: pointcloud
+  velodyne:
+    topic_name: /point_cloud_filter/lidar/point_cloud_filtered
+    data_type: pointcloud
 
   front_bpearl:
     topic_name: /robot_self_filter/bpearl_front/point_cloud
