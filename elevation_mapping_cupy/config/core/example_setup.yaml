@@ -1,18 +1,41 @@
 #### Plugins ########
 plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/core/plugin_config.yaml'
 
+#### Channel Fusions ########
+pointcloud_channel_fusions:
+  rgb: 'color'                # 'color' fusion is used for the 'rgb' channel
+  default: 'average'          # 'average' fusion is used for channels not listed here
+
+image_channel_fusions:
+  rgb: 'color'                # 'color' fusion is used for the 'rgb' channel
+  default: 'exponential'      # 'exponential' fusion is used for channels not listed here
+  feat_.*: 'exponential'      # 'exponential' fusion is also used for any channel starting with 'feat_' Regular expressions can be used for channel names
+
 #### Subscribers ########
-#  sensor_name:
-#    channels: ['feat_0','feat_1']
-#    fusion: ['average','average']
-#    topic_name: '/elevation_mapping/pointcloud_semantic'
+#  pointcloud_sensor_name:
+#    topic_name: '/sensor/pointcloud_semantic'
+#    data_type:  pointcloud  # pointcloud or image
+#
+#  image_sensor_name:
+#    topic_name: '/camera/image_semantic'
+#    data_type:  image  # pointcloud or image
+#    camera_info_topic_name: '/camera/depth/camera_info'
+#    channel_info_topic_name: '/camera/channel_info'
+
 
 subscribers:
   front_cam:
-    channels: ['rgb' ]
-    fusion: [ 'color']
     topic_name: '/camera/depth/points'
     data_type: pointcloud
+  color_cam: # for color camera
+    topic_name: '/camera/rgb/image_raw'
+    camera_info_topic_name: '/camera/depth/camera_info'
+    data_type: image
+  semantic_cam: # for semantic images
+    topic_name: '/front_cam/semantic_image'
+    camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
+    channel_info_topic_name: '/front_cam/channel_info'
+    data_type: image
 
 #### Publishers ########
 # topic_name:

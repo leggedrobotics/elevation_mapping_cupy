@@ -59,7 +59,3 @@ front_cam_image:
   image_topic: "/camera/rgb/image_raw"
   image_info_topic: "/camera/depth/camera_info"
   resize: 0.5
-
-  # sem_seg_topic: "semantic_front"
-  # sem_seg_image_topic: "semantic_image_front"
-
