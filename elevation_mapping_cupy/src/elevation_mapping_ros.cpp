@@ -80,19 +80,14 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
     // Initialize subscribers depending on the type
     if (type == "pointcloud") {
       std::string pointcloud_topic = subscriber.second["topic_name"];
-      boost::function<void(const sensor_msgs::PointCloud2&)> f = boost::bind(&ElevationMappingNode::pointcloudCallback, this, _1, key);
-      ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1, f);
-      pointcloudSubs_.push_back(sub);
-      const auto& channels = subscriber.second["channels"];
       channels_[key].push_back("x");
       channels_[key].push_back("y");
       channels_[key].push_back("z");
-      for (int32_t i = 0; i < channels.size(); ++i) {
-        auto elem = static_cast<std::string>(channels[i]);
-        channels_[key].push_back(elem);
-      }
-
-    } else if (type == "image") {
+      boost::function<void(const sensor_msgs::PointCloud2&)> f = boost::bind(&ElevationMappingNode::pointcloudCallback, this, _1, key);
+      ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1, f);
+      pointcloudSubs_.push_back(sub);
+    }
+    else if (type == "image") {
       std::string camera_topic = subscriber.second["topic_name"];
       std::string info_topic = subscriber.second["camera_info_topic_name"];
 
@@ -117,20 +112,32 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
       cam_info_sub->subscribe(nh_, info_topic, 1);
       cameraInfoSubs_.push_back(cam_info_sub);
 
-      std::string fusion_info_topic;
-      if (subscriber.second.hasMember("fusion_info_topic_name")) {
-        std::string fusion_info_topic = subscriber.second["fusion_info_topic_name"];
-        FusionInfoSubscriberPtr fusion_info_sub = std::make_shared<FusionInfoSubscriber>();
-        fusion_info_sub->subscribe(nh_, fusion_info_topic, 1);
-        fusionInfoSubs_.push_back(fusion_info_sub);
-        CameraFusionSyncPtr sync = std::make_shared<CameraFusionSync>(CameraFusionPolicy(10), *image_sub, *cam_info_sub, *fusion_info_sub);
-        sync->registerCallback(boost::bind(&ElevationMappingNode::imageFusionCallback, this, _1, _2, _3));
-        cameraFusionSyncs_.push_back(sync);
+      std::string channel_info_topic;
+      // If there is channel info topic setting, we use it.
+      if (subscriber.second.hasMember("channel_info_topic_name")) {
+        std::string channel_info_topic = subscriber.second["channel_info_topic_name"];
+        ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>();
+        channel_info_sub->subscribe(nh_, channel_info_topic, 1);
+        channelInfoSubs_.push_back(channel_info_sub);
+        CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
+        sync->registerCallback(boost::bind(&ElevationMappingNode::imageChannelCallback, this, _1, _2, _3));
+        cameraChannelSyncs_.push_back(sync);
       }
       else {
-        ROS_INFO_STREAM("Fusion info topic not found");
+        // If there is channels setting, we use it. Otherwise, we use rgb as default.
+        if (subscriber.second.hasMember("channels")) {
+          const auto& channels = subscriber.second["channels"];
+          for (int32_t i = 0; i < channels.size(); ++i) {
+            auto elem = static_cast<std::string>(channels[i]);
+            channels_[key].push_back(elem);
+          }
+        }
+        else {
+          channels_[key].push_back("rgb");
+        }
+        ROS_INFO_STREAM("Channel info topic not found for " << camera_topic << ". Using channels: " << boost::algorithm::join(channels_[key], ", "));
         CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-        sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2));
+        sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2, key));
         cameraSyncs_.push_back(sync);
       }
 
@@ -291,39 +298,40 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
 }
 
 void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key) {
+
+  //  get channels
+  auto fields = cloud.fields;
+  std::vector<std::string> channels;
+
+  for (int it = 0; it < fields.size(); it++) {
+    auto& field = fields[it];
+    channels.push_back(field.name);
+  }
+  inputPointCloud(cloud, channels);
+
+  // This is used for publishing as statistics.
+  pointCloudProcessCounter_++;
+}
+
+void ElevationMappingNode::inputPointCloud(const sensor_msgs::PointCloud2& cloud,
+                                          const std::vector<std::string>& channels) {
   auto start = ros::Time::now();
-  //  transform pointcloud into matrix
   auto* pcl_pc = new pcl::PCLPointCloud2;
   pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
   pcl_conversions::toPCL(cloud, *pcl_pc);
 
   //  get channels
   auto fields = cloud.fields;
-  std::vector<std::string> channels;
-  std::vector<bool> add_element;
-
-  for (int it = 0; it < fields.size(); it++) {
-    auto& field = fields[it];
-    if ((std::find(channels_[key].begin(), channels_[key].end(), field.name) != channels_[key].end()) && (field.datatype == 7)) {
-      add_element.push_back(true);
-      channels.push_back(field.name);
-    } else
-      add_element.push_back(false);
-  }
   uint array_dim = channels.size();
 
   RowMatrixXd points = RowMatrixXd(pcl_pc->width * pcl_pc->height, array_dim);
 
   for (unsigned int i = 0; i < pcl_pc->width * pcl_pc->height; ++i) {
-    int jit = 0;
-    for (unsigned int j = 0; j < add_element.size(); ++j) {
-      if (add_element[j]) {
-        float temp;
-        uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
-        memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
-        points(i, jit) = static_cast<double>(temp);
-        jit++;
-      }
+    for (unsigned int j = 0; j < channels.size(); ++j) {
+      float temp;
+      uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
+      memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
+      points(i, j) = static_cast<double>(temp);
     }
   }
   //  get pose of sensor in map frame
@@ -358,14 +366,12 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cl
                      (ros::Time::now() - start).toSec());
   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError);
   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError);
-  // This is used for publishing as statistics.
-  pointCloudProcessCounter_++;
+
 }
 
 void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_msg,
                                       const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
-                                      const std::vector<std::string>& channels,
-                                      const std::vector<std::string>& fusion_methods) {
+                                      const std::vector<std::string>& channels) {
   // Get image
   cv::Mat image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
 
@@ -403,37 +409,42 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
     multichannel_image.push_back(eigen_img);
   }
 
+  // Check if the size of multichannel_image and channels and channel_methods matches. "rgb" counts for 3 layers.
+  int total_channels = 0;
+  for (const auto& channel : channels) {
+    if (channel == "rgb") {
+      total_channels += 3;
+    } else {
+      total_channels += 1;
+    }
+  }
+  if (total_channels != multichannel_image.size()) {
+    ROS_ERROR("Mismatch in the size of multichannel_image (%d), channels (%d). Please check the input.", multichannel_image.size(), channels.size());
+    ROS_ERROR_STREAM("Current Channels: " << boost::algorithm::join(channels, ", "));
+    return;
+  }
+
   // Pass image to pipeline
-  map_.input_image(multichannel_image, channels, fusion_methods, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix,
+  map_.input_image(multichannel_image, channels, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix,
                    image.rows, image.cols);
 }
 
 void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
-                                         const sensor_msgs::CameraInfoConstPtr& camera_info_msg) {
+                                         const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
+                                         const std::string& key) {
   auto start = ros::Time::now();
-  // Default channels and fusion methods for image is rgb and image_color
-  std::vector<std::string> channels;
-  std::vector<std::string> fusion_methods;
-  channels.push_back("rgb");
-  fusion_methods.push_back("color");
-  inputImage(image_msg, camera_info_msg, channels, fusion_methods);
+  inputImage(image_msg, camera_info_msg, channels_[key]);
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
 
-void ElevationMappingNode::imageFusionCallback(const sensor_msgs::ImageConstPtr& image_msg,
+void ElevationMappingNode::imageChannelCallback(const sensor_msgs::ImageConstPtr& image_msg,
                                          const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
-                                         const elevation_map_msgs::FusionInfoConstPtr& fusion_info_msg) {
+                                         const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg) {
   auto start = ros::Time::now();
   // Default channels and fusion methods for image is rgb and image_color
   std::vector<std::string> channels;
-  std::vector<std::string> fusion_methods;
-  channels = fusion_info_msg->channels;
-  fusion_methods = fusion_info_msg->fusion_methods;
-  ROS_INFO_STREAM("Channels: " << boost::algorithm::join(channels, ", "));
-  ROS_INFO_STREAM("Fusion methods: " << boost::algorithm::join(fusion_methods, ", "));
-  // channels.push_back("rgb");
-  // fusion_methods.push_back("color");
-  inputImage(image_msg, camera_info_msg, channels, fusion_methods);
+  channels = channel_info_msg->channels;
+  inputImage(image_msg, camera_info_msg, channels);
   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
 }
 

@@ -146,7 +146,7 @@ class PluginManager(object):
         elements_to_shift={},
     ):
         idx = self.get_layer_index_with_name(name)
-        if idx is not None:
+        if idx is not None and idx < len(self.plugins):
             n_param = len(signature(self.plugins[idx]).parameters)
             if n_param == 5:
                 self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)

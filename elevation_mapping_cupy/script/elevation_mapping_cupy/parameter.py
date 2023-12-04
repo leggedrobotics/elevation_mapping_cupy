@@ -16,26 +16,12 @@ class Parameter(Serializable):
     subscriber_cfg: dict = field(
         default_factory=lambda: {
             "front_cam": {
-                "cam_frame": "zed2i_right_camera_optical_frame",
-                "cam_info_topic": "/zed2i/zed_node/depth/camera_info",
                 "channels": ["rgb", "person"],
-                "confidence": True,
-                "confidence_threshold": 10,
-                "confidence_topic": "/zed2i/zed_node/confidence/confidence_map",
-                "depth_topic": "/zed2i/zed_node/depth/depth_registered",
-                "feature_extractor": False,
-                "fusion": ["color", "class_average"],
-                "image_topic": "/zed2i/zed_node/left/image_rect_color",
-                "segmentation_model": "lraspp_mobilenet_v3_large",
-                "semantic_segmentation": True,
-                "show_label_legend": True,
                 "topic_name": "/elevation_mapping/pointcloud_semantic",
                 "data_type": "pointcloud",
             }
         }
     )
-    # additional_layers: list = field(default_factory=lambda: ["feat_0"])
-    # fusion_algorithms: list = field(default_factory=lambda: ["average"])
     additional_layers: list = field(default_factory=lambda: ["color"])
     fusion_algorithms: list = field(default_factory=lambda: [
         "image_color",
@@ -46,7 +32,8 @@ class Parameter(Serializable):
         "pointcloud_class_bayesian",
         "pointcloud_class_max",
         "pointcloud_color"])
-    pointcloud_channel_fusion: dict = field(default_factory=lambda: {"rgb": "pointcloud_color", "default": "pointcloud_class_average"})
+    pointcloud_channel_fusions: dict = field(default_factory=lambda: {"rgb": "color", "default": "class_average"})
+    image_channel_fusions: dict = field(default_factory=lambda: {"rgb": "color", "default": "exponential"})
     data_type: str = np.float32
     average_weight: float = 0.5
 
@@ -138,18 +125,6 @@ class Parameter(Serializable):
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
         self.true_cell_n = round(self.map_length / self.resolution)
         self.true_map_length = self.true_cell_n * self.resolution
-        # semantic_layers = []
-        # fusion_algorithms = []
-        # for subscriber, sub_val in self.subscriber_cfg.items():
-        #     channels = sub_val["channels"]
-        #     fusion = sub_val["fusion"]
-        #     for i in range(len(channels)):
-        #         name = channels[i]
-        #         if name not in semantic_layers:
-        #             semantic_layers.append(name)
-        #             fusion_algorithms.append(fusion[i])
-        # self.additional_layers = semantic_layers
-        # self.fusion_algorithms = fusion_algorithms
 
 
 if __name__ == "__main__":

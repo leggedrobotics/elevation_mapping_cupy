@@ -1,47 +1,40 @@
 #### Plugins ########
 plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/turtle_bot/plugin_config.yaml'
 
-pointcloud_channel_fusion:
+pointcloud_channel_fusions:
+  none: 'none'
+  # rgb: 'color'
+  # default: 'average'
+
+image_channel_fusions:
   rgb: 'color'
-  default: 'average'
-  sheep: 'average'
-  sofa: 'class_average'
-  person: 'class_average'
+  default: 'exponential'
+  feat_.*: 'exponential'
 
 #### Subscribers ########
 subscribers:
   color_cam: # for color camera
-    # channels: ['rgb']
-    # fusion: ['color']
     topic_name: '/camera/rgb/image_raw'
     camera_info_topic_name: '/camera/depth/camera_info'
     data_type: image
-  # front_cam:
-    # channels: ['rgb', 'sheep','sofa',"person" ]
-    # fusion: [ 'color','class_average','class_average','class_average' ]
-    # topic_name: '/elevation_mapping/pointcloud_semantic'
-    # semantic_segmentation: True
-    # publish_segmentation_image: True
-    # segmentation_model: 'lraspp_mobilenet_v3_large' # detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large
-    # show_label_legend: False
-
-    # cam_info_topic: "/camera/rgb/camera_info"
-    # image_topic: "/camera/rgb/image_raw"
-    # cam_frame: "camera_rgb_optical_frame"
-    # data_type: image
-    # depth_topic: "/camera/depth/image_raw"
-  semantic_cam: # for color camera
-    # channels: ['rgb']
-    # fusion: ['color']
+  semantic_cam: # for semantic images
     topic_name: '/front_cam/semantic_image'
     camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
-    fusion_info_topic_name: '/front_cam/fusion_info'
+    channel_info_topic_name: '/front_cam/channel_info'
     data_type: image
+  # fixed_semantic_cam: # for semantic images
+  #   topic_name: '/front_cam/semantic_image'
+  #   camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
+  #   channels: ["test", "test2", "test3"]
+  #   data_type: image
   front_cam_pointcloud:
-    channels: []
-    fusion: []
     topic_name: '/camera/depth/points'
     data_type: pointcloud
+  feat_front:
+    topic_name: /elevation_mapping/feat_f
+    camera_info_topic_name: "/camera/depth/camera_info"
+    channels: [ 'feat_0','feat_1','feat_2','feat_3','feat_4','feat_5','feat_6','feat_7','feat_8','feat_9' ]
+    data_type: image
 
 
 #### Publishers ########

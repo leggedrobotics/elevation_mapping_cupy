@@ -121,12 +121,13 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
   }
   param_.attr("subscriber_cfg") = sub_dict;
 
-  if (!nh.hasParam("pointcloud_channel_fusion")) {
-    ROS_WARN("No pointcloud_channel_fusion parameter found. Using default values.");
+  // point cloud channel fusion
+  if (!nh.hasParam("pointcloud_channel_fusions")) {
+    ROS_WARN("No pointcloud_channel_fusions parameter found. Using default values.");
   }
   else {
     XmlRpc::XmlRpcValue pointcloud_channel_fusion;
-    nh.getParam("pointcloud_channel_fusion", pointcloud_channel_fusion);
+    nh.getParam("pointcloud_channel_fusions", pointcloud_channel_fusion);
 
     py::dict pointcloud_channel_fusion_dict;
     for (auto& channel_fusion : pointcloud_channel_fusion) {
@@ -136,7 +137,28 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
         pointcloud_channel_fusion_dict[name] = fusion;
       }
     }
-    param_.attr("pointcloud_channel_fusion") = pointcloud_channel_fusion_dict;
+    ROS_INFO_STREAM("pointcloud_channel_fusion_dict: " << pointcloud_channel_fusion_dict);
+    param_.attr("pointcloud_channel_fusions") = pointcloud_channel_fusion_dict;
+  }
+
+  // image channel fusion
+  if (!nh.hasParam("image_channel_fusions")) {
+    ROS_WARN("No image_channel_fusions parameter found. Using default values.");
+  }
+  else {
+    XmlRpc::XmlRpcValue image_channel_fusion;
+    nh.getParam("image_channel_fusions", image_channel_fusion);
+
+    py::dict image_channel_fusion_dict;
+    for (auto& channel_fusion : image_channel_fusion) {
+      const char* const name = channel_fusion.first.c_str();
+      std::string fusion = static_cast<std::string>(channel_fusion.second);
+      if (!image_channel_fusion_dict.contains(name)) {
+        image_channel_fusion_dict[name] = fusion;
+      }
+    }
+    ROS_INFO_STREAM("image_channel_fusion_dict: " << image_channel_fusion_dict);
+    param_.attr("image_channel_fusions") = image_channel_fusion_dict;
   }
 
   param_.attr("update")();
@@ -155,10 +177,10 @@ void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector
                      Eigen::Ref<const Eigen::VectorXd>(t), positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image, const std::vector<std::string>& channels, const std::vector<std::string>& fusion_methods, const RowMatrixXd& R,
+void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image, const std::vector<std::string>& channels, const RowMatrixXd& R,
                                           const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, int height, int width) {
   py::gil_scoped_acquire acquire;
-  map_.attr("input_image")(multichannel_image, channels, fusion_methods, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
+  map_.attr("input_image")(multichannel_image, channels, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
                            Eigen::Ref<const RowMatrixXd>(cameraMatrix), height, width);
 }
 

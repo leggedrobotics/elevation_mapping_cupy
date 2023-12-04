@@ -49,7 +49,7 @@
 
 #include <elevation_map_msgs/CheckSafety.h>
 #include <elevation_map_msgs/Initialize.h>
-#include <elevation_map_msgs/FusionInfo.h>
+#include <elevation_map_msgs/ChannelInfo.h>
 
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
@@ -65,26 +65,37 @@ class ElevationMappingNode {
 
   using ImageSubscriber = image_transport::SubscriberFilter;
   using ImageSubscriberPtr = std::shared_ptr<ImageSubscriber>;
+
+  // Subscriber and Synchronizer for CameraInfo messages
   using CameraInfoSubscriber = message_filters::Subscriber<sensor_msgs::CameraInfo>;
   using CameraInfoSubscriberPtr = std::shared_ptr<CameraInfoSubscriber>;
   using CameraPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo>;
   using CameraSync = message_filters::Synchronizer<CameraPolicy>;
   using CameraSyncPtr = std::shared_ptr<CameraSync>;
 
-  using FusionInfoSubscriber = message_filters::Subscriber<elevation_map_msgs::FusionInfo>;
-  using FusionInfoSubscriberPtr = std::shared_ptr<FusionInfoSubscriber>;
-  using CameraFusionPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, elevation_map_msgs::FusionInfo>;
-  using CameraFusionSync = message_filters::Synchronizer<CameraFusionPolicy>;
-  using CameraFusionSyncPtr = std::shared_ptr<CameraFusionSync>;
+  // Subscriber and Synchronizer for ChannelInfo messages
+  using ChannelInfoSubscriber = message_filters::Subscriber<elevation_map_msgs::ChannelInfo>;
+  using ChannelInfoSubscriberPtr = std::shared_ptr<ChannelInfoSubscriber>;
+  using CameraChannelPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::CameraInfo, elevation_map_msgs::ChannelInfo>;
+  using CameraChannelSync = message_filters::Synchronizer<CameraChannelPolicy>;
+  using CameraChannelSyncPtr = std::shared_ptr<CameraChannelSync>;
+
+  // Subscriber and Synchronizer for Pointcloud messages
+  using PointCloudSubscriber = message_filters::Subscriber<sensor_msgs::PointCloud2>;
+  using PointCloudSubscriberPtr = std::shared_ptr<PointCloudSubscriber>;
+  using PointCloudPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, elevation_map_msgs::ChannelInfo>;
+  using PointCloudSync = message_filters::Synchronizer<PointCloudPolicy>;
+  using PointCloudSyncPtr = std::shared_ptr<PointCloudSync>;
 
  private:
   void readParameters();
   void setupMapPublishers();
   void pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key);
-  void inputImage(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
-                  const std::vector<std::string>& channels, const std::vector<std::string>& fusion_methods);
-  void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
-  void imageFusionCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const elevation_map_msgs::FusionInfoConstPtr& fusion_info_msg);
+  void inputPointCloud(const sensor_msgs::PointCloud2& cloud, const std::vector<std::string>& channels);
+  void inputImage(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::vector<std::string>& channels);
+  void imageCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::string& key);
+  void imageChannelCallback(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg);
+  void pointCloudChannelCallback(const sensor_msgs::PointCloud2& cloud, const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg);
   // void multiLayerImageCallback(const elevation_map_msgs::MultiLayerImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
   void publishAsPointCloud(const grid_map::GridMap& map) const;
   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
@@ -110,9 +121,10 @@ class ElevationMappingNode {
   std::vector<ros::Subscriber> pointcloudSubs_;
   std::vector<ImageSubscriberPtr> imageSubs_;
   std::vector<CameraInfoSubscriberPtr> cameraInfoSubs_;
-  std::vector<FusionInfoSubscriberPtr> fusionInfoSubs_;
+  std::vector<ChannelInfoSubscriberPtr> channelInfoSubs_;
   std::vector<CameraSyncPtr> cameraSyncs_;
-  std::vector<CameraFusionSyncPtr> cameraFusionSyncs_;
+  std::vector<CameraChannelSyncPtr> cameraChannelSyncs_;
+  std::vector<PointCloudSyncPtr> pointCloudSyncs_;
   std::vector<ros::Publisher> mapPubs_;
   tf::TransformBroadcaster tfBroadcaster_;
   ros::Publisher alivePub_;
