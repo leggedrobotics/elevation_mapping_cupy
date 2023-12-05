@@ -10,7 +10,7 @@
     :maxdepth: 3
     :caption: Getting Started
 
-    Introduction <getting_started/index>
+    Introduction <getting_started/introduction>
     Installation <getting_started/installation>
     Tutorial <getting_started/tutorial>
 

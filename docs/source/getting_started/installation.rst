@@ -1,32 +1,55 @@
 .. _installation:
 
 
-.. toctree::
-    :hidden:
-    :maxdepth: 2
-
-    Cuda installation <cuda_installation>
-
-
-
 Installation
 ******************************************************************
 
-CUDA & cuDNN
+This section provides instructions for installing the necessary dependencies for the project. The installation process includes setting up CUDA & cuDNN, installing Python dependencies, and configuring Cupy.
+Follow the instructions carefully to avoid any installation issues.
+
+
+Dockers
+==================================================================
+We provide a docker setup for the project.
+To build the docker image, run the following command:
+
+
+.. code-block:: bash
+
+  cd <project_root>/docker
+  ./build.sh
+
+
+To run the docker image, run the following command:
+
+
+.. code-block:: bash
+
+  cd <project_root>/docker
+  ./run.sh
+
+This will start the docker container and mount the home directory of the host machine to the docker container.
+After you clone the project repository into your catkin_ws, you can build the packages inside the docker container.
+To build the packages inside the docker container, follow the instructions in the `Build section <#build>`_ of this document.
+
+
+On Desktop or Laptop with NVIDIA GPU
 ==================================================================
 
+CUDA & cuDNN
+------------------------------------------------------------------
+
+If you do not have CUDA and cuDNN installed, please install them first.
 The tested versions are CUDA10.2, 11.6
 
 `CUDA <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation>`_
 `cuDNN <https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux>`_
 
 
-Check how to install :ref:`here<cuda_installation>`.
-
-
+You can check how to install :ref:`here<cuda_installation>`.
 
 Python dependencies
--------------------------------------------------------------------
+------------------------------------------------------------------
 
 You will need
 
@@ -236,3 +259,17 @@ Detectron
 .. code-block:: bash
 
   python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+
+
+Build
+==================================================================
+After installing all the dependencies, you can build the packages.
+Clone the project repository into your catkin_ws/src directory.
+Then, build the packages with catkin.
+
+.. code-block:: bash
+
+  cd <your_catkin_ws>
+  catkin build elevation_mapping_cupy  # The core package
+  catkin build convex_plane_decomposition_ros  # If you want to use plane segmentation
+  catkin build semantic_sensor  # If you want to use semantic sensors

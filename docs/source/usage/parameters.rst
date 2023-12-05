@@ -5,18 +5,20 @@ Parameters
 
 There are three parameter files:
 
-1. `Parameters`_
+#. `Robot Setup Configurations`_
 
-2. `Plugin configurations`_
+#. `Plugin configurations`_
 
-3. `Sensor parameter`_
+#. `Core Parameters`_
+
+#. `Sensor parameter`_
 
 
-
-Parameters
+Robot Setup Configurations
 ================================================
+Such as Publishers and subscribers
 
-.. include:: ../../../elevation_mapping_cupy/config/parameters.yaml
+.. include:: ../../../elevation_mapping_cupy/config/core/example_setup.yaml
   :code: yaml
 
 Plugin configurations
@@ -24,17 +26,21 @@ Plugin configurations
 
 More informations on the plugins can be found in :ref:`plugins`.
 
-.. include:: ../../../elevation_mapping_cupy/config/plugin_config.yaml
+.. include:: ../../../elevation_mapping_cupy/config/core/plugin_config.yaml
   :code: yaml
 
+Core Parameters
+==============================================================
 
+.. include:: ../../../elevation_mapping_cupy/config/core/core_param.yaml
+  :code: yaml
 
 Sensor parameter
 ================================================
 
 More informations on the sensor configurations can be found in :ref:`semantics`.
 
-.. include:: ../../../elevation_mapping_cupy/config/sensor_parameter.yaml
+.. include:: ../../../sensor_processing/semantic_sensor/config/sensor_parameter.yaml
   :code: yaml
 
 
