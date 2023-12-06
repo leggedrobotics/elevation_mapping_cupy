@@ -8,8 +8,26 @@
 
 import os, sys
 
-sys.path.insert(0, os.path.abspath("../../elevation_mapping_cupy"))
-sys.path.insert(0, os.path.abspath("../../sensor_processing/semantic_sensor"))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../elevation_mapping_cupy/script'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../sensor_processing/semantic_sensor/script'))
+
+autodoc_mock_imports = [
+    "cupy"
+    "numpy",
+    "scipy",
+    "dataclasses",
+    "ruamel.yaml",
+    "opencv-python",
+    "simple-parsing",
+    "scikit-image",
+    "matplotlib",
+    "catkin-tools",
+    "catkin_pkg",
+    "detectron",
+    "torch",
+    "shapely",
+    "simple_parsing",
+    ]
 
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
