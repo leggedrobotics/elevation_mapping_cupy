@@ -13,10 +13,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../sensor_processing
 
 autodoc_mock_imports = [
     "cupy",
+    "cupyx",
     "rospy",
+    "ros_numpy"
     "torchvision",
     "numpy",
     "scipy",
+    "sklearn",
     "dataclasses",
     "ruamel.yaml",
     "opencv-python",
@@ -25,7 +28,7 @@ autodoc_mock_imports = [
     "matplotlib",
     "catkin-tools",
     "catkin_pkg",
-    "detectron",
+    "detectron2",
     "torch",
     "shapely",
     "simple_parsing",
