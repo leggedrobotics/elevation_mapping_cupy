@@ -12,7 +12,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../elevation_mapping
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../sensor_processing/semantic_sensor/script'))
 
 autodoc_mock_imports = [
-    "cupy"
+    "cupy",
+    "rospy",
+    "torchvision",
     "numpy",
     "scipy",
     "dataclasses",
@@ -61,7 +63,7 @@ html_theme_options = {
     "prev_next_buttons_location": "bottom",
     "style_external_links": False,
     "vcs_pageview_mode": "",
-    "style_nav_header_background": "#A00000",
+    # "style_nav_header_background": "#A00000",
     # Toc options
     "collapse_navigation": True,
     "sticky_navigation": True,
