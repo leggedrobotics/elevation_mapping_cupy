@@ -1,0 +1,30 @@
+<launch>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="rviz_config" default="$(find elevation_mapping_cupy)/rviz/turtle_semantic_example.rviz"/>
+    <arg name="model" default="waffle" doc="model type [burger, waffle, waffle_pi]"/>
+    <arg name="x_pos" default="0.0"/>
+    <arg name="y_pos" default="2.0"/>
+    <arg name="z_pos" default="0.0"/>
+
+    <param name="/use_sim_time" type="bool" value="$(arg use_sim_time)"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_world.world"/>
+        <!-- <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_house.world"/> -->
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="false"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+
+    <!-- Publish turtlebot3 tf's. -->
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="waffle_state_publisher"/>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_config)"/>
+
+</launch>

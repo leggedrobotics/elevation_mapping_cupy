@@ -7,8 +7,8 @@ import cupy as cp
 from shapely.geometry import Polygon, MultiPoint
 
 
-def get_masked_traversability(map_array, mask):
-    traversability = map_array[3][1:-1, 1:-1]
+def get_masked_traversability(map_array, mask, traversability):
+    traversability = traversability[1:-1, 1:-1]
     is_valid = map_array[2][1:-1, 1:-1]
     mask = mask[1:-1, 1:-1]
 

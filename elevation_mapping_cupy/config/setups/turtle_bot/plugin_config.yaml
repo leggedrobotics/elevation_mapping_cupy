@@ -1,0 +1,67 @@
+# Settings of the plugins. (The plugins should be stored in script/plugins)
+
+# min_filter fills in minimum value around the invalid cell.
+min_filter:                                   
+  enable: True                                # weather to load this plugin
+  fill_nan: False                             # Fill nans to invalid cells of elevation layer.
+  is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
+  layer_name: "min_filter"                    # The layer name.
+  extra_params:                               # This params are passed to the plugin class on initialization.
+    dilation_size: 1                         # The patch size to apply
+    iteration_n: 30                           # The number of iterations
+# Apply smoothing.
+smooth_filter:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "smooth"
+  extra_params:
+    input_layer_name: "min_filter"
+# Apply inpainting using opencv
+inpainting:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "inpaint"
+  extra_params:
+    method: "telea"                           # telea or ns
+# Apply smoothing for inpainted layer
+
+robot_centric_elevation:                                  # Use the same name as your file name.
+  enable: False                                # weather to load this plugin
+  fill_nan: False                              # Fill nans to invalid cells of elevation layer.
+  is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
+  layer_name: "robot_centric_elevation"                 # The layer name.
+  extra_params:                               # This params are passed to the plugin class on initialization.
+    resolution: 0.04
+    threshold: 1.1
+    use_threshold: True
+
+semantic_filter:
+  type: "semantic_filter"
+  enable: True
+  fill_nan: False
+  is_height_layer: False
+  layer_name: "max_categories"
+  extra_params:
+    classes: ['^sem_.*$']
+
+semantic_traversability:
+  type: "semantic_traversability"
+  enable: False
+  fill_nan: False
+  is_height_layer: False
+  layer_name: "semantic_traversability"
+  extra_params:
+    layers: ['traversability','robot_centric_elevation']
+    thresholds: [0.3,0.5]
+    type: ['traversability', 'elevation']
+
+features_pca:
+  type: "features_pca"
+  enable: True
+  fill_nan: False
+  is_height_layer: False
+  layer_name: "pca"
+  extra_params:
+    process_layer_names: ["^feat_.*$"]

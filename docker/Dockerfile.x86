@@ -1,0 +1,46 @@
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04
+
+# Set noninteractive mode for apt-get
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Preconfigure tzdata
+RUN echo "Etc/UTC" > /etc/timezone && \
+    ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
+    apt-get update && apt-get install -y tzdata && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
+# Install Python
+RUN apt-get update && apt-get install -y \
+    python3.8 \
+    python3-pip \
+    git
+
+# Install PyTorch
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
+
+# Install other Python packages
+RUN pip3 install cupy-cuda11x scikit-learn
+RUN pip3 install 'git+https://github.com/facebookresearch/detectron2.git'
+
+# Install ROS
+RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list'
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-noetic-desktop-full
+
+# Install ROS packages
+RUN apt install -y ros-noetic-pybind11-catkin \
+    ros-noetic-grid-map-core ros-noetic-grid-map-msgs ros-noetic-grid-map-ros ros-noetic-grid-map-rviz-plugin \
+    libopencv-dev \
+    libeigen3-dev \
+    libgmp-dev \
+    libmpfr-dev \
+    libboost-all-dev \
+    ros-noetic-turtlebot3-gazebo ros-noetic-turtlebot3-teleop \
+    ros-noetic-ros-numpy
+
+RUN pip3 install catkin-tools
+ENV TURTLEBOT3_MODEL=waffle

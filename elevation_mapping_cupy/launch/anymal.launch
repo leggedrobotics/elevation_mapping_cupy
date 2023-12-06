@@ -1,0 +1,7 @@
+<launch>
+    <!-- Elevation mapping node -->
+    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen">
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/setups/anymal/anymal_parameters.yaml"/>
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/setups/anymal/anymal_sensor_parameter.yaml"/>
+    </node>
+</launch>

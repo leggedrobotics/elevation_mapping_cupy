@@ -1,0 +1,44 @@
+#### Plugins ########
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/turtle_bot/plugin_config.yaml'
+
+pointcloud_channel_fusions:
+  none: 'none'
+  # rgb: 'color'
+  # default: 'average'
+
+image_channel_fusions:
+  rgb: 'color'
+  default: 'exponential'
+  feat_.*: 'exponential'
+
+#### Subscribers ########
+subscribers:
+  color_cam: # for color camera
+    topic_name: '/camera/rgb/image_raw'
+    camera_info_topic_name: '/camera/depth/camera_info'
+    data_type: image
+  semantic_cam: # for semantic images
+    topic_name: '/front_cam/semantic_image'
+    camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
+    channel_info_topic_name: '/front_cam/channel_info'
+    data_type: image
+  front_cam_pointcloud:
+    topic_name: '/camera/depth/points'
+    data_type: pointcloud
+  feat_front:
+    topic_name: '/front_cam/semantic_seg_feat'
+    camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
+    channel_info_topic_name: '/front_cam/feat_channel_info'
+    data_type: image
+
+
+#### Publishers ########
+publishers:
+  elevation_map_raw:
+    layers: ['elevation', 'traversability', 'variance','rgb','max_categories', 'pca']
+    basic_layers: ['elevation']
+    fps: 5.0
+  elevation_map_filter:
+    layers: ['min_filter', 'smooth', 'inpaint', 'elevation','rgb','max_categories']
+    basic_layers: ['min_filter']
+    fps: 3.0

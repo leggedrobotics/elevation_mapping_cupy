@@ -10,7 +10,7 @@ min_filter:
     dilation_size: 1                         # The patch size to apply
     iteration_n: 30                           # The number of iterations
 # Apply smoothing.
-smooth_filter:                                
+smooth_filter:
   enable: True
   fill_nan: False
   is_height_layer: True
@@ -18,7 +18,7 @@ smooth_filter:
   extra_params:
     input_layer_name: "min_filter"
 # Apply inpainting using opencv
-inpainting:                                   
+inpainting:
   enable: True
   fill_nan: False
   is_height_layer: True
@@ -26,11 +26,3 @@ inpainting:
   extra_params:
     method: "telea"                           # telea or ns
 # Apply smoothing for inpainted layer
-smooth_filter_1:                                
-  type: "smooth_filter"
-  enable: True
-  fill_nan: False
-  is_height_layer: True
-  layer_name: "smooth_1"
-  extra_params:
-    input_layer_name: "inpaint"

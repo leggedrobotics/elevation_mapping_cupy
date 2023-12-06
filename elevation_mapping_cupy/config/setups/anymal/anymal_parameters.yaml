@@ -1,0 +1,89 @@
+#### Basic parameters ########
+resolution: 0.04                              # resolution in m.
+map_length: 8                           # map's size in m.
+sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
+mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
+outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
+drift_compensation_variance_inler: 0.05         # cells under this value is used for drift compensation.
+max_drift: 0.1                                  # drift compensation happens only the drift is smaller than this value (for safety)
+drift_compensation_alpha: 0.1                   # drift compensation alpha for smoother update of drift compensation
+time_variance: 0.0001                           # add this value when update_variance is called.
+max_variance: 100.0                             # maximum variance for each cell.
+initial_variance: 1000.0                         # initial variance for each cell.
+traversability_inlier: 0.9                      # cells with higher traversability are used for drift compensation.
+dilation_size: 3                                # dilation filter size before traversability filter.
+wall_num_thresh: 20                             # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
+position_noise_thresh: 0.01                     # if the position change is bigger than this value, the drift compensation happens.
+orientation_noise_thresh: 0.01                  # if the orientation change is bigger than this value, the drift compensation happens.
+position_lowpass_alpha: 0.2                     # lowpass filter alpha used for detecting movements.
+orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
+min_valid_distance: 0.5                         # points with shorter distance will be filtered out.
+max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
+ramped_height_range_a: 0.3                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+ramped_height_range_b: 1.0                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+ramped_height_range_c: 0.2                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+update_variance_fps: 5.0                        # fps for updating variance.
+update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
+time_interval: 0.1                              # Time layer is updated with this interval.
+map_acquire_fps: 5.0                            # Raw map is fetched from GPU memory in this fps.
+publish_statistics_fps: 1.0                     # Publish statistics topic in this fps.
+
+max_ray_length: 10.0                            # maximum length for ray tracing.
+cleanup_step: 0.1                               # subtitute this value from validity layer at visibiltiy cleanup.
+cleanup_cos_thresh: 0.1                         # subtitute this value from validity layer at visibiltiy cleanup.
+
+safe_thresh: 0.7                                # if traversability is smaller, it is counted as unsafe cell.
+safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
+max_unsafe_n: 10                                # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
+
+overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
+overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
+
+map_frame: 'odom'                               # The map frame where the odometry source uses.
+base_frame: 'base'                              # The robot's base frame. This frame will be a center of the map.
+corrected_map_frame: 'odom_corrected'
+
+#### Feature toggles ########
+enable_edge_sharpen: true
+enable_visibility_cleanup: true
+enable_drift_compensation: true
+enable_overlap_clearance: true
+enable_pointcloud_publishing: false
+enable_drift_corrected_TF_publishing: false
+enable_normal_color: false                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
+
+#### Traversability filter ########
+use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
+weight_file: '$(rospack find elevation_mapping_cupy)/config/core/weights.dat'               # Weight file for traversability filter
+
+#### Upper bound ########
+use_only_above_for_upper_bound: false
+
+#### Plugins ########
+# plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/anymal_plugin_config.yaml'
+
+#### Publishers ########
+# topic_name:
+#   layers:               # Choose from 'elevation', 'variance', 'traversability', 'time', 'normal_x', 'normal_y', 'normal_z', 'color', plugin_layer_names
+#   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
+#   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
+
+# publishers:
+#   elevation_map_raw:
+#     layers: ['elevation', 'traversability', 'variance']
+#     basic_layers: ['elevation', 'traversability']
+#     fps: 5.0
+
+#   semantic_map_raw:
+#     layers: ['elevation', 'traversability']
+#     basic_layers: ['elevation', 'traversability']
+#     fps: 5.0
+
+#### Initializer ########
+initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
+initialize_frame_id: ['RF_FOOT', 'LF_FOOT', 'RH_FOOT', 'LH_FOOT']   # One tf (like ['footprint'] ) initializes a square around it.
+initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
+dilation_size_initialize: 5                                         # dilation size after the init.
+initialize_tf_grid_size: 0.4                                        # This is not used if number of tf is more than 3.
+use_initializer_at_start: true                                      # Use initializer when the node starts.

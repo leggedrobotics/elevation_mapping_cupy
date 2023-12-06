@@ -1,0 +1,28 @@
+#### Plugins ########
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/turtle_bot/plugin_config.yaml'
+
+pointcloud_channel_fusions:
+  rgb: 'color'
+  default: 'average'
+
+image_channel_fusions:
+  rgb: 'color'
+  default: 'exponential'
+
+#### Subscribers ########
+subscribers:
+  front_cam_pointcloud:
+    topic_name: '/camera/depth/points'
+    data_type: pointcloud
+
+
+#### Publishers ########
+publishers:
+  elevation_map_raw:
+    layers: ['elevation', 'traversability', 'variance','rgb','max_categories']
+    basic_layers: ['elevation']
+    fps: 5.0
+  elevation_map_filter:
+    layers: ['min_filter', 'smooth', 'inpaint', 'elevation','rgb','max_categories']
+    basic_layers: ['min_filter']
+    fps: 3.0

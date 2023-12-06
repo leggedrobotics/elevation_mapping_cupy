@@ -3,10 +3,10 @@ project(convex_plane_decomposition)
 
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
-	cgal5_catkin
-	grid_map_core
-	grid_map_cv
-	grid_map_filters_rsl
+  cgal5_catkin
+  grid_map_core
+  grid_map_cv
+  grid_map_filters_rsl
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -33,14 +33,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 ###################################
 catkin_package(
   INCLUDE_DIRS
-		include
-		${EIGEN3_INCLUDE_DIRS}
+    include
+    ${EIGEN3_INCLUDE_DIRS}
   LIBRARIES
-		${PROJECT_NAME}
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
-		${CATKIN_PACKAGE_DEPENDENCIES}
-	DEPENDS
-		OpenCV GMP MPFR Boost
+    ${CATKIN_PACKAGE_DEPENDENCIES}
+  DEPENDS
+    OpenCV GMP MPFR Boost
 )
 
 ###########
@@ -68,16 +68,16 @@ add_library(${PROJECT_NAME}
   src/SegmentedPlaneProjection.cpp
 )
 add_dependencies(${PROJECT_NAME}
-	${catkin_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	gmp
-	mpfr
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  gmp
+  mpfr
 )
 target_compile_options(${PROJECT_NAME}
-	PUBLIC -DCGAL_HAS_THREADS
+  PUBLIC -DCGAL_HAS_THREADS
 )
 
 #############
@@ -90,7 +90,7 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY include/${PROJECT_NAME}/
-	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 #############
@@ -98,17 +98,17 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
-	test/testConvexApproximation.cpp
-	test/testPipeline.cpp
-	test/testPlanarRegion.cpp
-	test/testRegionGrowing.cpp
-	test/testUpsampling.cpp
+  test/testConvexApproximation.cpp
+  test/testPipeline.cpp
+  test/testPlanarRegion.cpp
+  test/testRegionGrowing.cpp
+  test/testUpsampling.cpp
 )
 target_link_libraries(test_${PROJECT_NAME}
-	${PROJECT_NAME}
-	${catkin_LIBRARIES}
-	${OpenCV_LIBRARIES}
-	gmp
-	mpfr
-	gtest_main
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  gmp
+  mpfr
+  gtest_main
 )

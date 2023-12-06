@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>semantic_sensor</name>
+    <version>0.0.0</version>
+    <description>The semantic_sensor package</description>
+    <maintainer email="gerni@ethz.ch">Gian Erni</maintainer>
+
+
+    <license>MIT</license>
+
+
+    <url type="github">https://github.com/leggedrobotics/elevation_mapping_semantic_cupy</url>
+
+
+    <author email="gerni@ethz.ch">Gian Erni</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <depend>rospy</depend>
+    <depend>roslib</depend>
+    <depend>tf</depend>
+    <depend>tf_conversions</depend>
+    <depend>sensor_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>geometry_msgs</depend>
+
+
+</package>

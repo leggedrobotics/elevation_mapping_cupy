@@ -14,6 +14,8 @@
 // ROS
 #include <ros/package.h>
 
+#include <utility>
+
 namespace elevation_mapping_cupy {
 
 ElevationMappingWrapper::ElevationMappingWrapper() {}
@@ -74,27 +76,117 @@ void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
     }
   }
 
+  XmlRpc::XmlRpcValue subscribers;
+  nh.getParam("subscribers", subscribers);
+
+  py::dict sub_dict;
+  for (auto& subscriber : subscribers) {
+    const char* const name = subscriber.first.c_str();
+    const auto& subscriber_params = subscriber.second;
+    if (!sub_dict.contains(name)) {
+      sub_dict[name] = py::dict();
+    }
+    for (auto iterat : subscriber_params) {
+      const char* const key = iterat.first.c_str();
+      const auto val = iterat.second;
+      std::vector<std::string> arr;
+      switch (val.getType()) {
+        case XmlRpc::XmlRpcValue::TypeString:
+          sub_dict[name][key] = static_cast<std::string>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeInt:
+          sub_dict[name][key] = static_cast<int>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeDouble:
+          sub_dict[name][key] = static_cast<double>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeBoolean:
+          sub_dict[name][key] = static_cast<bool>(val);
+          break;
+        case XmlRpc::XmlRpcValue::TypeArray:
+          for (int32_t i = 0; i < val.size(); ++i) {
+            auto elem = static_cast<std::string>(val[i]);
+            arr.push_back(elem);
+          }
+          sub_dict[name][key] = arr;
+          arr.clear();
+          break;
+        case XmlRpc::XmlRpcValue::TypeStruct:
+          break;
+        default:
+          sub_dict[name][key] = py::cast(val);
+          break;
+      }
+    }
+  }
+  param_.attr("subscriber_cfg") = sub_dict;
+
+  // point cloud channel fusion
+  if (!nh.hasParam("pointcloud_channel_fusions")) {
+    ROS_WARN("No pointcloud_channel_fusions parameter found. Using default values.");
+  }
+  else {
+    XmlRpc::XmlRpcValue pointcloud_channel_fusion;
+    nh.getParam("pointcloud_channel_fusions", pointcloud_channel_fusion);
+
+    py::dict pointcloud_channel_fusion_dict;
+    for (auto& channel_fusion : pointcloud_channel_fusion) {
+      const char* const name = channel_fusion.first.c_str();
+      std::string fusion = static_cast<std::string>(channel_fusion.second);
+      if (!pointcloud_channel_fusion_dict.contains(name)) {
+        pointcloud_channel_fusion_dict[name] = fusion;
+      }
+    }
+    ROS_INFO_STREAM("pointcloud_channel_fusion_dict: " << pointcloud_channel_fusion_dict);
+    param_.attr("pointcloud_channel_fusions") = pointcloud_channel_fusion_dict;
+  }
+
+  // image channel fusion
+  if (!nh.hasParam("image_channel_fusions")) {
+    ROS_WARN("No image_channel_fusions parameter found. Using default values.");
+  }
+  else {
+    XmlRpc::XmlRpcValue image_channel_fusion;
+    nh.getParam("image_channel_fusions", image_channel_fusion);
+
+    py::dict image_channel_fusion_dict;
+    for (auto& channel_fusion : image_channel_fusion) {
+      const char* const name = channel_fusion.first.c_str();
+      std::string fusion = static_cast<std::string>(channel_fusion.second);
+      if (!image_channel_fusion_dict.contains(name)) {
+        image_channel_fusion_dict[name] = fusion;
+      }
+    }
+    ROS_INFO_STREAM("image_channel_fusion_dict: " << image_channel_fusion_dict);
+    param_.attr("image_channel_fusions") = image_channel_fusion_dict;
+  }
+
+  param_.attr("update")();
   resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
-  map_length_ = py::cast<float>(param_.attr("get_value")("map_length"));
-  map_n_ = static_cast<int>(round(map_length_ / resolution_));
-  map_length_ = resolution_ * map_n_;  // get true length after rounding
+  map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
+  map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
 
   nh.param<bool>("enable_normal", enable_normal_, false);
   nh.param<bool>("enable_normal_color", enable_normal_color_, false);
 }
 
-void ElevationMappingWrapper::input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
-                                    const double positionNoise, const double orientationNoise) {
+void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R,
+                                    const Eigen::VectorXd& t, const double positionNoise, const double orientationNoise) {
   py::gil_scoped_acquire acquire;
-  RowMatrixXd points;
-  pointCloudToMatrix(pointCloud, points);
-  map_.attr("input")(Eigen::Ref<const RowMatrixXd>(points), Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
-                     positionNoise, orientationNoise);
+  map_.attr("input_pointcloud")(Eigen::Ref<const RowMatrixXd>(points), channels, Eigen::Ref<const RowMatrixXd>(R),
+                     Eigen::Ref<const Eigen::VectorXd>(t), positionNoise, orientationNoise);
 }
 
-void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p) {
+void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image, const std::vector<std::string>& channels, const RowMatrixXd& R,
+                                          const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, int height, int width) {
   py::gil_scoped_acquire acquire;
-  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p));
+  map_.attr("input_image")(multichannel_image, channels, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
+                           Eigen::Ref<const RowMatrixXd>(cameraMatrix), height, width);
+}
+
+void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p, const RowMatrixXd& R) {
+  py::gil_scoped_acquire acquire;
+  map_.attr("move_to")(Eigen::Ref<const Eigen::VectorXd>(p), Eigen::Ref<const RowMatrixXd>(R));
 }
 
 void ElevationMappingWrapper::clear() {
@@ -137,9 +229,12 @@ void ElevationMappingWrapper::get_grid_map(grid_map::GridMap& gridMap, const std
   std::vector<Eigen::MatrixXf> maps;
 
   for (const auto& layerName : layerNames) {
-    RowMatrixXf map(map_n_, map_n_);
-    map_.attr("get_map_with_name_ref")(layerName, Eigen::Ref<RowMatrixXf>(map));
-    gridMap.add(layerName, map);
+    bool exists = map_.attr("exists_layer")(layerName).cast<bool>();
+    if (exists) {
+      RowMatrixXf map(map_n_, map_n_);
+      map_.attr("get_map_with_name_ref")(layerName, Eigen::Ref<RowMatrixXf>(map));
+      gridMap.add(layerName, map);
+    }
   }
   if (enable_normal_color_) {
     RowMatrixXf normal_x(map_n_, map_n_);
@@ -176,7 +271,7 @@ void ElevationMappingWrapper::get_polygon_traversability(std::vector<Eigen::Vect
   if (untraversable_polygon_num > 0) {
     RowMatrixXf untraversable_polygon_m(untraversable_polygon_num, 2);
     map_.attr("get_untraversable_polygon")(Eigen::Ref<RowMatrixXf>(untraversable_polygon_m));
-    for (int j = 0; j < untraversable_polygon_num; i++) {
+    for (int j = 0; j < untraversable_polygon_num; j++) {
       Eigen::Vector2d p;
       p.x() = untraversable_polygon_m(j, 0);
       p.y() = untraversable_polygon_m(j, 1);
@@ -196,16 +291,6 @@ void ElevationMappingWrapper::initializeWithPoints(std::vector<Eigen::Vector3d>&
   }
   py::gil_scoped_acquire acquire;
   map_.attr("initialize_map")(Eigen::Ref<const RowMatrixXd>(points_m), method);
-}
-
-void ElevationMappingWrapper::pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points) {
-  points = RowMatrixXd(pointCloud->size(), 3);
-  for (unsigned int i = 0; i < pointCloud->size(); ++i) {
-    const auto& point = pointCloud->points[i];
-    points(i, 0) = static_cast<double>(point.x);
-    points(i, 1) = static_cast<double>(point.y);
-    points(i, 2) = static_cast<double>(point.z);
-  }
 }
 
 void ElevationMappingWrapper::addNormalColorLayer(grid_map::GridMap& map) {

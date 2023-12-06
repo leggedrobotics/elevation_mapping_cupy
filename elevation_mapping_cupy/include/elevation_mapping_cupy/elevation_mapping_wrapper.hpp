@@ -13,6 +13,7 @@
 
 // Pybind
 #include <pybind11/embed.h>  // everything needed for embedding
+#include <pybind11/stl.h>
 
 // ROS
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -39,14 +40,17 @@ class ElevationMappingWrapper {
  public:
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using RowMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+  using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 
   ElevationMappingWrapper();
 
   void initialize(ros::NodeHandle& nh);
 
-  void input(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, const RowMatrixXd& R, const Eigen::VectorXd& t,
+  void input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
              const double positionNoise, const double orientationNoise);
-  void move_to(const Eigen::VectorXd& p);
+  void input_image(const std::vector<ColMatrixXf>& multichannel_image, const std::vector<std::string>& channels, const RowMatrixXd& R,
+                   const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, int height, int width);
+  void move_to(const Eigen::VectorXd& p, const RowMatrixXd& R);
   void clear();
   void update_variance();
   void update_time();
@@ -57,7 +61,6 @@ class ElevationMappingWrapper {
                                   std::vector<Eigen::Vector2d>& untraversable_polygon);
   double get_additive_mean_error();
   void initializeWithPoints(std::vector<Eigen::Vector3d>& points, std::string method);
-  void pointCloudToMatrix(const pcl::PointCloud<pcl::PointXYZ>::Ptr& pointCloud, RowMatrixXd& points);
   void addNormalColorLayer(grid_map::GridMap& map);
 
  private:

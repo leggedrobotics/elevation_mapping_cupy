@@ -1,270 +1,136 @@
 # Elevation Mapping cupy
 
+![python tests](https://github.com/leggedrobotics/elevation_mapping_cupy/actions/workflows/python-tests.yml/badge.svg)
+
+[Documentation](https://leggedrobotics.github.io/elevation_mapping_cupy/)
+
+
 ## Overview
 
-This is a ROS package for elevation mapping on GPU. The elevation mapping code is written in python and uses cupy for GPU computation. The
-plane segmentation is done independently and runs on CPU. When the plane segmentation is generated, local convex approximations of the
-terrain can be efficiently generated.
-![screenshot](doc/main_repo.png)
-![gif](doc/convex_approximation.gif)
+The Elevaton Mapping CuPy software package represents an advancement in robotic navigation and locomotion. 
+Integrating with the Robot Operating System (ROS) and utilizing GPU acceleration, this framework enhances point cloud registration and ray casting,
+crucial for efficient and accurate robotic movement, particularly in legged robots.
+![screenshot](doc/media/main_repo.png)
+![screenshot](doc/media/main_mem.png)
+![gif](doc/media/convex_approximation.gif)
 
-## MEM: Multi-Modal Elevation Mapping
-We are preparing for merging the extended map with multi-modal layers such as semantics.  
-If you want to use the feature now, please checkout `refactor/semantic_layers` branch.  
-Also check this [paper](https://arxiv.org/abs/2309.16818) about the new extention.  
-![screenshot](doc/overview.png)
+## Key Features
+
+- **Height Drift Compensation**: Tackles state estimation drifts that can create mapping artifacts, ensuring more accurate terrain representation.
+
+- **Visibility Cleanup and Artifact Removal**: Raycasting methods and an exclusion zone feature are designed to remove virtual artifacts and correctly interpret overhanging obstacles, preventing misidentification as walls.
+
+- **Learning-based Traversability Filter**: Assesses terrain traversability using local geometry, improving path planning and navigation.
+
+- **Versatile Locomotion Tools**: Incorporates smoothing filters and plane segmentation, optimizing movement across various terrains.
+
+- **Multi-Modal Elevation Map (MEM) Framework**: Allows seamless integration of diverse data like geometry, semantics, and RGB information, enhancing multi-modal robotic perception.
+
+- **GPU-Enhanced Efficiency**: Facilitates rapid processing of large data structures, crucial for real-time applications.
+
+## Overview
+
+![Overview of multi-modal elevation map structure](doc/media/overview.png)
+
+Overview of our multi-modal elevation map structure. The framework takes multi-modal images (purple) and multi-modal (blue) point clouds as
+input. This data is input into the elevation map by first associating the data to the cells and then fused with different fusion algorithms into the various
+layers of the map. Finally the map can be post-processed with various custom plugins to generate new layers (e.g. traversability) or process layer for
+external components (e.g. line detection).
 
 ## Citing
+If you use the Elevation Mapping CuPy, please cite the following paper:
+Elevation Mapping for Locomotion and Navigation using GPU
 
-> Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
-> Elevation Mapping for Locomotion and Navigation using GPU  [arXiv](https://arxiv.org/abs/2204.12876)
+[Elevation Mapping for Locomotion and Navigation using GPU](https://arxiv.org/abs/2204.12876)
 
-```
+Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
+
+```bibtex
 @misc{mikielevation2022,
-  doi = {10.48550/ARXIV.2204.12876},
-  author = {Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
-  keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
-  title = {Elevation Mapping for Locomotion and Navigation using GPU},
-  publisher = {International Conference on Intelligent Robots and Systems (IROS)},
-  year = {2022},
+    doi = {10.48550/ARXIV.2204.12876},
+    author = {Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
+    keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {Elevation Mapping for Locomotion and Navigation using GPU},
+    publisher = {International Conference on Intelligent Robots and Systems (IROS)},
+    year = {2022},
 }
 ```
 
-## Installation
+If you use the Multi-modal Elevation Mapping for color or semantic layers, please cite the following paper:
 
-#### CUDA & cuDNN
+[MEM: Multi-Modal Elevation Mapping for Robotics and Learning](https://arxiv.org/abs/2309.16818v1)
 
-The tested versions are CUDA10.2, 11.6
+Gian Erni, Jonas Frey, Takahiro Miki, Matias Mattamala, Marco Hutter
 
-[CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation)  
-[cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux).
-
-Check how to install [here](doc/cuda-installation.md).
-
-#### Python dependencies
-
-You will need
-
-- [cupy](https://cupy.chainer.org/)
-- [numpy](https://www.numpy.org/)
-- [scipy](https://www.scipy.org/)
-- [shapely==1.7.1](https://github.com/Toblerity/Shapely)
-
-For traversability filter, either of
-
-- [torch](https://pytorch.org/)
-- [chainer](https://chainer.org/)
-
-Optionally, OpenCV for inpainting filter.
-
-- [opencv-python](https://opencv.org/)
-
-Install `numpy`, `scipy`, `shapely`, `opencv-python` with the following command.
-
-```bash
-pip3 install -r requirements.txt
+```bibtex
+@misc{Erni2023-bs,
+    title = "{MEM}: {Multi-Modal} Elevation Mapping for Robotics and Learning",
+    author = "Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco",
+    publisher = {International Conference on Intelligent Robots and Systems (IROS)},
+    year = {2023},
+}
 ```
 
-#### Cupy
+## Quick instructions to run:
 
-cupy can be installed with specific CUDA versions. (On jetson, only "from source" i.e. `pip install cupy` could work)
-> For CUDA 10.2
-> pip install cupy-cuda102
->
-> For CUDA 11.0
-> pip install cupy-cuda110
->
-> For CUDA 11.1
-> pip install cupy-cuda111
->
-> For CUDA 11.2
-> pip install cupy-cuda112
->
-> For CUDA 11.3
-> pip install cupy-cuda113
->
-> For CUDA 11.4
-> pip install cupy-cuda114
->
-> For CUDA 11.5
-> pip install cupy-cuda115
->
-> For CUDA 11.6
-> pip install cupy-cuda116
->
-> (Install CuPy from source)
-> % pip install cupy
+### Installation
 
-#### Traversability filter
+First, clone to your catkin_ws
 
-You can choose either pytorch, or chainer to run the CNN based traversability filter.  
-Install by following the official documents.
-
-- [torch](https://pytorch.org/)
-- [chainer](https://chainer.org/)
-
-Pytorch uses ~2GB more GPU memory than Chainer, but runs a bit faster.  
-Use parameter `use_chainer` to select which backend to use.
-
-#### ROS package dependencies
-
-- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
-- [grid_map](https://github.com/ANYbotics/grid_map)
-
-```bash
-sudo apt install ros-noetic-pybind11-catkin
-sudo apt install ros-noetic-grid-map-core ros-noetic-grid-map-msgs
+```zsh
+mkdir -p catkin_ws/src
+cd catkin_ws/src
+git clone https://github.com/leggedrobotics/elevation_mapping_cupy.git
 ```
 
-### On Jetson
+Then install dependencies.
+You can also use docker which already install all dependencies.
 
-#### CUDA CuDNN
-
-`CUDA` and `cuDNN` can be installed via apt. It comes with nvidia-jetpack. The tested version is jetpack 4.5 with L4T 32.5.0.
-
-#### python dependencies
-
-On jetson, you need the version for its CPU arch:
-
-```bash
-wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
-pip3 install Cython
-pip3 install numpy==1.19.5 torch-1.8.0-cp36-cp36m-linux_aarch64.whl
+```zsh
+cd docker
+./build.sh
+./run.sh
 ```
 
-Also, you need to install cupy with
+### Build package
 
-```bash
-pip3 install cupy
-```
-
-This builds the packages from source so it would take time.
-
-#### ROS dependencies
-
-- [pybind11_catkin](https://github.com/ipab-slmc/pybind11_catkin)
-- [grid_map](https://github.com/ANYbotics/grid_map)
-
-```bash
-sudo apt install ros-melodic-pybind11-catkin
-sudo apt install ros-melodic-grid-map-core ros-melodic-grid-map-msgs
-```
-
-Also, on jetson you need fortran (should already be installed).
-
-```bash
-sudo apt install gfortran
-```
-
-If the Jetson is set up with Jetpack 4.5 with ROS Melodic the following package is additionally required:
-
-```bash
-git clone git@github.com:ros/filters.git -b noetic-devel
-```
-
-### Plane segmentation dependencies
-
-#### OpenCV
-
-```bash
-sudo apt install libopencv-dev
-```
-
-#### Eigen
-
-```bash
-sudo apt install libeigen3-dev
-```
-
-#### CGAL
-
-CGAL5 is required. It will be automatically downloaded and installed into the catkin workspace by the cgal5_catkin package. Make sure you
-have the third-party libaries installed on you machine:
-
-```bash
-sudo apt install libgmp-dev
-sudo apt install libmpfr-dev
-sudo apt install libboost-all-dev
-```
-
-## Usage
-
-### Build
-
-```bash
+Inside docker container.
+```zsh
+cd $HOME/catkin_ws
 catkin build elevation_mapping_cupy
-catkin build convex_plane_decomposition_ros
 ```
 
-#### Errors
-
-If you get error such as
-
-```
-Make Error at /usr/share/cmake-3.16/Modules/FindPackageHandleStandardArgs.cmake:146 (message):
-  Could NOT find PythonInterp: Found unsuitable version "2.7.18", but
-  required is at least "3" (found /usr/bin/python)
-```
-
-Build with option.
-
-```bash
-catkin build elevation_mapping_cupy -DPYTHON_EXECUTABLE=$(which python3)
-```
-
-### Run
-
-Basic usage.
-
-```bash
-roslaunch elevation_mapping_cupy elevation_mapping_cupy.launch
-```
-
-For the plane segmentation node
-
-```bash
-roslaunch convex_plane_decomposition_ros convex_plane_decomposition.launch
-```
-
-#### Errors
-If you build with the install flag under ros melodic, you might get issues with the modules not found:
-
-```bash
-terminate called after throwing an instance of 'pybind11::error_already_set'
-  what():  ModuleNotFoundError: No module named 'elevation_mapping_cupy'
-```
-This is because python3 modules are installed into a different location.
-
-This can be fixed by including also the python3 modules location in the `PYTHONPATH` by adding following line into the launch file:
-
-```xml
-<env name="PYTHONPATH" value="<path_to_your_install>/lib/python3/dist-packages:$(env PYTHONPATH)" />
-```
-
-### Run TurtleBot example
-
-First, install turtlebot simulation.
-
-```bash
-sudo apt install ros-noetic-turtlebot3-gazebo ros-noetic-turtlebot3-teleop
-```
-
-Then, you can run the examples. For the basic version:
+### Run turtlebot example.
+![Elevation map examples](doc/media/turtlebot.png)
 
 ```bash
 export TURTLEBOT3_MODEL=waffle
-roslaunch elevation_mapping_cupy turtlesim_example.launch
+roslaunch elevation_mapping_cupy turtlesim_simple_example.launch
 ```
 
-Or, for the version including plane segmentation:
+For fusing semantics into the map such as rgb from a multi modal pointcloud:
+
+```bash
+export TURTLEBOT3_MODEL=waffle
+roslaunch elevation_mapping_cupy turtlesim_semantic_pointcloud_example.launch
+```
+
+For fusing semantics into the map such as rgb semantics or features from an image:
+
+```bash
+export TURTLEBOT3_MODEL=waffle
+roslaunch elevation_mapping_cupy turtlesim_semantic_image_example.launch
+```
+
+For plane segmentation:
 
 ```bash
 catkin build convex_plane_decomposition_ros
 export TURTLEBOT3_MODEL=waffle
-roslaunch elevation_mapping_cupy turtlesim_segmentation_example.launch
+roslaunch elevation_mapping_cupy turtlesim_plane_decomposition_example.launch
 ```
 
-To control the robot with a keyboard, a new terminal window needs to be opened.  
+To control the robot with a keyboard, a new terminal window needs to be opened.
 Then run
 
 ```bash
@@ -273,123 +139,3 @@ roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
 ```
 
 Velocity inputs can be sent to the robot by pressing the keys `a`, `w`, `d`, `x`. To stop the robot completely, press `s`.
-
-### Subscribed Topics
-
-* topics specified in **`pointcloud_topics`** in **`elevation_mapping_cupy/config/parameters.yaml`** ([sensor_msgs/PointCloud2])
-
-  The distance measurements.
-
-* **`/tf`** ([tf/tfMessage])
-
-  The transformation tree.
-
-* The plane segmentation node subscribes to an elevation map topic ([grid_map_msg/GridMap]). This can be configured in
-  **`convex_plane_decomposition_ros/config/parameters.yaml`**
-
-### Published Topics
-
-For elevation_mapping_cupy, topics are published as set in the rosparam.  
-You can specify which layers to publish in which fps.
-
-Under `publishers`, you can specify the `topic_name`, `layers` `basic_layers` and `fps`.
-
-```yaml
-publishers:
-  your_topic_name:
-    layers: [ 'list_of_layer_names', 'layer1', 'layer2' ]             # Choose from 'elevation', 'variance', 'traversability', 'time' + plugin layers
-    basic_layers: [ 'list of basic layers', 'layer1' ]                # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
-    fps: 5.0                                                        # Publish rate. Use smaller value than `map_acquire_fps`.
-```
-
-Example setting in `config/parameters.yaml`.
-
-* **`elevation_map_raw`** ([grid_map_msg/GridMap])
-
-  The entire elevation map.
-
-* **`elevation_map_recordable`** ([grid_map_msg/GridMap])
-
-  The entire elevation map with slower update rate for visualization and logging.
-
-* **`elevation_map_filter`** ([grid_map_msg/GridMap])
-
-  The filtered maps using plugins.
-
-The plane segmentation node publishes the following:
-
-* **`planar_terrain`**  ([convex_plane_decomposition_msgs/PlanarTerrain])
-
-  A custom message that contains the full segmentation as a map together with the boundary information.
-
-* **`filtered_map`**  ([grid_map_msg/GridMap])
-
-  A grid map message to visualize the segmentation and some intermediate results. This information is also part of **`planar_terrain`**.
-
-* **`boundaries`**  ([visualization_msgs/MarkerArray])
-
-  A set of polygons that trace the boundaries of the segmented region. Holes and boundaries of a single region are published as separate
-  markers with the same color.
-
-* **`insets`**  ([visualization_msgs/PolygonArray])
-
-  A set of polygons that are at a slight inward offset from **`boundaries`**. There might be more insets than boundaries since the inward
-  shift can cause a single region to break down into multiple when narrow passages exist.
-
-# Plugins
-
-You can create your own plugin to process the elevation map and publish as a layer in GridMap message.
-
-Let's look at the example.
-
-First, create your plugin file in `elevation_mapping_cupy/script/plugins/` and save as `example.py`.
-
-```python
-import cupy as cp
-from typing import List
-from .plugin_manager import PluginBase
-
-
-class NameOfYourPlugin(PluginBase):
-    def __init__(self, add_value:float=1.0, **kwargs):
-        super().__init__()
-        self.add_value = float(add_value)
-
-    def __call__(self, elevation_map: cp.ndarray, layer_names: List[str],
-            plugin_layers: cp.ndarray, plugin_layer_names: List[str])->cp.ndarray:
-        # Process maps here
-        # You can also use the other plugin's data through plugin_layers.
-        new_elevation = elevation_map[0] + self.add_value
-        return new_elevation
-```
-
-Then, add your plugin setting to `config/plugin_config.yaml`
-
-```yaml
-example:                                      # Name of your filter
-  type: "example"                             # Specify the name of your plugin (the name of your file name).
-  enable: True                                # weather to load this plugin
-  fill_nan: True                              # Fill nans to invalid cells of elevation layer.
-  is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
-  layer_name: "example_layer"                 # The layer name.
-  extra_params:                               # This params are passed to the plugin class on initialization.
-    add_value: 2.0                            # Example param
-    
-example_large:                                # You can apply same filter with different name.
-  type: "example"                             # Specify the name of your plugin (the name of your file name).
-  enable: True                                # weather to load this plugin
-  fill_nan: True                              # Fill nans to invalid cells of elevation layer.
-  is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
-  layer_name: "example_layer_large"           # The layer name.
-  extra_params:                               # This params are passed to the plugin class on initialization.
-    add_value: 100.0                          # Example param with larger value.
-```
-
-Finally, add your layer name to publishers in `config/parameters.yaml`. You can create a new topic or add to existing topics.
-
-```yaml
-  plugin_example: # Topic name
-    layers: [ 'elevation', 'example_layer', 'example_layer_large' ]
-    basic_layers: [ 'example_layer' ]
-    fps: 1.0        # The plugin is called with this fps.
-```

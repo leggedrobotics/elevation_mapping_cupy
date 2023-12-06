@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+    <arg name="rviz_config" default="$(find elevation_mapping_cupy)/rviz/turtle_example.rviz"/>
+
+    <!-- Launch elevation mapping turtle sim. -->
+    <include file="$(find elevation_mapping_cupy)/launch/turtlesim_init.launch">
+        <arg name="rviz_config" value="$(arg rviz_config)"/>
+    </include>
+
+    <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen">
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/core/core_param.yaml"/>
+        <rosparam command="load" file="$(find elevation_mapping_cupy)/config/setups/turtle_bot/turtle_bot_simple.yaml"/>
+    </node>
+</launch>

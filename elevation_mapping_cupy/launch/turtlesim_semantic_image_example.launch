@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+    <include file="$(find elevation_mapping_cupy)/launch/turtlesim_init.launch">
+        <arg name="rviz_config" value="$(find elevation_mapping_cupy)/rviz/turtle_example.rviz"/>
+    </include>
+
+
+    <node pkg="semantic_sensor" type="image_node.py" name="front_cam" args="front_cam_image"
+          output="screen">
+        <rosparam command="load" file="$(find semantic_sensor)/config/sensor_parameter.yaml"/>
+    </node>
+
+        <node pkg="elevation_mapping_cupy" type="elevation_mapping_node" name="elevation_mapping" output="screen">
+            <rosparam command="load" file="$(find elevation_mapping_cupy)/config/core/core_param.yaml"/>
+            <rosparam command="load" file="$(find elevation_mapping_cupy)/config/setups/turtle_bot/turtle_bot_semantics_image.yaml"/>
+        </node>
+</launch>
