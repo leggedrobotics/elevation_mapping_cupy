@@ -1,6 +1,6 @@
 ###### Requirements without Version Specifiers ######`
 numpy
-scipy==1.9
+scipy==1.9.2
 dataclasses
 ruamel.yaml
 opencv-python
