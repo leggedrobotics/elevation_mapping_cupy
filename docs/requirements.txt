@@ -8,6 +8,7 @@ simple-parsing
 scikit-image
 matplotlib
 catkin-tools
+catkin_pkg
 # cupy
 
 ###### Requirements with Version Specifiers ######`
