@@ -24,36 +24,12 @@ def semmap_ex(sem_lay, fusion_alg):
     [
         (["feat_0", "feat_1"], ["average", "average"], ["feat_0"]),
         (["feat_0", "feat_1"], ["average", "average"], []),
-        (
-            ["feat_0", "feat_1", "rgb"],
-            ["average", "average", "color"],
-            ["rgb", "feat_0"],
-        ),
-        (
-            ["feat_0", "feat_1", "rgb"],
-            ["class_average", "average", "color"],
-            ["rgb", "feat_0"],
-        ),
-        (
-            ["feat_0", "feat_1", "rgb"],
-            ["class_bayesian", "average", "color"],
-            ["rgb", "feat_0"],
-        ),
-        (
-            ["feat_0", "feat_1", "rgb"],
-            ["class_bayesian", "average", "color"],
-            ["rgb", "feat_0", "feat_1"],
-        ),
-        (
-            ["feat_0", "feat_1", "rgb"],
-            ["class_bayesian", "class_max", "color"],
-            ["rgb", "feat_0", "feat_1"],
-        ),
-        (
-            ["max1", "max2", "rgb"],
-            ["class_max", "class_max", "color"],
-            ["rgb", "max1", "max2"],
-        ),
+        (["feat_0", "feat_1", "rgb"], ["average", "average", "color"], ["rgb", "feat_0"],),
+        (["feat_0", "feat_1", "rgb"], ["class_average", "average", "color"], ["rgb", "feat_0"],),
+        (["feat_0", "feat_1", "rgb"], ["class_bayesian", "average", "color"], ["rgb", "feat_0"],),
+        (["feat_0", "feat_1", "rgb"], ["class_bayesian", "average", "color"], ["rgb", "feat_0", "feat_1"],),
+        (["feat_0", "feat_1", "rgb"], ["class_bayesian", "class_max", "color"], ["rgb", "feat_0", "feat_1"],),
+        (["max1", "max2", "rgb"], ["class_max", "class_max", "color"], ["rgb", "max1", "max2"],),
     ],
 )
 def test_fusion_of_pcl(semmap_ex, channels):
@@ -64,10 +40,7 @@ def test_fusion_of_pcl(semmap_ex, channels):
 
 
 @pytest.mark.parametrize(
-    "sem_lay, fusion_alg",
-    [
-        (["feat_0", "feat_1", "rgb"], ["average", "average", "color"]),
-    ],
+    "sem_lay, fusion_alg", [(["feat_0", "feat_1", "rgb"], ["average", "average", "color"]),],
 )
 @pytest.mark.parametrize("channels", [["rgb"], ["rgb", "feat_0"], []])
 def test_indices_fusion(semmap_ex, channels, fusion_alg):

@@ -73,7 +73,9 @@ class SemanticSegmentationNode:
         # subscribers
         if self.param.camera_info_topic is not None and self.param.resize is not None:
             rospy.Subscriber(self.param.camera_info_topic, CameraInfo, self.image_info_callback)
-            self.feat_im_info_pub = rospy.Publisher(node_name + "/" + self.param.camera_info_topic + "_resized", CameraInfo, queue_size=2)
+            self.feat_im_info_pub = rospy.Publisher(
+                node_name + "/" + self.param.camera_info_topic + "_resized", CameraInfo, queue_size=2
+            )
 
         if "compressed" in self.param.image_topic:
             self.compressed = True
@@ -94,9 +96,13 @@ class SemanticSegmentationNode:
         if self.param.feature_extractor:
             self.feature_pub = rospy.Publisher(node_name + "/" + self.param.feature_topic, Image, queue_size=2)
             self.feat_im_pub = rospy.Publisher(node_name + "/" + self.param.feat_image_topic, Image, queue_size=2)
-            self.feat_channel_info_pub = rospy.Publisher(node_name + "/" + self.param.feat_channel_info_topic, ChannelInfo, queue_size=2)
+            self.feat_channel_info_pub = rospy.Publisher(
+                node_name + "/" + self.param.feat_channel_info_topic, ChannelInfo, queue_size=2
+            )
 
-        self.channel_info_pub = rospy.Publisher(node_name + "/" + self.param.channel_info_topic, ChannelInfo, queue_size=2)
+        self.channel_info_pub = rospy.Publisher(
+            node_name + "/" + self.param.channel_info_topic, ChannelInfo, queue_size=2
+        )
 
     def color_map(self, N=256, normalized=False):
         """Create a color map for the class labels.

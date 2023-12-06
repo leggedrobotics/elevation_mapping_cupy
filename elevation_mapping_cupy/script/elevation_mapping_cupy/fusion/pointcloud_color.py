@@ -6,8 +6,7 @@ from .fusion_manager import FusionBase
 
 
 def add_color_kernel(
-    width,
-    height,
+    width, height,
 ):
     add_color_kernel = cp.ElementwiseKernel(
         in_params="raw T p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -57,8 +56,7 @@ def add_color_kernel(
 
 
 def color_average_kernel(
-    width,
-    height,
+    width, height,
 ):
     color_average_kernel = cp.ElementwiseKernel(
         in_params="raw V color_map, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -123,17 +121,11 @@ class Color(FusionBase):
         self.cell_n = params.cell_n
         self.resolution = params.resolution
 
-        self.add_color_kernel = add_color_kernel(
-            params.cell_n,
-            params.cell_n,
-        )
+        self.add_color_kernel = add_color_kernel(params.cell_n, params.cell_n,)
         self.color_average_kernel = color_average_kernel(self.cell_n, self.cell_n)
 
     def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
-        self.color_map = cp.zeros(
-            (1 + 3 * layer_ids.shape[0], self.cell_n, self.cell_n),
-            dtype=cp.uint32,
-        )
+        self.color_map = cp.zeros((1 + 3 * layer_ids.shape[0], self.cell_n, self.cell_n), dtype=cp.uint32,)
 
         points_all = points_all.astype(cp.float32)
         self.add_color_kernel(

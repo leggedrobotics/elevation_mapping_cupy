@@ -19,11 +19,9 @@ class FeaturesPca(PluginBase):
         classes (ruamel.yaml.comments.CommentedSeq):
         **kwargs ():
     """
+
     def __init__(
-        self,
-        cell_n: int = 100,
-        process_layer_names: List[str]=[],
-        **kwargs,
+        self, cell_n: int = 100, process_layer_names: List[str] = [], **kwargs,
     ):
         super().__init__()
         self.process_layer_names = process_layer_names
@@ -40,7 +38,6 @@ class FeaturesPca(PluginBase):
             if any(re.match(pattern, layer_name) for pattern in self.process_layer_names):
                 indices.append(i)
         return indices
-        
 
     def __call__(
         self,
@@ -67,8 +64,9 @@ class FeaturesPca(PluginBase):
         """
         # get indices of all layers that contain semantic features information
         data = []
-        for m, layer_names in zip([elevation_map, plugin_layers, semantic_map],
-                                 [layer_names, plugin_layer_names, semantic_layer_names]):
+        for m, layer_names in zip(
+            [elevation_map, plugin_layers, semantic_map], [layer_names, plugin_layer_names, semantic_layer_names]
+        ):
             layer_indices = self.get_layer_indices(layer_names)
             if len(layer_indices) > 0:
                 n_c = m[layer_indices].shape[1]

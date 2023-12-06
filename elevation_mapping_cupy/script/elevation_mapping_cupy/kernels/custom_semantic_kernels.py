@@ -3,9 +3,7 @@ import string
 
 
 def sum_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     """Sums the semantic values of the classes for the exponentiala verage or for the average.
 
@@ -50,9 +48,7 @@ def sum_kernel(
 
 
 def sum_compact_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_compact_kernel = cp.ElementwiseKernel(
@@ -87,9 +83,7 @@ def sum_compact_kernel(
 
 
 def sum_max_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_max_kernel = cp.ElementwiseKernel(
@@ -126,9 +120,7 @@ def sum_max_kernel(
 
 
 def alpha_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     # input the list of layers, amount of channels can slo be input through kernel
     alpha_kernel = cp.ElementwiseKernel(
@@ -169,8 +161,7 @@ def alpha_kernel(
 
 
 def average_kernel(
-    width,
-    height,
+    width, height,
 ):
     average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -200,8 +191,7 @@ def average_kernel(
 
 
 def bayesian_inference_kernel(
-    width,
-    height,
+    width, height,
 ):
     bayesian_inference_kernel = cp.ElementwiseKernel(
         in_params=" raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -237,9 +227,7 @@ def bayesian_inference_kernel(
 
 
 def class_average_kernel(
-    width,
-    height,
-    alpha,
+    width, height, alpha,
 ):
     class_average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -269,17 +257,14 @@ def class_average_kernel(
                 }
             }
             """
-        ).substitute(
-            alpha=alpha,
-        ),
+        ).substitute(alpha=alpha,),
         name="class_average_kernel",
     )
     return class_average_kernel
 
 
 def add_color_kernel(
-    width,
-    height,
+    width, height,
 ):
     add_color_kernel = cp.ElementwiseKernel(
         in_params="raw T p, raw U R, raw U t, raw W pcl_chan, raw W map_lay, raw W pcl_channels",
@@ -329,8 +314,7 @@ def add_color_kernel(
 
 
 def color_average_kernel(
-    width,
-    height,
+    width, height,
 ):
     color_average_kernel = cp.ElementwiseKernel(
         in_params="raw V color_map, raw W pcl_chan, raw W map_lay, raw W pcl_channels",

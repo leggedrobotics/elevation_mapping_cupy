@@ -23,15 +23,18 @@ class Parameter(Serializable):
         }
     )
     additional_layers: list = field(default_factory=lambda: ["color"])
-    fusion_algorithms: list = field(default_factory=lambda: [
-        "image_color",
-        "image_exponential",
-        "pointcloud_average",
-        "pointcloud_bayesian_inference",
-        "pointcloud_class_average",
-        "pointcloud_class_bayesian",
-        "pointcloud_class_max",
-        "pointcloud_color"])
+    fusion_algorithms: list = field(
+        default_factory=lambda: [
+            "image_color",
+            "image_exponential",
+            "pointcloud_average",
+            "pointcloud_bayesian_inference",
+            "pointcloud_class_average",
+            "pointcloud_class_bayesian",
+            "pointcloud_class_max",
+            "pointcloud_color",
+        ]
+    )
     pointcloud_channel_fusions: dict = field(default_factory=lambda: {"rgb": "color", "default": "class_average"})
     image_channel_fusions: dict = field(default_factory=lambda: {"rgb": "color", "default": "exponential"})
     data_type: str = np.float32

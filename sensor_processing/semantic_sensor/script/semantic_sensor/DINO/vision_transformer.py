@@ -34,12 +34,7 @@ class DropPath(nn.Module):
 
 class Mlp(nn.Module):
     def __init__(
-        self,
-        in_features,
-        hidden_features=None,
-        out_features=None,
-        act_layer=nn.GELU,
-        drop=0.0,
+        self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.0,
     ):
         super().__init__()
         out_features = out_features or in_features
@@ -60,13 +55,7 @@ class Mlp(nn.Module):
 
 class Attention(nn.Module):
     def __init__(
-        self,
-        dim,
-        num_heads=8,
-        qkv_bias=False,
-        qk_scale=None,
-        attn_drop=0.0,
-        proj_drop=0.0,
+        self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0.0, proj_drop=0.0,
     ):
         super().__init__()
         # number of attention heads
@@ -74,7 +63,7 @@ class Attention(nn.Module):
         # dimension of each head
         head_dim = dim // num_heads
         # scale factor for the attention scores
-        self.scale = qk_scale or head_dim**-0.5
+        self.scale = qk_scale or head_dim ** -0.5
 
         # linear layer to project the input to 3 times the dimension
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
@@ -127,22 +116,12 @@ class Block(nn.Module):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
-            dim,
-            num_heads=num_heads,
-            qkv_bias=qkv_bias,
-            qk_scale=qk_scale,
-            attn_drop=attn_drop,
-            proj_drop=drop,
+            dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop,
         )
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(
-            in_features=dim,
-            hidden_features=mlp_hidden_dim,
-            act_layer=act_layer,
-            drop=drop,
-        )
+        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop,)
 
     def forward(self, x, return_attention=False, return_qkv=False):
         y, attn, qkv = self.attn(self.norm1(x))
@@ -199,10 +178,7 @@ class VisionTransformer(nn.Module):
         self.num_features = self.embed_dim = embed_dim
 
         self.patch_embed = PatchEmbed(
-            img_size=img_size[0],
-            patch_size=patch_size,
-            in_chans=in_chans,
-            embed_dim=embed_dim,
+            img_size=img_size[0], patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,
         )
         num_patches = self.patch_embed.num_patches
 
@@ -372,14 +348,7 @@ def vit_base(patch_size=16, **kwargs):
 
 class DINOHead(nn.Module):
     def __init__(
-        self,
-        in_dim,
-        out_dim,
-        use_bn=False,
-        norm_last_layer=True,
-        nlayers=3,
-        hidden_dim=2048,
-        bottleneck_dim=256,
+        self, in_dim, out_dim, use_bn=False, norm_last_layer=True, nlayers=3, hidden_dim=2048, bottleneck_dim=256,
     ):
         super().__init__()
         nlayers = max(nlayers, 1)

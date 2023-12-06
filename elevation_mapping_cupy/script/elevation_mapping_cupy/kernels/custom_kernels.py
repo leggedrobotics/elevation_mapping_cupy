@@ -265,7 +265,7 @@ def add_points_kernel(
             mahalanobis_thresh=mahalanobis_thresh,
             outlier_variance=outlier_variance,
             wall_num_thresh=wall_num_thresh,
-            ray_step=resolution / 2**0.5,
+            ray_step=resolution / 2 ** 0.5,
             max_ray_length=max_ray_length,
             cleanup_step=cleanup_step,
             cleanup_cos_thresh=cleanup_cos_thresh,

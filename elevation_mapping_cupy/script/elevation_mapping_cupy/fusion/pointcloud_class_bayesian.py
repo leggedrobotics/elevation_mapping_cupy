@@ -6,9 +6,7 @@ from .fusion_manager import FusionBase
 
 
 def alpha_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     # input the list of layers, amount of channels can slo be input through kernel
     alpha_kernel = cp.ElementwiseKernel(
@@ -55,11 +53,7 @@ class ClassBayesian(FusionBase):
         self.name = "pointcloud_class_bayesian"
         self.cell_n = params.cell_n
         self.resolution = params.resolution
-        self.alpha_kernel = alpha_kernel(
-            self.resolution,
-            self.cell_n,
-            self.cell_n,
-        )
+        self.alpha_kernel = alpha_kernel(self.resolution, self.cell_n, self.cell_n,)
 
     def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.alpha_kernel(

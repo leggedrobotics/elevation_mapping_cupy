@@ -18,18 +18,16 @@ class SemanticFilter(PluginBase):
         classes (list): List of classes for semantic filtering. Default is ["person", "grass"].
         **kwargs: Additional keyword arguments.
     """
+
     def __init__(
-        self,
-        cell_n: int = 100,
-        classes: list = ["person", "grass"],
-        **kwargs,
+        self, cell_n: int = 100, classes: list = ["person", "grass"], **kwargs,
     ):
         super().__init__()
         self.indices = []
         self.classes = classes
         self.color_encoding = self.transform_color()
 
-    def color_map(self, N:int =256, normalized: bool=False):
+    def color_map(self, N: int = 256, normalized: bool = False):
         """
         Creates a color map with N different colors.
 
@@ -40,6 +38,7 @@ class SemanticFilter(PluginBase):
         Returns:
             np.ndarray: The color map.
         """
+
         def bitget(byteval, idx):
             return (byteval & (1 << idx)) != 0
 
@@ -117,8 +116,9 @@ class SemanticFilter(PluginBase):
         """
         # get indices of all layers that contain semantic class information
         data = []
-        for m, layer_names in zip([elevation_map, plugin_layers, semantic_map],
-                                 [layer_names, plugin_layer_names, semantic_layer_names]):
+        for m, layer_names in zip(
+            [elevation_map, plugin_layers, semantic_map], [layer_names, plugin_layer_names, semantic_layer_names]
+        ):
             layer_indices = self.get_layer_indices(layer_names)
             if len(layer_indices) > 0:
                 data.append(m[layer_indices])

@@ -31,10 +31,7 @@ def test_semantic_segmentation(model_name, channels, fusion):
 
 
 @pytest.mark.parametrize(
-    "model_name",
-    [
-        "DINO",
-    ],
+    "model_name", ["DINO",],
 )
 def test_feature_extractor(model_name):
     param = FeatureExtractorParameter()

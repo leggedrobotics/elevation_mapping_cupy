@@ -152,22 +152,11 @@ class PluginManager(object):
                 self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)
             elif n_param == 7:
                 self.layers[idx] = self.plugins[idx](
-                    elevation_map,
-                    layer_names,
-                    self.layers,
-                    self.layer_names,
-                    semantic_map,
-                    semantic_params,
+                    elevation_map, layer_names, self.layers, self.layer_names, semantic_map, semantic_params,
                 )
             elif n_param == 8:
                 self.layers[idx] = self.plugins[idx](
-                    elevation_map,
-                    layer_names,
-                    self.layers,
-                    self.layer_names,
-                    semantic_map,
-                    semantic_params,
-                    rotation,
+                    elevation_map, layer_names, self.layers, self.layer_names, semantic_map, semantic_params, rotation,
                 )
             else:
                 self.layers[idx] = self.plugins[idx](

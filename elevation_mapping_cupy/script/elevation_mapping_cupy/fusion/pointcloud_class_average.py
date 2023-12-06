@@ -6,9 +6,7 @@ from .fusion_manager import FusionBase
 
 
 def sum_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     """Sums the semantic values of the classes for the exponentiala verage or for the average.
 
@@ -53,9 +51,7 @@ def sum_kernel(
 
 
 def class_average_kernel(
-    width,
-    height,
-    alpha,
+    width, height, alpha,
 ):
     class_average_kernel = cp.ElementwiseKernel(
         in_params="raw V newmap, raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -85,9 +81,7 @@ def class_average_kernel(
                 }
             }
             """
-        ).substitute(
-            alpha=alpha,
-        ),
+        ).substitute(alpha=alpha,),
         name="class_average_kernel",
     )
     return class_average_kernel
@@ -102,16 +96,8 @@ class ClassAverage(FusionBase):
         self.resolution = params.resolution
         self.average_weight = params.average_weight
 
-        self.sum_kernel = sum_kernel(
-            self.resolution,
-            self.cell_n,
-            self.cell_n,
-        )
-        self.class_average_kernel = class_average_kernel(
-            self.cell_n,
-            self.cell_n,
-            self.average_weight,
-        )
+        self.sum_kernel = sum_kernel(self.resolution, self.cell_n, self.cell_n,)
+        self.class_average_kernel = class_average_kernel(self.cell_n, self.cell_n, self.average_weight,)
 
     def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.sum_kernel(

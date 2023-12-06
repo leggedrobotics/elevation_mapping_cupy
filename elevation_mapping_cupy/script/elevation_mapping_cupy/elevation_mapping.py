@@ -228,10 +228,7 @@ class ElevationMap:
     def compile_kernels(self):
         """Compile all kernels belonging to the elevation map."""
 
-        self.new_map = cp.zeros(
-            (self.elevation_map.shape[0], self.cell_n, self.cell_n),
-            dtype=self.data_type,
-        )
+        self.new_map = cp.zeros((self.elevation_map.shape[0], self.cell_n, self.cell_n), dtype=self.data_type,)
         self.traversability_input = cp.zeros((self.cell_n, self.cell_n), dtype=self.data_type)
         self.traversability_mask_dummy = cp.zeros((self.cell_n, self.cell_n), dtype=self.data_type)
         self.min_filtered = cp.zeros((self.cell_n, self.cell_n), dtype=self.data_type)
@@ -290,18 +287,14 @@ class ElevationMap:
                     np.zeros((self.cell_n, self.cell_n), dtype=np.bool_), dtype=np.bool_
                 )
                 self.uv_correspondence = cp.asarray(
-                    np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32),
-                    dtype=np.float32,
+                    np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32,
                 )
                 # self.distance_correspondence = cp.asarray(
                 #     np.zeros((self.cell_n, self.cell_n), dtype=np.float32), dtype=np.float32
                 # )
                 # TODO tolerance_z_collision add parameter
                 self.image_to_map_correspondence_kernel = image_to_map_correspondence_kernel(
-                    resolution=self.resolution,
-                    width=self.cell_n,
-                    height=self.cell_n,
-                    tolerance_z_collision=0.10,
+                    resolution=self.resolution, width=self.cell_n, height=self.cell_n, tolerance_z_collision=0.10,
                 )
                 break
 
@@ -529,12 +522,7 @@ class ElevationMap:
                 size=int(self.cell_n * self.cell_n),
             )
             self.semantic_map.update_layers_image(
-                image,
-                channels,
-                self.uv_correspondence,
-                self.valid_correspondence,
-                image_height,
-                image_width,
+                image, channels, self.uv_correspondence, self.valid_correspondence, image_height, image_width,
             )
 
     def update_normal(self, dilated_map):
@@ -546,10 +534,7 @@ class ElevationMap:
         with self.map_lock:
             self.normal_map *= 0.0
             self.normal_filter_kernel(
-                dilated_map,
-                self.elevation_map[2],
-                self.normal_map,
-                size=(self.cell_n * self.cell_n),
+                dilated_map, self.elevation_map[2], self.normal_map, size=(self.cell_n * self.cell_n),
             )
 
     def process_map_for_publish(self, input_map, fill_nan=False, add_z=False, xp=cp):
@@ -595,9 +580,7 @@ class ElevationMap:
             traversability layer
         """
         traversability = cp.where(
-            (self.elevation_map[2] + self.elevation_map[6]) > 0.5,
-            self.elevation_map[3].copy(),
-            cp.nan,
+            (self.elevation_map[2] + self.elevation_map[6]) > 0.5, self.elevation_map[3].copy(), cp.nan,
         )
         self.traversability_buffer[3:-3, 3:-3] = traversability[3:-3, 3:-3]
         traversability = self.traversability_buffer[1:-1, 1:-1]
@@ -619,8 +602,7 @@ class ElevationMap:
         """
         if self.param.use_only_above_for_upper_bound:
             valid = cp.logical_or(
-                cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5),
-                self.elevation_map[2] > 0.5,
+                cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5,
             )
         else:
             valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
@@ -636,8 +618,7 @@ class ElevationMap:
         """
         if self.param.use_only_above_for_upper_bound:
             valid = cp.logical_or(
-                cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5),
-                self.elevation_map[2] > 0.5,
+                cp.logical_and(self.elevation_map[5] > 0.0, self.elevation_map[6] > 0.5), self.elevation_map[2] > 0.5,
             )
         else:
             valid = cp.logical_or(self.elevation_map[2] > 0.5, self.elevation_map[6] > 0.5)
@@ -798,11 +779,7 @@ class ElevationMap:
             return_map = self.semantic_map.semantic_map[idx]
         elif name in self.plugin_manager.layer_names:
             self.plugin_manager.update_with_name(
-                name,
-                self.elevation_map,
-                self.layer_names,
-                self.semantic_map,
-                self.base_rotation,
+                name, self.elevation_map, self.layer_names, self.semantic_map, self.base_rotation,
             )
             return_map = self.plugin_manager.get_map_with_name(name)
         else:
@@ -848,10 +825,7 @@ class ElevationMap:
         else:
             t = cp.asarray(0.0, dtype=self.data_type)
         is_safe, un_polygon = is_traversable(
-            masked,
-            self.param.safe_thresh,
-            self.param.safe_min_thresh,
-            self.param.max_unsafe_n,
+            masked, self.param.safe_thresh, self.param.safe_min_thresh, self.param.max_unsafe_n,
         )
         untraversable_polygon_num = 0
         if un_polygon is not None:
@@ -907,9 +881,7 @@ if __name__ == "__main__":
     t = xp.random.rand(3)
     print(R, t)
     param = Parameter(
-        use_chainer=False,
-        weight_file="../config/weights.dat",
-        plugin_config_file="../config/plugin_config.yaml",
+        use_chainer=False, weight_file="../config/weights.dat", plugin_config_file="../config/plugin_config.yaml",
     )
     param.additional_layers = ["rgb", "grass", "tree", "people"]
     param.fusion_algorithms = ["color", "class_bayesian", "class_bayesian", "class_bayesian"]

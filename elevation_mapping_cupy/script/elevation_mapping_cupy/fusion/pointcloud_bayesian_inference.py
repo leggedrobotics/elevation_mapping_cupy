@@ -6,9 +6,7 @@ from .fusion_manager import FusionBase
 
 
 def sum_compact_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_compact_kernel = cp.ElementwiseKernel(
@@ -43,8 +41,7 @@ def sum_compact_kernel(
 
 
 def bayesian_inference_kernel(
-    width,
-    height,
+    width, height,
 ):
     bayesian_inference_kernel = cp.ElementwiseKernel(
         in_params=" raw W pcl_chan, raw W map_lay, raw W pcl_channels, raw U new_elmap",
@@ -91,23 +88,11 @@ class BayesianInference(FusionBase):
         self.data_type = params.data_type
 
         self.sum_mean = cp.ones(
-            (
-                self.fusion_algorithms.count("bayesian_inference"),
-                self.cell_n,
-                self.cell_n,
-            ),
-            self.data_type,
+            (self.fusion_algorithms.count("bayesian_inference"), self.cell_n, self.cell_n,), self.data_type,
         )
         # TODO initialize the variance with a value different than 0
-        self.sum_compact_kernel = sum_compact_kernel(
-            self.resolution,
-            self.cell_n,
-            self.cell_n,
-        )
-        self.bayesian_inference_kernel = bayesian_inference_kernel(
-            self.cell_n,
-            self.cell_n,
-        )
+        self.sum_compact_kernel = sum_compact_kernel(self.resolution, self.cell_n, self.cell_n,)
+        self.bayesian_inference_kernel = bayesian_inference_kernel(self.cell_n, self.cell_n,)
 
     def __call__(self, points_all, R, t, pcl_ids, layer_ids, elevation_map, semantic_map, new_map, *args):
         self.sum_mean *= 0

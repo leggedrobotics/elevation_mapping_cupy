@@ -10,9 +10,7 @@ plugin_path = "plugin_config.yaml"
 @pytest.fixture()
 def semmap_ex(add_lay, fusion_alg):
     p = parameter.Parameter(
-        use_chainer=False,
-        weight_file="../../../config/weights.dat",
-        plugin_config_file=plugin_path,
+        use_chainer=False, weight_file="../../../config/weights.dat", plugin_config_file=plugin_path,
     )
     p.subscriber_cfg["front_cam"]["channels"] = add_lay
     p.subscriber_cfg["front_cam"]["fusion"] = fusion_alg

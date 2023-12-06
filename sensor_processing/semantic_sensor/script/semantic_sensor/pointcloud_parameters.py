@@ -23,13 +23,7 @@ class PointcloudParameter(Serializable):
     topic_name: str = "/elvation_mapping/pointcloud_semantic"
     channels: list = field(default_factory=lambda: ["rgb", "person", "grass", "tree", "max"])
     fusion: list = field(
-        default_factory=lambda: [
-            "color",
-            "class_average",
-            "class_average",
-            "class_average",
-            "class_max",
-        ]
+        default_factory=lambda: ["color", "class_average", "class_average", "class_average", "class_max",]
     )
 
     semantic_segmentation: bool = False

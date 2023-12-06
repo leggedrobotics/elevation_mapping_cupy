@@ -4,9 +4,7 @@ import cupy as cp
 
 from elevation_mapping_cupy.parameter import Parameter
 
-from elevation_mapping_cupy.kernels import (
-    add_points_kernel,
-)
+from elevation_mapping_cupy.kernels import add_points_kernel
 from elevation_mapping_cupy.kernels import (
     average_kernel,
     class_average_kernel,
@@ -34,17 +32,11 @@ def test_color_kernel():
     semantic_map = cp.zeros((1, 4, 4), dtype=cp.float32)
 
     # compile kernel
-    add_color_kernel_ = add_color_kernel(
-        cell_n,
-        cell_n,
-    )
+    add_color_kernel_ = add_color_kernel(cell_n, cell_n,)
     color_average_kernel_ = color_average_kernel(cell_n, cell_n)
 
     # updatelayer
-    color_map = cp.zeros(
-        (1 + 3 * layer_ids.shape[0], cell_n, cell_n),
-        dtype=cp.uint32,
-    )
+    color_map = cp.zeros((1 + 3 * layer_ids.shape[0], cell_n, cell_n), dtype=cp.uint32,)
 
     points_all = points_all.astype(cp.float32)
     add_color_kernel_(
@@ -91,11 +83,7 @@ def test_sum_kernel(map_shape, points_all, pcl_ids, layer_ids):
     R = cp.eye(3, dtype=cp.float32)
     t = cp.array([0, 0, 0], dtype=cp.float32)
     # compile kernel
-    sum_kernel_ = sum_kernel(
-        0.9,
-        4,
-        4,
-    )
+    sum_kernel_ = sum_kernel(0.9, 4, 4,)
     # simulating adding the points
     print("idx, valid, inside, values")
     points_all[:, 0] = 1
@@ -138,10 +126,7 @@ def test_average_kernel(map_shape, points_all, pcl_ids, layer_ids):
     R = cp.eye(3, dtype=cp.float32)
     t = cp.array([0, 0, 0], dtype=cp.float32)
     # compile kernel
-    average_kernel_ = average_kernel(
-        4,
-        4,
-    )
+    average_kernel_ = average_kernel(4, 4,)
     cell_n = 4
     print("new_map", new_map)
     print("semantic_map", semantic_map)
@@ -184,23 +169,9 @@ def test_bayesian_inference_kernel(map_shape, points_all, pcl_ids, layer_ids):
     t = cp.array([0, 0, 0], dtype=cp.float32)
 
     # compile kernel
-    sum_mean = cp.ones(
-        (
-            pcl_ids.shape[0],
-            cell_n,
-            cell_n,
-        ),
-        cp.float32,
-    )
-    sum_compact_kernel_ = sum_compact_kernel(
-        resolution,
-        cell_n,
-        cell_n,
-    )
-    bayesian_inference_kernel_ = bayesian_inference_kernel(
-        cell_n,
-        cell_n,
-    )
+    sum_mean = cp.ones((pcl_ids.shape[0], cell_n, cell_n,), cp.float32,)
+    sum_compact_kernel_ = sum_compact_kernel(resolution, cell_n, cell_n,)
+    bayesian_inference_kernel_ = bayesian_inference_kernel(cell_n, cell_n,)
     # updatelayer
     sum_mean *= 0
     sum_compact_kernel_(
@@ -251,16 +222,8 @@ def test_class_average_kernel(map_shape, points_all, pcl_ids, layer_ids):
     R = cp.eye(3, dtype=cp.float32)
     t = cp.array([0, 0, 0], dtype=cp.float32)
     # compile kernel
-    sum_kernel_ = sum_kernel(
-        0.9,
-        4,
-        4,
-    )
-    class_average_kernel_ = class_average_kernel(
-        cell_n,
-        cell_n,
-        average_weight,
-    )
+    sum_kernel_ = sum_kernel(0.9, 4, 4,)
+    class_average_kernel_ = class_average_kernel(cell_n, cell_n, average_weight,)
     print("x,y,z,class")
     print("points all after ", points_all)
 
@@ -320,11 +283,7 @@ def test_class_bayesian_inference_fct(map_shape, points_all, pcl_ids, layer_ids)
     R = cp.eye(3, dtype=cp.float32)
     t = cp.array([0, 0, 0], dtype=cp.float32)
     # compile kernel
-    alpha_kernel_ = alpha_kernel(
-        resolution,
-        cell_n,
-        cell_n,
-    )
+    alpha_kernel_ = alpha_kernel(resolution, cell_n, cell_n,)
     # simulating adding the points
     print("idx, valid, inside, values")
     points_all[:, 0] = 1

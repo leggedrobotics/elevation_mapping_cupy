@@ -53,9 +53,7 @@ class ImageColor(FusionBase):
         self.resolution = params.resolution
 
         self.color_correspondences_to_map_kernel = color_correspondences_to_map_kernel(
-            resolution=self.resolution,
-            width=self.cell_n,
-            height=self.cell_n,
+            resolution=self.resolution, width=self.cell_n, height=self.cell_n,
         )
 
     def __call__(

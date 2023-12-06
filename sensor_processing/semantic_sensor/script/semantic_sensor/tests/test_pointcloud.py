@@ -28,12 +28,10 @@ def pointcloud_ex(cam_name, channels, fusion, semseg, segpub, showlbl):
     ],
 )
 @pytest.mark.parametrize(
-    "segpub",
-    [True, False],
+    "segpub", [True, False],
 )
 @pytest.mark.parametrize(
-    "showlbl",
-    [True, False],
+    "showlbl", [True, False],
 )
 def test_initialize(pointcloud_ex):
     # todo here we can add more test
@@ -46,39 +44,11 @@ def test_initialize(pointcloud_ex):
 @pytest.mark.parametrize(
     "cam_name,channels, fusion,semseg,segpub,showlbl",
     [
-        (
-            "front_cam",
-            ["feat_0", "feat_1"],
-            ["average", "average"],
-            False,
-            False,
-            False,
-        ),
+        ("front_cam", ["feat_0", "feat_1"], ["average", "average"], False, False, False,),
         ("front_cam", ["feat_0", "feat_1"], ["class_max", "average"], True, True, True),
-        (
-            "front_cam",
-            ["feat_0", "feat_1"],
-            ["class_max", "average"],
-            True,
-            False,
-            False,
-        ),
-        (
-            "front_cam",
-            ["feat_0", "feat_1"],
-            ["class_bayesian", "average"],
-            True,
-            True,
-            True,
-        ),
-        (
-            "front_cam",
-            ["feat_0", "feat_1"],
-            ["class_bayesian", "average"],
-            True,
-            False,
-            False,
-        ),
+        ("front_cam", ["feat_0", "feat_1"], ["class_max", "average"], True, False, False,),
+        ("front_cam", ["feat_0", "feat_1"], ["class_bayesian", "average"], True, True, True,),
+        ("front_cam", ["feat_0", "feat_1"], ["class_bayesian", "average"], True, False, False,),
     ],
 )
 def test_pcl_creation(pointcloud_ex, channels, fusion, semseg, segpub, showlbl):

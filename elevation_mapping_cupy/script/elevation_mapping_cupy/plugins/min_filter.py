@@ -18,6 +18,7 @@ class MinFilter(PluginBase):
         iteration_n (int): The number of iteration to repeat the same filter.
         **kwargs ():
     """
+
     def __init__(self, cell_n: int = 100, dilation_size: int = 5, iteration_n: int = 5, **kwargs):
         super().__init__()
         self.iteration_n = iteration_n

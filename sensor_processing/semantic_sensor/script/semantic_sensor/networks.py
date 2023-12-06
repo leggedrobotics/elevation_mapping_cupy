@@ -106,8 +106,7 @@ class PytorchModel:
         # get all classes
         class_to_idx = {cls: idx for (idx, cls) in enumerate(self.get_classes())}
         print(
-            "Semantic Segmentation possible channels: ",
-            self.get_classes(),
+            "Semantic Segmentation possible channels: ", self.get_classes(),
         )
         indices = []
         channels = []
@@ -124,14 +123,14 @@ class PytorchModel:
             #     print(chan, " is not in the semantic segmentation model.")
         # for it, chan in enumerate(self.param.channels):
         #     self.actual_channels.append(chan)
-            # if self.param.fusion_methods[it] in ["class_max"]:
-            #     self.actual_channels.append(chan)
-            #     print(
-            #         chan,
-            #         " is not in the semantic segmentation model but is a max channel.",
-            #     )
-            # else:
-            #     pass
+        # if self.param.fusion_methods[it] in ["class_max"]:
+        #     self.actual_channels.append(chan)
+        #     print(
+        #         chan,
+        #         " is not in the semantic segmentation model but is a max channel.",
+        #     )
+        # else:
+        #     pass
         self.stuff_categories = dict(zip(channels, indices))
         self.segmentation_channels = dict(zip(channels, indices))
 
@@ -204,8 +203,7 @@ class DetectronModel:
         classes = self.get_category(name)
         class_to_idx = {cls: idx for (idx, cls) in enumerate(classes)}
         print(
-            "Semantic Segmentation possible channels: ",
-            classes,
+            "Semantic Segmentation possible channels: ", classes,
         )
         indices = []
         channels = []
@@ -227,13 +225,7 @@ class DetectronModel:
         image = cp.flip(image, axis=2)
         prediction = self.predictor(image.get())
         probabilities = cp.asarray(torch.softmax(prediction["sem_seg"], dim=0))
-        output = cp.zeros(
-            (
-                len(self.segmentation_channels),
-                probabilities.shape[1],
-                probabilities.shape[2],
-            )
-        )
+        output = cp.zeros((len(self.segmentation_channels), probabilities.shape[1], probabilities.shape[2],))
         # add semseg
         output[cp.array(list(self.is_stuff.values()))] = probabilities[list(self.stuff_categories.values())]
         # add instances

@@ -6,9 +6,7 @@ from .fusion_manager import FusionBase
 
 
 def sum_max_kernel(
-    resolution,
-    width,
-    height,
+    resolution, width, height,
 ):
     # input the list of layers, amount of channels can slo be input through kernel
     sum_max_kernel = cp.ElementwiseKernel(
@@ -53,11 +51,7 @@ class ClassMax(FusionBase):
         self.resolution = params.resolution
         self.fusion_algorithms = params.fusion_algorithms
 
-        self.sum_max_kernel = sum_max_kernel(
-            self.resolution,
-            self.cell_n,
-            self.cell_n,
-        )
+        self.sum_max_kernel = sum_max_kernel(self.resolution, self.cell_n, self.cell_n,)
         layer_cnt = self.fusion_algorithms.count("class_max")
 
         self.unique_id = cp.array([0])
@@ -88,10 +82,7 @@ class ClassMax(FusionBase):
         # get all unique ids, where index is the position in the prob_sum and the value in the NN class
         self.unique_id = cp.unique(cp.concatenate((unique_idm, unique_ida)))
         # contains the sum of the new measurement probabilities
-        self.prob_sum = cp.zeros(
-            (len(self.unique_id), self.cell_n, self.cell_n),
-            dtype=np.float32,
-        )
+        self.prob_sum = cp.zeros((len(self.unique_id), self.cell_n, self.cell_n), dtype=np.float32,)
         # transform the index matrix of the classes to the index matrix of the prob_sum
         pt_id_zero = pt_id.copy()
         for it, val in enumerate(self.unique_id):
@@ -104,10 +95,7 @@ class ClassMax(FusionBase):
             pt_id_zero,
             pcl_ids,
             layer_ids,
-            cp.array(
-                [points_all.shape[1], pcl_ids.shape[0], pt_id.shape[1]],
-                dtype=cp.int32,
-            ),
+            cp.array([points_all.shape[1], pcl_ids.shape[0], pt_id.shape[1]], dtype=cp.int32,),
             self.prob_sum,
             size=(points_all.shape[0]),
         )

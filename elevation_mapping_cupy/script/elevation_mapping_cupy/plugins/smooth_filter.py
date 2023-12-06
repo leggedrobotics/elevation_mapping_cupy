@@ -21,9 +21,7 @@ class SmoothFilter(PluginBase):
         **kwargs: Additional keyword arguments.
     """
 
-    def __init__(
-        self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs
-    ):
+    def __init__(self, cell_n: int = 100, input_layer_name: str = "elevation", **kwargs):
         super().__init__()
         self.input_layer_name = input_layer_name
 
@@ -54,11 +52,7 @@ class SmoothFilter(PluginBase):
             idx = plugin_layer_names.index(self.input_layer_name)
             h = plugin_layers[idx]
         else:
-            print(
-                "layer name {} was not found. Using elevation layer.".format(
-                    self.input_layer_name
-                )
-            )
+            print("layer name {} was not found. Using elevation layer.".format(self.input_layer_name))
             h = elevation_map[0]
         hs1 = ndimage.uniform_filter(h, size=3)
         hs1 = ndimage.uniform_filter(hs1, size=3)

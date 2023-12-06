@@ -44,10 +44,7 @@ class ImageExponential(FusionBase):
         self.resolution = params.resolution
 
         self.exponential_correspondences_to_map_kernel = exponential_correspondences_to_map_kernel(
-            resolution=self.resolution,
-            width=self.cell_n,
-            height=self.cell_n,
-            alpha=0.7,
+            resolution=self.resolution, width=self.cell_n, height=self.cell_n, alpha=0.7,
         )
 
     def __call__(

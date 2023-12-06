@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 import cupy as cp
+
 np.float = np.float64  # temp fix for following import suggested at https://github.com/eric-wieser/ros_numpy/issues/37
 import ros_numpy
 import matplotlib.pyplot as plt
@@ -88,23 +89,10 @@ class PointcloudNode:
         if self.param.confidence:
             confidence_sub = message_filters.Subscriber(self.param.confidence_topic, Image)
             ts = message_filters.ApproximateTimeSynchronizer(
-                [
-                    depth_sub,
-                    rgb_sub,
-                    confidence_sub,
-                ],
-                queue_size=10,
-                slop=0.5,
+                [depth_sub, rgb_sub, confidence_sub,], queue_size=10, slop=0.5,
             )
         else:
-            ts = message_filters.ApproximateTimeSynchronizer(
-                [
-                    depth_sub,
-                    rgb_sub,
-                ],
-                queue_size=10,
-                slop=0.5,
-            )
+            ts = message_filters.ApproximateTimeSynchronizer([depth_sub, rgb_sub,], queue_size=10, slop=0.5,)
         ts.registerCallback(self.image_callback)
 
         self.pcl_pub = rospy.Publisher(self.param.topic_name, PointCloud2, queue_size=2)

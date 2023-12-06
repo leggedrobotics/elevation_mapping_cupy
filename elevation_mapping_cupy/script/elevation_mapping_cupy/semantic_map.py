@@ -32,13 +32,9 @@ class SemanticMap:
         self.amount_layer_names = len(self.layer_names)
 
         self.semantic_map = xp.zeros(
-            (self.amount_layer_names, self.param.cell_n, self.param.cell_n),
-            dtype=param.data_type,
+            (self.amount_layer_names, self.param.cell_n, self.param.cell_n), dtype=param.data_type,
         )
-        self.new_map = xp.zeros(
-            (self.amount_layer_names, self.param.cell_n, self.param.cell_n),
-            param.data_type,
-        )
+        self.new_map = xp.zeros((self.amount_layer_names, self.param.cell_n, self.param.cell_n), param.data_type,)
         # which layers should be reset to zero at each update, per default everyone,
         # if a layer should not be reset, it is defined in compile_kernels function
         self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool8)
@@ -58,10 +54,7 @@ class SemanticMap:
                 pcl_ids = self.get_layer_indices("class_max", self.layer_specs_points)
                 self.delete_new_layers[pcl_ids] = 0
                 layer_cnt = self.param.fusion_algorithms.count("class_max")
-                id_max = cp.zeros(
-                    (layer_cnt, self.param.cell_n, self.param.cell_n),
-                    dtype=cp.uint32,
-                )
+                id_max = cp.zeros((layer_cnt, self.param.cell_n, self.param.cell_n), dtype=cp.uint32,)
                 self.elements_to_shift["id_max"] = id_max
             self.fusion_manager.register_plugin(fusion)
 
@@ -77,10 +70,7 @@ class SemanticMap:
                 pcl_ids = self.get_layer_indices("class_max", self.layer_specs_points)
                 self.delete_new_layers[pcl_ids] = 0
                 layer_cnt = self.param.fusion_algorithms.count("class_max")
-                id_max = cp.zeros(
-                    (layer_cnt, self.param.cell_n, self.param.cell_n),
-                    dtype=cp.uint32,
-                )
+                id_max = cp.zeros((layer_cnt, self.param.cell_n, self.param.cell_n), dtype=cp.uint32,)
                 self.elements_to_shift["id_max"] = id_max
 
     def add_layer(self, name):
@@ -98,12 +88,9 @@ class SemanticMap:
                 axis=0,
             )
             self.new_map = cp.append(
-                self.new_map,
-                cp.zeros((1, self.param.cell_n, self.param.cell_n), dtype=self.param.data_type),
-                axis=0,
+                self.new_map, cp.zeros((1, self.param.cell_n, self.param.cell_n), dtype=self.param.data_type), axis=0,
             )
             self.delete_new_layers = cp.append(self.delete_new_layers, cp.array([1], dtype=cp.bool8))
-
 
     def pad_value(self, x, shift_value, idx=None, value=0.0):
         """Create a padding of the map along x,y-axis according to amount that has shifted.
@@ -147,7 +134,9 @@ class SemanticMap:
             el = cp.roll(el, shift_value, axis=(1, 2))
             self.pad_value(el, shift_value, value=0.0)
 
-    def get_fusion(self, channels: List[str], channel_fusions: Dict[str, str], layer_specs: Dict[str, str]) -> List[str]:
+    def get_fusion(
+        self, channels: List[str], channel_fusions: Dict[str, str], layer_specs: Dict[str, str]
+    ) -> List[str]:
         """Get all fusion algorithms that need to be applied to a specific pointcloud.
 
         Args:
@@ -156,18 +145,22 @@ class SemanticMap:
         fusion_list = []
         process_channels = []
         for channel in channels:
-            if channel not in layer_specs: 
+            if channel not in layer_specs:
                 # If the channel is not in the layer_specs, we use the default fusion algorithm
                 matched_fusion = self.get_matching_fusion(channel, channel_fusions)
                 if matched_fusion is None:
                     if "default" in channel_fusions:
                         default_fusion = channel_fusions["default"]
-                        print(f"[WARNING] Layer {channel} not found in layer_specs. Using {default_fusion} algorithm as default.")
+                        print(
+                            f"[WARNING] Layer {channel} not found in layer_specs. Using {default_fusion} algorithm as default."
+                        )
                         layer_specs[channel] = default_fusion
                         self.update_fusion_setting()
                     # If there's no default fusion algorithm, we skip this channel
                     else:
-                        print(f"[WARNING] Layer {channel} not found in layer_specs ({layer_specs}) and no default fusion is configured. Skipping.")
+                        print(
+                            f"[WARNING] Layer {channel} not found in layer_specs ({layer_specs}) and no default fusion is configured. Skipping."
+                        )
                         continue
                 else:
                     layer_specs[channel] = matched_fusion
@@ -177,14 +170,12 @@ class SemanticMap:
             process_channels.append(channel)
         return process_channels, fusion_list
 
-
     def get_matching_fusion(self, channel: str, fusion_algs: Dict[str, str]):
         """ Use regular expression to check if the fusion algorithm matches the channel name."""
         for fusion_alg, alg_value in fusion_algs.items():
             if re.match(f"^{fusion_alg}$", channel):
                 return alg_value
         return None
-
 
     def get_layer_indices(self, fusion_alg, layer_specs):
         """Get the indices of the layers that are used for a specific fusion algorithm.
@@ -216,10 +207,7 @@ class SemanticMap:
         # this contains exactly the fusion alg type for each channel of the pcl
         pcl_val_list = [layer_specs[x] for x in pcl_channels]
         # this contains the indices of the point cloud where we have to perform a certain fusion
-        pcl_indices = cp.array(
-            [idp + 3 for idp, x in enumerate(pcl_val_list) if x == fusion_alg],
-            dtype=cp.int32,
-        )
+        pcl_indices = cp.array([idp + 3 for idp, x in enumerate(pcl_val_list) if x == fusion_alg], dtype=cp.int32,)
         # create a list of indices of the layers that will be updated by the point cloud with specific fusion alg
         layer_indices = cp.array([], dtype=cp.int32)
         for it, (key, val) in enumerate(layer_specs.items()):
@@ -238,7 +226,9 @@ class SemanticMap:
             t: translation vector
             elevation_map: elevation map object
         """
-        process_channels, additional_fusion = self.get_fusion(channels, self.param.pointcloud_channel_fusions, self.layer_specs_points)
+        process_channels, additional_fusion = self.get_fusion(
+            channels, self.param.pointcloud_channel_fusions, self.layer_specs_points
+        )
         # If channels has a new layer that is not in the semantic map, add it
         for channel in process_channels:
             if channel not in self.layer_names:
@@ -286,7 +276,9 @@ class SemanticMap:
             image_width:
         """
 
-        process_channels, fusion_methods = self.get_fusion(channels, self.param.image_channel_fusions, self.layer_specs_image)
+        process_channels, fusion_methods = self.get_fusion(
+            channels, self.param.image_channel_fusions, self.layer_specs_image
+        )
         self.new_map[self.delete_new_layers] = 0.0
         for j, (fusion, channel) in enumerate(zip(fusion_methods, process_channels)):
             if channel not in self.layer_names:
