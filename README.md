@@ -92,12 +92,16 @@ cd docker
 ./run.sh
 ```
 
+For more information, check [Document](https://leggedrobotics.github.io/elevation_mapping_cupy/getting_started/installation.html)
+
 ### Build package
 
 Inside docker container.
 ```zsh
 cd $HOME/catkin_ws
 catkin build elevation_mapping_cupy
+catkin build convex_plane_decomposition_ros  # If you want to use plane segmentation
+catkin build semantic_sensor  # If you want to use semantic sensors
 ```
 
 ### Run turtlebot example.
