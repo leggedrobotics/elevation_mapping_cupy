@@ -10,9 +10,9 @@
 The Elevaton Mapping CuPy software package represents an advancement in robotic navigation and locomotion. 
 Integrating with the Robot Operating System (ROS) and utilizing GPU acceleration, this framework enhances point cloud registration and ray casting,
 crucial for efficient and accurate robotic movement, particularly in legged robots.
-![screenshot](doc/media/main_repo.png)
-![screenshot](doc/media/main_mem.png)
-![gif](doc/media/convex_approximation.gif)
+![screenshot](docs/media/main_repo.png)
+![screenshot](docs/media/main_mem.png)
+![gif](docs/media/convex_approximation.gif)
 
 ## Key Features
 
@@ -30,7 +30,7 @@ crucial for efficient and accurate robotic movement, particularly in legged robo
 
 ## Overview
 
-![Overview of multi-modal elevation map structure](doc/media/overview.png)
+![Overview of multi-modal elevation map structure](docs/media/overview.png)
 
 Overview of our multi-modal elevation map structure. The framework takes multi-modal images (purple) and multi-modal (blue) point clouds as
 input. This data is input into the elevation map by first associating the data to the cells and then fused with different fusion algorithms into the various
@@ -101,7 +101,7 @@ catkin build elevation_mapping_cupy
 ```
 
 ### Run turtlebot example.
-![Elevation map examples](doc/media/turtlebot.png)
+![Elevation map examples](docs/media/turtlebot.png)
 
 ```bash
 export TURTLEBOT3_MODEL=waffle
