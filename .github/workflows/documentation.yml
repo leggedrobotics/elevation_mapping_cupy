@@ -9,7 +9,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install sphinx sphinx_rtd_theme sphinx-copybutton
-          pip install -r requirements.txt
+          pip install -r docs/requirements.txt
       - name: Sphinx build
         run: |
           sphinx-build docs/source docs/_build
