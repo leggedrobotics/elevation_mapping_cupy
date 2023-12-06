@@ -1,6 +1,6 @@
 # Elevation Mapping cupy
 
-![python tests](https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg)
+![python tests](https://github.com/leggedrobotics/elevation_mapping_cupy/actions/workflows/python-tests.yml/badge.svg)
 
 [Documentation](https://leggedrobotics.github.io/elevation_mapping_cupy/)
 
