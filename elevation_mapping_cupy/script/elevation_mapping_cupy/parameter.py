@@ -12,9 +12,6 @@ from typing import Tuple
 
 @dataclass
 class Parameter(Serializable):
-    """
-    This class holds the parameters for the elevation mapping algorithm.
-    """
     resolution: float = 0.04  # resolution in m.
     subscriber_cfg: dict = field(
         default_factory=lambda: {
