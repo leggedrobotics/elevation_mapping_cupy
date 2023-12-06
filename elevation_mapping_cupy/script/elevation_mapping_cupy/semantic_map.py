@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2022, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 from elevation_mapping_cupy.parameter import Parameter
 import cupy as cp
 import numpy as np

@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2023, Takahiro Miki. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 from abc import ABC, abstractmethod
 import cupy as cp
 from typing import List, Dict, Any
