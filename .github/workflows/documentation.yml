@@ -10,6 +10,7 @@ jobs:
         run: |
           pip install sphinx sphinx_rtd_theme sphinx-copybutton
           pip install -r docs/requirements.txt
+          pip install elevation_mapping_cupy/.
       - name: Sphinx build
         run: |
           sphinx-build docs/source docs/_build
