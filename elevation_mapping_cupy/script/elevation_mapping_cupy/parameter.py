@@ -12,6 +12,69 @@ from typing import Tuple
 
 @dataclass
 class Parameter(Serializable):
+    """
+    This class holds the parameters for the elevation mapping algorithm.
+    
+    Attributes:
+        resolution (float): resolution in m.
+        subscriber_cfg (dict): configuration for the subscriber.
+        additional_layers (list): additional layers for the map.
+        fusion_algorithms (list): list of fusion algorithms.
+        pointcloud_channel_fusions (dict): fusion for pointcloud channels.
+        image_channel_fusions (dict): fusion for image channels.
+        data_type (str): data type for the map.
+        average_weight (float): weight for the average fusion.
+        map_length (float): map's size in m.
+        sensor_noise_factor (float): point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
+        mahalanobis_thresh (float): points outside this distance is outlier.
+        outlier_variance (float): if point is outlier, add this value to the cell.
+        drift_compensation_variance_inlier (float): cells under this value is used for drift compensation.
+        time_variance (float): add this value when update_variance is called.
+        time_interval (float): Time layer is updated with this interval.
+        max_variance (float): maximum variance for each cell.
+        dilation_size (float): dilation filter size before traversability filter.
+        dilation_size_initialize (float): dilation size after the init.
+        drift_compensation_alpha (float): drift compensation alpha for smoother update of drift compensation.
+        traversability_inlier (float): cells with higher traversability are used for drift compensation.
+        wall_num_thresh (float): if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+        min_height_drift_cnt (float): drift compensation only happens if the valid cells are more than this number.
+        max_ray_length (float): maximum length for ray tracing.
+        cleanup_step (float): substitute this value from validity layer at visibility cleanup.
+        cleanup_cos_thresh (float): substitute this value from validity layer at visibility cleanup.
+        min_valid_distance (float): points with shorter distance will be filtered out.
+        max_height_range: float = 1.0  # points higher than this value from sensor will be filtered out to disable ceiling.
+        ramped_height_range_a: float = 0.3  # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+        ramped_height_range_b: float = 1.0  # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+        ramped_height_range_c: float = 0.2  # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+        safe_thresh: float = 0.5  # if traversability is smaller, it is counted as unsafe cell.
+        safe_min_thresh: float = 0.5  # polygon is unsafe if there exists lower traversability than this.
+        max_unsafe_n: int = 20  # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
+        checker_layer: str = "traversability"  # layer used for checking safety
+        min_filter_size: int = 5  # minimum size for the filter
+        min_filter_iteration: int = 3  # minimum number of iterations for the filter
+        max_drift: float = 0.10  # maximum drift for the compensation
+        overlap_clear_range_xy: float = 4.0  # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
+        overlap_clear_range_z: float = 2.0  # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
+        enable_edge_sharpen: bool = True  # enable edge sharpening
+        enable_drift_compensation: bool = True  # enable drift compensation
+        enable_visibility_cleanup: bool = True  # enable visibility cleanup
+        enable_overlap_clearance: bool = True  # enable overlap clearance
+        use_only_above_for_upper_bound: bool = True  # use only above for upper bound
+        use_chainer: bool = True  # use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
+        position_noise_thresh: float = 0.1  # if the position change is bigger than this value, the drift compensation happens.
+        orientation_noise_thresh: float = 0.1  # if the orientation change is bigger than this value, the drift compensation happens.
+        plugin_config_file: str = "config/plugin_config.yaml"  # configuration file for the plugin
+        weight_file: str = "config/weights.dat"  # weight file for traversability filter
+        initial_variance: float = 10.0  # initial variance for each cell.
+        initialized_variance: float = 10.0  # initialized variance for each cell.
+        w1: np.ndarray = field(default_factory=lambda: np.zeros((4, 1, 3, 3)))  # weights for the first layer
+        w2: np.ndarray = field(default_factory=lambda: np.zeros((4, 1, 3, 3)))  # weights for the second layer
+        w3: np.ndarray = field(default_factory=lambda: np.zeros((4, 1, 3, 3)))  # weights for the third layer
+        w_out: np.ndarray = field(default_factory=lambda: np.zeros((1, 12, 1, 1)))  # weights for the output layer
+        true_map_length: float = None  # true length of the map
+        cell_n: int = None  # number of cells in the map
+        true_cell_n: int = None  # true number of cells in the map
+    """
     resolution: float = 0.04  # resolution in m.
     subscriber_cfg: dict = field(
         default_factory=lambda: {
