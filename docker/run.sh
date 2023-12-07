@@ -1,5 +1,5 @@
 #!/bin/bash
-IMAGE_NAME="elevation_mapping_cupy:latest"
+IMAGE_NAME="mktk1117/elevation_mapping_cupy:latest"
 
 # Define environment variables for enabling graphical output for the container.
 XSOCK=/tmp/.X11-unix
