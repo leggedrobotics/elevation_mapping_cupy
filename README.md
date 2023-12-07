@@ -87,10 +87,13 @@ Then install dependencies.
 You can also use docker which already install all dependencies.
 When you run the script it should pull the image.
 
+
 ```zsh
 cd docker
 ./run.sh
 ```
+
+You can also build locally by running `build.sh`.
 
 For more information, check [Document](https://leggedrobotics.github.io/elevation_mapping_cupy/getting_started/installation.html)
 
