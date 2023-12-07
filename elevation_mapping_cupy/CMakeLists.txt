@@ -4,6 +4,7 @@ project(elevation_mapping_cupy)
 
 find_package(PythonInterp 3 REQUIRED)
 find_package(PythonLibs 3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 if(PYTHONLIBS_FOUND)
   message(STATUS "Using Python Libraries at: " ${PYTHON_LIBRARIES})
@@ -54,13 +55,14 @@ include_directories(
   ${PYTHON_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 add_library(elevation_mapping_ros
     src/elevation_mapping_wrapper.cpp
     src/elevation_mapping_ros.cpp)
 
-target_link_libraries(elevation_mapping_ros ${PYTHON_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(elevation_mapping_ros ${PYTHON_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
 target_link_libraries(elevation_mapping_node elevation_mapping_ros)
