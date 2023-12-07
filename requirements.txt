@@ -1,11 +1,10 @@
 ###### Requirements without Version Specifiers ######`
 numpy
-scipy==1.9.2
-dataclasses
+scipy==1.7
 ruamel.yaml
 opencv-python
 simple-parsing
-scikit-image
+scikit-image==0.19
 matplotlib
 catkin-tools
 # cupy
