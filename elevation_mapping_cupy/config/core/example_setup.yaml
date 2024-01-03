@@ -48,7 +48,7 @@ publishers:
     layers: ['elevation', 'traversability', 'variance','rgb']
     basic_layers: ['elevation']
     fps: 5.0
- elevation_map_recordable:
+  elevation_map_recordable:
    layers: ['elevation', 'traversability']
    basic_layers: ['elevation', 'traversability']
    fps: 2.0
