@@ -18,7 +18,7 @@ image_channel_fusions:
 
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance', 'rgb']
+    layers: ['elevation', 'traversability', 'variance', 'rgb', 'anomaly']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
 
@@ -74,3 +74,9 @@ subscribers:
   rear_bpearl:
     topic_name: /robot_self_filter/bpearl_rear/point_cloud
     data_type: pointcloud
+
+  anomaly:
+    topic_name: "/wild_visual_navigation_node/front/traversability"
+    camera_info_topic_name: "/wild_visual_navigation_node/front/camera_info"
+    channel_info_topic_name: "/wild_visual_navigation_node/front/channel_info"
+    data_type: image
