@@ -29,7 +29,6 @@ class MaxLayerFilter(PluginBase):
         min_or_max: str = "max",
         thresholds: list = [False],
         default_value: float = 0.0,
-        apply_sqrt: bool = True,
         **kwargs,
     ):
         super().__init__()
@@ -38,7 +37,6 @@ class MaxLayerFilter(PluginBase):
         self.min_or_max = min_or_max
         self.thresholds = thresholds
         self.default_value = default_value
-        self.apply_sqrt = apply_sqrt
 
     def get_layer_data(
         self,
@@ -121,6 +119,4 @@ class MaxLayerFilter(PluginBase):
             result = cp.min(result, axis=0)
         else:
             result = cp.max(result, axis=0)
-        if self.apply_sqrt:
-            result = cp.square(result)
         return result
