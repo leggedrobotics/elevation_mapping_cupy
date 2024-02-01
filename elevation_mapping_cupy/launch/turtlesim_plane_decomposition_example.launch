@@ -3,7 +3,7 @@
 <launch>
 
     <!-- Launch elevation mapping turtle sim. -->
-    <include file="$(find elevation_mapping_cupy)/launch/turtlesim_example.launch">
+    <include file="$(find elevation_mapping_cupy)/launch/turtlesim_simple_example.launch">
         <arg name="rviz_config" value="$(find elevation_mapping_cupy)/rviz/turtle_segmentation_example.rviz"/>
     </include>
 
