@@ -4,7 +4,7 @@
 #
 from abc import ABC
 import cupy as cp
-from typing import List, Dict
+from typing import List, Dict, Optional
 import importlib
 import inspect
 from dataclasses import dataclass
@@ -39,6 +39,8 @@ class PluginBase(ABC):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        semantic_map: cp.ndarray,
+        semantic_layer_names: List[str],
         *args,
         **kwargs,
     ) -> cp.ndarray:
@@ -50,6 +52,8 @@ class PluginBase(ABC):
             layer_names ():
             plugin_layers ():
             plugin_layer_names ():
+            semantic_map ():
+            semantic_layer_names ():
 
         Run your processing here and return the result.
         layer of elevation_map  0: elevation
@@ -63,6 +67,45 @@ class PluginBase(ABC):
 
         """
         pass
+
+    def get_layer_data(
+        self,
+        elevation_map: cp.ndarray,
+        layer_names: List[str],
+        plugin_layers: cp.ndarray,
+        plugin_layer_names: List[str],
+        semantic_map: cp.ndarray,
+        semantic_layer_names: List[str],
+        name: str,
+    ) -> Optional[cp.ndarray]:
+        """
+        Retrieve a copy of the layer data from the elevation, plugin, or semantic maps based on the layer name.
+
+        Args:
+            elevation_map (cp.ndarray): The elevation map containing various layers.
+            layer_names (List[str]): A list of names for each layer in the elevation map.
+            plugin_layers (cp.ndarray): The plugin layers containing additional data.
+            plugin_layer_names (List[str]): A list of names for each layer in the plugin layers.
+            semantic_map (cp.ndarray): The semantic map containing various layers.
+            semantic_layer_names (List[str]): A list of names for each layer in the semantic map.
+            name (str): The name of the layer to retrieve.
+
+        Returns:
+            Optional[cp.ndarray]: A copy of the requested layer as a cupy ndarray if found, otherwise None.
+        """
+        if name in layer_names:
+            idx = layer_names.index(name)
+            layer = elevation_map[idx].copy()
+        elif name in plugin_layer_names:
+            idx = plugin_layer_names.index(name)
+            layer = plugin_layers[idx].copy()
+        elif name in semantic_layer_names:
+            idx = semantic_layer_names.index(name)
+            layer = semantic_map[idx].copy()
+        else:
+            print(f"Could not find layer {name}!")
+            layer = None
+        return layer
 
 
 class PluginManager(object):
@@ -152,11 +195,22 @@ class PluginManager(object):
                 self.layers[idx] = self.plugins[idx](elevation_map, layer_names, self.layers, self.layer_names)
             elif n_param == 7:
                 self.layers[idx] = self.plugins[idx](
-                    elevation_map, layer_names, self.layers, self.layer_names, semantic_map, semantic_params,
+                    elevation_map,
+                    layer_names,
+                    self.layers,
+                    self.layer_names,
+                    semantic_map,
+                    semantic_params,
                 )
             elif n_param == 8:
                 self.layers[idx] = self.plugins[idx](
-                    elevation_map, layer_names, self.layers, self.layer_names, semantic_map, semantic_params, rotation,
+                    elevation_map,
+                    layer_names,
+                    self.layers,
+                    self.layer_names,
+                    semantic_map,
+                    semantic_params,
+                    rotation,
                 )
             else:
                 self.layers[idx] = self.plugins[idx](
