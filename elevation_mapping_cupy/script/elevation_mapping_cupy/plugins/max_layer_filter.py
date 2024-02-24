@@ -39,30 +39,6 @@ class MaxLayerFilter(PluginBase):
         self.thresholds = thresholds
         self.default_value = default_value
 
-    # def get_layer_data(
-    #     self,
-    #     elevation_map,
-    #     layer_names,
-    #     plugin_layers,
-    #     plugin_layer_names,
-    #     semantic_map,
-    #     semantic_layer_names,
-    #     name,
-    # ):
-    #     if name in layer_names:
-    #         idx = layer_names.index(name)
-    #         layer = elevation_map[idx].copy()
-    #     elif name in plugin_layer_names:
-    #         idx = plugin_layer_names.index(name)
-    #         layer = plugin_layers[idx].copy()
-    #     elif name in semantic_layer_names:
-    #         idx = semantic_layer_names.index(name)
-    #         layer = semantic_map[idx].copy()
-    #     else:
-    #         print(f"Could not find layer {name}!")
-    #         layer = None
-    #     return layer
-
     def __call__(
         self,
         elevation_map: cp.ndarray,
