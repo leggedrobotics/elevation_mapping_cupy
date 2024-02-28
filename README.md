@@ -46,13 +46,13 @@ Elevation Mapping for Locomotion and Navigation using GPU
 Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
 
 ```bibtex
-@misc{mikielevation2022,
-    doi = {10.48550/ARXIV.2204.12876},
-    author = {Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
-    keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
-    title = {Elevation Mapping for Locomotion and Navigation using GPU},
-    publisher = {International Conference on Intelligent Robots and Systems (IROS)},
-    year = {2022},
+@inproceedings{miki2022elevation,
+  title={Elevation mapping for locomotion and navigation using gpu},
+  author={Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
+  booktitle={2022 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages={2273--2280},
+  year={2022},
+  organization={IEEE}
 }
 ```
 
@@ -63,11 +63,13 @@ If you use the Multi-modal Elevation Mapping for color or semantic layers, pleas
 Gian Erni, Jonas Frey, Takahiro Miki, Matias Mattamala, Marco Hutter
 
 ```bibtex
-@misc{Erni2023-bs,
-    title = "{MEM}: {Multi-Modal} Elevation Mapping for Robotics and Learning",
-    author = "Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco",
-    publisher = {International Conference on Intelligent Robots and Systems (IROS)},
-    year = {2023},
+@inproceedings{erni2023mem,
+  title={MEM: Multi-Modal Elevation Mapping for Robotics and Learning},
+  author={Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco},
+  booktitle={2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages={11011--11018},
+  year={2023},
+  organization={IEEE}
 }
 ```
 
