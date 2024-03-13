@@ -27,7 +27,11 @@ def exponential_correspondences_to_map_kernel(resolution, width, height, alpha):
             if (valid_correspondence[cell_idx]){
                 int cell_idx_2 = get_map_idx(i, 1);
                 int idx = int(uv_correspondence[cell_idx]) + int(uv_correspondence[cell_idx_2]) * image_width; 
-                new_sem_map[get_map_idx(i, map_idx)] = sem_map[get_map_idx(i, map_idx)] * (1-${alpha}) +  ${alpha} * image_mono[idx];
+                if (isnan( sem_map[get_map_idx(i, map_idx)] )){
+                    new_sem_map[get_map_idx(i, map_idx)] = image_mono[idx];
+                }else{
+                    new_sem_map[get_map_idx(i, map_idx)] = sem_map[get_map_idx(i, map_idx)] * (1-${alpha}) +  ${alpha} * image_mono[idx];
+                }
             }else{
                 new_sem_map[get_map_idx(i, map_idx)] = sem_map[get_map_idx(i, map_idx)];
             }

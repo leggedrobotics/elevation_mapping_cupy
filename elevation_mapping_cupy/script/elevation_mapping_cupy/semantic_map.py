@@ -35,10 +35,10 @@ class SemanticMap:
 
         self.amount_layer_names = len(self.layer_names)
 
-        self.semantic_map = xp.zeros(
-            (self.amount_layer_names, self.param.cell_n, self.param.cell_n), dtype=param.data_type,
+        self.semantic_map = xp.full(
+            (self.amount_layer_names, self.param.cell_n, self.param.cell_n), cp.nan, dtype=param.data_type,
         )
-        self.new_map = xp.zeros((self.amount_layer_names, self.param.cell_n, self.param.cell_n), param.data_type,)
+        self.new_map = xp.full((self.amount_layer_names, self.param.cell_n, self.param.cell_n), cp.nan, param.data_type,)
         # which layers should be reset to zero at each update, per default everyone,
         # if a layer should not be reset, it is defined in compile_kernels function
         self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool8)
@@ -46,7 +46,7 @@ class SemanticMap:
 
     def clear(self):
         """Clear the semantic map."""
-        self.semantic_map *= 0.0
+        self.semantic_map[:,:,:] = cp.nan
 
     def initialize_fusion(self):
         """Initialize the fusion algorithms."""
@@ -88,7 +88,7 @@ class SemanticMap:
             self.layer_names.append(name)
             self.semantic_map = cp.append(
                 self.semantic_map,
-                cp.zeros((1, self.param.cell_n, self.param.cell_n), dtype=self.param.data_type),
+                xp.full((1, self.param.cell_n, self.param.cell_n), cp.nan, dtype=self.param.data_type),
                 axis=0,
             )
             self.new_map = cp.append(
@@ -131,12 +131,12 @@ class SemanticMap:
             shift_value:
         """
         self.semantic_map = cp.roll(self.semantic_map, shift_value, axis=(1, 2))
-        self.pad_value(self.semantic_map, shift_value, value=0.0)
+        self.pad_value(self.semantic_map, shift_value, value=cp.nan)
         self.new_map = cp.roll(self.new_map, shift_value, axis=(1, 2))
-        self.pad_value(self.new_map, shift_value, value=0.0)
+        self.pad_value(self.new_map, shift_value, value=cp.nan)
         for el in self.elements_to_shift.values():
             el = cp.roll(el, shift_value, axis=(1, 2))
-            self.pad_value(el, shift_value, value=0.0)
+            self.pad_value(el, shift_value, value=cp.nan)
 
     def get_fusion(
         self, channels: List[str], channel_fusions: Dict[str, str], layer_specs: Dict[str, str]
@@ -240,7 +240,6 @@ class SemanticMap:
                 self.add_layer(channel)
 
         # Resetting new_map for the layers that are to be deleted
-        self.new_map[self.delete_new_layers] = 0.0
         for fusion in list(set(additional_fusion)):
             # which layers need to be updated with this fusion algorithm
             pcl_ids, layer_ids = self.get_indices_fusion(process_channels, fusion, self.layer_specs_points)
@@ -283,7 +282,7 @@ class SemanticMap:
         process_channels, fusion_methods = self.get_fusion(
             channels, self.param.image_channel_fusions, self.layer_specs_image
         )
-        self.new_map[self.delete_new_layers] = 0.0
+        self.new_map[:,:,:] = cp.nan
         for j, (fusion, channel) in enumerate(zip(fusion_methods, process_channels)):
             if channel not in self.layer_names:
                 print(f"Layer {channel} not found, adding it to the semantic map")
@@ -307,7 +306,7 @@ class SemanticMap:
                 self.semantic_map,
                 self.new_map,
             )
-
+            
     def decode_max(self, mer):
         """Decode the float32 value into two 16 bit value containing the class probability and the class id.
 
