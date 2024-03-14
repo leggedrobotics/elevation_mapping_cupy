@@ -53,15 +53,15 @@ subscribers:
     topic_name: /depth_camera_right/point_cloud_self_filtered
     data_type: pointcloud
 
-  front_wide_angle:
-    topic_name: /wide_angle_camera_front/image_color_rect/compressed
-    camera_info_topic_name: /wide_angle_camera_front/camera_info
-    data_type: image
+  # front_wide_angle:
+  #   topic_name: /wide_angle_camera_front/image_color_rect/compressed
+  #   camera_info_topic_name: /wide_angle_camera_front/camera_info
+  #   data_type: image
 
-  rear_wide_angle:
-    topic_name: /wide_angle_camera_rear/image_color_rect/compressed
-    camera_info_topic_name: /wide_angle_camera_rear/camera_info
-    data_type: image
+  # rear_wide_angle:
+  #   topic_name: /wide_angle_camera_rear/image_color_rect/compressed
+  #   camera_info_topic_name: /wide_angle_camera_rear/camera_info
+  #   data_type: image
 
   velodyne:
     topic_name: /point_cloud_filter/lidar/point_cloud_filtered
