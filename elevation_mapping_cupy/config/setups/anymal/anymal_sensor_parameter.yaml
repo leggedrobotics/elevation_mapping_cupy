@@ -18,7 +18,7 @@ image_channel_fusions:
 
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance', 'rgb', 'anomaly', 'friction', 'stiffness', 'risk']
+    layers: ['elevation', 'traversability', 'variance', 'rgb', 'anomaly', 'friction', 'stiffness', 'risk', 'upper_bound']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
 
@@ -28,7 +28,7 @@ publishers:
     fps: 2.0
 
   filtered_elevation_map:
-    layers: ['inpaint', 'smooth', 'min_filter']
+    layers: ['inpaint', 'smooth', 'min_filter', 'upper_bound']
     basic_layers: ['inpaint']
     fps: 5.0
 
