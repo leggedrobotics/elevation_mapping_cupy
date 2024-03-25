@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Multi-modal elevation mapping’s documentation" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#used-for-various-real-world-applications">Used for Various Real-World Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-features">Key Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subscribed-topics">Subscribed Topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#published-topics">Published Topics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Introduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/getting_started/introduction.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="introduction">
+<span id="id1"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h1>
+<p>The Elevaton Mapping CuPy software package represents an advancement in robotic navigation and locomotion.
+Integrating with the Robot Operating System (ROS) and utilizing GPU acceleration, this framework enhances point cloud registration and ray casting,
+crucial for efficient and accurate robotic movement, particularly in legged robots.</p>
+<section id="used-for-various-real-world-applications">
+<h2>Used for Various Real-World Applications<a class="headerlink" href="#used-for-various-real-world-applications" title="Link to this heading">¶</a></h2>
+<p>This software package has been rigorously tested in challenging environments, including the DARPA Subterranean Challenge,
+demonstrating its effectiveness in complex, real-world scenarios.
+It supports a wide range of applications, from underground exploration to advanced research in legged locomotion and autonomous navigation.</p>
+<ul>
+<li><p><strong>DARPA Subterranean Challenge</strong>: This package was used by Team CERBERUS in the DARPA Subterranean Challenge.</p>
+<p><a class="reference external" href="https://www.subt-cerberus.org/">Team Cerberus</a></p>
+<p><a class="reference external" href="https://www.science.org/doi/10.1126/scirobotics.abp9742">CERBERUS in the DARPA Subterranean Challenge (Science Robotics)</a></p>
+</li>
+<li><p><strong>ESA / ESRIC Space Resources Challenge</strong>: This package was used for the Space Resources Challenge.</p>
+<p><a class="reference external" href="https://www.science.org/doi/full/10.1126/scirobotics.ade9548">Scientific exploration of challenging planetary analog environments with a team of legged robots (Science Robotics)</a></p>
+</li>
+</ul>
+</section>
+<section id="key-features">
+<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Height Drift Compensation</strong>: Tackles state estimation drifts that can create mapping artifacts, ensuring more accurate terrain representation.</p></li>
+<li><p><strong>Visibility Cleanup and Artifact Removal</strong>: Raycasting methods and an exclusion zone feature are designed to remove virtual artifacts and correctly interpret overhanging obstacles, preventing misidentification as walls.</p></li>
+<li><p><strong>Learning-based Traversability Filter</strong>: Assesses terrain traversability using local geometry, improving path planning and navigation.</p></li>
+<li><p><strong>Versatile Locomotion Tools</strong>: Incorporates smoothing filters and plane segmentation, optimizing movement across various terrains.</p></li>
+<li><p><strong>Multi-Modal Elevation Map (MEM) Framework</strong>: Allows seamless integration of diverse data like geometry, semantics, and RGB information, enhancing multi-modal robotic perception.</p></li>
+<li><p><strong>GPU-Enhanced Efficiency</strong>: Facilitates rapid processing of large data structures, crucial for real-time applications.</p></li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<img alt="Overview of multi-modal elevation map structure" src="../_images/overview.png" />
+<p>Overview of our multi-modal elevation map structure. The framework takes multi-modal images (purple) and multi-modal (blue) point clouds as
+input. This data is input into the elevation map by first associating the data to the cells and then fused with different fusion algorithms into the various
+layers of the map. Finally the map can be post-processed with various custom plugins to generate new layers (e.g. traversability) or process layer for
+external components (e.g. line detection).</p>
+</section>
+<section id="subscribed-topics">
+<h2>Subscribed Topics<a class="headerlink" href="#subscribed-topics" title="Link to this heading">¶</a></h2>
+<p>The subscribed topics are specified under <strong>subscribers</strong> parameter.</p>
+<p>Example setup is in <strong>elevation_mapping_cupy/config/core/example_setup.yaml</strong>.</p>
+<ul>
+<li><p><strong>/&lt;point_cloud_topic&gt;</strong> ([sensor_msgs/PointCloud2])</p>
+<p>The point cloud topic. It can have additional channels for RGB, intensity, etc.</p>
+</li>
+<li><p><strong>/&lt;image_topic&gt;</strong> ([sensor_msgs/Image])</p>
+<p>The image topic. It can have additional channels for RGB, semantic probabilities, image features etc.</p>
+</li>
+<li><p><strong>/&lt;camera_info&gt;</strong> ([sensor_msgs/CameraInfo])</p>
+<p>The camera info topic. It is used to project the point cloud into the image plane.</p>
+</li>
+<li><p><strong>/&lt;channel_info&gt;</strong> ([elevation_map_msgs/ChannelInfo])</p>
+<p>If this topic is configured, the node will subscribe to it and use the information to associate the image channels to the elevation map layers.</p>
+</li>
+<li><p><strong>/tf</strong> ([tf/tfMessage])</p>
+<p>The transformation tree.</p>
+</li>
+<li><p>The plane segmentation node subscribes to an elevation map topic ([grid_map_msg/GridMap]). This can be configured in
+<strong>convex_plane_decomposition_ros/config/core/parameters.yaml</strong></p></li>
+</ul>
+</section>
+<section id="published-topics">
+<h2>Published Topics<a class="headerlink" href="#published-topics" title="Link to this heading">¶</a></h2>
+<p>For elevation_mapping_cupy, topics are published as set in the rosparam.
+You can specify which layers to publish in which fps.</p>
+<p>Under publishers, you can specify the topic_name, layers basic_layers and fps.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">publishers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">your_topic_name</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">&#39;list_of_layer_names&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;layer1&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;layer2&#39;</span><span class="w"> </span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Choose from &#39;elevation&#39;, &#39;variance&#39;, &#39;traversability&#39;, &#39;time&#39; + plugin layers</span>
+<span class="w">      </span><span class="nt">basic_layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">&#39;list</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">basic</span><span class="nv"> </span><span class="s">layers&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;layer1&#39;</span><span class="w"> </span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.</span>
+<span class="w">      </span><span class="nt">fps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w">  </span><span class="c1"># Publish rate. Use smaller value than `map_acquire_fps`.</span>
+</pre></div>
+</div>
+<p>Example setting in <cite>config/parameters.yaml</cite>.</p>
+<ul>
+<li><p><strong>elevation_map_raw</strong> ([grid_map_msg/GridMap])</p>
+<p>The entire elevation map.</p>
+</li>
+<li><p><strong>elevation_map_recordable</strong> ([grid_map_msg/GridMap])</p>
+<p>The entire elevation map with slower update rate for visualization and logging.</p>
+</li>
+<li><p><strong>elevation_map_filter</strong> ([grid_map_msg/GridMap])</p>
+<p>The filtered maps using plugins.</p>
+</li>
+</ul>
+<p>The plane segmentation node publishes the following:</p>
+<ul>
+<li><p><strong>planar_terrain</strong>  ([convex_plane_decomposition_msgs/PlanarTerrain])</p>
+<p>A custom message that contains the full segmentation as a map together with the boundary information.</p>
+</li>
+<li><p><strong>filtered_map</strong>  ([grid_map_msg/GridMap])</p>
+<p>A grid map message to visualize the segmentation and some intermediate results. This information is also part of <strong>planar_terrain</strong>.</p>
+</li>
+<li><p><strong>boundaries</strong>  ([visualization_msgs/MarkerArray])</p>
+<p>A set of polygons that trace the boundaries of the segmented region. Holes and boundaries of a single region are published as separate
+markers with the same color.</p>
+</li>
+<li><p><strong>insets</strong>  ([visualization_msgs/PolygonArray])</p>
+<p>A set of polygons that are at a slight inward offset from <strong>boundaries</strong>. There might be more insets than boundaries since the inward
+shift can cause a single region to break down into multiple when narrow passages exist.</p>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Multi-modal elevation mapping’s documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

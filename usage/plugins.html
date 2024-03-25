@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plugins &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Parameters" href="parameters.html" />
+    <link rel="prev" title="Tutorial" href="../getting_started/tutorial.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#"> Plugins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#create-a-plugin">Create a plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#existing-plugins">Existing plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-elevation_mapping_cupy.plugins.min_filter">1. Min filter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.min_filter.MinFilter"><code class="docutils literal notranslate"><span class="pre">MinFilter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#inpainting">2. Inpainting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-elevation_mapping_cupy.plugins.smooth_filter">3. Smooth Filter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.smooth_filter.SmoothFilter"><code class="docutils literal notranslate"><span class="pre">SmoothFilter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-elevation_mapping_cupy.plugins.robot_centric_elevation">4. Robot centric elevation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.robot_centric_elevation.RobotCentricElevation"><code class="docutils literal notranslate"><span class="pre">RobotCentricElevation</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-elevation_mapping_cupy.plugins.semantic_filter">5. Semantic Filter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter"><code class="docutils literal notranslate"><span class="pre">SemanticFilter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-elevation_mapping_cupy.plugins.semantic_traversability">6. Semantic traversability</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.semantic_traversability.SemanticTraversability"><code class="docutils literal notranslate"><span class="pre">SemanticTraversability</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-elevation_mapping_cupy.plugins.features_pca">7. Features PCA</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.features_pca.FeaturesPca"><code class="docutils literal notranslate"><span class="pre">FeaturesPca</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Plugins</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/usage/plugins.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="plugins">
+<span id="id1"></span><h1>Plugins<a class="headerlink" href="#plugins" title="Link to this heading">¶</a></h1>
+<p>You can add your own plugin to process the elevation map and publish as a layer in GridMap message.</p>
+<p>This page is structured in two parts:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#create-a-plugin">Create a plugin</a></p></li>
+<li><p><a class="reference internal" href="#existing-plugins">Existing plugins</a></p></li>
+</ul>
+<section id="create-a-plugin">
+<h2>Create a plugin<a class="headerlink" href="#create-a-plugin" title="Link to this heading">¶</a></h2>
+<p>You can create your own plugin to process the elevation map and publish as a layer in GridMap message.</p>
+<p>Let’s look at the example.</p>
+<p>First, create your plugin file in <cite>elevation_mapping_cupy/script/plugins/</cite> and save as <cite>example.py</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">cupy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">.plugin_manager</span> <span class="kn">import</span> <span class="n">PluginBase</span>
+
+
+<span class="k">class</span> <span class="nc">NameOfYourPlugin</span><span class="p">(</span><span class="n">PluginBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">add_value</span><span class="p">:</span><span class="nb">float</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">add_value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+        <span class="n">elevation_map</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">plugin_layers</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">plugin_layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">semantic_layers</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">semantic_layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="o">*</span><span class="n">args</span>
+    <span class="p">)</span><span class="o">-&gt;</span><span class="n">cp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="c1"># Process maps here</span>
+        <span class="c1"># You can also use the other plugin&#39;s data through plugin_layers.</span>
+        <span class="n">new_elevation</span> <span class="o">=</span> <span class="n">elevation_map</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_value</span>
+        <span class="k">return</span> <span class="n">new_elevation</span>
+</pre></div>
+</div>
+<p>Then, add your plugin setting to <cite>config/plugin_config.yaml</cite></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">example</span><span class="p">:</span><span class="w">                                      </span><span class="c1"># Name of your filter</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;example&quot;</span><span class="w">                             </span><span class="c1"># Specify the name of your plugin (the name of your file name).</span>
+<span class="w">  </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                                </span><span class="c1"># weather to load this plugin</span>
+<span class="w">  </span><span class="nt">fill_nan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                              </span><span class="c1"># Fill nans to invalid cells of elevation layer.</span>
+<span class="w">  </span><span class="nt">is_height_layer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                       </span><span class="c1"># If this is a height layer (such as elevation) or not (such as traversability)</span>
+<span class="w">  </span><span class="nt">layer_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;example_layer&quot;</span><span class="w">                 </span><span class="c1"># The layer name.</span>
+<span class="w">  </span><span class="nt">extra_params</span><span class="p">:</span><span class="w">                               </span><span class="c1"># This params are passed to the plugin class on initialization.</span>
+<span class="w">    </span><span class="nt">add_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span><span class="w">                            </span><span class="c1"># Example param</span>
+
+<span class="nt">example_large</span><span class="p">:</span><span class="w">                                </span><span class="c1"># You can apply same filter with different name.</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;example&quot;</span><span class="w">                             </span><span class="c1"># Specify the name of your plugin (the name of your file name).</span>
+<span class="w">  </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                                </span><span class="c1"># weather to load this plugin</span>
+<span class="w">  </span><span class="nt">fill_nan</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                              </span><span class="c1"># Fill nans to invalid cells of elevation layer.</span>
+<span class="w">  </span><span class="nt">is_height_layer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                       </span><span class="c1"># If this is a height layer (such as elevation) or not (such as traversability)</span>
+<span class="w">  </span><span class="nt">layer_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;example_layer_large&quot;</span><span class="w">           </span><span class="c1"># The layer name.</span>
+<span class="w">  </span><span class="nt">extra_params</span><span class="p">:</span><span class="w">                               </span><span class="c1"># This params are passed to the plugin class on initialization.</span>
+<span class="w">    </span><span class="nt">add_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span><span class="w">                          </span><span class="c1"># Example param with larger value.</span>
+</pre></div>
+</div>
+<p>Finally, add your layer name to publishers in your config. You can create a new topic or add to existing topics.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">plugin_example</span><span class="p">:</span><span class="w"> </span><span class="c1"># Topic name</span>
+<span class="w">  </span><span class="nt">layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">&#39;elevation&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;example_layer&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;example_layer_large&#39;</span><span class="w"> </span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">basic_layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">&#39;example_layer&#39;</span><span class="w"> </span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">fps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">        </span><span class="c1"># The plugin is called with this fps.</span>
+</pre></div>
+</div>
+</section>
+<section id="existing-plugins">
+<h2>Existing plugins<a class="headerlink" href="#existing-plugins" title="Link to this heading">¶</a></h2>
+<p>This section lists the plugins that are already installed and available for use.</p>
+<section id="module-elevation_mapping_cupy.plugins.min_filter">
+<span id="min-filter"></span><h3>1. Min filter<a class="headerlink" href="#module-elevation_mapping_cupy.plugins.min_filter" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.min_filter.MinFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.min_filter.</span></span><span class="sig-name descname"><span class="pre">MinFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.min_filter.MinFilter" title="Link to this definition">¶</a></dt>
+<dd><p>This is a filter to fill in invalid cells with minimum values around.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_n</strong> (<em>int</em>) – width of the elevation map.</p></li>
+<li><p><strong>dilation_size</strong> (<em>int</em>) – The size of the patch to search for minimum value for each iteration.</p></li>
+<li><p><strong>iteration_n</strong> (<em>int</em>) – The number of iteration to repeat the same filter.</p></li>
+<li><p><strong>(</strong><strong>)</strong> (<em>**kwargs</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.min_filter.MinFilter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.min_filter.MinFilter.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="inpainting">
+<h3>2. Inpainting<a class="headerlink" href="#inpainting" title="Link to this heading">¶</a></h3>
+</section>
+<section id="module-elevation_mapping_cupy.plugins.smooth_filter">
+<span id="smooth-filter"></span><h3>3. Smooth Filter<a class="headerlink" href="#module-elevation_mapping_cupy.plugins.smooth_filter" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.smooth_filter.SmoothFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.smooth_filter.</span></span><span class="sig-name descname"><span class="pre">SmoothFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_layer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'elevation'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.smooth_filter.SmoothFilter" title="Link to this definition">¶</a></dt>
+<dd><p>SmoothFilter is a class that applies a smoothing filter
+to the elevation map. The filter is applied to the layer specified by the input_layer_name parameter.
+If the specified layer is not found, the filter is applied to the elevation layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_n</strong> (<em>int</em>) – The width and height of the elevation map. Default is 100.</p></li>
+<li><p><strong>input_layer_name</strong> (<em>str</em>) – The name of the layer to which the filter should be applied. Default is “elevation”.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.smooth_filter.SmoothFilter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_layer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'elevation'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.smooth_filter.SmoothFilter.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-elevation_mapping_cupy.plugins.robot_centric_elevation">
+<span id="robot-centric-elevation"></span><h3>4. Robot centric elevation<a class="headerlink" href="#module-elevation_mapping_cupy.plugins.robot_centric_elevation" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.robot_centric_elevation.RobotCentricElevation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.robot_centric_elevation.</span></span><span class="sig-name descname"><span class="pre">RobotCentricElevation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.robot_centric_elevation.RobotCentricElevation" title="Link to this definition">¶</a></dt>
+<dd><p>Generates an elevation map with respect to the robot frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_n</strong> (<em>int</em>) – </p></li>
+<li><p><strong>resolution</strong> (<em>ruamel.yaml.scalarfloat.ScalarFloat</em>) – </p></li>
+<li><p><strong>threshold</strong> (<em>ruamel.yaml.scalarfloat.ScalarFloat</em>) – </p></li>
+<li><p><strong>use_threshold</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>(</strong><strong>)</strong> (<em>**kwargs</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.robot_centric_elevation.RobotCentricElevation.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.robot_centric_elevation.RobotCentricElevation.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-elevation_mapping_cupy.plugins.semantic_filter">
+<span id="semantic-filter"></span><h3>5. Semantic Filter<a class="headerlink" href="#module-elevation_mapping_cupy.plugins.semantic_filter" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.semantic_filter.</span></span><span class="sig-name descname"><span class="pre">SemanticFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['person',</span> <span class="pre">'grass']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter" title="Link to this definition">¶</a></dt>
+<dd><p>This is a filter to create a one hot encoded map of the class probabilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_n</strong> (<em>int</em>) – width and height of the elevation map.</p></li>
+<li><p><strong>classes</strong> (<em>list</em>) – List of classes for semantic filtering. Default is [“person”, “grass”].</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['person',</span> <span class="pre">'grass']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.color_map">
+<span class="sig-name descname"><span class="pre">color_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalized</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.color_map" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a color map with N different colors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>N</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of colors in the map. Defaults to 256.</p></li>
+<li><p><strong>normalized</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the colors are normalized to the range [0,1]. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The color map.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.transform_color">
+<span class="sig-name descname"><span class="pre">transform_color</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.transform_color" title="Link to this definition">¶</a></dt>
+<dd><p>Transforms the color map into a format that can be used for semantic filtering.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The transformed color map.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>cp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.get_layer_indices">
+<span class="sig-name descname"><span class="pre">get_layer_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_filter.SemanticFilter.get_layer_indices" title="Link to this definition">¶</a></dt>
+<dd><p>Get the indices of the layers that are to be processed using regular expressions.
+:param layer_names: List of layer names.
+:type layer_names: List[str]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of layer indices.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-elevation_mapping_cupy.plugins.semantic_traversability">
+<span id="semantic-traversability"></span><h3>6. Semantic traversability<a class="headerlink" href="#module-elevation_mapping_cupy.plugins.semantic_traversability" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_traversability.SemanticTraversability">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.semantic_traversability.</span></span><span class="sig-name descname"><span class="pre">SemanticTraversability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['traversability']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[0.5]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['traversability']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_traversability.SemanticTraversability" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts traversability and elevations from layers and generates an updated traversability that can be used by checker.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_n</strong> (<em>int</em>) – The width and height of the elevation map.</p></li>
+<li><p><strong>layers</strong> (<em>list</em>) – List of layers for semantic traversability. Default is [“traversability”].</p></li>
+<li><p><strong>thresholds</strong> (<em>list</em>) – List of thresholds for each layer. Default is [0.5].</p></li>
+<li><p><strong>type</strong> (<em>list</em>) – List of types for each layer. Default is [“traversability”].</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.semantic_traversability.SemanticTraversability.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['traversability']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thresholds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[0.5]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['traversability']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.semantic_traversability.SemanticTraversability.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-elevation_mapping_cupy.plugins.features_pca">
+<span id="features-pca"></span><h3>7. Features PCA<a class="headerlink" href="#module-elevation_mapping_cupy.plugins.features_pca" title="Link to this heading">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.features_pca.FeaturesPca">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.features_pca.</span></span><span class="sig-name descname"><span class="pre">FeaturesPca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.features_pca.FeaturesPca" title="Link to this definition">¶</a></dt>
+<dd><p>This is a filter to create a pca layer of the semantic features in the map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell_n</strong> (<em>int</em>) – width and height of the elevation map.</p></li>
+<li><p><strong>classes</strong> (<em>ruamel.yaml.comments.CommentedSeq</em>) – </p></li>
+<li><p><strong>(</strong><strong>)</strong> (<em>**kwargs</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.features_pca.FeaturesPca.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.features_pca.FeaturesPca.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.features_pca.FeaturesPca.get_layer_indices">
+<span class="sig-name descname"><span class="pre">get_layer_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.features_pca.FeaturesPca.get_layer_indices" title="Link to this definition">¶</a></dt>
+<dd><p>Get the indices of the layers that are to be processed using regular expressions.
+:param layer_names: List of layer names.
+:type layer_names: List[str]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of layer indices.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../getting_started/tutorial.html" class="btn btn-neutral float-left" title="Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="parameters.html" class="btn btn-neutral float-right" title="Parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dockers">Dockers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#on-desktop-or-laptop-with-nvidia-gpu">On Desktop or Laptop with NVIDIA GPU</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cuda-cudnn">CUDA &amp; cuDNN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-dependencies">Python dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Cupy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#traversability-filter">Traversability filter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ros-package-dependencies">ROS package dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#on-jetson">On Jetson</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">CUDA CuDNN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Python dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ros-dependencies">ROS dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plane-segmentation-dependencies">Plane segmentation dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#opencv">OpenCV</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#eigen">Eigen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cgal">CGAL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#semantic-sensors">Semantic Sensors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Python dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#build">Build</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/getting_started/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<p>This section provides instructions for installing the necessary dependencies for the project. The installation process includes setting up CUDA &amp; cuDNN, installing Python dependencies, and configuring Cupy.
+Follow the instructions carefully to avoid any installation issues.</p>
+<section id="dockers">
+<h2>Dockers<a class="headerlink" href="#dockers" title="Link to this heading">¶</a></h2>
+<p>We provide a docker setup for the project.
+To build the docker image, run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;project_root&gt;/docker
+./build.sh
+</pre></div>
+</div>
+<p>To run the docker image, run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;project_root&gt;/docker
+./run.sh
+</pre></div>
+</div>
+<p>This will start the docker container and mount the home directory of the host machine to the docker container.
+After you clone the project repository into your catkin_ws, you can build the packages inside the docker container.
+To build the packages inside the docker container, follow the instructions in the <a class="reference external" href="#build">Build section</a> of this document.</p>
+</section>
+<section id="on-desktop-or-laptop-with-nvidia-gpu">
+<h2>On Desktop or Laptop with NVIDIA GPU<a class="headerlink" href="#on-desktop-or-laptop-with-nvidia-gpu" title="Link to this heading">¶</a></h2>
+<section id="cuda-cudnn">
+<h3>CUDA &amp; cuDNN<a class="headerlink" href="#cuda-cudnn" title="Link to this heading">¶</a></h3>
+<p>If you do not have CUDA and cuDNN installed, please install them first.
+The tested versions are CUDA10.2, 11.6</p>
+<p><a class="reference external" href="https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu-installation">CUDA</a>
+<a class="reference external" href="https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html#install-linux">cuDNN</a></p>
+<p>You can check how to install <a class="reference internal" href="cuda_installation.html#id1"><span class="std std-ref">here</span></a>.</p>
+</section>
+<section id="python-dependencies">
+<h3>Python dependencies<a class="headerlink" href="#python-dependencies" title="Link to this heading">¶</a></h3>
+<p>You will need</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://cupy.chainer.org/">cupy</a></p></li>
+<li><p><a class="reference external" href="https://www.numpy.org/">numpy</a></p></li>
+<li><p><a class="reference external" href="https://www.scipy.org/">scipy</a></p></li>
+<li><p><a class="reference external" href="https://github.com/Toblerity/Shapely">shapely==1.7.1</a></p></li>
+</ul>
+<p>For traversability filter, either of</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/">torch</a></p></li>
+<li><p><a class="reference external" href="https://chainer.org/">chainer</a></p></li>
+</ul>
+<p>Optionally, OpenCV for inpainting filter.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://opencv.org/">opencv-python</a></p></li>
+</ul>
+<p>Install <cite>numpy</cite>, <cite>scipy</cite>, <cite>shapely</cite>, <cite>opencv-python</cite> with the following command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h3>Cupy<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<p>cupy can be installed with specific CUDA versions. (On jetson, only “from source” i.e. <cite>pip install cupy</cite> could work)
+For CUDA 10.2</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda102
+</pre></div>
+</div>
+<p>For CUDA 11.0</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda110
+</pre></div>
+</div>
+<p>For CUDA 11.1</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda111
+</pre></div>
+</div>
+<p>For CUDA 11.2</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda112
+</pre></div>
+</div>
+<p>For CUDA 11.3</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda113
+</pre></div>
+</div>
+<p>For CUDA 11.4</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda114
+</pre></div>
+</div>
+<p>For CUDA 11.5</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda115
+</pre></div>
+</div>
+<p>For CUDA 11.6</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda116
+</pre></div>
+</div>
+<p>(Install CuPy from source)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>cupy
+</pre></div>
+</div>
+</section>
+<section id="traversability-filter">
+<h3>Traversability filter<a class="headerlink" href="#traversability-filter" title="Link to this heading">¶</a></h3>
+<p>You can choose either pytorch, or chainer to run the CNN based traversability filter.
+Install by following the official documents.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pytorch.org/">torch</a></p></li>
+<li><p><a class="reference external" href="https://chainer.org/">chainer</a></p></li>
+</ul>
+<p>Pytorch uses ~2GB more GPU memory than Chainer, but runs a bit faster.
+Use parameter <cite>use_chainer</cite> to select which backend to use.</p>
+</section>
+<section id="ros-package-dependencies">
+<h3>ROS package dependencies<a class="headerlink" href="#ros-package-dependencies" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/ipab-slmc/pybind11_catkin">pybind11_catkin</a></p></li>
+<li><p><a class="reference external" href="https://github.com/ANYbotics/grid_map">grid_map</a></p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-noetic-pybind11-catkin
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-noetic-grid-map-core<span class="w"> </span>ros-noetic-grid-map-msgs
+</pre></div>
+</div>
+</section>
+</section>
+<section id="on-jetson">
+<h2>On Jetson<a class="headerlink" href="#on-jetson" title="Link to this heading">¶</a></h2>
+<section id="id5">
+<h3>CUDA CuDNN<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<p><cite>CUDA</cite> and <cite>cuDNN</cite> can be installed via apt. It comes with nvidia-jetpack. The tested version is jetpack 4.5 with L4T 32.5.0.</p>
+</section>
+<section id="id6">
+<h3>Python dependencies<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<p>On jetson, you need the version for its CPU arch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl<span class="w"> </span>-O<span class="w"> </span>torch-1.8.0-cp36-cp36m-linux_aarch64.whl
+pip3<span class="w"> </span>install<span class="w"> </span>Cython
+pip3<span class="w"> </span>install<span class="w"> </span><span class="nv">numpy</span><span class="o">==</span><span class="m">1</span>.19.5<span class="w"> </span>torch-1.8.0-cp36-cp36m-linux_aarch64.whl
+</pre></div>
+</div>
+<p>Also, you need to install cupy with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>cupy
+</pre></div>
+</div>
+<p>This builds the packages from source so it would take time.</p>
+</section>
+<section id="ros-dependencies">
+<h3>ROS dependencies<a class="headerlink" href="#ros-dependencies" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/ipab-slmc/pybind11_catkin">pybind11_catkin</a></p></li>
+<li><p><a class="reference external" href="https://github.com/ANYbotics/grid_map">grid_map</a></p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-melodic-pybind11-catkin
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-melodic-grid-map-core<span class="w"> </span>ros-melodic-grid-map-msgs
+</pre></div>
+</div>
+<p>Also, on jetson you need fortran (should already be installed).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>gfortran
+</pre></div>
+</div>
+<p>If the Jetson is set up with Jetpack 4.5 with ROS Melodic the following package is additionally required:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:ros/filters.git<span class="w"> </span>-b<span class="w"> </span>noetic-devel
+</pre></div>
+</div>
+</section>
+</section>
+<section id="plane-segmentation-dependencies">
+<h2>Plane segmentation dependencies<a class="headerlink" href="#plane-segmentation-dependencies" title="Link to this heading">¶</a></h2>
+<section id="opencv">
+<h3>OpenCV<a class="headerlink" href="#opencv" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libopencv-dev
+</pre></div>
+</div>
+</section>
+<section id="eigen">
+<h3>Eigen<a class="headerlink" href="#eigen" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libeigen3-dev
+</pre></div>
+</div>
+</section>
+<section id="cgal">
+<h3>CGAL<a class="headerlink" href="#cgal" title="Link to this heading">¶</a></h3>
+<p>CGAL5 is required. It will be automatically downloaded and installed into the catkin workspace by the cgal5_catkin package. Make sure you
+have the third-party libaries installed on you machine:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libgmp-dev
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libmpfr-dev
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>libboost-all-dev
+</pre></div>
+</div>
+</section>
+</section>
+<section id="semantic-sensors">
+<h2>Semantic Sensors<a class="headerlink" href="#semantic-sensors" title="Link to this heading">¶</a></h2>
+<p>Elevation mapping node can receive multi-modal point cloud and image topics.
+In this example, we use semantic segmentation models to process color images and publish those topics.</p>
+<section id="id9">
+<h3>Python dependencies<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>torchvision<span class="w"> </span>scikit-learn
+</pre></div>
+</div>
+<p>Detectron</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;git+https://github.com/facebookresearch/detectron2.git&#39;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="build">
+<h2>Build<a class="headerlink" href="#build" title="Link to this heading">¶</a></h2>
+<p>After installing all the dependencies, you can build the packages.
+Clone the project repository into your catkin_ws/src directory.
+Then, build the packages with catkin.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;your_catkin_ws&gt;
+catkin<span class="w"> </span>build<span class="w"> </span>elevation_mapping_cupy<span class="w">  </span><span class="c1"># The core package</span>
+catkin<span class="w"> </span>build<span class="w"> </span>convex_plane_decomposition_ros<span class="w">  </span><span class="c1"># If you want to use plane segmentation</span>
+catkin<span class="w"> </span>build<span class="w"> </span>semantic_sensor<span class="w">  </span><span class="c1"># If you want to use semantic sensors</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

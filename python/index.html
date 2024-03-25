@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python software &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Elevation mapping cupy" href="elevation_mapping.html" />
+    <link rel="prev" title="Semantics" href="../usage/semantics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#"> Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html">Elevation mapping cupy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html">Semantic Pointcloud</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python software</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/python/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-software">
+<h1>Python software<a class="headerlink" href="#python-software" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="elevation_mapping.html">Elevation mapping cupy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap"><code class="docutils literal notranslate"><span class="pre">ElevationMap</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.__init__"><code class="docutils literal notranslate"><span class="pre">ElevationMap.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.clear"><code class="docutils literal notranslate"><span class="pre">ElevationMap.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_position"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.move"><code class="docutils literal notranslate"><span class="pre">ElevationMap.move()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.move_to"><code class="docutils literal notranslate"><span class="pre">ElevationMap.move_to()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.pad_value"><code class="docutils literal notranslate"><span class="pre">ElevationMap.pad_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_xy"><code class="docutils literal notranslate"><span class="pre">ElevationMap.shift_map_xy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_z"><code class="docutils literal notranslate"><span class="pre">ElevationMap.shift_map_z()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.compile_kernels"><code class="docutils literal notranslate"><span class="pre">ElevationMap.compile_kernels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.compile_image_kernels"><code class="docutils literal notranslate"><span class="pre">ElevationMap.compile_image_kernels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_translation_to_map_center"><code class="docutils literal notranslate"><span class="pre">ElevationMap.shift_translation_to_map_center()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_map_with_kernel"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_map_with_kernel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.clear_overlap_map"><code class="docutils literal notranslate"><span class="pre">ElevationMap.clear_overlap_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_additive_mean_error"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_additive_mean_error()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_variance"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_variance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_time"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_upper_bound_with_valid_elevation"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_upper_bound_with_valid_elevation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.input_pointcloud"><code class="docutils literal notranslate"><span class="pre">ElevationMap.input_pointcloud()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.input_image"><code class="docutils literal notranslate"><span class="pre">ElevationMap.input_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_normal"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_normal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.process_map_for_publish"><code class="docutils literal notranslate"><span class="pre">ElevationMap.process_map_for_publish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_elevation"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_elevation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_variance"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_variance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_traversability"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_traversability()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_time"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_upper_bound"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_upper_bound()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_is_upper_bound"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_is_upper_bound()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.xp_of_array"><code class="docutils literal notranslate"><span class="pre">ElevationMap.xp_of_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.copy_to_cpu"><code class="docutils literal notranslate"><span class="pre">ElevationMap.copy_to_cpu()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.exists_layer"><code class="docutils literal notranslate"><span class="pre">ElevationMap.exists_layer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_map_with_name_ref"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_map_with_name_ref()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_maps"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_normal_maps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_ref"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_normal_ref()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_layer"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_layer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_polygon_traversability"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_polygon_traversability()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_untraversable_polygon"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_untraversable_polygon()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.elevation_mapping.ElevationMap.initialize_map"><code class="docutils literal notranslate"><span class="pre">ElevationMap.initialize_map()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap"><code class="docutils literal notranslate"><span class="pre">SemanticMap</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.__init__"><code class="docutils literal notranslate"><span class="pre">SemanticMap.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.clear"><code class="docutils literal notranslate"><span class="pre">SemanticMap.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.initialize_fusion"><code class="docutils literal notranslate"><span class="pre">SemanticMap.initialize_fusion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.update_fusion_setting"><code class="docutils literal notranslate"><span class="pre">SemanticMap.update_fusion_setting()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.add_layer"><code class="docutils literal notranslate"><span class="pre">SemanticMap.add_layer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.pad_value"><code class="docutils literal notranslate"><span class="pre">SemanticMap.pad_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.shift_map_xy"><code class="docutils literal notranslate"><span class="pre">SemanticMap.shift_map_xy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_fusion"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_fusion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_matching_fusion"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_matching_fusion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_layer_indices"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_layer_indices()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_indices_fusion"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_indices_fusion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.update_layers_pointcloud"><code class="docutils literal notranslate"><span class="pre">SemanticMap.update_layers_pointcloud()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.update_layers_image"><code class="docutils literal notranslate"><span class="pre">SemanticMap.update_layers_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.decode_max"><code class="docutils literal notranslate"><span class="pre">SemanticMap.decode_max()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_map_with_name"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_map_with_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_rgb"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_rgb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_semantic"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_semantic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.process_map_for_publish"><code class="docutils literal notranslate"><span class="pre">SemanticMap.process_map_for_publish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.semantic_map.SemanticMap.get_index"><code class="docutils literal notranslate"><span class="pre">SemanticMap.get_index()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter"><code class="docutils literal notranslate"><span class="pre">Parameter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.resolution"><code class="docutils literal notranslate"><span class="pre">Parameter.resolution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.subscriber_cfg"><code class="docutils literal notranslate"><span class="pre">Parameter.subscriber_cfg</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.additional_layers"><code class="docutils literal notranslate"><span class="pre">Parameter.additional_layers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.fusion_algorithms"><code class="docutils literal notranslate"><span class="pre">Parameter.fusion_algorithms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.pointcloud_channel_fusions"><code class="docutils literal notranslate"><span class="pre">Parameter.pointcloud_channel_fusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.image_channel_fusions"><code class="docutils literal notranslate"><span class="pre">Parameter.image_channel_fusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.data_type"><code class="docutils literal notranslate"><span class="pre">Parameter.data_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.average_weight"><code class="docutils literal notranslate"><span class="pre">Parameter.average_weight</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.map_length"><code class="docutils literal notranslate"><span class="pre">Parameter.map_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.sensor_noise_factor"><code class="docutils literal notranslate"><span class="pre">Parameter.sensor_noise_factor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.mahalanobis_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.mahalanobis_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.outlier_variance"><code class="docutils literal notranslate"><span class="pre">Parameter.outlier_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.drift_compensation_variance_inlier"><code class="docutils literal notranslate"><span class="pre">Parameter.drift_compensation_variance_inlier</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.time_variance"><code class="docutils literal notranslate"><span class="pre">Parameter.time_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.time_interval"><code class="docutils literal notranslate"><span class="pre">Parameter.time_interval</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.max_variance"><code class="docutils literal notranslate"><span class="pre">Parameter.max_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.dilation_size"><code class="docutils literal notranslate"><span class="pre">Parameter.dilation_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.dilation_size_initialize"><code class="docutils literal notranslate"><span class="pre">Parameter.dilation_size_initialize</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.drift_compensation_alpha"><code class="docutils literal notranslate"><span class="pre">Parameter.drift_compensation_alpha</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.traversability_inlier"><code class="docutils literal notranslate"><span class="pre">Parameter.traversability_inlier</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.wall_num_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.wall_num_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.min_height_drift_cnt"><code class="docutils literal notranslate"><span class="pre">Parameter.min_height_drift_cnt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.max_ray_length"><code class="docutils literal notranslate"><span class="pre">Parameter.max_ray_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.cleanup_step"><code class="docutils literal notranslate"><span class="pre">Parameter.cleanup_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.cleanup_cos_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.cleanup_cos_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.min_valid_distance"><code class="docutils literal notranslate"><span class="pre">Parameter.min_valid_distance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.max_height_range"><code class="docutils literal notranslate"><span class="pre">Parameter.max_height_range</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.ramped_height_range_a"><code class="docutils literal notranslate"><span class="pre">Parameter.ramped_height_range_a</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.ramped_height_range_b"><code class="docutils literal notranslate"><span class="pre">Parameter.ramped_height_range_b</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.ramped_height_range_c"><code class="docutils literal notranslate"><span class="pre">Parameter.ramped_height_range_c</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.safe_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.safe_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.safe_min_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.safe_min_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.max_unsafe_n"><code class="docutils literal notranslate"><span class="pre">Parameter.max_unsafe_n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.checker_layer"><code class="docutils literal notranslate"><span class="pre">Parameter.checker_layer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.min_filter_size"><code class="docutils literal notranslate"><span class="pre">Parameter.min_filter_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.min_filter_iteration"><code class="docutils literal notranslate"><span class="pre">Parameter.min_filter_iteration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.max_drift"><code class="docutils literal notranslate"><span class="pre">Parameter.max_drift</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.overlap_clear_range_xy"><code class="docutils literal notranslate"><span class="pre">Parameter.overlap_clear_range_xy</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.overlap_clear_range_z"><code class="docutils literal notranslate"><span class="pre">Parameter.overlap_clear_range_z</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.enable_edge_sharpen"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_edge_sharpen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.enable_drift_compensation"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_drift_compensation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.enable_visibility_cleanup"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_visibility_cleanup</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.enable_overlap_clearance"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_overlap_clearance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.use_only_above_for_upper_bound"><code class="docutils literal notranslate"><span class="pre">Parameter.use_only_above_for_upper_bound</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.use_chainer"><code class="docutils literal notranslate"><span class="pre">Parameter.use_chainer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.position_noise_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.position_noise_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.orientation_noise_thresh"><code class="docutils literal notranslate"><span class="pre">Parameter.orientation_noise_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.plugin_config_file"><code class="docutils literal notranslate"><span class="pre">Parameter.plugin_config_file</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.weight_file"><code class="docutils literal notranslate"><span class="pre">Parameter.weight_file</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.initial_variance"><code class="docutils literal notranslate"><span class="pre">Parameter.initial_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.initialized_variance"><code class="docutils literal notranslate"><span class="pre">Parameter.initialized_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.w1"><code class="docutils literal notranslate"><span class="pre">Parameter.w1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.w2"><code class="docutils literal notranslate"><span class="pre">Parameter.w2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.w3"><code class="docutils literal notranslate"><span class="pre">Parameter.w3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.w_out"><code class="docutils literal notranslate"><span class="pre">Parameter.w_out</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.true_map_length"><code class="docutils literal notranslate"><span class="pre">Parameter.true_map_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.cell_n"><code class="docutils literal notranslate"><span class="pre">Parameter.cell_n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.true_cell_n"><code class="docutils literal notranslate"><span class="pre">Parameter.true_cell_n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id0"><code class="docutils literal notranslate"><span class="pre">Parameter.resolution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id1"><code class="docutils literal notranslate"><span class="pre">Parameter.subscriber_cfg</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id2"><code class="docutils literal notranslate"><span class="pre">Parameter.additional_layers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id3"><code class="docutils literal notranslate"><span class="pre">Parameter.fusion_algorithms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id4"><code class="docutils literal notranslate"><span class="pre">Parameter.pointcloud_channel_fusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id5"><code class="docutils literal notranslate"><span class="pre">Parameter.image_channel_fusions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id6"><code class="docutils literal notranslate"><span class="pre">Parameter.average_weight</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id7"><code class="docutils literal notranslate"><span class="pre">Parameter.map_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id8"><code class="docutils literal notranslate"><span class="pre">Parameter.sensor_noise_factor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id9"><code class="docutils literal notranslate"><span class="pre">Parameter.mahalanobis_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id10"><code class="docutils literal notranslate"><span class="pre">Parameter.outlier_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id11"><code class="docutils literal notranslate"><span class="pre">Parameter.drift_compensation_variance_inlier</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id12"><code class="docutils literal notranslate"><span class="pre">Parameter.time_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id13"><code class="docutils literal notranslate"><span class="pre">Parameter.time_interval</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id14"><code class="docutils literal notranslate"><span class="pre">Parameter.max_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id15"><code class="docutils literal notranslate"><span class="pre">Parameter.dilation_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id16"><code class="docutils literal notranslate"><span class="pre">Parameter.dilation_size_initialize</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id17"><code class="docutils literal notranslate"><span class="pre">Parameter.drift_compensation_alpha</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id18"><code class="docutils literal notranslate"><span class="pre">Parameter.traversability_inlier</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id19"><code class="docutils literal notranslate"><span class="pre">Parameter.wall_num_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id20"><code class="docutils literal notranslate"><span class="pre">Parameter.min_height_drift_cnt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id21"><code class="docutils literal notranslate"><span class="pre">Parameter.max_ray_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id22"><code class="docutils literal notranslate"><span class="pre">Parameter.cleanup_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id23"><code class="docutils literal notranslate"><span class="pre">Parameter.cleanup_cos_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id24"><code class="docutils literal notranslate"><span class="pre">Parameter.min_valid_distance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id25"><code class="docutils literal notranslate"><span class="pre">Parameter.max_height_range</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id26"><code class="docutils literal notranslate"><span class="pre">Parameter.ramped_height_range_a</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id27"><code class="docutils literal notranslate"><span class="pre">Parameter.ramped_height_range_b</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id28"><code class="docutils literal notranslate"><span class="pre">Parameter.ramped_height_range_c</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id29"><code class="docutils literal notranslate"><span class="pre">Parameter.safe_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id30"><code class="docutils literal notranslate"><span class="pre">Parameter.safe_min_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id31"><code class="docutils literal notranslate"><span class="pre">Parameter.max_unsafe_n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id32"><code class="docutils literal notranslate"><span class="pre">Parameter.checker_layer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id33"><code class="docutils literal notranslate"><span class="pre">Parameter.min_filter_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id34"><code class="docutils literal notranslate"><span class="pre">Parameter.min_filter_iteration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id35"><code class="docutils literal notranslate"><span class="pre">Parameter.max_drift</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id36"><code class="docutils literal notranslate"><span class="pre">Parameter.overlap_clear_range_xy</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id37"><code class="docutils literal notranslate"><span class="pre">Parameter.overlap_clear_range_z</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id38"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_edge_sharpen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id39"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_drift_compensation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id40"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_visibility_cleanup</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id41"><code class="docutils literal notranslate"><span class="pre">Parameter.enable_overlap_clearance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id42"><code class="docutils literal notranslate"><span class="pre">Parameter.use_only_above_for_upper_bound</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id43"><code class="docutils literal notranslate"><span class="pre">Parameter.use_chainer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id44"><code class="docutils literal notranslate"><span class="pre">Parameter.position_noise_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id45"><code class="docutils literal notranslate"><span class="pre">Parameter.orientation_noise_thresh</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id46"><code class="docutils literal notranslate"><span class="pre">Parameter.plugin_config_file</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id47"><code class="docutils literal notranslate"><span class="pre">Parameter.weight_file</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id48"><code class="docutils literal notranslate"><span class="pre">Parameter.initial_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id49"><code class="docutils literal notranslate"><span class="pre">Parameter.initialized_variance</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id50"><code class="docutils literal notranslate"><span class="pre">Parameter.w1</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id51"><code class="docutils literal notranslate"><span class="pre">Parameter.w2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id52"><code class="docutils literal notranslate"><span class="pre">Parameter.w3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id53"><code class="docutils literal notranslate"><span class="pre">Parameter.w_out</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id54"><code class="docutils literal notranslate"><span class="pre">Parameter.true_map_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id55"><code class="docutils literal notranslate"><span class="pre">Parameter.cell_n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#id56"><code class="docutils literal notranslate"><span class="pre">Parameter.true_cell_n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.load_weights"><code class="docutils literal notranslate"><span class="pre">Parameter.load_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.get_names"><code class="docutils literal notranslate"><span class="pre">Parameter.get_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.get_types"><code class="docutils literal notranslate"><span class="pre">Parameter.get_types()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.set_value"><code class="docutils literal notranslate"><span class="pre">Parameter.set_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.get_value"><code class="docutils literal notranslate"><span class="pre">Parameter.get_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.update"><code class="docutils literal notranslate"><span class="pre">Parameter.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.parameter.Parameter.__init__"><code class="docutils literal notranslate"><span class="pre">Parameter.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginParams"><code class="docutils literal notranslate"><span class="pre">PluginParams</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.name"><code class="docutils literal notranslate"><span class="pre">PluginParams.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.layer_name"><code class="docutils literal notranslate"><span class="pre">PluginParams.layer_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.fill_nan"><code class="docutils literal notranslate"><span class="pre">PluginParams.fill_nan</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.is_height_layer"><code class="docutils literal notranslate"><span class="pre">PluginParams.is_height_layer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.__init__"><code class="docutils literal notranslate"><span class="pre">PluginParams.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginBase"><code class="docutils literal notranslate"><span class="pre">PluginBase</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginBase.__init__"><code class="docutils literal notranslate"><span class="pre">PluginBase.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginBase.get_layer_data"><code class="docutils literal notranslate"><span class="pre">PluginBase.get_layer_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager"><code class="docutils literal notranslate"><span class="pre">PluginManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.__init__"><code class="docutils literal notranslate"><span class="pre">PluginManager.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.init"><code class="docutils literal notranslate"><span class="pre">PluginManager.init()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.load_plugin_settings"><code class="docutils literal notranslate"><span class="pre">PluginManager.load_plugin_settings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_names"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_layer_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_names"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_plugin_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_index_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_plugin_index_with_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_index_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_layer_index_with_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.update_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.update_with_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_map_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_map_with_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="elevation_mapping.html#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_param_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_param_with_name()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="semantic_sensor.html">Semantic Pointcloud</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.name"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.interpolation"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.interpolation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.model"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.patch_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.patch_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dim"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dim</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dropout"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dropout</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dino_feat_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dino_feat_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.projection_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.projection_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.input_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.input_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.feature_image_topic"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.feature_image_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.pcl"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.pcl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.__init__"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.sensor_name"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.sensor_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.topic_name"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.topic_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.channels"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.channels</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.fusion"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.fusion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.semantic_segmentation"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.semantic_segmentation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_model"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.segmentation_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_segmentation_image"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.publish_segmentation_image</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_image_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.segmentation_image_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.pub_all"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.pub_all</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.show_label_legend"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.show_label_legend</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_info_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.cam_info_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.image_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.image_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.depth_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.depth_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_frame"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.cam_frame</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.confidence</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.confidence_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_threshold"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.confidence_threshold</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_extractor"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.feature_extractor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_feature_image"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.publish_feature_image</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_config"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.feature_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.__init__"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.pointcloud_parameters.PointcloudParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.name"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.interpolation"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.interpolation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.model"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.patch_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.patch_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.dim"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dim</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.dropout"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dropout</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.dino_feat_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dino_feat_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.projection_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.projection_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.input_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.input_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.pcl"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.pcl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.__init__"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.FeatureExtractorParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter"><code class="docutils literal notranslate"><span class="pre">ImageParameter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.image_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.image_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.semantic_segmentation"><code class="docutils literal notranslate"><span class="pre">ImageParameter.semantic_segmentation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.segmentation_model"><code class="docutils literal notranslate"><span class="pre">ImageParameter.segmentation_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.show_label_legend"><code class="docutils literal notranslate"><span class="pre">ImageParameter.show_label_legend</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.channels"><code class="docutils literal notranslate"><span class="pre">ImageParameter.channels</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.publish_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.publish_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.publish_image_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.publish_image_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.channel_info_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.channel_info_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.feature_extractor"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feature_extractor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.feature_config"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feature_config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.feature_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feature_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.feat_image_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feat_image_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.feat_channel_info_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feat_channel_info_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.resize"><code class="docutils literal notranslate"><span class="pre">ImageParameter.resize</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.camera_info_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.camera_info_topic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.__init__"><code class="docutils literal notranslate"><span class="pre">ImageParameter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.image_parameters.ImageParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">ImageParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.utils.encode_max"><code class="docutils literal notranslate"><span class="pre">encode_max()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="semantic_sensor.html#semantic_sensor.utils.decode_max"><code class="docutils literal notranslate"><span class="pre">decode_max()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../usage/semantics.html" class="btn btn-neutral float-left" title="Semantics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="elevation_mapping.html" class="btn btn-neutral float-right" title="Elevation mapping cupy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

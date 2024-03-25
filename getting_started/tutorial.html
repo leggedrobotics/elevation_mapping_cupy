@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plugins" href="../usage/plugins.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#run">Run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-turtlebot-example">Run TurtleBot example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#errors">Errors</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tutorial</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/getting_started/tutorial.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial">
+<span id="id1"></span><h1>Tutorial<a class="headerlink" href="#tutorial" title="Link to this heading">¶</a></h1>
+<p>This tutorial will guide you through the basic usage of the elevation mapping cupy.
+You will learn how to run the plane segmentation node, the sensor node, and the TurtleBot example.</p>
+<p>If you want to use your own custom plugins, please refer to the <a class="reference internal" href="../usage/plugins.html#plugins"><span class="std std-ref">Plugins</span></a>.</p>
+<section id="run">
+<h2>Run<a class="headerlink" href="#run" title="Link to this heading">¶</a></h2>
+<p>Basic usage.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>elevation_mapping_cupy.launch
+</pre></div>
+</div>
+<p>For the plane segmentation node</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>convex_plane_decomposition_ros<span class="w"> </span>convex_plane_decomposition.launch
+</pre></div>
+</div>
+<p>For the sensor node</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>semantic_sensor<span class="w"> </span>semantic_pointcloud.launch
+roslaunch<span class="w"> </span>semantic_sensor<span class="w"> </span>semantic_image.launch
+</pre></div>
+</div>
+</section>
+<section id="run-turtlebot-example">
+<h2>Run TurtleBot example<a class="headerlink" href="#run-turtlebot-example" title="Link to this heading">¶</a></h2>
+<p>First, install turtlebot simulation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-noetic-turtlebot3-gazebo<span class="w"> </span>ros-noetic-turtlebot3-teleop
+</pre></div>
+</div>
+<p>Then, you can run the examples. For the basic version:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+roslaunch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_simple_example.launch
+</pre></div>
+</div>
+<p>For fusing semantics into the map such as rgb from a multi modal pointcloud:</p>
+<img alt="Elevation map examples" src="../_images/turtlebot.png" />
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+roslaunch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_semantic_pointcloud_example.launch
+</pre></div>
+</div>
+<p>For fusing semantics into the map such as rgb semantics or features from an image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+roslaunch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_semantic_image_example.launch
+</pre></div>
+</div>
+<p>Or, for the version including plane segmentation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>catkin<span class="w"> </span>build<span class="w"> </span>convex_plane_decomposition_ros
+<span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+roslaunch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_plane_decomposition_example.launch
+</pre></div>
+</div>
+<p>To control the robot with a keyboard, a new terminal window needs to be opened.
+Then run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+roslaunch<span class="w"> </span>turtlebot3_teleop<span class="w"> </span>turtlebot3_teleop_key.launch
+</pre></div>
+</div>
+<p>Velocity inputs can be sent to the robot by pressing the keys <cite>a</cite>, <cite>w</cite>, <cite>d</cite>, <cite>x</cite>. To stop the robot completely, press <cite>s</cite>.</p>
+</section>
+<section id="errors">
+<h2>Errors<a class="headerlink" href="#errors" title="Link to this heading">¶</a></h2>
+<p>If you build with the install flag under ros melodic, you might get issues with the modules not found:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>terminate<span class="w"> </span>called<span class="w"> </span>after<span class="w"> </span>throwing<span class="w"> </span>an<span class="w"> </span>instance<span class="w"> </span>of<span class="w"> </span><span class="s1">&#39;pybind11::error_already_set&#39;</span>
+<span class="w">  </span>what<span class="o">()</span>:<span class="w">  </span>ModuleNotFoundError:<span class="w"> </span>No<span class="w"> </span>module<span class="w"> </span>named<span class="w"> </span><span class="s1">&#39;elevation_mapping_cupy&#39;</span>
+</pre></div>
+</div>
+<p>This is because python3 modules are installed into a different location.</p>
+<p>This can be fixed by including also the python3 modules location in the <cite>PYTHONPATH</cite> by adding following line into the launch file:</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;env</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;PYTHONPATH&quot;</span><span class="w"> </span><span class="na">value=</span><span class="s">&quot;&lt;path_to_your_install&gt;/lib/python3/dist-packages:$(env PYTHONPATH)&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>If you get error such as</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Make Error at /usr/share/cmake-3.16/Modules/FindPackageHandleStandardArgs.cmake:146 (message):
+  Could NOT find PythonInterp: Found unsuitable version &quot;2.7.18&quot;, but
+  required is at least &quot;3&quot; (found /usr/bin/python)
+</pre></div>
+</div>
+<p>Build with option.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>catkin<span class="w"> </span>build<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>-DPYTHON_EXECUTABLE<span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>python3<span class="k">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../usage/plugins.html" class="btn btn-neutral float-right" title="Plugins" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

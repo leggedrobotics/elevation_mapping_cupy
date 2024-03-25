@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semantic Pointcloud &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Elevation mapping cupy" href="elevation_mapping.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Python</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="elevation_mapping.html">Elevation mapping cupy</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Semantic Pointcloud</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.name"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.interpolation"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.interpolation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.model"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.patch_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.patch_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dim"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dropout"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dropout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dino_feat_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dino_feat_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.projection_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.projection_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.input_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.input_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.feature_image_topic"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.feature_image_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.pcl"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.pcl</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.__init__"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.sensor_name"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.sensor_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.topic_name"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.topic_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.channels"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.channels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.fusion"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.fusion</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.semantic_segmentation"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.semantic_segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_model"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.segmentation_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_segmentation_image"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.publish_segmentation_image</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_image_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.segmentation_image_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.pub_all"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.pub_all</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.show_label_legend"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.show_label_legend</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_info_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.cam_info_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.image_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.image_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.depth_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.depth_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_frame"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.cam_frame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_topic"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.confidence_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_threshold"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.confidence_threshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_extractor"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.feature_extractor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_feature_image"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.publish_feature_image</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_config"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.feature_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.__init__"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">PointcloudParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.name"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.interpolation"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.interpolation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.model"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.patch_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.patch_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.dim"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.dropout"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dropout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.dino_feat_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.dino_feat_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.projection_type"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.projection_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.input_size"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.input_size</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.pcl"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.pcl</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.__init__"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">FeatureExtractorParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter"><code class="docutils literal notranslate"><span class="pre">ImageParameter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.image_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.image_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.semantic_segmentation"><code class="docutils literal notranslate"><span class="pre">ImageParameter.semantic_segmentation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.segmentation_model"><code class="docutils literal notranslate"><span class="pre">ImageParameter.segmentation_model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.show_label_legend"><code class="docutils literal notranslate"><span class="pre">ImageParameter.show_label_legend</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.channels"><code class="docutils literal notranslate"><span class="pre">ImageParameter.channels</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.publish_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.publish_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.publish_image_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.publish_image_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.channel_info_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.channel_info_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.feature_extractor"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feature_extractor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.feature_config"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feature_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.feature_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feature_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.feat_image_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feat_image_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.feat_channel_info_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.feat_channel_info_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.resize"><code class="docutils literal notranslate"><span class="pre">ImageParameter.resize</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.camera_info_topic"><code class="docutils literal notranslate"><span class="pre">ImageParameter.camera_info_topic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.__init__"><code class="docutils literal notranslate"><span class="pre">ImageParameter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#semantic_sensor.image_parameters.ImageParameter.decode_into_subclasses"><code class="docutils literal notranslate"><span class="pre">ImageParameter.decode_into_subclasses</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic_sensor.utils.encode_max"><code class="docutils literal notranslate"><span class="pre">encode_max()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic_sensor.utils.decode_max"><code class="docutils literal notranslate"><span class="pre">decode_max()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Python software</a></li>
+      <li class="breadcrumb-item active">Semantic Pointcloud</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/python/semantic_sensor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-semantic_sensor.pointcloud_parameters">
+<span id="semantic-pointcloud"></span><span id="semantic-sensor"></span><h1>Semantic Pointcloud<a class="headerlink" href="#module-semantic_sensor.pointcloud_parameters" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">semantic_sensor.pointcloud_parameters.</span></span><span class="sig-name descname"><span class="pre">FeatureExtractorParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'DINO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'vit_small'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dino_feat_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'feat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'nonlinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/semantic_sensor/feature_image'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pcl:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DINO'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.interpolation">
+<span class="sig-name descname"><span class="pre">interpolation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'bilinear'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.interpolation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'vit_small'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.patch_size">
+<span class="sig-name descname"><span class="pre">patch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.patch_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dim" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dropout">
+<span class="sig-name descname"><span class="pre">dropout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dropout" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dino_feat_type">
+<span class="sig-name descname"><span class="pre">dino_feat_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'feat'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.dino_feat_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.projection_type">
+<span class="sig-name descname"><span class="pre">projection_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'nonlinear'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.projection_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.input_size">
+<span class="sig-name descname"><span class="pre">input_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Field(name=None,type=None,default=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object&gt;,default_factory=&lt;function</span> <span class="pre">PointcloudParameter.&lt;lambda&gt;&gt;,init=True,repr=True,hash=None,compare=True,metadata=mappingproxy({}),kw_only=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object&gt;,_field_type=None)</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.input_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.feature_image_topic">
+<span class="sig-name descname"><span class="pre">feature_image_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/semantic_sensor/feature_image'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.feature_image_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.pcl">
+<span class="sig-name descname"><span class="pre">pcl</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.pcl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'DINO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'vit_small'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dino_feat_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'feat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'nonlinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/semantic_sensor/feature_image'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pcl:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.decode_into_subclasses">
+<span class="sig-name descname"><span class="pre">decode_into_subclasses</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter.decode_into_subclasses" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">semantic_sensor.pointcloud_parameters.</span></span><span class="sig-name descname"><span class="pre">PointcloudParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sensor_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'camera'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/elvation_mapping/pointcloud_semantic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fusion:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_segmentation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'lraspp_mobilenet_v3_large'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_segmentation_image:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/semantic_sensor/sem_seg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pub_all:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_label_legend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cam_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/depth/camera_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/left/image_rect_color'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/depth/depth_registered'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cam_frame:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'zed2i_right_camera_optical_frame'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/confidence/confidence_map'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_threshold:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_extractor:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_feature_image:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_config:</span> <span class="pre">semantic_sensor.pointcloud_parameters.FeatureExtractorParameter</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'semantic_sensor.pointcloud_parameters.FeatureExtractorParameter'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.sensor_name">
+<span class="sig-name descname"><span class="pre">sensor_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'camera'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.sensor_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.topic_name">
+<span class="sig-name descname"><span class="pre">topic_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/elvation_mapping/pointcloud_semantic'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.topic_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.channels">
+<span class="sig-name descname"><span class="pre">channels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.channels" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.fusion">
+<span class="sig-name descname"><span class="pre">fusion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.fusion" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.semantic_segmentation">
+<span class="sig-name descname"><span class="pre">semantic_segmentation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.semantic_segmentation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_model">
+<span class="sig-name descname"><span class="pre">segmentation_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'lraspp_mobilenet_v3_large'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_segmentation_image">
+<span class="sig-name descname"><span class="pre">publish_segmentation_image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_segmentation_image" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_image_topic">
+<span class="sig-name descname"><span class="pre">segmentation_image_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/semantic_sensor/sem_seg'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.segmentation_image_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.pub_all">
+<span class="sig-name descname"><span class="pre">pub_all</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.pub_all" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.show_label_legend">
+<span class="sig-name descname"><span class="pre">show_label_legend</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.show_label_legend" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_info_topic">
+<span class="sig-name descname"><span class="pre">cam_info_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/zed2i/zed_node/depth/camera_info'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_info_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.image_topic">
+<span class="sig-name descname"><span class="pre">image_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/zed2i/zed_node/left/image_rect_color'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.image_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.depth_topic">
+<span class="sig-name descname"><span class="pre">depth_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/zed2i/zed_node/depth/depth_registered'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.depth_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_frame">
+<span class="sig-name descname"><span class="pre">cam_frame</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'zed2i_right_camera_optical_frame'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.cam_frame" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_topic">
+<span class="sig-name descname"><span class="pre">confidence_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/zed2i/zed_node/confidence/confidence_map'</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_threshold">
+<span class="sig-name descname"><span class="pre">confidence_threshold</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.confidence_threshold" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_extractor">
+<span class="sig-name descname"><span class="pre">feature_extractor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_extractor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_feature_image">
+<span class="sig-name descname"><span class="pre">publish_feature_image</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.publish_feature_image" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_config">
+<span class="sig-name descname"><span class="pre">feature_config</span></span><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.feature_config" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#semantic_sensor.pointcloud_parameters.FeatureExtractorParameter" title="semantic_sensor.pointcloud_parameters.FeatureExtractorParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureExtractorParameter</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sensor_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'camera'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/elvation_mapping/pointcloud_semantic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fusion:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_segmentation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'lraspp_mobilenet_v3_large'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_segmentation_image:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/semantic_sensor/sem_seg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pub_all:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_label_legend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cam_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/depth/camera_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/left/image_rect_color'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/depth/depth_registered'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cam_frame:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'zed2i_right_camera_optical_frame'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/zed2i/zed_node/confidence/confidence_map'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence_threshold:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_extractor:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_feature_image:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_config:</span> <span class="pre">~semantic_sensor.pointcloud_parameters.FeatureExtractorParameter</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'semantic_sensor.pointcloud_parameters.FeatureExtractorParameter'&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.pointcloud_parameters.PointcloudParameter.decode_into_subclasses">
+<span class="sig-name descname"><span class="pre">decode_into_subclasses</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.pointcloud_parameters.PointcloudParameter.decode_into_subclasses" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-semantic_sensor.image_parameters">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">semantic_sensor.image_parameters.</span></span><span class="sig-name descname"><span class="pre">FeatureExtractorParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'DINO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'vit_small'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dino_feat_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'feat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'nonlinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pcl:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DINO'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.interpolation">
+<span class="sig-name descname"><span class="pre">interpolation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'bilinear'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.interpolation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'vit_small'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.patch_size">
+<span class="sig-name descname"><span class="pre">patch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.patch_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.dim" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.dropout">
+<span class="sig-name descname"><span class="pre">dropout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.dropout" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.dino_feat_type">
+<span class="sig-name descname"><span class="pre">dino_feat_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'feat'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.dino_feat_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.projection_type">
+<span class="sig-name descname"><span class="pre">projection_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'nonlinear'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.projection_type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.input_size">
+<span class="sig-name descname"><span class="pre">input_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.input_size" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.pcl">
+<span class="sig-name descname"><span class="pre">pcl</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.pcl" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'DINO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'vit_small'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dino_feat_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'feat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_type:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'nonlinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pcl:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.FeatureExtractorParameter.decode_into_subclasses">
+<span class="sig-name descname"><span class="pre">decode_into_subclasses</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.FeatureExtractorParameter.decode_into_subclasses" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">semantic_sensor.image_parameters.</span></span><span class="sig-name descname"><span class="pre">ImageParameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/alphasense_driver_ros/cam4/debayered'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_segmentation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'detectron_coco_panoptic_fpn_R_101_3x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_label_legend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg_img'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'channel_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_extractor:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_config:</span> <span class="pre">semantic_sensor.image_parameters.FeatureExtractorParameter</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'semantic_sensor.image_parameters.FeatureExtractorParameter'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg_feat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feat_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg_feat_im'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feat_channel_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'feat_channel_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'camera_info'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.image_topic">
+<span class="sig-name descname"><span class="pre">image_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'/alphasense_driver_ros/cam4/debayered'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.image_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.semantic_segmentation">
+<span class="sig-name descname"><span class="pre">semantic_segmentation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.semantic_segmentation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.segmentation_model">
+<span class="sig-name descname"><span class="pre">segmentation_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'detectron_coco_panoptic_fpn_R_101_3x'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.segmentation_model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.show_label_legend">
+<span class="sig-name descname"><span class="pre">show_label_legend</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.show_label_legend" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.channels">
+<span class="sig-name descname"><span class="pre">channels</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.channels" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.publish_topic">
+<span class="sig-name descname"><span class="pre">publish_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'semantic_seg'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.publish_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.publish_image_topic">
+<span class="sig-name descname"><span class="pre">publish_image_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'semantic_seg_img'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.publish_image_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.channel_info_topic">
+<span class="sig-name descname"><span class="pre">channel_info_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'channel_info'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.channel_info_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.feature_extractor">
+<span class="sig-name descname"><span class="pre">feature_extractor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.feature_extractor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.feature_config">
+<span class="sig-name descname"><span class="pre">feature_config</span></span><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.feature_config" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#semantic_sensor.image_parameters.FeatureExtractorParameter" title="semantic_sensor.image_parameters.FeatureExtractorParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">FeatureExtractorParameter</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.feature_topic">
+<span class="sig-name descname"><span class="pre">feature_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'semantic_seg_feat'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.feature_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.feat_image_topic">
+<span class="sig-name descname"><span class="pre">feat_image_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'semantic_seg_feat_im'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.feat_image_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.feat_channel_info_topic">
+<span class="sig-name descname"><span class="pre">feat_channel_info_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'feat_channel_info'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.feat_channel_info_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.resize">
+<span class="sig-name descname"><span class="pre">resize</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.resize" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.camera_info_topic">
+<span class="sig-name descname"><span class="pre">camera_info_topic</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'camera_info'</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.camera_info_topic" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/alphasense_driver_ros/cam4/debayered'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_segmentation:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segmentation_model:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'detectron_coco_panoptic_fpn_R_101_3x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_label_legend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels:</span> <span class="pre">list</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publish_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg_img'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'channel_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_extractor:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_config:</span> <span class="pre">~semantic_sensor.image_parameters.FeatureExtractorParameter</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'semantic_sensor.image_parameters.FeatureExtractorParameter'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg_feat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feat_image_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'semantic_seg_feat_im'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feat_channel_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'feat_channel_info'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resize:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_info_topic:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'camera_info'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="semantic_sensor.image_parameters.ImageParameter.decode_into_subclasses">
+<span class="sig-name descname"><span class="pre">decode_into_subclasses</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#semantic_sensor.image_parameters.ImageParameter.decode_into_subclasses" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function" id="module-semantic_sensor.utils">
+<dt class="sig sig-object py" id="semantic_sensor.utils.encode_max">
+<span class="sig-prename descclassname"><span class="pre">semantic_sensor.utils.</span></span><span class="sig-name descname"><span class="pre">encode_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">maxim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#semantic_sensor.utils.encode_max" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="semantic_sensor.utils.decode_max">
+<span class="sig-prename descclassname"><span class="pre">semantic_sensor.utils.</span></span><span class="sig-name descname"><span class="pre">decode_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mer</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#semantic_sensor.utils.decode_max" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="elevation_mapping.html" class="btn btn-neutral float-left" title="Elevation mapping cupy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

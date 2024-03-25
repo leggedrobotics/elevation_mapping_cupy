@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semantics &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python software" href="../python/index.html" />
+    <link rel="prev" title="Plane Segmentation" href="plane_segmentation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"> Semantics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#semantic-extension-of-the-elevation-map">semantic extension of the elevation map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#semantic-pointcloud">Semantic pointcloud</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Semantics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/usage/semantics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="semantics">
+<span id="id1"></span><h1>Semantics<a class="headerlink" href="#semantics" title="Link to this heading">¶</a></h1>
+<p>The elevation map is also able to include semantic information.
+The workflow consists in two elements:</p>
+<ul class="simple">
+<li><p>semantic extension of the elevation map</p></li>
+<li><p>semantic pointcloud</p></li>
+</ul>
+<section id="semantic-extension-of-the-elevation-map">
+<h2>semantic extension of the elevation map<a class="headerlink" href="#semantic-extension-of-the-elevation-map" title="Link to this heading">¶</a></h2>
+<p>The semantics of the elevation map can be configured in the sensor parameter file.
+The sensor parameter file contains all the topics the map subscribes to.</p>
+<p>The channels and fusion lists are the parameters that define the semantics of the elevation map.
+The channel is a list that contains the name of the semantic layers as well as the name of the channel
+of the data that the elevation map node subscribes to.
+The fusion list indicates the fusion algorithm type which is applied to the data to fuse the
+sensor data into the map.</p>
+<p>There are different fusion algorithms types:</p>
+<ul class="simple">
+<li><p>average</p></li>
+</ul>
+<hr class="docutils" />
+<blockquote>
+<div><blockquote>
+<div><p>Takes the average of all the points that fall within the same cell and average them
+and then takes a weighted average of the existing value.</p>
+</div></blockquote>
+<p>use case: semantic features</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>bayesian_inference:</p></li>
+</ul>
+<hr class="docutils" />
+<blockquote>
+<div><p>Employs a gaussian bayesian inference at each iteration. Where we use the psoterior
+of the previous iteration as the prior to the new iteration.</p>
+<p>use case: semantic features</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>class_average</p></li>
+</ul>
+<hr class="docutils" />
+<blockquote>
+<div><blockquote>
+<div><p>Takes the average of all the points that fall within the same cell and average them
+and then takes a weighted average of the existing value. If the previous value is zero</p>
+</div></blockquote>
+<p>it weights the previous value with a zero weight.</p>
+<p>use case: class probabilities</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>class_bayesian</p></li>
+</ul>
+<hr class="docutils" />
+<blockquote>
+<div><p>Employs a bayesian inference of a categorical distribution with a dirichlet prior.
+The alpha hyperparameters of the dirichlet prior are updated at every iteration,
+such that the posterior of iteration t-1 is the prior of t.</p>
+<p>use case: class probabilities</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>color</p></li>
+</ul>
+<hr class="docutils" />
+<blockquote>
+<div><p>The color is subscribed as a uint32. The color of the cell is the result of the average of
+all the points within that cell.</p>
+<p>use case: rgb color information</p>
+</div></blockquote>
+</section>
+<section id="semantic-pointcloud">
+<h2>Semantic pointcloud<a class="headerlink" href="#semantic-pointcloud" title="Link to this heading">¶</a></h2>
+<p>Sensors do not always directly provide all semantic information.
+The semantic pointcloud is a ROS node that subscribes to stereo cameras and generates a
+multichannel pointcloud containing semantic information additionally to the goemteric position of
+the points.
+The pointcloud is also configured from the sensor_parameter file.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plane_segmentation.html" class="btn btn-neutral float-left" title="Plane Segmentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../python/index.html" class="btn btn-neutral float-right" title="Python software" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

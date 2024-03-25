@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parameters &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plane Segmentation" href="plane_segmentation.html" />
+    <link rel="prev" title="Plugins" href="plugins.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="plugins.html"> Plugins</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"> Parameters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#robot-setup-configurations">Robot Setup Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-configurations">Plugin configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core-parameters">Core Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sensor-parameter">Sensor parameter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Parameters</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/usage/parameters.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="parameters">
+<span id="id1"></span><h1>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h1>
+<p>There are three parameter files:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#robot-setup-configurations">Robot Setup Configurations</a></p></li>
+<li><p><a class="reference internal" href="#plugin-configurations">Plugin configurations</a></p></li>
+<li><p><a class="reference internal" href="#core-parameters">Core Parameters</a></p></li>
+<li><p><a class="reference internal" href="#sensor-parameter">Sensor parameter</a></p></li>
+</ol>
+<section id="robot-setup-configurations">
+<h2>Robot Setup Configurations<a class="headerlink" href="#robot-setup-configurations" title="Link to this heading">¶</a></h2>
+<p>Such as Publishers and subscribers</p>
+<div class="code yaml highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#### Plugins ########</span>
+<span class="n">plugin_config_file</span><span class="p">:</span> <span class="s1">&#39;$(rospack find elevation_mapping_cupy)/config/core/plugin_config.yaml&#39;</span>
+
+<span class="c1">#### Channel Fusions ########</span>
+<span class="n">pointcloud_channel_fusions</span><span class="p">:</span>
+  <span class="n">rgb</span><span class="p">:</span> <span class="s1">&#39;color&#39;</span>                <span class="c1"># &#39;color&#39; fusion is used for the &#39;rgb&#39; channel</span>
+  <span class="n">default</span><span class="p">:</span> <span class="s1">&#39;average&#39;</span>          <span class="c1"># &#39;average&#39; fusion is used for channels not listed here</span>
+
+<span class="n">image_channel_fusions</span><span class="p">:</span>
+  <span class="n">rgb</span><span class="p">:</span> <span class="s1">&#39;color&#39;</span>                <span class="c1"># &#39;color&#39; fusion is used for the &#39;rgb&#39; channel</span>
+  <span class="n">default</span><span class="p">:</span> <span class="s1">&#39;exponential&#39;</span>      <span class="c1"># &#39;exponential&#39; fusion is used for channels not listed here</span>
+  <span class="n">feat_</span><span class="o">.*</span><span class="p">:</span> <span class="s1">&#39;exponential&#39;</span>      <span class="c1"># &#39;exponential&#39; fusion is also used for any channel starting with &#39;feat_&#39; Regular expressions can be used for channel names</span>
+
+<span class="c1">#### Subscribers ########</span>
+<span class="c1">#  pointcloud_sensor_name:</span>
+<span class="c1">#    topic_name: &#39;/sensor/pointcloud_semantic&#39;</span>
+<span class="c1">#    data_type:  pointcloud  # pointcloud or image</span>
+<span class="c1">#</span>
+<span class="c1">#  image_sensor_name:</span>
+<span class="c1">#    topic_name: &#39;/camera/image_semantic&#39;</span>
+<span class="c1">#    data_type:  image  # pointcloud or image</span>
+<span class="c1">#    camera_info_topic_name: &#39;/camera/depth/camera_info&#39;</span>
+<span class="c1">#    channel_info_topic_name: &#39;/camera/channel_info&#39;</span>
+
+
+<span class="n">subscribers</span><span class="p">:</span>
+  <span class="n">front_cam</span><span class="p">:</span>
+    <span class="n">topic_name</span><span class="p">:</span> <span class="s1">&#39;/camera/depth/points&#39;</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="n">pointcloud</span>
+  <span class="n">color_cam</span><span class="p">:</span> <span class="c1"># for color camera</span>
+    <span class="n">topic_name</span><span class="p">:</span> <span class="s1">&#39;/camera/rgb/image_raw&#39;</span>
+    <span class="n">camera_info_topic_name</span><span class="p">:</span> <span class="s1">&#39;/camera/depth/camera_info&#39;</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="n">image</span>
+  <span class="n">semantic_cam</span><span class="p">:</span> <span class="c1"># for semantic images</span>
+    <span class="n">topic_name</span><span class="p">:</span> <span class="s1">&#39;/front_cam/semantic_image&#39;</span>
+    <span class="n">camera_info_topic_name</span><span class="p">:</span> <span class="s1">&#39;/front_cam/camera/depth/camera_info_resized&#39;</span>
+    <span class="n">channel_info_topic_name</span><span class="p">:</span> <span class="s1">&#39;/front_cam/channel_info&#39;</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="n">image</span>
+
+<span class="c1">#### Publishers ########</span>
+<span class="c1"># topic_name:</span>
+<span class="c1">#   layers:               # Choose from &#39;elevation&#39;, &#39;variance&#39;, &#39;traversability&#39;, &#39;time&#39;, &#39;normal_x&#39;, &#39;normal_y&#39;, &#39;normal_z&#39;, &#39;color&#39;, plugin_layer_names</span>
+<span class="c1">#   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.</span>
+<span class="c1">#   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.</span>
+
+<span class="n">publishers</span><span class="p">:</span>
+  <span class="n">elevation_map_raw</span><span class="p">:</span>
+    <span class="n">layers</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="s1">&#39;traversability&#39;</span><span class="p">,</span> <span class="s1">&#39;variance&#39;</span><span class="p">,</span><span class="s1">&#39;rgb&#39;</span><span class="p">]</span>
+    <span class="n">basic_layers</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;elevation&#39;</span><span class="p">]</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="mf">5.0</span>
+  <span class="n">elevation_map_recordable</span><span class="p">:</span>
+   <span class="n">layers</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="s1">&#39;traversability&#39;</span><span class="p">]</span>
+   <span class="n">basic_layers</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;elevation&#39;</span><span class="p">,</span> <span class="s1">&#39;traversability&#39;</span><span class="p">]</span>
+   <span class="n">fps</span><span class="p">:</span> <span class="mf">2.0</span>
+  <span class="n">elevation_map_filter</span><span class="p">:</span>
+    <span class="n">layers</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;min_filter&#39;</span><span class="p">,</span> <span class="s1">&#39;smooth&#39;</span><span class="p">,</span> <span class="s1">&#39;inpaint&#39;</span><span class="p">,</span> <span class="s1">&#39;elevation&#39;</span><span class="p">]</span>
+    <span class="n">basic_layers</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;min_filter&#39;</span><span class="p">]</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="mf">3.0</span>
+</pre></div>
+</div>
+</section>
+<section id="plugin-configurations">
+<h2>Plugin configurations<a class="headerlink" href="#plugin-configurations" title="Link to this heading">¶</a></h2>
+<p>More informations on the plugins can be found in <a class="reference internal" href="plugins.html#plugins"><span class="std std-ref">Plugins</span></a>.</p>
+<div class="code yaml highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Settings of the plugins. (The plugins should be stored in script/plugins)</span>
+
+<span class="c1"># min_filter fills in minimum value around the invalid cell.</span>
+<span class="n">min_filter</span><span class="p">:</span>
+  <span class="n">enable</span><span class="p">:</span> <span class="kc">True</span>                                <span class="c1"># weather to load this plugin</span>
+  <span class="n">fill_nan</span><span class="p">:</span> <span class="kc">False</span>                             <span class="c1"># Fill nans to invalid cells of elevation layer.</span>
+  <span class="n">is_height_layer</span><span class="p">:</span> <span class="kc">True</span>                       <span class="c1"># If this is a height layer (such as elevation) or not (such as traversability)</span>
+  <span class="n">layer_name</span><span class="p">:</span> <span class="s2">&quot;min_filter&quot;</span>                    <span class="c1"># The layer name.</span>
+  <span class="n">extra_params</span><span class="p">:</span>                               <span class="c1"># This params are passed to the plugin class on initialization.</span>
+    <span class="n">dilation_size</span><span class="p">:</span> <span class="mi">1</span>                         <span class="c1"># The patch size to apply</span>
+    <span class="n">iteration_n</span><span class="p">:</span> <span class="mi">30</span>                           <span class="c1"># The number of iterations</span>
+<span class="c1"># Apply smoothing.</span>
+<span class="n">smooth_filter</span><span class="p">:</span>
+  <span class="n">enable</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">fill_nan</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="n">is_height_layer</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">layer_name</span><span class="p">:</span> <span class="s2">&quot;smooth&quot;</span>
+  <span class="n">extra_params</span><span class="p">:</span>
+    <span class="n">input_layer_name</span><span class="p">:</span> <span class="s2">&quot;min_filter&quot;</span>
+<span class="c1"># Apply inpainting using opencv</span>
+<span class="n">inpainting</span><span class="p">:</span>
+  <span class="n">enable</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">fill_nan</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="n">is_height_layer</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">layer_name</span><span class="p">:</span> <span class="s2">&quot;inpaint&quot;</span>
+  <span class="n">extra_params</span><span class="p">:</span>
+    <span class="n">method</span><span class="p">:</span> <span class="s2">&quot;telea&quot;</span>                           <span class="c1"># telea or ns</span>
+<span class="c1"># Apply smoothing for inpainted layer</span>
+<span class="n">erosion</span><span class="p">:</span>
+  <span class="n">enable</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">fill_nan</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="n">is_height_layer</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="n">layer_name</span><span class="p">:</span> <span class="s2">&quot;erosion&quot;</span>
+  <span class="n">extra_params</span><span class="p">:</span>
+    <span class="n">input_layer_name</span><span class="p">:</span> <span class="s2">&quot;traversability&quot;</span>
+    <span class="n">dilation_size</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">iteration_n</span><span class="p">:</span> <span class="mi">20</span>
+    <span class="n">reverse</span><span class="p">:</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</section>
+<section id="core-parameters">
+<h2>Core Parameters<a class="headerlink" href="#core-parameters" title="Link to this heading">¶</a></h2>
+<div class="code yaml highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#### Basic parameters ########</span>
+<span class="n">resolution</span><span class="p">:</span> <span class="mf">0.04</span>                                <span class="c1"># resolution in m.</span>
+<span class="n">map_length</span><span class="p">:</span> <span class="mf">8.0</span>                                 <span class="c1"># map&#39;s size in m.</span>
+<span class="n">sensor_noise_factor</span><span class="p">:</span> <span class="mf">0.05</span>                       <span class="c1"># point&#39;s noise is sensor_noise_factor*z^2 (z is distance from sensor).</span>
+<span class="n">mahalanobis_thresh</span><span class="p">:</span> <span class="mf">2.0</span>                         <span class="c1"># points outside this distance is outlier.</span>
+<span class="n">outlier_variance</span><span class="p">:</span> <span class="mf">0.01</span>                          <span class="c1"># if point is outlier, add this value to the cell.</span>
+<span class="n">drift_compensation_variance_inler</span><span class="p">:</span> <span class="mf">0.05</span>         <span class="c1"># cells under this value is used for drift compensation.</span>
+<span class="n">max_drift</span><span class="p">:</span> <span class="mf">0.1</span>                                  <span class="c1"># drift compensation happens only the drift is smaller than this value (for safety)</span>
+<span class="n">drift_compensation_alpha</span><span class="p">:</span> <span class="mf">0.1</span>                   <span class="c1"># drift compensation alpha for smoother update of drift compensation</span>
+<span class="n">time_variance</span><span class="p">:</span> <span class="mf">0.0001</span>                           <span class="c1"># add this value when update_variance is called.</span>
+<span class="n">max_variance</span><span class="p">:</span> <span class="mf">100.0</span>                             <span class="c1"># maximum variance for each cell.</span>
+<span class="n">initial_variance</span><span class="p">:</span> <span class="mf">1000.0</span>                         <span class="c1"># initial variance for each cell.</span>
+<span class="n">traversability_inlier</span><span class="p">:</span> <span class="mf">0.9</span>                      <span class="c1"># cells with higher traversability are used for drift compensation.</span>
+<span class="n">dilation_size</span><span class="p">:</span> <span class="mi">3</span>                                <span class="c1"># dilation filter size before traversability filter.</span>
+<span class="n">wall_num_thresh</span><span class="p">:</span> <span class="mi">20</span>                             <span class="c1"># if there are more points than this value, only higher points than the current height are used to make the wall more sharp.</span>
+<span class="n">min_height_drift_cnt</span><span class="p">:</span> <span class="mi">100</span>                       <span class="c1"># drift compensation only happens if the valid cells are more than this number.</span>
+<span class="n">position_noise_thresh</span><span class="p">:</span> <span class="mf">0.01</span>                     <span class="c1"># if the position change is bigger than this value, the drift compensation happens.</span>
+<span class="n">orientation_noise_thresh</span><span class="p">:</span> <span class="mf">0.01</span>                  <span class="c1"># if the orientation change is bigger than this value, the drift compensation happens.</span>
+<span class="n">position_lowpass_alpha</span><span class="p">:</span> <span class="mf">0.2</span>                     <span class="c1"># lowpass filter alpha used for detecting movements.</span>
+<span class="n">orientation_lowpass_alpha</span><span class="p">:</span> <span class="mf">0.2</span>                  <span class="c1"># lowpass filter alpha used for detecting movements.</span>
+<span class="n">min_valid_distance</span><span class="p">:</span> <span class="mf">0.5</span>                         <span class="c1"># points with shorter distance will be filtered out.</span>
+<span class="n">max_height_range</span><span class="p">:</span> <span class="mf">1.0</span>                           <span class="c1"># points higher than this value from sensor will be filtered out to disable ceiling.</span>
+<span class="n">ramped_height_range_a</span><span class="p">:</span> <span class="mf">0.3</span>                      <span class="c1"># if z &gt; max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.</span>
+<span class="n">ramped_height_range_b</span><span class="p">:</span> <span class="mf">1.0</span>                      <span class="c1"># if z &gt; max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.</span>
+<span class="n">ramped_height_range_c</span><span class="p">:</span> <span class="mf">0.2</span>                      <span class="c1"># if z &gt; max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.</span>
+<span class="n">update_variance_fps</span><span class="p">:</span> <span class="mf">5.0</span>                        <span class="c1"># fps for updating variance.</span>
+<span class="n">update_pose_fps</span><span class="p">:</span> <span class="mf">10.0</span>                           <span class="c1"># fps for updating pose and shift the center of map.</span>
+<span class="n">time_interval</span><span class="p">:</span> <span class="mf">0.1</span>                              <span class="c1"># Time layer is updated with this interval.</span>
+<span class="n">map_acquire_fps</span><span class="p">:</span> <span class="mf">5.0</span>                            <span class="c1"># Raw map is fetched from GPU memory in this fps.</span>
+<span class="n">publish_statistics_fps</span><span class="p">:</span> <span class="mf">1.0</span>                     <span class="c1"># Publish statistics topic in this fps.</span>
+
+<span class="n">max_ray_length</span><span class="p">:</span> <span class="mf">10.0</span>                            <span class="c1"># maximum length for ray tracing.</span>
+<span class="n">cleanup_step</span><span class="p">:</span> <span class="mf">0.1</span>                               <span class="c1"># subtitute this value from validity layer at visibiltiy cleanup.</span>
+<span class="n">cleanup_cos_thresh</span><span class="p">:</span> <span class="mf">0.1</span>                         <span class="c1"># subtitute this value from validity layer at visibiltiy cleanup.</span>
+
+<span class="n">safe_thresh</span><span class="p">:</span> <span class="mf">0.7</span>                                <span class="c1"># if traversability is smaller, it is counted as unsafe cell.</span>
+<span class="n">safe_min_thresh</span><span class="p">:</span> <span class="mf">0.4</span>                            <span class="c1"># polygon is unsafe if there exists lower traversability than this.</span>
+<span class="n">max_unsafe_n</span><span class="p">:</span> <span class="mi">10</span>                                <span class="c1"># if the number of cells under safe_thresh exceeds this value, polygon is unsafe.</span>
+
+<span class="n">overlap_clear_range_xy</span><span class="p">:</span> <span class="mf">4.0</span>                     <span class="c1"># xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)</span>
+<span class="n">overlap_clear_range_z</span><span class="p">:</span> <span class="mf">2.0</span>                      <span class="c1"># z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)</span>
+
+<span class="n">map_frame</span><span class="p">:</span> <span class="s1">&#39;odom&#39;</span>                               <span class="c1"># The map frame where the odometry source uses.</span>
+<span class="n">base_frame</span><span class="p">:</span> <span class="s1">&#39;base_footprint&#39;</span>                              <span class="c1"># The robot&#39;s base frame. This frame will be a center of the map.</span>
+<span class="n">corrected_map_frame</span><span class="p">:</span> <span class="s1">&#39;odom&#39;</span>
+
+<span class="c1">#### Feature toggles ########</span>
+<span class="n">enable_edge_sharpen</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">enable_visibility_cleanup</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">enable_drift_compensation</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">enable_overlap_clearance</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">enable_pointcloud_publishing</span><span class="p">:</span> <span class="n">false</span>
+<span class="n">enable_drift_corrected_TF_publishing</span><span class="p">:</span> <span class="n">false</span>
+<span class="n">enable_normal_color</span><span class="p">:</span> <span class="n">false</span>                      <span class="c1"># If true, the map contains &#39;color&#39; layer corresponding to normal. Add &#39;color&#39; layer to the publishers setting if you want to visualize.</span>
+
+<span class="c1">#### Traversability filter ########</span>
+<span class="n">use_chainer</span><span class="p">:</span> <span class="n">false</span>                              <span class="c1"># Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.</span>
+<span class="n">weight_file</span><span class="p">:</span> <span class="s1">&#39;$(rospack find elevation_mapping_cupy)/config/core/weights.dat&#39;</span>               <span class="c1"># Weight file for traversability filter</span>
+
+<span class="c1">#### Upper bound ########</span>
+<span class="n">use_only_above_for_upper_bound</span><span class="p">:</span> <span class="n">false</span>
+
+<span class="c1">#### Initializer ########</span>
+<span class="n">initialize_method</span><span class="p">:</span> <span class="s1">&#39;linear&#39;</span>                                         <span class="c1"># Choose one from &#39;nearest&#39;, &#39;linear&#39;, &#39;cubic&#39;</span>
+<span class="n">initialize_frame_id</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;base_footprint&#39;</span><span class="p">]</span>   <span class="c1"># One tf (like [&#39;footprint&#39;] ) initializes a square around it.</span>
+<span class="n">initialize_tf_offset</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>                          <span class="c1"># z direction. Should be same number as initialize_frame_id.</span>
+<span class="n">dilation_size_initialize</span><span class="p">:</span> <span class="mi">2</span>                                         <span class="c1"># dilation size after the init.</span>
+<span class="n">initialize_tf_grid_size</span><span class="p">:</span> <span class="mf">0.5</span>                                        <span class="c1"># This is not used if number of tf is more than 3.</span>
+<span class="n">use_initializer_at_start</span><span class="p">:</span> <span class="n">true</span>                                      <span class="c1"># Use initializer when the node starts.</span>
+
+<span class="c1">#### Default Plugins ########</span>
+<span class="n">plugin_config_file</span><span class="p">:</span> <span class="s1">&#39;$(rospack find elevation_mapping_cupy)/config/core/plugin_config.yaml&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="sensor-parameter">
+<h2>Sensor parameter<a class="headerlink" href="#sensor-parameter" title="Link to this heading">¶</a></h2>
+<p>More informations on the sensor configurations can be found in <a class="reference internal" href="semantics.html#semantics"><span class="std std-ref">Semantics</span></a>.</p>
+<div class="code yaml highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">front_cam_pointcloud</span><span class="p">:</span>
+  <span class="n">channels</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;rgb&#39;</span><span class="p">,</span> <span class="s1">&#39;chair&#39;</span><span class="p">,</span><span class="s1">&#39;sofa&#39;</span><span class="p">,</span><span class="s2">&quot;person&quot;</span> <span class="p">]</span>
+  <span class="n">fusion</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;color&#39;</span><span class="p">,</span><span class="s1">&#39;class_average&#39;</span><span class="p">,</span><span class="s1">&#39;class_average&#39;</span><span class="p">,</span><span class="s1">&#39;class_average&#39;</span><span class="p">]</span>
+  <span class="n">topic_name</span><span class="p">:</span> <span class="s1">&#39;front_camera/semantic_pointcloud&#39;</span>
+  <span class="n">semantic_segmentation</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">publish_segmentation_image</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">segmentation_model</span><span class="p">:</span> <span class="s1">&#39;lraspp_mobilenet_v3_large&#39;</span> <span class="c1"># detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large</span>
+  <span class="n">show_label_legend</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="n">data_type</span><span class="p">:</span> <span class="n">pointcloud</span>
+
+  <span class="n">cam_info_topic</span><span class="p">:</span> <span class="s2">&quot;camera/depth/camera_info&quot;</span>
+  <span class="n">image_topic</span><span class="p">:</span> <span class="s2">&quot;camera/rgb/image_raw&quot;</span>
+  <span class="n">depth_topic</span><span class="p">:</span> <span class="s2">&quot;camera/depth/image_raw&quot;</span>
+  <span class="n">cam_frame</span><span class="p">:</span> <span class="s2">&quot;camera_rgb_optical_frame&quot;</span>
+
+<span class="n">front_cam_image</span><span class="p">:</span>
+  <span class="n">channels</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;chair&#39;</span><span class="p">,</span><span class="s1">&#39;sofa&#39;</span><span class="p">,</span><span class="s2">&quot;person&quot;</span><span class="p">]</span>
+  <span class="n">fusion_methods</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;exponential&#39;</span><span class="p">,</span><span class="s1">&#39;exponential&#39;</span><span class="p">,</span><span class="s1">&#39;exponential&#39;</span><span class="p">]</span>
+  <span class="n">publish_topic</span><span class="p">:</span> <span class="s1">&#39;semantic_image&#39;</span>
+  <span class="n">publish_image_topic</span><span class="p">:</span> <span class="s2">&quot;semantic_image_debug&quot;</span>
+  <span class="n">publish_camera_info_topic</span><span class="p">:</span> <span class="s1">&#39;semantic_image_info&#39;</span>
+  <span class="n">publish_fusion_info_topic</span><span class="p">:</span> <span class="s1">&#39;semantic_image_fusion_info&#39;</span>
+  <span class="n">data_type</span><span class="p">:</span> <span class="n">image</span>
+
+  <span class="n">semantic_segmentation</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">feature_extractor</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">segmentation_model</span><span class="p">:</span> <span class="s1">&#39;lraspp_mobilenet_v3_large&#39;</span> <span class="c1"># detectron_coco_panoptic_fpn_R_101_3x, lraspp_mobilenet_v3_large</span>
+  <span class="n">show_label_legend</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="n">image_topic</span><span class="p">:</span> <span class="s2">&quot;camera/rgb/image_raw&quot;</span>
+  <span class="n">camera_info_topic</span><span class="p">:</span> <span class="s2">&quot;camera/depth/camera_info&quot;</span>
+  <span class="n">resize</span><span class="p">:</span> <span class="mf">0.5</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plugins.html" class="btn btn-neutral float-left" title="Plugins" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plane_segmentation.html" class="btn btn-neutral float-right" title="Plane Segmentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

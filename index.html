@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-modal elevation mapping’s documentation &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+        <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="getting_started/introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage/plugins.html"> Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/parameters.html"> Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/plane_segmentation.html"> Plane Segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/semantics.html"> Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python/index.html"> Python</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Multi-modal elevation mapping’s documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multi-modal-elevation-mapping-s-documentation">
+<h1>Multi-modal elevation mapping’s documentation<a class="headerlink" href="#multi-modal-elevation-mapping-s-documentation" title="Link to this heading">¶</a></h1>
+<p>Welcome to elevation mapping documentation</p>
+<a class="reference external image-reference" href="https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg"><img alt="python tests" src="https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/python-tests.yml/badge.svg" /></a>
+<a class="reference external image-reference" href="https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/documentation.yml/badge.svg"><img alt="documentation" src="https://github.com/leggedrobotics/elevation_mapping_semantic_cupy/actions/workflows/documentation.yml/badge.svg" /></a>
+<section id="index">
+<h2>Index<a class="headerlink" href="#index" title="Link to this heading">¶</a></h2>
+<div class="line-block">
+<div class="line"><a class="reference internal" href="getting_started/introduction.html"><span class="doc">Introduction</span></a> - What is elevation mapping cupy</div>
+<div class="line"><a class="reference internal" href="getting_started/installation.html"><span class="doc">Installation</span></a> - How to install the elevation map</div>
+<div class="line"><a class="reference internal" href="getting_started/tutorial.html"><span class="doc">Tutorial</span></a> - How to launch the first elevation map</div>
+</div>
+<p>This is a ROS package for elevation mapping on GPU. The elevation mapping code is written in python and uses cupy for GPU computation. The
+plane segmentation is done independently and runs on CPU. When the plane segmentation is generated, local convex approximations of the
+terrain can be efficiently generated.</p>
+<img alt="Elevation map examples" src="_images/main_repo.png" />
+<img alt="Overview of the project" src="_images/main_mem.png" />
+</section>
+<section id="citing">
+<h2>Citing<a class="headerlink" href="#citing" title="Link to this heading">¶</a></h2>
+<p>If you use the elevation mapping cupy, please cite the following paper:
+Elevation Mapping for Locomotion and Navigation using GPU</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Elevation Mapping for Locomotion and Navigation using GPU  <a class="reference external" href="https://arxiv.org/abs/2204.12876">Link</a></p>
+<p>Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">mikielevation2022</span><span class="p">,</span>
+    <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.48550</span><span class="o">/</span><span class="n">ARXIV</span><span class="mf">.2204.12876</span><span class="p">},</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Miki</span><span class="p">,</span> <span class="n">Takahiro</span> <span class="ow">and</span> <span class="n">Wellhausen</span><span class="p">,</span> <span class="n">Lorenz</span> <span class="ow">and</span> <span class="n">Grandia</span><span class="p">,</span> <span class="n">Ruben</span> <span class="ow">and</span> <span class="n">Jenelten</span><span class="p">,</span> <span class="n">Fabian</span> <span class="ow">and</span> <span class="n">Homberger</span><span class="p">,</span> <span class="n">Timon</span> <span class="ow">and</span> <span class="n">Hutter</span><span class="p">,</span> <span class="n">Marco</span><span class="p">},</span>
+    <span class="n">keywords</span> <span class="o">=</span> <span class="p">{</span><span class="n">Robotics</span> <span class="p">(</span><span class="n">cs</span><span class="o">.</span><span class="n">RO</span><span class="p">),</span> <span class="n">FOS</span><span class="p">:</span> <span class="n">Computer</span> <span class="ow">and</span> <span class="n">information</span> <span class="n">sciences</span><span class="p">,</span> <span class="n">FOS</span><span class="p">:</span> <span class="n">Computer</span> <span class="ow">and</span> <span class="n">information</span> <span class="n">sciences</span><span class="p">},</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Elevation</span> <span class="n">Mapping</span> <span class="k">for</span> <span class="n">Locomotion</span> <span class="ow">and</span> <span class="n">Navigation</span> <span class="n">using</span> <span class="n">GPU</span><span class="p">},</span>
+    <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">International</span> <span class="n">Conference</span> <span class="n">on</span> <span class="n">Intelligent</span> <span class="n">Robots</span> <span class="ow">and</span> <span class="n">Systems</span> <span class="p">(</span><span class="n">IROS</span><span class="p">)},</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2022</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Multi-modal elevation mapping if you use color or semantic layers</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>MEM: Multi-Modal Elevation Mapping for Robotics and Learning  <a class="reference external" href="https://arxiv.org/abs/2309.16818v1">Link</a></p>
+<p>Gian Erni, Jonas Frey, Takahiro Miki, Matias Mattamala, Marco Hutter</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">Erni2023</span><span class="o">-</span><span class="n">bs</span><span class="p">,</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{MEM}</span><span class="s2">: {Multi-Modal} Elevation Mapping for Robotics and Learning&quot;</span><span class="p">,</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="s2">&quot;Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco&quot;</span><span class="p">,</span>
+    <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">International</span> <span class="n">Conference</span> <span class="n">on</span> <span class="n">Intelligent</span> <span class="n">Robots</span> <span class="ow">and</span> <span class="n">Systems</span> <span class="p">(</span><span class="n">IROS</span><span class="p">)},</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2023</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started/introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
