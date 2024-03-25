@@ -68,6 +68,7 @@ ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
+  nh.param<bool>("always_clear_with_initializer", alwaysClearWithInitializer_, false);
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
 
@@ -541,6 +542,9 @@ bool ElevationMappingNode::getSubmap(grid_map_msgs::GetGridMap::Request& request
 bool ElevationMappingNode::clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
   ROS_INFO("Clearing map.");
   map_.clear();
+  if (alwaysClearWithInitializer_) {
+    initializeWithTF();
+  }
   return true;
 }
 
