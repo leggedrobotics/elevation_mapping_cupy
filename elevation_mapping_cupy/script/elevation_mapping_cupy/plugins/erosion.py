@@ -28,6 +28,7 @@ class Erosion(PluginBase):
         kernel_size: int = 3,
         iterations: int = 1,
         reverse: bool = False,
+        default_layer_name: str = "traversability",
         **kwargs,
     ):
         super().__init__()
@@ -35,6 +36,7 @@ class Erosion(PluginBase):
         self.kernel_size = kernel_size
         self.iterations = iterations
         self.reverse = reverse
+        self.default_layer_name = default_layer_name
 
     def __call__(
         self,
@@ -69,6 +71,28 @@ class Erosion(PluginBase):
             semantic_layer_names,
             self.input_layer_name,
         )
+        if layer_data is None:
+            print(f"No layers are found, using {self.default_layer_name}!")
+            layer_data = self.get_layer_data(
+                elevation_map,
+                layer_names,
+                plugin_layers,
+                plugin_layer_names,
+                semantic_map,
+                semantic_layer_names,
+                self.default_layer_name,
+            )
+            if layer_data is None:
+                print(f"No layers are found, using traversability!")
+                layer_data = self.get_layer_data(
+                    elevation_map,
+                    layer_names,
+                    plugin_layers,
+                    plugin_layer_names,
+                    semantic_map,
+                    semantic_layer_names,
+                    "traversability",
+                )
         layer_np = cp.asnumpy(layer_data)
 
         # Define the erosion kernel
