@@ -22,7 +22,7 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
                 return layer * layer_n + idx;
             }
             __device__ bool is_inside_map(int x, int y) {
-                return (x >= 0 && y >= 0 && x<${width} && x<${height});
+                return (x >= 0 && y >= 0 && x<${width} && y<${height});
             }
             __device__ float get_l2_distance(int x0, int y0, int x1, int y1) {
                 float dx = x0-x1;
