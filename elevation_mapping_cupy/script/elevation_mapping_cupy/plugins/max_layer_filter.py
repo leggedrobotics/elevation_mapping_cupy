@@ -29,6 +29,7 @@ class MaxLayerFilter(PluginBase):
         reverse: list = [True],
         min_or_max: str = "max",
         thresholds: list = [False],
+        scales: list = [1.0],
         default_value: float = 0.0,
         **kwargs,
     ):
@@ -37,6 +38,7 @@ class MaxLayerFilter(PluginBase):
         self.reverse = reverse
         self.min_or_max = min_or_max
         self.thresholds = thresholds
+        self.scales = scales
         self.default_value = default_value
 
     def __call__(
@@ -84,6 +86,8 @@ class MaxLayerFilter(PluginBase):
                 layer = cp.where(layer == 0, default_layer, layer)
             if self.reverse[it]:
                 layer = 1.0 - layer
+            if len(self.scales) > it and isinstance(self.scales[it], float):
+                layer = layer * float(self.scales[it])
             if isinstance(self.thresholds[it], float):
                 layer = cp.where(layer > float(self.thresholds[it]), 1, 0)
             layers.append(layer)
