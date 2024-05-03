@@ -10,7 +10,6 @@ def map_utils(
     resolution,
     width,
     height,
-    sensor_noise_factor,
     min_valid_distance,
     max_height_range,
     ramped_height_range_a,
@@ -51,13 +50,12 @@ def map_utils(
             const int layer = ${width} * ${height};
             return layer * layer_n + idx;
         }
+        // TODO: Possibly Replace
         __device__ float transform_p(float16 x, float16 y, float16 z,
                                      float16 r0, float16 r1, float16 r2, float16 t) {
             return r0 * x + r1 * y + r2 * z + t;
         }
-        __device__ float z_noise(float16 z){
-            return ${sensor_noise_factor} * z * z;
-        }
+        //
 
         __device__ float point_sensor_distance(float16 x, float16 y, float16 z,
                                                float16 sx, float16 sy, float16 sz) {
@@ -112,7 +110,6 @@ def map_utils(
         resolution=resolution,
         width=width,
         height=height,
-        sensor_noise_factor=sensor_noise_factor,
         min_valid_distance=min_valid_distance,
         max_height_range=max_height_range,
         ramped_height_range_a=ramped_height_range_a,
@@ -126,7 +123,6 @@ def add_points_kernel(
     resolution,
     width,
     height,
-    sensor_noise_factor,
     mahalanobis_thresh,
     outlier_variance,
     wall_num_thresh,
@@ -142,13 +138,12 @@ def add_points_kernel(
     enable_visibility_cleanup=True,
 ):
     add_points_kernel = cp.ElementwiseKernel(
-        in_params="raw U center_x, raw U center_y, raw U R, raw U t, raw U norm_map",
+        in_params="raw U center_x, raw U center_y, raw U R, raw U t, raw U var_h, raw U norm_map",
         out_params="raw U p, raw U map, raw T newmap",
         preamble=map_utils(
             resolution,
             width,
             height,
-            sensor_noise_factor,
             min_valid_distance,
             max_height_range,
             ramped_height_range_a,
@@ -163,7 +158,7 @@ def add_points_kernel(
             U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
-            U v = z_noise(rz);
+            U v = var_h[i]; // TODO: double check indexing here
             int idx = get_idx(x, y, center_x[0], center_y[0]);
             if (is_valid(x, y, z, t[0], t[1], t[2])) {
                 if (is_inside(idx)) {
@@ -281,7 +276,6 @@ def error_counting_kernel(
     resolution,
     width,
     height,
-    sensor_noise_factor,
     mahalanobis_thresh,
     outlier_variance,
     traversability_inlier,
@@ -298,7 +292,6 @@ def error_counting_kernel(
             resolution,
             width,
             height,
-            sensor_noise_factor,
             min_valid_distance,
             max_height_range,
             ramped_height_range_a,
@@ -313,7 +306,6 @@ def error_counting_kernel(
             U x = transform_p(rx, ry, rz, R[0], R[1], R[2], t[0]);
             U y = transform_p(rx, ry, rz, R[3], R[4], R[5], t[1]);
             U z = transform_p(rx, ry, rz, R[6], R[7], R[8], t[2]);
-            U v = z_noise(rz);
             // if (!is_valid(z, t[2])) {return;}
             if (!is_valid(x, y, z, t[0], t[1], t[2])) {return;}
             // if ((x - t[0]) * (x - t[0]) + (y - t[1]) * (y - t[1]) + (z - t[2]) * (z - t[2]) < 0.5) {return;}

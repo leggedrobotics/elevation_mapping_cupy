@@ -6,55 +6,73 @@ import numpy as np
 import cupy as cp
 
 
+
+def make_3x1vec(vec):
+    """Make sure vector is a 3x1 vector"""
+    if vec.shape == (3,):
+        vec = vec[:, np.newaxis]
+    assert vec.shape == (3, 1), "Vector should be a 3x1 vector"
+    return vec
 class SensorProcessor(object):
     """
     Class for processing sensor data.
     Currenlty restricted to point cloud data.
     Mainly used for sensor dependent propagation of uncertainty.
     """
-    def __init__(self, sensor_ID, C_BS, B_r_BS, Sigma_Theta_BS, Sigma_b_r_BS, noise_model_name, noise_model_params, xp=cp):
+    def __init__(self, sensor_ID, noise_model_name, noise_model_params, xp=cp, data_type=cp.float32):
         """Initialize sensor processor for a specific sensor.
 
         Args:
             sensor_ID (str): Sensor ID. Should be unique for each instance of a sensor
-            C_BS (cupy._core.core.ndarray):             Matrix representing relative orientation of sensor frame in body frame.
-                                                        (takes points from sensor frame and transforms them to body frame)
-            B_r_BS (cupy._core.core.ndarray):           Position of sensor in body frame.
-            Sigma_Theta_BS (cupy._core.core.ndarray):   Covariance of sensor orientation where orientation is defined 
-                                                        as fixed-axis(extrinsic) xyz(roll, pitch, yaw) Euler angles.
-            Sigma_b_r_BS (cupy._core.core.ndarray):     Covariance of sensor position in base frame.
             noise_model_name (str):                     Noise model of the sensor. Either "SLS" or "LiDAR".
             noise_model_params (dict):                  Parameters for the noise model.
             xp (module):                                Numpy or Cupy module.
         """
+        self.data_type = data_type
         self.sensor_ID = sensor_ID
-        assert C_BS.shape == (3, 3), "C_BS should be a 3x3 matrix"
-        self.C_BS = C_BS
-        self.B_r_BS = self.make_3x1vec(B_r_BS)
-        assert Sigma_Theta_BS.shape == (3, 3), "Sigma_Theta_BS should be a 3x3 matrix"
-        self.Sigma_Theta_BS = Sigma_Theta_BS
-        assert Sigma_b_r_BS.shape == (3, 3), "Sigma_b_r_BS should be a 3x3 matrix"
-        self.Sigma_b_r_BS = Sigma_b_r_BS
+        # Set default values for C_BS and B_r_BS
+        self.C_BS = xp.eye(3, dtype=self.data_type)
+        self.B_r_BS = make_3x1vec(xp.array([0.0, 0.0, 0.0],dtype=self.data_type))
+        # Set default values for Sigma_Theta_BS and Sigma_b_r_BS
+        # Sigma_Theta_BS: Covariance of sensor orientation where orientation is defined 
+        #                 as fixed-axis(extrinsic) xyz(roll, pitch, yaw) Euler angles.
+        self.Sigma_Theta_BS = xp.zeros((3, 3), dtype=self.data_type)
+        # Sigma_b_r_BS:   Covariance of sensor position in base frame.
+        self.Sigma_b_r_BS = xp.zeros((3, 3), dtype=self.data_type)
+
         self.noise_models = {"SLS": self.SLS_noise_model, "LiDAR": self.LiDAR_noise_model} # Structured Light Sensor, LiDAR
         assert noise_model_name in self.noise_models.keys(), "noise_model should be chosen from {}".format(self.noise_models.keys())
         self.noise_model_name = noise_model_name
         self.noise_model = self.noise_models[self.noise_model_name]
-        self.noise_model_params = noise_model_params
+        self.noise_model_params = {}
         # Make sure params are compatible with cupy
-        for key in self.noise_model_params.keys():
-            self.noise_model_params[key] = xp.array(self.noise_model_params[key])
+        for key in noise_model_params.keys():
+            if key == "Sigma_Theta_BS_diag":
+                assert len(noise_model_params[key]) == 3, "Sigma_Theta_BS_diag should be 3 element arrays"
+                self.noise_model_params['Sigma_Theta_BS'] = xp.diag(cp.asarray(noise_model_params[key], dtype=self.data_type))
+            elif key == "Sigma_b_r_BS_diag":
+                assert len(noise_model_params[key]) == 3, "Sigma_b_r_BS_diag should be 3 element arrays"
+                self.noise_model_params['Sigma_b_r_BS'] = xp.diag(cp.asarray(noise_model_params[key], dtype=self.data_type))
+            else:
+                self.noise_model_params[key] = xp.array(noise_model_params[key], dtype=self.data_type)
         self.xp = xp
     
-    def make_3x1vec(self, vec):
-        """Make sure vector is a 3x1 vector"""
-        if vec.shape == (3,):
-            vec = vec[:, np.newaxis]
-        assert vec.shape == (3, 1), "Vector should be a 3x1 vector"
-        return vec
+    def set_BS_transform(self, C_BS, B_r_BS):
+        """Set the transformation from body frame to sensor frame
+        Enables the transformation of points from sensor frame to body frame using:
+        B_r_BP = C_BS * S_r_SP + B_r_BS
+
+        Args: 
+            C_BS (cupy._core.core.ndarray):             Matrix representing relative orientation of sensor frame in body frame.
+                                                        (takes points from sensor frame and transforms them to body frame)
+            B_r_BS (cupy._core.core.ndarray):           Position of sensor in body frame."""
+        assert C_BS.shape == (3, 3), "C_BS should be a 3x3 matrix"
+        self.C_BS = C_BS
+        self.B_r_BS = make_3x1vec(B_r_BS)
     
     def SS(self, v):
         """Skew symmetric matrix of a vector v"""
-        C = self.xp.zeros((3, 3))
+        C = self.xp.zeros((3, 3), dtype=self.data_type)
         C[0, 1] = -v[2]
         C[0, 2] = v[1]
         C[1, 0] = v[2]
@@ -68,13 +86,14 @@ class SensorProcessor(object):
         #                 [-v[1], v[0], 0]])
     def ei(self, i):
         """Basis vector ei"""
-        return self.xp.array([1 if j == i else 0 for j in range(3)])
+        return self.xp.array([1 if j == i else 0 for j in range(3)], dtype=self.data_type)
     
     def Rx(self, a):
         """Rotation matrix around x-axis"""
-        C = self.xp.eye(3)
+        C = self.xp.eye(3, dtype=self.data_type)
         C[1:, 1:] = self.xp.array( [[self.xp.cos(a), -self.xp.sin(a)],
-                                    [self.xp.sin(a), self.xp.cos(a)]])
+                                    [self.xp.sin(a), self.xp.cos(a)]],
+                                    dtype=self.data_type)
         return C
         # Implementing this way instead of below because of cupy compatibility
         # return self.xp.array([[1, 0, 0],
@@ -83,7 +102,7 @@ class SensorProcessor(object):
 
     def Ry(self, b):
         """Rotation matrix around y-axis"""
-        C = self.xp.eye(3)
+        C = self.xp.eye(3, dtype=self.data_type)
         C[0, 0] = self.xp.cos(b)
         C[0, 2] = self.xp.sin(b)
         C[2, 0] = -self.xp.sin(b)
@@ -98,7 +117,8 @@ class SensorProcessor(object):
         """Rotation matrix around z-axis"""
         C = self.xp.eye(3)
         C[:2, :2] = self.xp.array( [[self.xp.cos(c), -self.xp.sin(c)],
-                                    [self.xp.sin(c), self.xp.cos(c)]])
+                                    [self.xp.sin(c), self.xp.cos(c)]],
+                                    dtype=self.data_type)
         return C
         # Implementing this way instead of below because of cupy compatibility
         # return self.xp.array([[self.xp.cos(c), -self.xp.sin(c), 0],
@@ -115,6 +135,7 @@ class SensorProcessor(object):
             A 3D numpy array where D[:,:,i] is a diagonal matrix with d[i,:] on the diagonal
         """
         # TODO: Figure out how to do this without a for loop
+        # Can't seem to pass dtype=self.data_type, but should be fine
         return self.xp.stack([self.xp.diag(val) for val in d], axis=0)
     
     def SLS_noise_model(self, S_r_SP, C_MB):
@@ -250,7 +271,7 @@ class SensorProcessor(object):
         """
         # C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB
         assert C_MB.shape == (3, 3), "C_MB should be a 3x3 matrix"
-        B_r_MB = self.make_3x1vec(B_r_MB)
+        B_r_MB = make_3x1vec(B_r_MB)
         assert Sigma_Theta_MB.shape == (3, 3), "Sigma_Theta_MB should be a 3x3 matrix"
         assert Sigma_b_r_MB.shape == (3, 3), "Sigma_b_r_MB should be a 3x3 matrix"
         S_r_SP = points # For ease of numpy/cupy notation points are Nx3 i.e. batch index first
@@ -262,12 +283,16 @@ class SensorProcessor(object):
         J_Theta_BS = C_MB @ self.Jac_of_rot(self.C_BS, S_r_SP) # Jacobian of M_r_MP wrt Theta_BS
         J_S_r_SP, Sigma_S_r_SP = self.noise_model(S_r_SP, C_MB) # Jacobian of M_r_MP wrt S_r_SP
 
+        Sigma_Theta_BS = self.noise_model_params["Sigma_Theta_BS"]
+        Sigma_b_r_BS = self.noise_model_params["Sigma_b_r_BS"]
+
         # Propagate uncertainty
         # Could apply H here, but in the future we may want the full
         # covariance matrix for applying a single point observation to multiple cells
-        Sigma_M_r_MP =  J_Theta_MB @ Sigma_Theta_MB @ J_Theta_MB.transpose((0,2,1)) + \
-                        J_B_r_BS @ Sigma_b_r_MB @ J_B_r_BS.T + \
-                        J_Theta_BS @ self.Sigma_Theta_BS @ J_Theta_BS.transpose((0,2,1)) + \
+        Sigma_M_r_MP =  Sigma_b_r_MB + \
+                        J_Theta_MB @ Sigma_Theta_MB @ J_Theta_MB.transpose((0,2,1)) + \
+                        J_B_r_BS @ Sigma_b_r_BS @ J_B_r_BS.T + \
+                        J_Theta_BS @ Sigma_Theta_BS @ J_Theta_BS.transpose((0,2,1)) + \
                         J_S_r_SP @ Sigma_S_r_SP @ J_S_r_SP.T
         
         # Pull out the z variance
@@ -313,13 +338,19 @@ if __name__ == "__main__":
     sensor_ID = "test_sls"
     C_BS = xp.eye(3)*1.0e0
     B_r_BS = xp.array([0.0, 0.0, 0.0])
-    Sigma_Theta_BS = xp.eye(3)*1.0e-1
-    Sigma_b_r_BS = xp.eye(3)*1.0e-3
+    Sigma_Theta_BS_diag = xp.array([1.0e-1, 1.0e-1, 1.0e-1])
+    Sigma_b_r_BS_diag = xp.array([1.0e-3, 1.0e-3, 1.0e-3])
     noise_model_name = "SLS"
     # Taking parameters from equaiton 6 in the paper
     # sigma_z = b - c * z + 2 * d * z^2
-    SLS_params = {"a": 6.8e-3, "b": 28.0e-3, "c": 38.0e-3, "d": (42e-3+2.0e-3)/2.0}
-    sp = SensorProcessor(sensor_ID, C_BS, B_r_BS, Sigma_Theta_BS, Sigma_b_r_BS, noise_model_name, SLS_params, xp)
+    SLS_params = {"a": 6.8e-3,
+                  "b": 28.0e-3,
+                  "c": 38.0e-3,
+                  "d": (42e-3+2.0e-3)/2.0,
+                  "Sigma_Theta_BS_diag": Sigma_Theta_BS_diag,
+                  "Sigma_b_r_BS_diag": Sigma_b_r_BS_diag}
+    sp = SensorProcessor(sensor_ID, noise_model_name, SLS_params, xp)
+    sp.set_BS_transform(C_BS, B_r_BS)
     # points = xp.array([[0, 0, 1.0], [0.0, 0.0, 2.0], [0.0, 0.0, 3.0], [1.0, 2.0, 3.0]])
     # Generate a larger number of points randomly in range of -20 to 20 in each dimension
     points = xp.random.uniform(-20, 20, (1000, 3))
