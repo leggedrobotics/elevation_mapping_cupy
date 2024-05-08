@@ -4,7 +4,7 @@
 #
 import numpy as np
 import cupy as cp
-
+from cupyx.profiler import time_range
 
 
 def make_3x1vec(vec):
@@ -19,6 +19,7 @@ class SensorProcessor(object):
     Currenlty restricted to point cloud data.
     Mainly used for sensor dependent propagation of uncertainty.
     """
+    @time_range('init', color_id=0)
     def __init__(self, sensor_ID, noise_model_name, noise_model_params, xp=cp, data_type=cp.float32):
         """Initialize sensor processor for a specific sensor.
 
@@ -60,6 +61,7 @@ class SensorProcessor(object):
                 self.noise_model_params[key] = xp.array(noise_model_params[key], dtype=self.data_type)
         self.xp = xp
     
+    @time_range('set_BS_transform', color_id=0)
     def set_BS_transform(self, C_BS, B_r_BS):
         """Set the transformation from body frame to sensor frame
         Enables the transformation of points from sensor frame to body frame using:
@@ -71,8 +73,9 @@ class SensorProcessor(object):
             B_r_BS (cupy._core.core.ndarray):           Position of sensor in body frame."""
         assert C_BS.shape == (3, 3), "C_BS should be a 3x3 matrix"
         self.C_BS = cp.asarray(C_BS, dtype=self.data_type)
-        self.B_r_BS = cp.asarray(make_3x1vec(B_r_BS))
+        self.B_r_BS = cp.asarray(make_3x1vec(B_r_BS), dtype=self.data_type)
     
+    @time_range('SS', color_id=0)
     def SS(self, v):
         """Skew symmetric matrix of a vector v"""
         C = self.xp.zeros((3, 3), dtype=self.data_type)
@@ -87,10 +90,13 @@ class SensorProcessor(object):
         # return self.xp.array([[0, -v[2], v[1]],
         #                 [v[2], 0, -v[0]],
         #                 [-v[1], v[0], 0]])
+    
+    @time_range('ei', color_id=0)
     def ei(self, i):
         """Basis vector ei"""
         return self.xp.array([1 if j == i else 0 for j in range(3)], dtype=self.data_type)
     
+    @time_range('Rx', color_id=0)
     def Rx(self, a):
         """Rotation matrix around x-axis"""
         C = self.xp.eye(3, dtype=self.data_type)
@@ -103,6 +109,7 @@ class SensorProcessor(object):
         #                       [0, self.xp.cos(a), -self.xp.sin(a)],
         #                       [0, self.xp.sin(a), self.xp.cos(a)]])
 
+    @time_range('Ry', color_id=0)
     def Ry(self, b):
         """Rotation matrix around y-axis"""
         C = self.xp.eye(3, dtype=self.data_type)
@@ -116,6 +123,7 @@ class SensorProcessor(object):
         #                       [0, 1, 0],
         #                       [-self.xp.sin(b), 0, self.xp.cos(b)]])
 
+    @time_range('Rz', color_id=0)
     def Rz(self, c):
         """Rotation matrix around z-axis"""
         C = self.xp.eye(3)
@@ -128,6 +136,7 @@ class SensorProcessor(object):
         #                       [self.xp.sin(c), self.xp.cos(c), 0],
         #                       [0, 0, 1]])
     
+    @time_range('diag_array_to_stacks', color_id=0)
     def diag_array_to_stacks(self, d):
         """Converts a 2D array where each row defines a diagonal into a 3D array of diagonal matrices
 
@@ -141,6 +150,7 @@ class SensorProcessor(object):
         # Can't seem to pass dtype=self.data_type, but should be fine
         return self.xp.stack([self.xp.diag(val) for val in d], axis=0)
     
+    @time_range('SLS_noise_model', color_id=0)
     def SLS_noise_model(self, S_r_SP, C_MB):
         """
         Structured Light Sensor noise model.
@@ -172,6 +182,7 @@ class SensorProcessor(object):
 
         return J_S_r_SP, Sigma_S_r_SP
     
+    @time_range('SLS_old_noise_model', color_id=0)
     def SLS_old_noise_model(self, S_r_SP, C_MB):
         """
         Noise model assumed by em_cupy  prior to the addition of the SensorProcessor class.
@@ -187,6 +198,7 @@ class SensorProcessor(object):
         Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([z_noise, z_noise, z_noise]).T)
         return J_S_r_SP, Sigma_S_r_SP
     
+    @time_range('constant_noise_model', color_id=0)
     def constant_noise_model(self, S_r_SP, C_MB):
         """
         Assume constant variance for all points
@@ -200,10 +212,12 @@ class SensorProcessor(object):
         Sigma_S_r_SP = self.xp.repeat(Sigma[np.newaxis, :, :], N, axis=0)
         return J_S_r_SP, Sigma_S_r_SP
     
+    @time_range('LiDAR_noise_model', color_id=0)
     def LiDAR_noise_model(self, points, C_MB):
         raise NotImplementedError("LiDAR noise model not implemented yet")
     
     # TODO: May need to make this its own kernel...
+    @time_range('get_ext_euler_angles', color_id=0)
     def get_ext_euler_angles(self, C):
         """
         Extract Extrinsically defined Euler angles from rotation matrix
@@ -273,7 +287,7 @@ class SensorProcessor(object):
                 roll = -yaw + self.xp.arctan2(-C[0,1], -C[0,2])
         return roll, pitch, yaw
 
-    
+    @time_range('get_z_variance', color_id=0)
     def get_z_variance(self, points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB):
         """
         Calculate variance in z direction of map frame for each point.
@@ -302,11 +316,14 @@ class SensorProcessor(object):
         """
         # C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB
         assert C_MB.shape == (3, 3), "C_MB should be a 3x3 matrix"
-        B_r_MB = make_3x1vec(B_r_MB)
+        C_MB = cp.asarray(C_MB, dtype=self.data_type)
+        B_r_MB = cp.asarray(make_3x1vec(B_r_MB), dtype=self.data_type)
         assert Sigma_Theta_MB.shape == (3, 3), "Sigma_Theta_MB should be a 3x3 matrix"
+        Sigma_Theta_MB = cp.asarray(Sigma_Theta_MB, dtype=self.data_type)
         assert Sigma_b_r_MB.shape == (3, 3), "Sigma_b_r_MB should be a 3x3 matrix"
-        S_r_SP = points # For ease of numpy/cupy notation points are Nx3 i.e. batch index first
-        assert S_r_SP.shape[1] == 3, "Points should be a Nx3 matrix"
+        Sigma_b_r_MB = cp.asarray(Sigma_b_r_MB, dtype=self.data_type)
+        assert points.shape[1] == 3, "Points should be a Nx3 matrix"
+        S_r_SP = cp.asarray(points, dtype=self.data_type) # For ease of numpy/cupy notation points are Nx3 i.e. batch index first
 
         # If using the old SLS noise model, we can ignore error propagation
         if self.noise_model_name == "SLS_old":
@@ -340,6 +357,7 @@ class SensorProcessor(object):
         z_var = Sigma_M_r_MP[:, 2, 2]
         return z_var
 
+    @time_range('Jac_of_rot', color_id=0)
     def Jac_of_rot(self, C, r):
         """
         Calculate Jacobian of rotation matrix C applied to vector r
@@ -375,6 +393,7 @@ class SensorProcessor(object):
 
 
 if __name__ == "__main__":
+    print("Starting")
     xp = cp
     sensor_ID = "test_sls"
     C_BS = xp.eye(3)*1.0e0
@@ -400,8 +419,10 @@ if __name__ == "__main__":
     Sigma_Theta_MB = xp.eye(3)*1.0e-6
     Sigma_b_r_MB = xp.eye(3)*1.0e-1
     # TODO: Deal with data types
-    z_var = sp.get_z_variance(points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB)
+    for i in range(10):
+        z_var = sp.get_z_variance(points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB)
     # print(z_var)
-    if xp == cp:
-        from cupyx.profiler import benchmark
-        print(benchmark(sp.get_z_variance, (points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB), n_repeat=20))
+    # if xp == cp:
+    #     from cupyx.profiler import benchmark
+    #     print(benchmark(sp.get_z_variance, (points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB), n_repeat=20))
+    print("Done!")
