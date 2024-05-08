@@ -40,7 +40,10 @@ class SensorProcessor(object):
         # Sigma_b_r_BS:   Covariance of sensor position in base frame.
         self.Sigma_b_r_BS = xp.zeros((3, 3), dtype=self.data_type)
 
-        self.noise_models = {"SLS": self.SLS_noise_model, "LiDAR": self.LiDAR_noise_model} # Structured Light Sensor, LiDAR
+        self.noise_models = {"SLS": self.SLS_noise_model, # Structured Light Sensor Kinect v2 Fankhauser et al. 2015
+                             "SLS_old": self.SLS_old_noise_model, # Isotropic variance proportional to square of distance in z direction
+                             "constant": self.constant_noise_model, # Constant variance for all points
+                             "LiDAR": self.LiDAR_noise_model} # LiDAR
         assert noise_model_name in self.noise_models.keys(), "noise_model should be chosen from {}".format(self.noise_models.keys())
         self.noise_model_name = noise_model_name
         self.noise_model = self.noise_models[self.noise_model_name]
@@ -67,8 +70,8 @@ class SensorProcessor(object):
                                                         (takes points from sensor frame and transforms them to body frame)
             B_r_BS (cupy._core.core.ndarray):           Position of sensor in body frame."""
         assert C_BS.shape == (3, 3), "C_BS should be a 3x3 matrix"
-        self.C_BS = C_BS
-        self.B_r_BS = make_3x1vec(B_r_BS)
+        self.C_BS = cp.asarray(C_BS, dtype=self.data_type)
+        self.B_r_BS = cp.asarray(make_3x1vec(B_r_BS))
     
     def SS(self, v):
         """Skew symmetric matrix of a vector v"""
@@ -167,6 +170,34 @@ class SensorProcessor(object):
         Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([sigma_l**2, sigma_l**2, sigma_z**2]).T)
         J_S_r_SP = C_MB @ self.C_BS
 
+        return J_S_r_SP, Sigma_S_r_SP
+    
+    def SLS_old_noise_model(self, S_r_SP, C_MB):
+        """
+        Noise model assumed by em_cupy  prior to the addition of the SensorProcessor class.
+        This method is kept for backwards compatibility. Assumes an isotropic variance 
+        proportional to the square of the distance from the sensor along the z direction (front),
+        of the camera. 
+        """
+        # Error propagation can be ignored for this approach as the variance is isotropic and
+        # any rotations will not change the shape of the distribution
+        J_S_r_SP = None
+        z_noise = self.noise_model_params["sensor_noise_factor"] * self.xp.power(S_r_SP[:, 2], 2, dtype=self.data_type)
+        N = S_r_SP.shape[0]
+        Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([z_noise, z_noise, z_noise]).T)
+        return J_S_r_SP, Sigma_S_r_SP
+    
+    def constant_noise_model(self, S_r_SP, C_MB):
+        """
+        Assume constant variance for all points
+        """
+        # Error propagation can be ignored for this approach as the variance is isotropic and
+        # any rotations will not change the shape of the distribution
+        J_S_r_SP = None
+        var = self.noise_model_params["constant_variance"]
+        N = S_r_SP.shape[0]
+        Sigma = self.xp.diag(self.xp.array([var, var, var], dtype=self.data_type))
+        Sigma_S_r_SP = self.xp.repeat(Sigma[np.newaxis, :, :], N, axis=0)
         return J_S_r_SP, Sigma_S_r_SP
     
     def LiDAR_noise_model(self, points, C_MB):
@@ -276,6 +307,16 @@ class SensorProcessor(object):
         assert Sigma_b_r_MB.shape == (3, 3), "Sigma_b_r_MB should be a 3x3 matrix"
         S_r_SP = points # For ease of numpy/cupy notation points are Nx3 i.e. batch index first
         assert S_r_SP.shape[1] == 3, "Points should be a Nx3 matrix"
+
+        # If using the old SLS noise model, we can ignore error propagation
+        if self.noise_model_name == "SLS_old":
+            J_S_r_SP, Sigma_S_r_SP = self.noise_model(S_r_SP, C_MB)
+            return Sigma_S_r_SP[:, 2, 2]
+        elif self.noise_model_name == "constant":
+            J_S_r_SP, Sigma_S_r_SP = self.noise_model(S_r_SP, C_MB)
+            return Sigma_S_r_SP[:, 2, 2]
+        
+        # Error propagation
         # J_M_r_MB = I # Jacobian of M_r_MP wrt M_r_MB
         B_r_BP = (self.C_BS @ S_r_SP.T + self.B_r_BS).T # B_r_BP = C_BS @ S_r_SP +  B_r_BS
         J_Theta_MB = self.Jac_of_rot(C_MB, B_r_BP) # Jacobian of M_r_MP wrt Theta_MB

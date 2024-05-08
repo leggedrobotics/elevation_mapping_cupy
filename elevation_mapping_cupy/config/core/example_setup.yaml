@@ -22,12 +22,17 @@ image_channel_fusions:
 #    camera_info_topic_name: '/camera/depth/camera_info'
 #    channel_info_topic_name: '/camera/channel_info'
 
+additional_layers: []
 
 subscribers:
   front_cam:
     topic_name: '/camera/depth/points'
     data_type: pointcloud
     noise_model_name: SLS
+    SLS_old_noise_model_params:
+      sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
+    constant_noise_model_params:
+      constant_variance: 0.01
     SLS_noise_model_params:
       a: 6.8e-3
       b: 28.0e-3

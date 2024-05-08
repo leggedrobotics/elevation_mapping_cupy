@@ -919,31 +919,36 @@ if __name__ == "__main__":
     #  Test script for profiling.
     #  $ python -m cProfile -o profile.stats elevation_mapping.py
     #  $ snakeviz profile.stats
+
+    # Get the directory of the script
+    # Which should be located at: ws_dir/elevation_mapping_cupy/elevation_mapping_cupy/script/elevation_mapping.py
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    # Back up two directories to find the base directory of the package
+    # located here: ws_dir/elevation_mapping_cupy/
+    base_dir = os.path.dirname(os.path.dirname(script_dir))
+    # Navigate down to the core config directory
+    # located here: ws_dir/elevation_mapping_cupy/elevation_mapping_cupy/config/core/plugin_config.yaml
+    core_dir = os.path.join(base_dir, 'config', 'core')
+
     xp.random.seed(123)
-    # C_MB = xp.random.rand(3, 3)
     C_MB = xp.eye(3,3)
-    # b_r_MB = xp.random.rand(3)
     b_r_MB = xp.zeros(3)
     b_r_MB[2] += 1.0
     print(C_MB, b_r_MB)
+
     Sigma_b_r_MB = xp.eye(3,3)*0.1
     Sigma_Theta_MB = xp.eye(3,3)*0.1
     param = Parameter(
-        use_chainer=False, weight_file="../config/weights.dat", plugin_config_file="../config/plugin_config.yaml",
+        use_chainer=False, weight_file=os.path.join(core_dir, "weights.dat"), plugin_config_file=os.path.join(core_dir, "plugin_config.yaml"),
     )
-    # param.additional_layers = ["rgb", "grass", "tree", "people"]
-    # param.fusion_algorithms = ["color", "class_bayesian", "class_bayesian", "class_bayesian"]
-    # param.additional_layers = ["rgb"]
-    param.additional_layers = []
-    # param.fusion_algorithms = ["pointcloud_color"]
-    param.initial_variance = 1000.0
-    param.initialized_variance = 1000.0
-    param.max_height_range = 100.0
-    param.mahalanobis_thresh = 100.0
-    param.ramped_height_range_a = 100.0
-    # param.pointcloud_channel_fusions = {"rgb": "color"}#, "default": "average"}
-    param.pointcloud_channel_fusions = {"default": "average"}
+    param.load_from_yaml(os.path.join(core_dir, "core_param.yaml"))
+    param.load_from_yaml(os.path.join(core_dir, "example_setup.yaml"))
+    # Override weights file location and plugin config file location that are set in the yaml file
+    # Not removing there for ROS compatability
+    param.weight_file = os.path.join(core_dir, "weights.dat")
+    param.plugin_config_file = os.path.join(core_dir, "plugin_config.yaml")
     param.update()
+    param.additional_layers = []
     # Should be front_cam
     sensor_ID = list(param.subscriber_cfg.keys())[0]
     elevation = ElevationMap(param)
@@ -958,14 +963,14 @@ if __name__ == "__main__":
     ]
     # Points within a 1m.x1m.x1m. cube
     points = xp.random.rand(10000, 3 + len(param.additional_layers))
-    # points[:, 0] = 0.0
-    # points[:, 1] = 0.0
+    # Set starting elevation to -1.0 meter
     points[:, 2] = -1.0
 
     channels = ["x", "y", "z"] + param.additional_layers
     print(channels)
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
     for i in range(50):
+        # Move points along xy direction and up to test mapping
         points[:, 0] += param.resolution*2
         points[:, 1] += param.resolution*2
         points[:, 2] += 0.1
