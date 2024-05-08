@@ -175,12 +175,23 @@ class SensorProcessor(object):
         N = S_r_SP.shape[0]
         sigma_z = self.noise_model_params["b"] - self.noise_model_params["c"] * z + 2 * self.noise_model_params["d"] * z**2
         # Repeat sigma_l for each point
-        sigma_l = self.xp.repeat(sigma_l, N)
-        # Sigma_S_r_SP = self.xp.diag(self.xp.array([sigma_l**2, sigma_l**2, sigma_z**2]))
-        Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([sigma_l**2, sigma_l**2, sigma_z**2]).T)
+        # If we wanted to return the full covariance matrix we would need to repeat sigma_l for each point,
+        # combine with sigma_z, and then diagonalize the matrix.
+        # sigma_l = self.xp.repeat(sigma_l, N)
+        # Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([sigma_l**2, sigma_l**2, sigma_z**2]).T)
+        # This is unnecessary computaiton that can be simplified by instead returning the propagated error in
+        # the map frame J_S_r_SP @ Sigma_S_r_SP @ J_S_r_SP.T
         J_S_r_SP = C_MB @ self.C_BS
+        # Break the computation into the lateral and z components
+        # sensor_Sigma_M_r_MP_l = J_S_r_SP @ Sigma_S_r_SP_l @ J_S_r_SP.T
+        # simplifield since sigma_l is isotropic, Sigma_xx = Sigma_yy = sigma_l^2, and rest are 0
+        sensor_Sigma_M_r_MP_l = (sigma_l**2) * (J_S_r_SP[:, 0:2] @ J_S_r_SP[:, 0:2].T)[self.xp.newaxis, :, :]
+        # sensor_Sigma_M_r_MP_z = J_S_r_SP @ Sigma_S_r_SP_z @ J_S_r_SP.T
+        # Also simplified because only Sigma_zz component is non-zero
+        sensor_Sigma_M_r_MP_z = (sigma_z**2)[:, self.xp.newaxis, self.xp.newaxis] * (J_S_r_SP[:, 2:3] @ J_S_r_SP[:, 2:3].T)[self.xp.newaxis, :, :]
+        sensor_Sigma_M_r_MP = sensor_Sigma_M_r_MP_l + sensor_Sigma_M_r_MP_z
 
-        return J_S_r_SP, Sigma_S_r_SP
+        return sensor_Sigma_M_r_MP
     
     @time_range('SLS_old_noise_model', color_id=0)
     def SLS_old_noise_model(self, S_r_SP, C_MB):
@@ -194,9 +205,11 @@ class SensorProcessor(object):
         # any rotations will not change the shape of the distribution
         J_S_r_SP = None
         z_noise = self.noise_model_params["sensor_noise_factor"] * self.xp.power(S_r_SP[:, 2], 2, dtype=self.data_type)
-        N = S_r_SP.shape[0]
-        Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([z_noise, z_noise, z_noise]).T)
-        return J_S_r_SP, Sigma_S_r_SP
+        # N = S_r_SP.shape[0]
+        # Sigma_S_r_SP = self.diag_array_to_stacks(self.xp.array([z_noise, z_noise, z_noise]).T)
+        # TODO: Improve this using sparse diagonals
+        sensor_Sigma_M_r_MP = z_noise[:, self.xp.newaxis, self.xp.newaxis] * self.xp.eye(3, dtype=self.data_type)[self.xp.newaxis, :, :]
+        return sensor_Sigma_M_r_MP
     
     @time_range('constant_noise_model', color_id=0)
     def constant_noise_model(self, S_r_SP, C_MB):
@@ -208,9 +221,11 @@ class SensorProcessor(object):
         J_S_r_SP = None
         var = self.noise_model_params["constant_variance"]
         N = S_r_SP.shape[0]
-        Sigma = self.xp.diag(self.xp.array([var, var, var], dtype=self.data_type))
-        Sigma_S_r_SP = self.xp.repeat(Sigma[np.newaxis, :, :], N, axis=0)
-        return J_S_r_SP, Sigma_S_r_SP
+        # Sigma = self.xp.diag(self.xp.array([var, var, var], dtype=self.data_type))
+        # Sigma_S_r_SP = self.xp.repeat(Sigma[xp.newaxis, :, :], N, axis=0)
+        # TODO: Improve this using sparse diagonals or somehow avoid the repeat
+        sensor_Sigma_M_r_MP = self.xp.repeat(self.xp.diag(var * self.xp.ones(3, dtype=self.data_type))[self.xp.newaxis, :, :], N, axis=0)
+        return sensor_Sigma_M_r_MP
     
     @time_range('LiDAR_noise_model', color_id=0)
     def LiDAR_noise_model(self, points, C_MB):
@@ -325,21 +340,19 @@ class SensorProcessor(object):
         assert points.shape[1] == 3, "Points should be a Nx3 matrix"
         S_r_SP = cp.asarray(points, dtype=self.data_type) # For ease of numpy/cupy notation points are Nx3 i.e. batch index first
 
-        # If using the old SLS noise model, we can ignore error propagation
-        if self.noise_model_name == "SLS_old":
-            J_S_r_SP, Sigma_S_r_SP = self.noise_model(S_r_SP, C_MB)
-            return Sigma_S_r_SP[:, 2, 2]
-        elif self.noise_model_name == "constant":
-            J_S_r_SP, Sigma_S_r_SP = self.noise_model(S_r_SP, C_MB)
-            return Sigma_S_r_SP[:, 2, 2]
+        # If using the old SLS or constant noise model, we can ignore error propagation
+        if self.noise_model_name in ["SLS_old", "constant"]:
+            sensor_Sigma_M_r_MP = self.noise_model(S_r_SP, C_MB)
+            return sensor_Sigma_M_r_MP[:, 2, 2]
         
         # Error propagation
+        # TODO: Room for speedups here by looking at how Jac_of_rot is used
         # J_M_r_MB = I # Jacobian of M_r_MP wrt M_r_MB
         B_r_BP = (self.C_BS @ S_r_SP.T + self.B_r_BS).T # B_r_BP = C_BS @ S_r_SP +  B_r_BS
         J_Theta_MB = self.Jac_of_rot(C_MB, B_r_BP) # Jacobian of M_r_MP wrt Theta_MB
         J_B_r_BS = C_MB # Jacobian of M_r_MP wrt B_r_BS
         J_Theta_BS = C_MB @ self.Jac_of_rot(self.C_BS, S_r_SP) # Jacobian of M_r_MP wrt Theta_BS
-        J_S_r_SP, Sigma_S_r_SP = self.noise_model(S_r_SP, C_MB) # Jacobian of M_r_MP wrt S_r_SP
+        sensor_Sigma_M_r_MP = self.noise_model(S_r_SP, C_MB) # Sensor noise propagated to map frame
 
         Sigma_Theta_BS = self.noise_model_params["Sigma_Theta_BS"]
         Sigma_b_r_BS = self.noise_model_params["Sigma_b_r_BS"]
@@ -351,7 +364,7 @@ class SensorProcessor(object):
                         J_Theta_MB @ Sigma_Theta_MB @ J_Theta_MB.transpose((0,2,1)) + \
                         J_B_r_BS @ Sigma_b_r_BS @ J_B_r_BS.T + \
                         J_Theta_BS @ Sigma_Theta_BS @ J_Theta_BS.transpose((0,2,1)) + \
-                        J_S_r_SP @ Sigma_S_r_SP @ J_S_r_SP.T
+                        sensor_Sigma_M_r_MP
         
         # Pull out the z variance
         z_var = Sigma_M_r_MP[:, 2, 2]
@@ -409,20 +422,30 @@ if __name__ == "__main__":
                   "d": (42e-3+2.0e-3)/2.0,
                   "Sigma_Theta_BS_diag": Sigma_Theta_BS_diag,
                   "Sigma_b_r_BS_diag": Sigma_b_r_BS_diag}
-    sp = SensorProcessor(sensor_ID, noise_model_name, SLS_params, xp)
+    SLS_old_params = {"sensor_noise_factor": 0.05}
+    constant_params = {"constant_variance": 0.01}
+    if noise_model_name == "SLS":
+        sensor_params = SLS_params
+    elif noise_model_name == "SLS_old":
+        sensor_params = SLS_old_params
+    elif noise_model_name == "constant":
+        sensor_params = constant_params
+    sp = SensorProcessor(sensor_ID, noise_model_name, sensor_params, xp)
     sp.set_BS_transform(C_BS, B_r_BS)
     # points = xp.array([[0, 0, 1.0], [0.0, 0.0, 2.0], [0.0, 0.0, 3.0], [1.0, 2.0, 3.0]])
     # Generate a larger number of points randomly in range of -20 to 20 in each dimension
-    points = xp.random.uniform(-20, 20, (1000, 3))
+    points = xp.random.uniform(-20, 20, (10000, 3))
     C_MB = xp.eye(3)*1.0e0
     B_r_MB = xp.array([10.0, 0, 0])
     Sigma_Theta_MB = xp.eye(3)*1.0e-6
     Sigma_b_r_MB = xp.eye(3)*1.0e-1
-    # TODO: Deal with data types
-    for i in range(10):
-        z_var = sp.get_z_variance(points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB)
-    # print(z_var)
-    # if xp == cp:
-    #     from cupyx.profiler import benchmark
-    #     print(benchmark(sp.get_z_variance, (points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB), n_repeat=20))
+
+    # For profiling using Nsight Systems
+    # for i in range(10):
+    #     z_var = sp.get_z_variance(points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB)
+
+    # For profiling directly in the script
+    if xp == cp:
+        from cupyx.profiler import benchmark
+        print(benchmark(sp.get_z_variance, (points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB), n_repeat=20))
     print("Done!")
