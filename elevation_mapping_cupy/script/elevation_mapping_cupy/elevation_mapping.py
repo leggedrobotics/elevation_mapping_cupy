@@ -28,6 +28,7 @@ from elevation_mapping_cupy.kernels import normal_filter_kernel
 from elevation_mapping_cupy.kernels import polygon_mask_kernel
 from elevation_mapping_cupy.kernels import image_to_map_correspondence_kernel
 
+from elevation_mapping_cupy.sensor_processor import SensorProcessor, make_3x1vec
 from elevation_mapping_cupy.map_initializer import MapInitializer
 from elevation_mapping_cupy.plugins.plugin_manager import PluginManager
 from elevation_mapping_cupy.semantic_map import SemanticMap
@@ -58,7 +59,7 @@ class ElevationMap:
         self.param = param
         self.data_type = self.param.data_type
         self.resolution = param.resolution
-        self.center = xp.array([0, 0, 0], dtype=self.data_type)
+        self.center = xp.array([[0],[0],[0]], dtype=self.data_type)
         self.base_rotation = xp.eye(3, dtype=self.data_type)
         self.map_length = param.map_length
         self.cell_n = param.cell_n
@@ -83,6 +84,9 @@ class ElevationMap:
         self.initial_variance = param.initial_variance
         self.elevation_map[1] += self.initial_variance
         self.elevation_map[3] += 1.0
+
+        # Configure sensors
+        self.configure_sensors(param)
 
         # overlap clearance
         cell_range = int(self.param.overlap_clear_range_xy / self.resolution)
@@ -115,6 +119,22 @@ class ElevationMap:
         self.plugin_manager.load_plugin_settings(plugin_config_file)
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance, xp=cp, method="points")
+    
+    def configure_sensors(self, param):
+        """Configure the sensor Processors for the elevation map.
+
+        Args:
+            param (elevation_mapping_cupy.parameter.Parameter):
+        """
+        self.sensor_processors = {}
+        for sensor_ID, config in param.subscriber_cfg.items():
+            if config["data_type"] == "pointcloud":
+                nm_name = config["noise_model_name"]
+                nm_param_name = nm_name + "_noise_model_params"
+                nm_params = config.get(nm_param_name, {})
+                sp = SensorProcessor(sensor_ID, nm_name, nm_params, xp)
+                self.sensor_processors[sensor_ID] = sp
+        
 
     def clear(self):
         """Reset all the layers of the elevation & the semantic map."""
@@ -238,7 +258,6 @@ class ElevationMap:
             self.resolution,
             self.cell_n,
             self.cell_n,
-            self.param.sensor_noise_factor,
             self.param.mahalanobis_thresh,
             self.param.outlier_variance,
             self.param.wall_num_thresh,
@@ -257,7 +276,6 @@ class ElevationMap:
             self.resolution,
             self.cell_n,
             self.cell_n,
-            self.param.sensor_noise_factor,
             self.param.mahalanobis_thresh,
             self.param.drift_compensation_variance_inlier,
             self.param.traversability_inlier,
@@ -303,39 +321,57 @@ class ElevationMap:
 
         Args:
             t (cupy._core.core.ndarray): Absolute point position
+        
+        Returns:
+            cupy._core.core.ndarray: Translated point position
         """
-        t -= self.center
+        t_shift = t -  self.center
+        return t_shift
 
-    def update_map_with_kernel(self, points_all, channels, R, t, position_noise, orientation_noise):
+    def update_map_with_kernel(self, sensor_ID, points_all, channels, C_MB, B_r_MB, Sigma_b_r_MB, Sigma_Theta_MB):
         """Update map with new measurement.
 
         Args:
+            sensor_ID (str):                            Sensor ID
             points_all (cupy._core.core.ndarray):
-            channels (List[str]):
-            R (cupy._core.core.ndarray):
-            t (cupy._core.core.ndarray):
-            position_noise (float):
-            orientation_noise (float):
+            channels (List[str]):                       List of channels in the point cloud besides x, y, z
+            C_MB (cupy._core.core.ndarray):             Rotation matrix from the map frame to the base frame
+            B_r_MB (cupy._core.core.ndarray):           Translation vector from the map frame to the base frame
+            Sigma_b_r_MB (cupy._core.core.ndarray):     Covariance of base position in map frame.
+            Sigma_Theta_MB (cupy._core.core.ndarray):   Covariance of base orientation in map frame where orientation is defined 
+                                                        as fixed-axis(extrinsic) xyz(roll, pitch, yaw) Euler angles.
         """
         self.new_map *= 0.0
         error = cp.array([0.0], dtype=cp.float32)
         error_cnt = cp.array([0], dtype=cp.float32)
         points = points_all[:, :3]
+        # Obtain the transform from the map frame to the sensor frame
+        C_BS = self.sensor_processors[sensor_ID].C_BS
+        B_r_BS = self.sensor_processors[sensor_ID].B_r_BS
+        C_MS = C_MB @ C_BS
+        B_r_MS = C_MB @ B_r_BS + B_r_MB
         # additional_fusion = self.get_fusion_of_pcl(channels)
         with self.map_lock:
-            self.shift_translation_to_map_center(t)
+            # Now the translation is w.r.t. the map center frame O
+            O_r_OS = self.shift_translation_to_map_center(B_r_MS)
+            # C_MS is equivalent to C_OS because we assume the map center frame O is aligned with the map frame M
+            C_OS = C_MS
             self.error_counting_kernel(
                 self.elevation_map,
                 points,
                 cp.array([0.0], dtype=self.data_type),
                 cp.array([0.0], dtype=self.data_type),
-                R,
-                t,
+                C_OS,
+                O_r_OS,
                 self.new_map,
                 error,
                 error_cnt,
                 size=(points.shape[0]),
             )
+            # Compute position and orientation noise of the base frame in the map frame for
+            # triggering drift compensation
+            position_noise = cp.sqrt(Sigma_b_r_MB[0, 0] + Sigma_b_r_MB[1, 1] + Sigma_b_r_MB[2, 2])
+            orientation_noise = cp.sqrt(Sigma_Theta_MB[0, 0] + Sigma_Theta_MB[1, 1] + Sigma_Theta_MB[2, 2])
             if (
                 self.param.enable_drift_compensation
                 and error_cnt > self.param.min_height_drift_cnt
@@ -348,11 +384,14 @@ class ElevationMap:
                 self.additive_mean_error += self.mean_error
                 if np.abs(self.mean_error) < self.param.max_drift:
                     self.elevation_map[0] += self.mean_error * self.param.drift_compensation_alpha
+            # Compute the vertical variance for the sensor using uncertainty propagation for the sensor
+            var_h = self.sensor_processors[sensor_ID].get_z_variance(points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB)
             self.add_points_kernel(
                 cp.array([0.0], dtype=self.data_type),
                 cp.array([0.0], dtype=self.data_type),
-                R,
-                t,
+                C_OS,
+                O_r_OS,
+                var_h,
                 self.normal_map,
                 points,
                 self.elevation_map,
@@ -361,10 +400,10 @@ class ElevationMap:
             )
             self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
-            self.semantic_map.update_layers_pointcloud(points_all, channels, R, t, self.new_map)
+            self.semantic_map.update_layers_pointcloud(points_all, channels, C_OS, O_r_OS, self.new_map)
 
             if self.param.enable_overlap_clearance:
-                self.clear_overlap_map(t)
+                self.clear_overlap_map(O_r_OS)
             # dilation before traversability_filter
             self.traversability_input *= 0.0
             self.dilation_filter_kernel(
@@ -426,23 +465,26 @@ class ElevationMap:
 
     def input_pointcloud(
         self,
+        sensor_ID: str,
         raw_points: cp._core.core.ndarray,
         channels: List[str],
-        R: cp._core.core.ndarray,
-        t: cp._core.core.ndarray,
-        position_noise: float,
-        orientation_noise: float,
+        C_MB: cp._core.core.ndarray,
+        B_r_MB: cp._core.core.ndarray,
+        Sigma_b_r_MB: cp._core.core.ndarray,
+        Sigma_Theta_MB: cp._core.core.ndarray,
     ):
         """Input the point cloud and fuse the new measurements to update the elevation map.
 
         Args:
-            raw_points (cupy._core.core.ndarray):
-            channels (List[str]):
-            R  (cupy._core.core.ndarray):
-            t (cupy._core.core.ndarray):
-            position_noise (float):
-            orientation_noise (float):
-
+            sensor_ID (str):                            Sensor ID
+            raw_points (cupy._core.core.ndarray):       Points in the sensor frame (S_r_SP)
+            channels (List[str]):                       List of channels in the point cloud including x, y, z as
+                                                        the first three channels
+            C_MB (cupy._core.core.ndarray):             Rotation matrix from the map frame to the base frame
+            B_r_MB (cupy._core.core.ndarray):           Translation vector from the map frame to the base frame
+            Sigma_b_r_MB (cupy._core.core.ndarray):     Covariance of base position in map frame.
+            Sigma_Theta_MB (cupy._core.core.ndarray):   Covariance of base orientation in map frame where orientation is defined 
+                                                        as fixed-axis(extrinsic) xyz(roll, pitch, yaw) Euler angles.
         Returns:
             None:
         """
@@ -450,12 +492,13 @@ class ElevationMap:
         additional_channels = channels[3:]
         raw_points = raw_points[~cp.isnan(raw_points).any(axis=1)]
         self.update_map_with_kernel(
+            sensor_ID,
             raw_points,
             additional_channels,
-            cp.asarray(R, dtype=self.data_type),
-            cp.asarray(t, dtype=self.data_type),
-            position_noise,
-            orientation_noise,
+            cp.asarray(C_MB, dtype=self.data_type),
+            make_3x1vec(cp.asarray(B_r_MB, dtype=self.data_type)),
+            cp.asarray(Sigma_b_r_MB, dtype=self.data_type),
+            cp.asarray(Sigma_Theta_MB, dtype=self.data_type),
         )
 
     def input_image(
@@ -876,16 +919,38 @@ if __name__ == "__main__":
     #  Test script for profiling.
     #  $ python -m cProfile -o profile.stats elevation_mapping.py
     #  $ snakeviz profile.stats
+
+    # Get the directory of the script
+    # Which should be located at: ws_dir/elevation_mapping_cupy/elevation_mapping_cupy/script/elevation_mapping.py
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    # Back up two directories to find the base directory of the package
+    # located here: ws_dir/elevation_mapping_cupy/
+    base_dir = os.path.dirname(os.path.dirname(script_dir))
+    # Navigate down to the core config directory
+    # located here: ws_dir/elevation_mapping_cupy/elevation_mapping_cupy/config/core/plugin_config.yaml
+    core_dir = os.path.join(base_dir, 'config', 'core')
+
     xp.random.seed(123)
-    R = xp.random.rand(3, 3)
-    t = xp.random.rand(3)
-    print(R, t)
+    C_MB = xp.eye(3,3)
+    b_r_MB = xp.zeros(3)
+    b_r_MB[2] += 1.0
+    print(C_MB, b_r_MB)
+
+    Sigma_b_r_MB = xp.eye(3,3)*0.1
+    Sigma_Theta_MB = xp.eye(3,3)*0.1
     param = Parameter(
-        use_chainer=False, weight_file="../config/weights.dat", plugin_config_file="../config/plugin_config.yaml",
+        use_chainer=False, weight_file=os.path.join(core_dir, "weights.dat"), plugin_config_file=os.path.join(core_dir, "plugin_config.yaml"),
     )
-    param.additional_layers = ["rgb", "grass", "tree", "people"]
-    param.fusion_algorithms = ["color", "class_bayesian", "class_bayesian", "class_bayesian"]
+    param.load_from_yaml(os.path.join(core_dir, "core_param.yaml"))
+    param.load_from_yaml(os.path.join(core_dir, "example_setup.yaml"))
+    # Override weights file location and plugin config file location that are set in the yaml file
+    # Not removing there for ROS compatability
+    param.weight_file = os.path.join(core_dir, "weights.dat")
+    param.plugin_config_file = os.path.join(core_dir, "plugin_config.yaml")
     param.update()
+    param.additional_layers = []
+    # Should be front_cam
+    sensor_ID = list(param.subscriber_cfg.keys())[0]
     elevation = ElevationMap(param)
     layers = [
         "elevation",
@@ -896,16 +961,23 @@ if __name__ == "__main__":
         "inpaint",
         "rgb",
     ]
-    points = xp.random.rand(100000, len(layers))
+    # Points within a 1m.x1m.x1m. cube
+    points = xp.random.rand(10000, 3 + len(param.additional_layers))
+    # Set starting elevation to -1.0 meter
+    points[:, 2] = -1.0
 
     channels = ["x", "y", "z"] + param.additional_layers
     print(channels)
     data = np.zeros((elevation.cell_n - 2, elevation.cell_n - 2), dtype=np.float32)
     for i in range(50):
-        elevation.input_pointcloud(points, channels, R, t, 0, 0)
-        elevation.update_normal(elevation.elevation_map[0])
-        pos = np.array([i * 0.01, i * 0.02, i * 0.01])
-        elevation.move_to(pos, R)
+        # Move points along xy direction and up to test mapping
+        points[:, 0] += param.resolution*2
+        points[:, 1] += param.resolution*2
+        points[:, 2] += 0.1
+        elevation.input_pointcloud(sensor_ID, points, channels, C_MB, b_r_MB, Sigma_b_r_MB, Sigma_Theta_MB)
+        # elevation.update_normal(elevation.elevation_map[0])
+        # pos = np.array([i * 0.01, i * 0.02, i * 0.01])
+        # elevation.move_to(pos, R)
         for layer in layers:
             elevation.get_map_with_name_ref(layer, data)
         print(i)

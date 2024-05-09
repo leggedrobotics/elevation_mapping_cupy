@@ -8,6 +8,8 @@ import numpy as np
 from simple_parsing.helpers import Serializable
 from dataclasses import field
 from typing import Tuple
+import os
+import yaml
 
 
 @dataclass
@@ -141,6 +143,15 @@ class Parameter(Serializable):
                 "channels": ["rgb", "person"],
                 "topic_name": "/elevation_mapping/pointcloud_semantic",
                 "data_type": "pointcloud",
+                "noise_model_name": "SLS",
+                "SLS_noise_model_params": {
+                    "a": 6.8e-3,
+                    "b": 28.0e-3,
+                    "c": 38.0e-3,
+                    "d": 22.0e-3,
+                    "Sigma_Theta_BS_diag": [1.0e-1, 1.0e-1, 1.0e-1],
+                    "Sigma_b_r_BS_diag": [1.0e-3, 1.0e-3, 1.0e-3]
+                }
             }
         }
     )  # configuration for the subscriber
@@ -287,14 +298,38 @@ class Parameter(Serializable):
         self.cell_n = int(round(self.map_length / self.resolution)) + 2
         self.true_cell_n = round(self.map_length / self.resolution)
         self.true_map_length = self.true_cell_n * self.resolution
+    
+    def load_from_yaml(self, filename):
+
+        with open(filename, 'r') as file:
+            data = yaml.safe_load(file)
+
+        for key, value in data.items():
+            if key in self.__dict__:
+                setattr(self, key, value)
+            elif key == "subscribers":
+                key = "subscriber_cfg"
+                setattr(self, key, value)
+            else:
+                print(f"Key {key} not found in parameter class")
 
 
 if __name__ == "__main__":
     param = Parameter()
-    print(param)
-    print(param.resolution)
-    param.set_value("resolution", 0.1)
-    print(param.resolution)
+    # Use the directory of the script to navigate to the core config directory
+    # Which should be located at: ws_dir/elevation_mapping_cupy/elevation_mapping_cupy/script/elevation_mapping_cupy/parameter.py
+    emcupy_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    config_dir = os.path.join(emcupy_dir, 'config')
+    # Navigate down to the core directory for testing
+    core_dir = os.path.join(config_dir, 'core')
+    filename = os.path.join(core_dir, "example_setup.yaml")
+    print("Default parameter 'subscriber_cfg' ", param.subscriber_cfg)
+    param.load_from_yaml(filename)
+    print("Loaded parameter 'subscriber_cfg' ", param.subscriber_cfg)
+    # print(param)
+    # print(param.resolution)
+    # param.set_value("resolution", 0.1)
+    # print(param.resolution)
 
-    print("names ", param.get_names())
-    print("types ", param.get_types())
+    # print("names ", param.get_names())
+    # print("types ", param.get_types())
