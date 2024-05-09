@@ -228,8 +228,63 @@ class SensorProcessor(object):
         return sensor_Sigma_M_r_MP
     
     @time_range('LiDAR_noise_model', color_id=0)
-    def LiDAR_noise_model(self, points, C_MB):
-        raise NotImplementedError("LiDAR noise model not implemented yet")
+    def LiDAR_noise_model(self, S_r_SP, C_MB):
+        """
+        Noise model for LiDAR sensor based on the paper:
+        Noise characterization of depth sensors for surface inspections, Pomerleau et. al., 2012
+        A coordinate frame is defined for each point with the z-axis pointing from the sensor to the point.
+        The XY plane for that point is defined as normal to the z-axis.
+        The noise model is defined as:
+        sigma_d = a (depth noise in meters)
+        sigma_r = (b*depth-c)/1000 (lateral noise in meters)
+        where depth is the distance from the sensor to the point along the z-axis and a, b, and c are constants.
+        Note that the naming convention is consistent with the paper for clarity even though another choice
+        of variable names may be more intuitive.
+        """
+        # First define the coordinate frame for each point
+        # The z-axis is the unit vector from the sensor to the point
+        depth = self.xp.linalg.norm(S_r_SP, axis=1)
+        ez = S_r_SP / depth[:, self.xp.newaxis]
+        # Solve for the x axis by noting that the dot product of the x axis with the z axis is 0
+        # and assuming that the ex_z component is 0
+        # ex = [ax, ay, az] and ez = [bz, by, bz]
+        # First handle degenerate case where bx == 0
+        ex = self.xp.zeros_like(ez, dtype=self.data_type)
+        degen_case = ez[:, 0] == 0.0
+        # ay = 0
+        ex[degen_case, 1] = 0.0
+        # ax = 1 if bz > 0 else -1
+        # RESUME HERE: Need to check indexing for degen case and double check math
+        ex[degen_case, 0] = self.xp.where(ez[degen_case, 2] > 0, 1.0, -1.0)
+        # ay = sqrt((1 + by^2/bx^2))^-1
+        ex[~degen_case, 1] = self.xp.sqrt(1.0/(1 + ez[~degen_case, 1]**2 / ez[~degen_case, 0]**2))
+        # ax = -by/bx * ay
+        ex[~degen_case, 0] = -ez[~degen_case, 1] / ez[~degen_case, 0] * ex[~degen_case, 1]
+
+        # The y axis is the cross product of the z and x axes
+        ey = self.xp.cross(ez, ex)
+        # Now check that the dot product between the basis vectors is 0
+        # assert self.xp.all(self.xp.abs(self.xp.sum(ex * ez, axis=1)) <= 1.0e-6), "ex and ez should be orthogonal"
+        # assert self.xp.all(self.xp.abs(self.xp.sum(ey * ez, axis=1)) <= 1.0e-6), "ey and ez should be orthogonal"
+        # assert self.xp.all(self.xp.abs(self.xp.sum(ex * ey, axis=1)) <= 1.0e-6), "ex and ey should be orthogonal"
+
+        # The rotation matrix from the sensor frame to the point frame is the transpose of the rotation matrix
+        # from the point frame to the sensor frame
+        # C_PS = self.xp.
+        C_SP = self.xp.stack([ex, ey, ez], axis=1)
+
+        # Now we can calculate the noise
+        sigma_d = self.noise_model_params["a"]
+        sigma_r = (self.noise_model_params["b"] * depth - self.noise_model_params["c"]) / 1000
+
+        # Propagate the error
+        J_P_r_SP = C_MB @ self.C_BS @ C_SP
+        # Break the computation into the tangent (sigma_d) and radial (sigma_r) components
+        sensor_Sigma_M_r_MP_d = (sigma_d**2) * (J_P_r_SP[:, :, 2:3] @ J_P_r_SP[:, :, 2:3].transpose((0,2,1)))
+        sensor_Sigma_M_r_MP_r = (sigma_r**2)[:,self.xp.newaxis, self.xp.newaxis] * (J_P_r_SP[:, :, 0:2] @ J_P_r_SP[:, :, 0:2].transpose((0,2,1)))
+        sensor_Sigma_M_r_MP = sensor_Sigma_M_r_MP_d + sensor_Sigma_M_r_MP_r
+
+        return sensor_Sigma_M_r_MP
     
     # TODO: May need to make this its own kernel...
     @time_range('get_ext_euler_angles', color_id=0)
@@ -273,22 +328,25 @@ class SensorProcessor(object):
         """
         if self.xp.abs(C[2, 0]) != 1.0:
             pitch1 = -self.xp.arcsin(C[2,0]) # Different compared to paper due to 
-            pitch2 = self.xp.pi - pitch1
             roll1 = self.xp.arctan2(C[2,1]/self.xp.cos(pitch1), C[2,2]/self.xp.cos(pitch1))
-            roll2 = self.xp.arctan2(C[2,1]/self.xp.cos(pitch2), C[2,2]/self.xp.cos(pitch2))
             yaw1 = self.xp.arctan2(C[1,0]/self.xp.cos(pitch1), C[0,0]/self.xp.cos(pitch1))
-            yaw2 = self.xp.arctan2(C[1,0]/self.xp.cos(pitch2), C[0,0]/self.xp.cos(pitch2))
             # Select the correct set of angles
             a1_valid = roll1 >= -self.xp.pi and roll1 <= self.xp.pi
             a1_valid = a1_valid and (pitch1 >= -self.xp.pi and pitch1 <= self.xp.pi)
             a1_valid = a1_valid and (yaw1 >= 0 and yaw1 <= self.xp.pi)
+            if a1_valid:
+                roll, pitch, yaw = roll1, pitch1, yaw1
+                return roll, pitch, yaw
+            # else:
+            pitch2 = self.xp.pi - pitch1
+            roll2 = self.xp.arctan2(C[2,1]/self.xp.cos(pitch2), C[2,2]/self.xp.cos(pitch2))
+            yaw2 = self.xp.arctan2(C[1,0]/self.xp.cos(pitch2), C[0,0]/self.xp.cos(pitch2))
             a2_valid = roll2 >= -self.xp.pi and roll2 <= self.xp.pi
             a2_valid = a2_valid and (pitch2 >= -self.xp.pi and pitch2 <= self.xp.pi)
             a2_valid = a2_valid and (yaw2 >= 0 and yaw2 <= self.xp.pi)
-            if a1_valid:
-                roll, pitch, yaw = roll1, pitch1, yaw1
-            elif a2_valid:
+            if a2_valid:
                 roll, pitch, yaw = roll2, pitch2, yaw2
+                return roll, pitch, yaw
             else:
                 raise ValueError("No valid set of Euler angles found")
                 
@@ -329,14 +387,9 @@ class SensorProcessor(object):
         Returns:
             cupy._core.core.ndarray: Variance of each point along z direction of map frame.
         """
-        # C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB
+        # Check the inputs relevant to the non-error propagation noise models first
         assert C_MB.shape == (3, 3), "C_MB should be a 3x3 matrix"
         C_MB = cp.asarray(C_MB, dtype=self.data_type)
-        B_r_MB = cp.asarray(make_3x1vec(B_r_MB), dtype=self.data_type)
-        assert Sigma_Theta_MB.shape == (3, 3), "Sigma_Theta_MB should be a 3x3 matrix"
-        Sigma_Theta_MB = cp.asarray(Sigma_Theta_MB, dtype=self.data_type)
-        assert Sigma_b_r_MB.shape == (3, 3), "Sigma_b_r_MB should be a 3x3 matrix"
-        Sigma_b_r_MB = cp.asarray(Sigma_b_r_MB, dtype=self.data_type)
         assert points.shape[1] == 3, "Points should be a Nx3 matrix"
         S_r_SP = cp.asarray(points, dtype=self.data_type) # For ease of numpy/cupy notation points are Nx3 i.e. batch index first
 
@@ -344,6 +397,13 @@ class SensorProcessor(object):
         if self.noise_model_name in ["SLS_old", "constant"]:
             sensor_Sigma_M_r_MP = self.noise_model(S_r_SP, C_MB)
             return sensor_Sigma_M_r_MP[:, 2, 2]
+        
+        # Check the other inputs
+        B_r_MB = cp.asarray(make_3x1vec(B_r_MB), dtype=self.data_type)
+        assert Sigma_Theta_MB.shape == (3, 3), "Sigma_Theta_MB should be a 3x3 matrix"
+        Sigma_Theta_MB = cp.asarray(Sigma_Theta_MB, dtype=self.data_type)
+        assert Sigma_b_r_MB.shape == (3, 3), "Sigma_b_r_MB should be a 3x3 matrix"
+        Sigma_b_r_MB = cp.asarray(Sigma_b_r_MB, dtype=self.data_type)
         
         # Error propagation
         # TODO: Room for speedups here by looking at how Jac_of_rot is used
@@ -408,12 +468,12 @@ class SensorProcessor(object):
 if __name__ == "__main__":
     print("Starting")
     xp = cp
-    sensor_ID = "test_sls"
+    sensor_ID = "test_sensor"
     C_BS = xp.eye(3)*1.0e0
     B_r_BS = xp.array([0.0, 0.0, 0.0])
     Sigma_Theta_BS_diag = xp.array([1.0e-1, 1.0e-1, 1.0e-1])
     Sigma_b_r_BS_diag = xp.array([1.0e-3, 1.0e-3, 1.0e-3])
-    noise_model_name = "SLS"
+    noise_model_name = "LiDAR"
     # Taking parameters from equaiton 6 in the paper
     # sigma_z = b - c * z + 2 * d * z^2
     SLS_params = {"a": 6.8e-3,
@@ -424,12 +484,19 @@ if __name__ == "__main__":
                   "Sigma_b_r_BS_diag": Sigma_b_r_BS_diag}
     SLS_old_params = {"sensor_noise_factor": 0.05}
     constant_params = {"constant_variance": 0.01}
+    LiDAR_params = {"a": 0.012,
+                    "b": 6.8,
+                    "c": 0.81,
+                    "Sigma_Theta_BS_diag": Sigma_Theta_BS_diag,
+                    "Sigma_b_r_BS_diag": Sigma_b_r_BS_diag}
     if noise_model_name == "SLS":
         sensor_params = SLS_params
     elif noise_model_name == "SLS_old":
         sensor_params = SLS_old_params
     elif noise_model_name == "constant":
         sensor_params = constant_params
+    elif noise_model_name == "LiDAR":
+        sensor_params = LiDAR_params
     sp = SensorProcessor(sensor_ID, noise_model_name, sensor_params, xp)
     sp.set_BS_transform(C_BS, B_r_BS)
     # points = xp.array([[0, 0, 1.0], [0.0, 0.0, 2.0], [0.0, 0.0, 3.0], [1.0, 2.0, 3.0]])
@@ -441,7 +508,7 @@ if __name__ == "__main__":
     Sigma_b_r_MB = xp.eye(3)*1.0e-1
 
     # For profiling using Nsight Systems
-    # for i in range(10):
+    # for i in range(20):
     #     z_var = sp.get_z_variance(points, C_MB, B_r_MB, Sigma_Theta_MB, Sigma_b_r_MB)
 
     # For profiling directly in the script
