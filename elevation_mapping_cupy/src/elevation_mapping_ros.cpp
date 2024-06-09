@@ -388,6 +388,9 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
   // Extract camera matrix
   Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> cameraMatrix(&camera_info_msg->K[0]);
 
+  // Extract distortion coefficients
+  Eigen::Map<const Eigen::VectorXd> distortionCoeffs(camera_info_msg->D.data(), camera_info_msg->D.size());
+
   // Get pose of sensor in map frame
   tf::StampedTransform transformTf;
   std::string sensorFrameId = image_msg->header.frame_id;
@@ -428,8 +431,8 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
   }
 
   // Pass image to pipeline
-  map_.input_image(multichannel_image, channels, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix,
-                   image.rows, image.cols);
+  map_.input_image(multichannel_image, channels, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix, 
+                   distortionCoeffs, image.rows, image.cols);
 }
 
 void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
