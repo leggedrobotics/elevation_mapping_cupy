@@ -466,6 +466,7 @@ class ElevationMap:
         R: cp._core.core.ndarray,
         t: cp._core.core.ndarray,
         K: cp._core.core.ndarray,
+        D: cp._core.core.ndarray,
         image_height: int,
         image_width: int,
     ):
@@ -492,6 +493,7 @@ class ElevationMap:
         K = cp.asarray(K, dtype=self.data_type)
         R = cp.asarray(R, dtype=self.data_type)
         t = cp.asarray(t, dtype=self.data_type)
+        D = cp.asarray(D, dtype=self.data_type)
         image_height = cp.float32(image_height)
         image_width = cp.float32(image_width)
 
@@ -514,6 +516,7 @@ class ElevationMap:
                 y1,
                 z1,
                 P.reshape(-1),
+                D.reshape(-1),
                 image_height,
                 image_width,
                 self.center,

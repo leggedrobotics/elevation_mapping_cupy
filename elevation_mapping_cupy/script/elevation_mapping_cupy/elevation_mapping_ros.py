@@ -177,7 +177,7 @@ class ElevationMapWrapper:
         assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
         # process pointcloud
-        self._map.input_image(sub_key, semantic_img, R, t, K, camera_info_msg.height, camera_info_msg.width)
+        self._map.input_image(sub_key, semantic_img, R, t, K, D, camera_info_msg.height, camera_info_msg.width)
         self._image_process_counter += 1
 
     def pointcloud_callback(self, msg, sub_key):
