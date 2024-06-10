@@ -64,22 +64,27 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
             // filter point next to image plane
             if ((u < 0) || (v < 0) || (u >= image_width) || (v >= image_height)){
                 return;
-            } 
+            }
 
-            // Apply undistortion using distortion matrix D
-            float k1 = D[0];
-            float k2 = D[1];
-            float p1 = D[2];
-            float p2 = D[3];
-            float k3 = D[4];
-            float x = (u - image_width / 2.0) / (image_width / 2.0);
-            float y = (v - image_height / 2.0) / (image_height / 2.0);
-            float r2 = x * x + y * y;
-            float radial_distortion = 1 + k1 * r2 + k2 * r2 * r2 + k3 * r2 * r2 * r2;
-            float x_corrected = x * radial_distortion + 2 * p1 * x * y + p2 * (r2 + 2 * x * x);
-            float y_corrected = y * radial_distortion + 2 * p2 * x * y + p1 * (r2 + 2 * y * y);
-            u = (x_corrected * (image_width / 2.0)) + (image_width / 2.0);
-            v = (y_corrected * (image_height / 2.0)) + (image_height / 2.0);
+            // Check if D is all zeros
+            bool is_D_zero = (D[0] == 0 && D[1] == 0 && D[2] == 0 && D[3] == 0 && D[4] == 0);
+
+            // Apply undistortion using distortion matrix D if not all zeros
+            if (!is_D_zero) {
+                float k1 = D[0];
+                float k2 = D[1];
+                float p1 = D[2];
+                float p2 = D[3];
+                float k3 = D[4];
+                float x = (u - image_width / 2.0) / (image_width / 2.0);
+                float y = (v - image_height / 2.0) / (image_height / 2.0);
+                float r2 = x * x + y * y;
+                float radial_distortion = 1 + k1 * r2 + k2 * r2 * r2 + k3 * r2 * r2 * r2;
+                float x_corrected = x * radial_distortion + 2 * p1 * x * y + p2 * (r2 + 2 * x * x);
+                float y_corrected = y * radial_distortion + 2 * p2 * x * y + p1 * (r2 + 2 * y * y);
+                u = (x_corrected * (image_width / 2.0)) + (image_width / 2.0);
+                v = (y_corrected * (image_height / 2.0)) + (image_height / 2.0);
+            }
             
             int y0_c = y0;
             int x0_c = x0;
