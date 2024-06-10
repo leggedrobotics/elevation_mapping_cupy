@@ -388,8 +388,14 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
   Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> cameraMatrix(&camera_info_msg->K[0]);
 
   // Extract distortion coefficients
-  Eigen::Map<const Eigen::VectorXd> distortionCoeffs(camera_info_msg->D.data(), camera_info_msg->D.size());
-
+  Eigen::VectorXd distortionCoeffs;
+  if (!camera_info_msg->D.empty()) {
+    distortionCoeffs = Eigen::Map<const Eigen::VectorXd>(camera_info_msg->D.data(), camera_info_msg->D.size());
+  } else {
+    ROS_ERROR("Distortion coefficients are empty.");
+    return;
+  }
+  
   // Get pose of sensor in map frame
   tf::StampedTransform transformTf;
   std::string sensorFrameId = image_msg->header.frame_id;

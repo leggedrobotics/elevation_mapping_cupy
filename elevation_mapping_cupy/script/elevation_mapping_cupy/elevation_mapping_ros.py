@@ -174,8 +174,11 @@ class ElevationMapWrapper:
         else:
             semantic_img = [semantic_img]
 
-        assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
         K = np.array(camera_info_msg.K, dtype=np.float32).reshape(3, 3)
+
+        assert np.all(np.array(camera_info_msg.D) == 0.0), "Undistortion not implemented"
+        D = np.array(camera_info_msg.D, dtype=np.float32).reshape(5, 1)
+        
         # process pointcloud
         self._map.input_image(sub_key, semantic_img, R, t, K, D, camera_info_msg.height, camera_info_msg.width)
         self._image_process_counter += 1
