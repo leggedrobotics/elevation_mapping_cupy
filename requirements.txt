@@ -7,6 +7,7 @@ simple-parsing
 scikit-image==0.19
 matplotlib
 catkin-tools
+networkx==3.0
 # cupy
 
 ###### Requirements with Version Specifiers ######`

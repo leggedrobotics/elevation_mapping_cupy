@@ -4,10 +4,9 @@
 
 [Documentation](https://leggedrobotics.github.io/elevation_mapping_cupy/)
 
-
 ## Overview
 
-The Elevaton Mapping CuPy software package represents an advancement in robotic navigation and locomotion. 
+The Elevaton Mapping CuPy software package represents an advancement in robotic navigation and locomotion.
 Integrating with the Robot Operating System (ROS) and utilizing GPU acceleration, this framework enhances point cloud registration and ray casting,
 crucial for efficient and accurate robotic movement, particularly in legged robots.
 ![screenshot](docs/media/main_repo.png)
@@ -38,6 +37,7 @@ layers of the map. Finally the map can be post-processed with various custom plu
 external components (e.g. line detection).
 
 ## Citing
+
 If you use the Elevation Mapping CuPy, please cite the following paper:
 Elevation Mapping for Locomotion and Navigation using GPU
 
@@ -46,13 +46,13 @@ Elevation Mapping for Locomotion and Navigation using GPU
 Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter  
 
 ```bibtex
-@misc{mikielevation2022,
-    doi = {10.48550/ARXIV.2204.12876},
-    author = {Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
-    keywords = {Robotics (cs.RO), FOS: Computer and information sciences, FOS: Computer and information sciences},
-    title = {Elevation Mapping for Locomotion and Navigation using GPU},
-    publisher = {International Conference on Intelligent Robots and Systems (IROS)},
-    year = {2022},
+@inproceedings{miki2022elevation,
+  title={Elevation mapping for locomotion and navigation using gpu},
+  author={Miki, Takahiro and Wellhausen, Lorenz and Grandia, Ruben and Jenelten, Fabian and Homberger, Timon and Hutter, Marco},
+  booktitle={2022 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages={2273--2280},
+  year={2022},
+  organization={IEEE}
 }
 ```
 
@@ -63,15 +63,17 @@ If you use the Multi-modal Elevation Mapping for color or semantic layers, pleas
 Gian Erni, Jonas Frey, Takahiro Miki, Matias Mattamala, Marco Hutter
 
 ```bibtex
-@misc{Erni2023-bs,
-    title = "{MEM}: {Multi-Modal} Elevation Mapping for Robotics and Learning",
-    author = "Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco",
-    publisher = {International Conference on Intelligent Robots and Systems (IROS)},
-    year = {2023},
+@inproceedings{erni2023mem,
+  title={MEM: Multi-Modal Elevation Mapping for Robotics and Learning},
+  author={Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco},
+  booktitle={2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages={11011--11018},
+  year={2023},
+  organization={IEEE}
 }
 ```
 
-## Quick instructions to run:
+## Quick instructions to run
 
 ### Installation
 
@@ -87,19 +89,19 @@ Then install dependencies.
 You can also use docker which already install all dependencies.
 When you run the script it should pull the image.
 
-
 ```zsh
 cd docker
 ./run.sh
 ```
 
-You can also build locally by running `build.sh`.
+You can also build locally by running `build.sh`, but in this case change `IMAGE_NAME` in `run.sh` to `elevation_mapping_cupy:latest`.
 
 For more information, check [Document](https://leggedrobotics.github.io/elevation_mapping_cupy/getting_started/installation.html)
 
 ### Build package
 
 Inside docker container.
+
 ```zsh
 cd $HOME/catkin_ws
 catkin build elevation_mapping_cupy
@@ -107,7 +109,8 @@ catkin build convex_plane_decomposition_ros  # If you want to use plane segmenta
 catkin build semantic_sensor  # If you want to use semantic sensors
 ```
 
-### Run turtlebot example.
+### Run turtlebot example
+
 ![Elevation map examples](docs/media/turtlebot.png)
 
 ```bash

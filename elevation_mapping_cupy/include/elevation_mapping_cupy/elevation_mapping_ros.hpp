@@ -184,6 +184,7 @@ class ElevationMappingNode {
   bool enableDriftCorrectedTFPublishing_;
   bool useInitializerAtStart_;
   double initializeTfGridSize_;
+  bool alwaysClearWithInitializer_;
   std::atomic_int pointCloudProcessCounter_;
 };
 

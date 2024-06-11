@@ -15,9 +15,10 @@ class MaxLayerFilter(PluginBase):
 
     Args:
         cell_n (int): The width and height of the elevation map.
+        reverse (list): A list of boolean values indicating whether to reverse the filter operation for each layer. Default is [True].
+        min_or_max (str): A string indicating whether to apply a minimum or maximum filter. Accepts "min" or "max". Default is "max".
         layers (list): List of layers for semantic traversability. Default is ["traversability"].
-        thresholds (list): List of thresholds for each layer. Default is [0.5].
-        type (list): List of types for each layer. Default is ["traversability"].
+        thresholds (list): List of thresholds for each layer. If the value is bigger than a threshold, assign 1.0 otherwise 0.0. If it is False, it does not apply. Default is [False].
         **kwargs: Additional keyword arguments.
     """
 
@@ -28,6 +29,7 @@ class MaxLayerFilter(PluginBase):
         reverse: list = [True],
         min_or_max: str = "max",
         thresholds: list = [False],
+        scales: list = [1.0],
         default_value: float = 0.0,
         **kwargs,
     ):
@@ -36,31 +38,8 @@ class MaxLayerFilter(PluginBase):
         self.reverse = reverse
         self.min_or_max = min_or_max
         self.thresholds = thresholds
+        self.scales = scales
         self.default_value = default_value
-
-    def get_layer_data(
-        self,
-        elevation_map,
-        layer_names,
-        plugin_layers,
-        plugin_layer_names,
-        semantic_map,
-        semantic_layer_names,
-        name,
-    ):
-        if name in layer_names:
-            idx = layer_names.index(name)
-            layer = elevation_map[idx].copy()
-        elif name in plugin_layer_names:
-            idx = plugin_layer_names.index(name)
-            layer = plugin_layers[idx].copy()
-        elif name in semantic_layer_names:
-            idx = semantic_layer_names.index(name)
-            layer = semantic_map[idx].copy()
-        else:
-            print(f"Could not find layer {name}!")
-            layer = None
-        return layer
 
     def __call__(
         self,
@@ -107,6 +86,8 @@ class MaxLayerFilter(PluginBase):
                 layer = cp.where(layer == 0, default_layer, layer)
             if self.reverse[it]:
                 layer = 1.0 - layer
+            if len(self.scales) > it and isinstance(self.scales[it], float):
+                layer = layer * float(self.scales[it])
             if isinstance(self.thresholds[it], float):
                 layer = cp.where(layer > float(self.thresholds[it]), 1, 0)
             layers.append(layer)

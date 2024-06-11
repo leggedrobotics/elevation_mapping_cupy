@@ -9,3 +9,4 @@ _build
 .idea*
 .vscode*
 *.egg-info
+elevation_mapping_cupy/compile_commands.json

@@ -18,12 +18,12 @@ image_channel_fusions:
 
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance', 'rgb', 'anomaly', 'friction', 'stiffness', 'risk', 'upper_bound']
+    layers: ['elevation', 'traversability', 'variance', 'rgb', 'upper_bound']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
 
   elevation_map_recordable:
-    layers: ['elevation', 'traversability', 'variance', 'rgb', 'anomaly', 'friction', 'stiffness', 'risk']
+    layers: ['elevation', 'traversability', 'variance', 'rgb']
     basic_layers: ['elevation', 'traversability']
     fps: 2.0
 
@@ -79,15 +79,3 @@ subscribers:
   rear_bpearl:
     topic_name: /robot_self_filter/bpearl_rear/point_cloud
     data_type: pointcloud
-
-  traversability:
-      topic_name: "/hdr_camera/semantic_image"
-      camera_info_topic_name: "/hdr_camera/semantic_camera_info"
-      channel_info_topic_name: "/hdr_camera/image_channel_info"
-      data_type: image
-
-  anomaly:
-    topic_name: "/wild_visual_navigation_node/front/traversability"
-    camera_info_topic_name: "/wild_visual_navigation_node/front/camera_info"
-    channel_info_topic_name: "/wild_visual_navigation_node/front/channel_info"
-    data_type: image

@@ -26,3 +26,13 @@ inpainting:
   extra_params:
     method: "telea"                           # telea or ns
 # Apply smoothing for inpainted layer
+erosion:
+  enable: True
+  fill_nan: False
+  is_height_layer: False
+  layer_name: "erosion"
+  extra_params:
+    input_layer_name: "traversability"
+    dilation_size: 3
+    iteration_n: 20
+    reverse: True
