@@ -178,10 +178,10 @@ void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector
 }
 
 void ElevationMappingWrapper::input_image(const std::vector<ColMatrixXf>& multichannel_image, const std::vector<std::string>& channels, const RowMatrixXd& R,
-                                          const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, const RowMatrixXd& D, int height, int width) {
+                                          const Eigen::VectorXd& t, const RowMatrixXd& cameraMatrix, const Eigen::VectorXd& D, int height, int width) {
   py::gil_scoped_acquire acquire;
   map_.attr("input_image")(multichannel_image, channels, Eigen::Ref<const RowMatrixXd>(R), Eigen::Ref<const Eigen::VectorXd>(t),
-                           Eigen::Ref<const RowMatrixXd>(cameraMatrix), Eigen::Ref<const RowMatrixXd>(D), height, width);
+                           Eigen::Ref<const RowMatrixXd>(cameraMatrix), Eigen::Ref<const Eigen::VectorXd>(D), height, width);
 }
 
 void ElevationMappingWrapper::move_to(const Eigen::VectorXd& p, const RowMatrixXd& R) {

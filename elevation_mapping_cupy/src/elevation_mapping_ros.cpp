@@ -392,8 +392,9 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
   if (!camera_info_msg->D.empty()) {
     distortionCoeffs = Eigen::Map<const Eigen::VectorXd>(camera_info_msg->D.data(), camera_info_msg->D.size());
   } else {
-    ROS_ERROR("Distortion coefficients are empty.");
-    return;
+    ROS_WARN("Distortion coefficients are empty.");
+    distortionCoeffs = Eigen::VectorXd::Zero(5);
+    // return;
   }
   
   // Get pose of sensor in map frame

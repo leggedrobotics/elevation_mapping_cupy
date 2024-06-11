@@ -13,7 +13,7 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
     The function returns a kernel that can be used to perform the correspondence calculation.
     """
     _image_to_map_correspondence_kernel = cp.ElementwiseKernel(
-        in_params="raw U map, raw U x1, raw U y1, raw U z1, raw U P, raw U D, raw U image_height, raw U image_width, raw U center",
+        in_params="raw U map, raw U x1, raw U y1, raw U z1, raw U P, raw U K, raw U D, raw U image_height, raw U image_width, raw U center",
         out_params="raw U uv_correspondence, raw B valid_correspondence",
         preamble=string.Template(
             """
@@ -60,11 +60,6 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
             }
             u = u/d;
             v = v/d;
-            
-            // filter point next to image plane
-            if ((u < 0) || (v < 0) || (u >= image_width) || (v >= image_height)){
-                return;
-            }
 
             // Check if D is all zeros
             bool is_D_zero = (D[0] == 0 && D[1] == 0 && D[2] == 0 && D[3] == 0 && D[4] == 0);
@@ -76,14 +71,23 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
                 float p1 = D[2];
                 float p2 = D[3];
                 float k3 = D[4];
-                float x = (u - image_width / 2.0) / (image_width / 2.0);
-                float y = (v - image_height / 2.0) / (image_height / 2.0);
+                float fx = K[0];
+                float fy = K[4];
+                float cx = K[2];
+                float cy = K[5];
+                float x = (u - cx) / fx;
+                float y = (v - cy) / fy;
                 float r2 = x * x + y * y;
                 float radial_distortion = 1 + k1 * r2 + k2 * r2 * r2 + k3 * r2 * r2 * r2;
-                float x_corrected = x * radial_distortion + 2 * p1 * x * y + p2 * (r2 + 2 * x * x);
-                float y_corrected = y * radial_distortion + 2 * p2 * x * y + p1 * (r2 + 2 * y * y);
-                u = (x_corrected * (image_width / 2.0)) + (image_width / 2.0);
-                v = (y_corrected * (image_height / 2.0)) + (image_height / 2.0);
+                float u_corrected = x * radial_distortion + 2 * p1 * x * y + p2 * (r2 + 2 * x * x);
+                float v_corrected = y * radial_distortion + 2 * p2 * x * y + p1 * (r2 + 2 * y * y);
+                u = fx * u_corrected + cx;
+                v = fy * v_corrected + cy;
+            }
+            
+            // filter point next to image plane
+            if ((u < 0) || (v < 0) || (u >= image_width) || (v >= image_height)){
+                return;
             }
             
             int y0_c = y0;
