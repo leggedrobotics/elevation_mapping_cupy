@@ -18,12 +18,17 @@ image_channel_fusions:
 
 publishers:
   elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance', 'rgb']
+    layers: ['elevation', 'traversability', 'variance', 'rgb', 'upper_bound']
     basic_layers: ['elevation', 'traversability']
     fps: 5.0
 
+  elevation_map_recordable:
+    layers: ['elevation', 'traversability', 'variance', 'rgb']
+    basic_layers: ['elevation', 'traversability']
+    fps: 2.0
+
   filtered_elevation_map:
-    layers: ['inpaint', 'smooth', 'min_filter', 'erosion']
+    layers: ['inpaint', 'smooth', 'min_filter', 'upper_bound']
     basic_layers: ['inpaint']
     fps: 5.0
 
