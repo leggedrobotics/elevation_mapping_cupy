@@ -397,6 +397,9 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
     distortionCoeffs = Eigen::VectorXd::Zero(5);
     // return;
   }
+
+  // distortion model
+  std::string distortion_model = camera_info_msg->distortion_model;
   
   // Get pose of sensor in map frame
   tf::StampedTransform transformTf;
@@ -439,7 +442,7 @@ void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_ms
 
   // Pass image to pipeline
   map_.input_image(multichannel_image, channels, transformationMapToSensor.rotation(), transformationMapToSensor.translation(), cameraMatrix, 
-                   distortionCoeffs, image.rows, image.cols);
+                   distortionCoeffs, distortion_model, image.rows, image.cols);
 }
 
 void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,

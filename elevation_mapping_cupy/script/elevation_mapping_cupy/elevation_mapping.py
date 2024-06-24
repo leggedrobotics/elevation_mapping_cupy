@@ -474,6 +474,7 @@ class ElevationMap:
         t: cp._core.core.ndarray,
         K: cp._core.core.ndarray,
         D: cp._core.core.ndarray,
+        distortion_model: str,
         image_height: int,
         image_width: int,
     ):
@@ -511,6 +512,18 @@ class ElevationMap:
             D = cp.concatenate([D, cp.zeros(1, dtype=self.data_type)])
         else:
             D = D[:5]
+
+        if distortion_model == "radtan":
+            pass
+        elif distortion_model == "equidistant":
+            # Not implemented yet.
+            D *= 0
+        elif distortion_model == "plumb_bob":
+            # Not implemented yet.
+            D *= 0
+        else:
+            # Not implemented yet.
+            D *= 0
 
         # Calculate transformation matrix
         P = cp.asarray(K @ cp.concatenate([R, t[:, None]], 1), dtype=np.float32)
