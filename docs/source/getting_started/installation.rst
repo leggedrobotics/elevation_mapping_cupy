@@ -170,6 +170,8 @@ Python dependencies
 
 On jetson, you need the version for its CPU arch:
 
+Please check `official document <https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html>`_ for latest information for pytorch.
+
 .. code-block:: bash
     
     wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
