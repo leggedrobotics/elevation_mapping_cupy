@@ -154,7 +154,7 @@ ROS package dependencies
 .. code-block:: bash
 
   sudo apt install ros-noetic-pybind11-catkin
-  sudo apt install ros-noetic-grid-map-core ros-noetic-grid-map-msgs
+  sudo apt install ros-noetic-grid-map-core ros-noetic-grid-map-msgs ros-noetic-grid-map-ros
 
 
 On Jetson
@@ -195,7 +195,7 @@ ROS dependencies
 .. code-block:: bash
 
   sudo apt install ros-melodic-pybind11-catkin
-  sudo apt install ros-melodic-grid-map-core ros-melodic-grid-map-msgs
+  sudo apt install ros-melodic-grid-map-core ros-melodic-grid-map-msgs ros-melodic-grid-map-ros
 
 
 Also, on jetson you need fortran (should already be installed).
