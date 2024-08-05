@@ -172,6 +172,17 @@ On jetson, you need the version for its CPU arch:
 
 Please check `official document <https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/index.html>`_ for latest information for pytorch.
 
+Current for Jetson Orin on Ubuntu 20.04:
+
+.. code-block:: bash
+
+  export TORCH_INSTALL=https://developer.download.nvidia.cn/compute/redist/jp/v511/pytorch/torch-2.0.0+nv23.05-cp38-cp38-linux_aarch64.whl
+  pip install Cython
+  python -m pip install numpy==’1.24.1’ 
+  python -m pip install --no-cache $TORCH_INSTALL
+
+Current for Jetson Xavier on Ubuntu 18.04:
+
 .. code-block:: bash
     
     wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl
@@ -254,7 +265,16 @@ Python dependencies
 
 .. code-block:: bash
 
-  pip3 install torchvision scikit-learn
+  pip3 install scikit-learn
+
+Torchvision (for Jetson Orin on Ubuntu 20.04) 
+
+.. code-block:: bash
+
+  git clone --branch release/0.15 https://github.com/pytorch/vision torchvision
+  cd torchvision/
+  export BUILD_VERSION=0.15.1
+  python3 setup.py install --user
 
 Detectron
 
