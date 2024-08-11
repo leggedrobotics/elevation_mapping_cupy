@@ -93,8 +93,13 @@ class MaxLayerFilter(PluginBase):
             layers.append(layer)
         if len(layers) == 0:
             print("No layers are found, returning traversability!")
-            idx = layer_names.index("traversability")
-            return elevation_map[idx]
+            if isinstance(self.default_value, float):
+                layer = cp.ones_like(elevation_map[0])
+                layer *= float(self.default_value)
+                return layer
+            else:
+                idx = layer_names.index("traversability")
+                return elevation_map[idx]
         result = cp.stack(layers, axis=0)
         if self.min_or_max == "min":
             result = cp.min(result, axis=0)
