@@ -1,13 +1,19 @@
 <?xml version="1.0"?>
 <package format="2">
-    <name>cgal5_catkin</name>
-    <version>5.0.2</version>
-    <description>Catkin wrapper for CGAL 5.</description>
-    <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
+  <name>cgal5_catkin</name>
+  <version>0.0.1</version>
+  <description>ROS2 package integrating CGAL</description>
+  <maintainer email="lterenzi@ethz.ch">Lorenzo Terenzi</maintainer>
+  <license>BSD-3-Clause</license>
 
-    <license>See package</license>
+  <!-- Buildtool dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <buildtool_depend>catkin</buildtool_depend>
-    <exec_depend>libgmp-dev</exec_depend>  <!-- required for the buildserver -->
-    <exec_depend>libmpfr-dev</exec_depend>  <!-- required for the buildserver -->
+  <!-- Build dependencies -->
+  <depend>Boost</depend>
+
+  <!-- Export dependencies -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
