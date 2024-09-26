@@ -1,40 +1,43 @@
-# Project configuration
-cmake_minimum_required (VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5)
 project(grid_map_filters_rsl)
 
-set(CMAKE_CXX_STANDARD 14)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+# Enable warnings
 add_compile_options(-Wall -Wextra -Wpedantic)
+
+# Export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CATKIN_PACKAGE_DEPENDENCIES
-  grid_map_cv
-  grid_map_core
-)
-
-find_package(catkin REQUIRED 
-  COMPONENTS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-)
-
+# Find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(grid_map_cv REQUIRED)
+find_package(grid_map_core REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(ament_cmake_gtest REQUIRED)
+find_package(sensor_msgs REQUIRED)          # Added dependency
+find_package(rosidl_runtime_cpp REQUIRED)   # Added dependency
 
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-  INCLUDE_DIRS 
-    include
-      ${EIGEN3_INCLUDE_DIR}
-  LIBRARIES 
-    ${PROJECT_NAME}
-  CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
+# Debugging output
+message(STATUS "grid_map_cv_FOUND: ${grid_map_cv_FOUND}")
+message(STATUS "grid_map_cv_INCLUDE_DIRS: ${grid_map_cv_INCLUDE_DIRS}")
+message(STATUS "grid_map_cv_LIBRARIES: ${grid_map_cv_LIBRARIES}")
+
+# Include directories
+include_directories(
+  include
+  ${grid_map_cv_INCLUDE_DIRS}
+  ${grid_map_core_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${sensor_msgs_INCLUDE_DIRS}            # Ensure sensor_msgs include dirs are added
+  ${rosidl_runtime_cpp_INCLUDE_DIRS}     # Ensure rosidl_runtime_cpp include dirs are added
 )
 
-###########
-## Build ##
-###########
-add_library(${PROJECT_NAME}
+# Add library
+add_library(${PROJECT_NAME} SHARED
   src/GridMapDerivative.cpp
   src/inpainting.cpp
   src/lookup.cpp
@@ -42,85 +45,37 @@ add_library(${PROJECT_NAME}
   src/processing.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-  include
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-    ${catkin_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
+# Replace target_link_libraries with ament_target_dependencies
+ament_target_dependencies(${PROJECT_NAME}
+  grid_map_cv
+  grid_map_core
+  sensor_msgs
+  rosidl_runtime_cpp
+)
+
+# Install library
+install(TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+# Install headers
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION include/${PROJECT_NAME}/
 )
 
 
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
-
-##########
-## Test ##
-##########
-
-## GTest.
-if(CATKIN_ENABLE_TESTING)
-  ## Find catkin dependencies, including test dependencies.
-  find_package(catkin REQUIRED
-    COMPONENTS
-    ${CATKIN_PACKAGE_DEPENDENCIES}
-    )
-
-  catkin_add_gtest(test_${PROJECT_NAME}
-    test/TestDerivativeFilter.cpp
-    test/TestFilters.cpp
-    test/TestLookup.cpp
-    )
-endif()
-
-## Link GTest.
-if(TARGET test_${PROJECT_NAME})
-  target_link_libraries(test_${PROJECT_NAME}
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    gtest_main
-    )
-
-  target_include_directories(test_${PROJECT_NAME} PRIVATE
-    include
-    )
-
-  target_include_directories(test_${PROJECT_NAME} SYSTEM PUBLIC
-    ${catkin_INCLUDE_DIRS}
-    )
-
-  # Generate test coverage report
-  find_package(cmake_code_coverage QUIET)
-  if(cmake_code_coverage_FOUND)
-    add_gtest_coverage(
-      TEST_BUILD_TARGETS test_${PROJECT_NAME}
-    )
-  endif(cmake_code_coverage_FOUND)
-endif()
-
-#############
-## Install ##
-#############
-install(
-  TARGETS
-    ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(
-  DIRECTORY
-    include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-###########
-## Clang ##
-###########
+# Clang tools (optional)
 find_package(cmake_clang_tools QUIET)
 if(cmake_clang_tools_FOUND)
   add_default_clang_tooling()
-endif(cmake_clang_tools_FOUND)
+endif()
+
+ament_package()

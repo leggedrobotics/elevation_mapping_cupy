@@ -1,19 +1,38 @@
 <?xml version="1.0"?>
-<package format="2">
-    <name>grid_map_filters_rsl</name>
-    <version>0.1.0</version>
-    <description>Extension of grid map filters package with op-cv filters and others</description>
-    <maintainer email="fabian.jenelten@mavt.ethz.ch">Fabian Jenelten</maintainer>
+<package format="3">
+  <name>grid_map_filters_rsl</name>
+  <version>0.1.0</version>
+  <description>Extension of grid map filters package with OpenCV filters and others</description>
 
-    <author email="fabian.jenelten@mavt.ethz.ch">Fabian Jenelten</author>
+  <maintainer email="fabian.jenelten@mavt.ethz.ch">Fabian Jenelten</maintainer>
+  <author email="fabian.jenelten@mavt.ethz.ch">Fabian Jenelten</author>
 
-    <license>MIT</license>
+  <license>MIT</license>
 
-    <buildtool_depend>catkin</buildtool_depend>
-    <build_depend>cmake_clang_tools</build_depend>
-    <depend>grid_map_cv</depend>
-    <depend>grid_map_core</depend>
+  <!-- Buildtool Depend -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <test_depend>gtest</test_depend>
-    <test_depend>cmake_code_coverage</test_depend>
+  <!-- Build Dependencies -->
+  <build_depend>ament_cmake</build_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+  <build_depend>grid_map_cv</build_depend>
+  <build_depend>grid_map_core</build_depend>
+  <build_depend>Eigen3</build_depend>
+  
+  <!-- Build and Execution Dependencies -->
+  <depend>rosidl_runtime_cpp</depend>
+
+  <!-- Execution Dependencies -->
+  <exec_depend>grid_map_cv</exec_depend>
+  <exec_depend>grid_map_core</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <!-- Test Dependencies -->
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+
+  <!-- Export Dependencies -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
