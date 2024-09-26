@@ -1,23 +1,25 @@
 <?xml version="1.0"?>
 
-<package format="2">
-
-    <name>convex_plane_decomposition_msgs</name>
-    <version>0.0.0</version>
-    <description>Convex plane decomposition message definitions.</description>
-
-    <maintainer email="rgrandia@ethz.ch">Ruben Grandia</maintainer>
-
-    <license>MIT</license>
-
-    <buildtool_depend>catkin</buildtool_depend>
-
-    <build_depend>message_generation</build_depend>
-
-    <depend>std_msgs</depend>
-    <depend>geometry_msgs</depend>
-    <depend>grid_map_msgs</depend>
-
-    <exec_depend>message_runtime</exec_depend>
-
+<package format="3">
+  <name>convex_plane_decomposition_msgs</name>
+  <version>0.0.1</version>
+  <description>
+    Messages for Convex Plane Decomposition.
+  </description>
+  <maintainer email="lterenzi@ethz.ch">Lorenzo Terenzi</maintainer>
+  <license>Apache-2.0</license>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>rosidl_default_generators</build_depend>
+  <exec_depend>rosidl_runtime_cpp</exec_depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>grid_map_msgs</depend>
+  
+  <!-- Add the member_of_group tag -->
+  <member_of_group>rosidl_interface_packages</member_of_group>
+  
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
