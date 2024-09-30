@@ -1,33 +1,28 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(semantic_sensor)
 
-find_package(PythonInterp 3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED)
+# Find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclpy REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-if(PYTHONLIBS_FOUND)
-  message(STATUS "Using Python Libraries at: " ${PYTHON_LIBRARIES})
-  message(STATUS "Using Python include directories at: " ${PYTHON_INCLUDE_DIRS})
-else()
-  message(WARNING "Could not find Python Libraries")
-endif()
+# Install Python modules
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR script/semantic_sensor)
 
-
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  rospy
-  tf
-  tf_conversions
-  sensor_msgs
-  std_msgs
-  geometry_msgs
+# Install Python executables
+install(PROGRAMS
+  script/semantic_sensor/pointcloud_node.py
+  script/semantic_sensor/image_node.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
-catkin_package()
+# Install launch files
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
-catkin_python_setup()
-
-
-
-catkin_install_python(PROGRAMS script/semantic_sensor/pointcloud_node.py script/semantic_sensor/image_node.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
+ament_package()
