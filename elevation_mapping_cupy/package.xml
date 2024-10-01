@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
     <name>elevation_mapping_cupy</name>
     <version>2.0.0</version>
     <description>The elevation mapping on GPU</description>
@@ -8,19 +8,23 @@
 
     <license>MIT</license>
 
-    <buildtool_depend>catkin</buildtool_depend>
-    <depend>roscpp</depend>
-    <depend>rospy</depend>
-    <depend>tf</depend>
-    <depend>tf_conversions</depend>
-    <depend>sensor_msgs</depend>
+    <!-- Update buildtool dependencies -->
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+    <!-- ROS2 Dependencies -->
+    <depend>rclpy</depend>
     <depend>std_msgs</depend>
+    <depend>sensor_msgs</depend>
     <depend>geometry_msgs</depend>
-    <depend>grid_map_msgs</depend>
     <depend>elevation_map_msgs</depend>
+    <depend>grid_map_msgs</depend>
     <depend>grid_map_ros</depend>
     <depend>image_transport</depend>
     <depend>pcl_ros</depend>
-    <depend>pybind11_catkin</depend>
+    <depend>pybind11</depend>
 
+    <export>
+      <build_type>ament_python</build_type>
+    </export>
 </package>

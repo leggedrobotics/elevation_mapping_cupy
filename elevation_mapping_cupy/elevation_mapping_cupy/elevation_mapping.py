@@ -20,6 +20,7 @@ from elevation_mapping_cupy.kernels import (
     add_color_kernel,
     color_average_kernel,
 )
+
 from elevation_mapping_cupy.kernels import sum_kernel
 from elevation_mapping_cupy.kernels import error_counting_kernel
 from elevation_mapping_cupy.kernels import average_map_kernel
