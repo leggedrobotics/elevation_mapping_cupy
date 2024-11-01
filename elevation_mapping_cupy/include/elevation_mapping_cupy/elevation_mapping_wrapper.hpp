@@ -15,16 +15,17 @@
 #include <pybind11/embed.h>  // everything needed for embedding
 #include <pybind11/stl.h>
 
-// ROS
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <std_srvs/Empty.h>
-#include <tf/transform_listener.h>
+// ROS2
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_srvs/srv/empty.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 // Grid Map
-#include <grid_map_msgs/GetGridMap.h>
-#include <grid_map_msgs/GridMap.h>
+#include <grid_map_msgs/srv/get_grid_map.hpp>
+#include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 
 // PCL
@@ -44,7 +45,7 @@ class ElevationMappingWrapper {
 
   ElevationMappingWrapper();
 
-  void initialize(ros::NodeHandle& nh);
+  void initialize(rclcpp::Node::SharedPtr node);
 
   void input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
              const double positionNoise, const double orientationNoise);
@@ -64,7 +65,7 @@ class ElevationMappingWrapper {
   void addNormalColorLayer(grid_map::GridMap& map);
 
  private:
-  void setParameters(ros::NodeHandle& nh);
+  void setParameters(rclcpp::Node::SharedPtr node);
   py::object map_;
   py::object param_;
   double resolution_;
