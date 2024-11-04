@@ -9,11 +9,13 @@
     <license>MIT</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_python</buildtool_depend>
     <depend>rclcpp</depend>
     <depend>std_msgs</depend>
     <depend>std_srvs</depend>    
     <depend>sensor_msgs</depend>
     <depend>geometry_msgs</depend>
+    
     <depend>message_filters</depend>
     <depend>grid_map_msgs</depend>
     <depend>elevation_map_msgs</depend>

@@ -12,16 +12,15 @@
 
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("elevation_mapping");
-
+  
   py::scoped_interpreter guard{};  // start the interpreter and keep it alive
-  // elevation_mapping_cupy::ElevationMappingNode mapNode(node);
+  auto mapNode = std::make_shared<elevation_mapping_cupy::ElevationMappingNode>();  // Correct instantiation  
   py::gil_scoped_release release;
+  
 
-  // Spin
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
-  executor.spin();
+  // TODO: Create a multi-threaded executor
+  rclcpp::spin(mapNode);
   rclcpp::shutdown();
   return 0;
 }
+

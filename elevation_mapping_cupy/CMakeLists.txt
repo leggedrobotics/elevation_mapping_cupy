@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
 project(elevation_mapping_cupy)
 
-# Enable C++11 (or higher if needed for ROS 2 and pybind11)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# # Enable C++11 (or higher if needed for ROS 2 and pybind11)
+# set(CMAKE_CXX_STANDARD 11)
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Compiler options
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 # Additional dependencies
-find_package(Python COMPONENTS Interpreter Development)
+# find_package(Python COMPONENTS Interpreter Development)
 find_package(PythonInterp 3 REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -37,7 +37,9 @@ find_package(elevation_map_msgs REQUIRED)
 find_package(grid_map_ros REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(pcl_ros REQUIRED)
-
+find_package(tf2_eigen REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(python_cmake_module REQUIRED)
 
 # List dependencies for ament_target_dependencies
 set(dependencies
@@ -54,6 +56,7 @@ set(dependencies
   image_transport
   pcl_ros
   message_filters
+  tf2_eigen
 )
 
 # Include directories
@@ -72,22 +75,47 @@ add_library(elevation_mapping_ros
 )
 
 # Link the library with necessary dependencies
-target_link_libraries(elevation_mapping_ros ${PYTHON_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(elevation_mapping_ros ${PYTHON_LIBRARIES} ${OpenCV_LIBRARIES} pybind11::embed)
 ament_target_dependencies(elevation_mapping_ros ${dependencies})
 
 # Declare C++ executable
 add_executable(elevation_mapping_node src/elevation_mapping_node.cpp)
 
 # Link the executable with the library and dependencies
-target_link_libraries(elevation_mapping_node elevation_mapping_ros ${OpenCV_LIBRARIES})
+target_link_libraries(elevation_mapping_node elevation_mapping_ros ${OpenCV_LIBRARIES} pybind11::embed)
 ament_target_dependencies(elevation_mapping_node ${dependencies})
+
+
 
 # Install targets
 install(
-  TARGETS elevation_mapping_ros elevation_mapping_node
+  TARGETS  elevation_mapping_node
+  DESTINATION lib/${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+
+install(TARGETS 
+  elevation_mapping_node 
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
+install(
+  TARGETS elevation_mapping_ros 
+  DESTINATION lib/${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR script/${PROJECT_NAME})
+
+install(PROGRAMS  
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 # Install launch and config directories
@@ -95,6 +123,15 @@ install(
   DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
+
+
+
+_ament_cmake_python_register_environment_hook()
+
+
+# ament_python_install_package(script/${PROJECT_NAME})
+# ament_python_install_package(script/${PROJECT_NAME})
+
 
 # Ament package declaration
 ament_package()

@@ -1,157 +1,187 @@
-// //
-// // Copyright (c) 2022, Takahiro Miki. All rights reserved.
-// // Licensed under the MIT license. See LICENSE file in the project root for details.
-// //
-
-// #include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
-
-// // Pybind
-// #include <pybind11/eigen.h>
-
-// // ROS
-// #include <geometry_msgs/Point32.h>
-// #include <ros/package.h>
-// #include <tf_conversions/tf_eigen.h>
-
-// // PCL
-// #include <pcl/common/projection_matrix.h>
-
-// #include <elevation_map_msgs/Statistics.h>
-
-// namespace elevation_mapping_cupy {
-
-// ElevationMappingNode::ElevationMappingNode(ros::NodeHandle& nh)
-//     : it_(nh),
-//       lowpassPosition_(0, 0, 0),
-//       lowpassOrientation_(0, 0, 0, 1),
-//       positionError_(0),
-//       orientationError_(0),
-//       positionAlpha_(0.1),
-//       orientationAlpha_(0.1),
-//       enablePointCloudPublishing_(false),
-//       isGridmapUpdated_(false) {
-//   nh_ = nh;
-
-//   std::string pose_topic, map_frame;
-//   XmlRpc::XmlRpcValue publishers;
-//   XmlRpc::XmlRpcValue subscribers;
-//   std::vector<std::string> map_topics;
-//   double recordableFps, updateVarianceFps, timeInterval, updatePoseFps, updateGridMapFps, publishStatisticsFps;
-//   bool enablePointCloudPublishing(false);
-
-//   // Read parameters
-//   nh.getParam("subscribers", subscribers);
-//   nh.getParam("publishers", publishers);
-//   if (!subscribers.valid()) {
-//     ROS_FATAL("There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
-//   }
-//   if (!publishers.valid()) {
-//     ROS_FATAL("There aren't any publishers to be configured, the elevation mapping cannot be configured. Exit");
-//   }
-//   nh.param<std::vector<std::string>>("initialize_frame_id", initialize_frame_id_, {"base"});
-//   nh.param<std::vector<double>>("initialize_tf_offset", initialize_tf_offset_, {0.0});
-//   nh.param<std::string>("pose_topic", pose_topic, "pose");
-//   nh.param<std::string>("map_frame", mapFrameId_, "map");
-//   nh.param<std::string>("base_frame", baseFrameId_, "base");
-//   nh.param<std::string>("corrected_map_frame", correctedMapFrameId_, "corrected_map");
-//   nh.param<std::string>("initialize_method", initializeMethod_, "cubic");
-//   nh.param<double>("position_lowpass_alpha", positionAlpha_, 0.2);
-//   nh.param<double>("orientation_lowpass_alpha", orientationAlpha_, 0.2);
-//   nh.param<double>("recordable_fps", recordableFps, 3.0);
-//   nh.param<double>("update_variance_fps", updateVarianceFps, 1.0);
-//   nh.param<double>("time_interval", timeInterval, 0.1);
-//   nh.param<double>("update_pose_fps", updatePoseFps, 10.0);
-//   nh.param<double>("initialize_tf_grid_size", initializeTfGridSize_, 0.5);
-//   nh.param<double>("map_acquire_fps", updateGridMapFps, 5.0);
-//   nh.param<double>("publish_statistics_fps", publishStatisticsFps, 1.0);
-//   nh.param<bool>("enable_pointcloud_publishing", enablePointCloudPublishing, false);
-//   nh.param<bool>("enable_normal_arrow_publishing", enableNormalArrowPublishing_, false);
-//   nh.param<bool>("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_, false);
-//   nh.param<bool>("use_initializer_at_start", useInitializerAtStart_, false);
-//   nh.param<bool>("always_clear_with_initializer", alwaysClearWithInitializer_, false);
-
-//   enablePointCloudPublishing_ = enablePointCloudPublishing;
-
-//   // Iterate all the subscribers
-//   // here we have to remove all the stuff
-//   for (auto& subscriber : subscribers) {
-//     std::string key = subscriber.first;
-//     auto type = static_cast<std::string>(subscriber.second["data_type"]);
-
-//     // Initialize subscribers depending on the type
-//     if (type == "pointcloud") {
-//       std::string pointcloud_topic = subscriber.second["topic_name"];
-//       channels_[key].push_back("x");
-//       channels_[key].push_back("y");
-//       channels_[key].push_back("z");
-//       boost::function<void(const sensor_msgs::PointCloud2&)> f = boost::bind(&ElevationMappingNode::pointcloudCallback, this, _1, key);
-//       ros::Subscriber sub = nh_.subscribe<sensor_msgs::PointCloud2>(pointcloud_topic, 1, f);
-//       pointcloudSubs_.push_back(sub);
-//       ROS_INFO_STREAM("Subscribed to PointCloud2 topic: " << pointcloud_topic);
-//     }
-//     else if (type == "image") {
-//       std::string camera_topic = subscriber.second["topic_name"];
-//       std::string info_topic = subscriber.second["camera_info_topic_name"];
-
-//       // Handle compressed images with transport hints
-//       // We obtain the hint from the last part of the topic name
-//       std::string transport_hint = "compressed";
-//       std::size_t ind = camera_topic.find(transport_hint);  // Find if compressed is in the topic name
-//       if (ind != std::string::npos) {
-//         transport_hint = camera_topic.substr(ind, camera_topic.length());  // Get the hint as the last part
-//         camera_topic.erase(ind - 1, camera_topic.length());                // We remove the hint from the topic
-//       } else {
-//         transport_hint = "raw";  // In the default case we assume raw topic
-//       }
-
-//       // Setup subscriber
-//       const auto hint = image_transport::TransportHints(transport_hint, ros::TransportHints(), ros::NodeHandle(camera_topic));
-//       ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>();
-//       image_sub->subscribe(it_, camera_topic, 1, hint);
-//       imageSubs_.push_back(image_sub);
-
-//       CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>();
-//       cam_info_sub->subscribe(nh_, info_topic, 1);
-//       cameraInfoSubs_.push_back(cam_info_sub);
-
-//       std::string channel_info_topic;
-//       // If there is channel info topic setting, we use it.
-//       if (subscriber.second.hasMember("channel_info_topic_name")) {
-//         std::string channel_info_topic = subscriber.second["channel_info_topic_name"];
-//         ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>();
-//         channel_info_sub->subscribe(nh_, channel_info_topic, 1);
-//         channelInfoSubs_.push_back(channel_info_sub);
-//         CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
-//         sync->registerCallback(boost::bind(&ElevationMappingNode::imageChannelCallback, this, _1, _2, _3));
-//         cameraChannelSyncs_.push_back(sync);
-//         ROS_INFO_STREAM("Subscribed to Image topic: " << camera_topic << ", Camera info topic: " << info_topic << ", Channel info topic: " << channel_info_topic);
-//       }
-//       else {
-//         // If there is channels setting, we use it. Otherwise, we use rgb as default.
-//         if (subscriber.second.hasMember("channels")) {
-//           const auto& channels = subscriber.second["channels"];
-//           for (int32_t i = 0; i < channels.size(); ++i) {
-//             auto elem = static_cast<std::string>(channels[i]);
-//             channels_[key].push_back(elem);
-//           }
-//         }
-//         else {
-//           channels_[key].push_back("rgb");
-//         }
-//         ROS_INFO_STREAM("Subscribed to Image topic: " << camera_topic << ", Camera info topic: " << info_topic << ". Channel info topic: " << (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")) : channel_info_topic));
-//         CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-//         sync->registerCallback(boost::bind(&ElevationMappingNode::imageCallback, this, _1, _2, key));
-//         cameraSyncs_.push_back(sync);
-//       }
+//
+// Copyright (c) 2022, Takahiro Miki. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
 
 
-//     } else {
-//       ROS_WARN_STREAM("Subscriber data_type [" << type << "] Not valid. Supported types: pointcloud, image");
-//       continue;
-//     }
-//   }
+#include "elevation_mapping_cupy/elevation_mapping_ros.hpp"
 
-//   map_.initialize(nh_);
+// Pybind
+#include <pybind11/eigen.h>
+
+// ROS2
+#include <geometry_msgs/msg/point32.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
+
+// PCL
+#include <pcl/common/projection_matrix.h>
+
+#include <elevation_map_msgs/msg/statistics.hpp>
+
+namespace elevation_mapping_cupy {
+
+ElevationMappingNode::ElevationMappingNode()
+    : rclcpp::Node("elevation_mapping_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)),     
+      node_(std::shared_ptr<ElevationMappingNode>(this, [](auto *) {})),
+      // it_(node_),
+      lowpassPosition_(0, 0, 0),
+      lowpassOrientation_(0, 0, 0, 1),
+      positionError_(0),
+      orientationError_(0),
+      positionAlpha_(0.1),
+      orientationAlpha_(0.1),
+      enablePointCloudPublishing_(false),
+      isGridmapUpdated_(false){
+      RCLCPP_INFO(this->get_logger(), "Initializing ElevationMappingNode...");
+
+  tfBroadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(*this);// ROS2构造TransformBroadcaster
+  tfBuffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+  tfListener_ = std::make_shared<tf2_ros::TransformListener>(*tfBuffer_);
+  
+  
+  std::string pose_topic, map_frame;
+  std::vector<std::string> map_topics;
+  double recordableFps, updateVarianceFps, timeInterval, updatePoseFps, updateGridMapFps, publishStatisticsFps;
+  bool enablePointCloudPublishing(false);
+  
+  py::gil_scoped_acquire acquire;
+  auto math = py::module::import("math");
+  double root_two = math.attr("sqrt")(2.0).cast<double>();  
+  RCLCPP_INFO(this->get_logger(), "The square root of 2 is: %f", root_two);
+
+  this->get_parameter("initialize_frame_id", initialize_frame_id_);
+  this->get_parameter("initialize_tf_offset", initialize_tf_offset_);  
+  this->get_parameter("pose_topic", pose_topic);
+  this->get_parameter("map_frame", mapFrameId_);
+  this->get_parameter("base_frame", baseFrameId_);
+  this->get_parameter("corrected_map_frame", correctedMapFrameId_);
+  this->get_parameter("initialize_method", initializeMethod_);
+  this->get_parameter("position_lowpass_alpha", positionAlpha_);
+  this->get_parameter("orientation_lowpass_alpha", orientationAlpha_);
+  this->get_parameter("recordable_fps", recordableFps);
+  this->get_parameter("update_variance_fps", updateVarianceFps);
+  this->get_parameter("time_interval", timeInterval);
+  this->get_parameter("update_pose_fps", updatePoseFps);
+  this->get_parameter("initialize_tf_grid_size", initializeTfGridSize_);
+  this->get_parameter("map_acquire_fps", updateGridMapFps);
+  this->get_parameter("publish_statistics_fps", publishStatisticsFps);
+  this->get_parameter("enable_pointcloud_publishing", enablePointCloudPublishing);
+  this->get_parameter("enable_normal_arrow_publishing", enableNormalArrowPublishing_);
+  this->get_parameter("enable_drift_corrected_TF_publishing", enableDriftCorrectedTFPublishing_);
+  this->get_parameter("use_initializer_at_start", useInitializerAtStart_);
+  this->get_parameter("always_clear_with_initializer", alwaysClearWithInitializer_);
+
+  RCLCPP_INFO(this->get_logger(), "initialize_frame_id: %s", initialize_frame_id_.empty() ? "[]" : initialize_frame_id_[0].c_str());
+  RCLCPP_INFO(this->get_logger(), "initialize_tf_offset: [%f, %f, %f, %f]", initialize_tf_offset_[0], initialize_tf_offset_[1], initialize_tf_offset_[2], initialize_tf_offset_[3]);
+  RCLCPP_INFO(this->get_logger(), "pose_topic: %s", pose_topic.c_str());
+  RCLCPP_INFO(this->get_logger(), "map_frame: %s", mapFrameId_.c_str());
+  RCLCPP_INFO(this->get_logger(), "base_frame: %s", baseFrameId_.c_str());
+  RCLCPP_INFO(this->get_logger(), "corrected_map_frame: %s", correctedMapFrameId_.c_str());
+  RCLCPP_INFO(this->get_logger(), "initialize_method: %s", initializeMethod_.c_str());
+  RCLCPP_INFO(this->get_logger(), "position_lowpass_alpha: %f", positionAlpha_);
+  RCLCPP_INFO(this->get_logger(), "orientation_lowpass_alpha: %f", orientationAlpha_);
+  RCLCPP_INFO(this->get_logger(), "recordable_fps: %f", recordableFps);
+  RCLCPP_INFO(this->get_logger(), "update_variance_fps: %f", updateVarianceFps);
+  RCLCPP_INFO(this->get_logger(), "time_interval: %f", timeInterval);
+  RCLCPP_INFO(this->get_logger(), "update_pose_fps: %f", updatePoseFps);
+  RCLCPP_INFO(this->get_logger(), "initialize_tf_grid_size: %f", initializeTfGridSize_);
+  RCLCPP_INFO(this->get_logger(), "map_acquire_fps: %f", updateGridMapFps);
+  RCLCPP_INFO(this->get_logger(), "publish_statistics_fps: %f", publishStatisticsFps);
+  RCLCPP_INFO(this->get_logger(), "enable_pointcloud_publishing: %s", enablePointCloudPublishing ? "true" : "false");
+  RCLCPP_INFO(this->get_logger(), "enable_normal_arrow_publishing: %s", enableNormalArrowPublishing_ ? "true" : "false");
+  RCLCPP_INFO(this->get_logger(), "enable_drift_corrected_TF_publishing: %s", enableDriftCorrectedTFPublishing_ ? "true" : "false");
+  RCLCPP_INFO(this->get_logger(), "use_initializer_at_start: %s", useInitializerAtStart_ ? "true" : "false");
+  RCLCPP_INFO(this->get_logger(), "always_clear_with_initializer: %s", alwaysClearWithInitializer_ ? "true" : "false");
+
+  enablePointCloudPublishing_ = enablePointCloudPublishing;
+  
+  std::map<std::string, rclcpp::Parameter> subscriber_params, publisher_params;  
+  if (!this->get_parameters("subscribers", subscriber_params)) {
+    RCLCPP_FATAL(this->get_logger(), "There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
+    rclcpp::shutdown();
+  }
+  if (!this->get_parameters("publishers", publisher_params)) {
+    RCLCPP_FATAL(this->get_logger(), "There aren't any publishers to be configured, the elevation mapping cannot be configured. Exit");
+    rclcpp::shutdown();
+  }
+    
+    for (const auto& name : subscriber_params) {     
+        if (name.first.find("image_topic") != std::string::npos) {            
+            std::string camera_topic = name.second.as_string();     
+            // setup image subscriber
+            std::string transport_hint = "compressed";
+            std::size_t ind = camera_topic.find(transport_hint);  // Find if compressed is in the topic name
+            if (ind != std::string::npos) {
+              transport_hint = camera_topic.substr(ind, camera_topic.length());  // Get the hint as the last part
+              camera_topic.erase(ind - 1, camera_topic.length());                // We remove the hint from the topic
+            } else {
+              transport_hint = "raw";  // In the default case we assume raw topic
+            }                        
+            // Create a standard ROS2 subscription for the image topic            
+            ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(this, camera_topic, rmw_qos_profile_sensor_data);        
+            // image_sub->subscribe(this->shared_from_this(), camera_topic, 1);            
+            imageSubs_.push_back(image_sub);                                
+
+          
+            
+            
+
+            std::string info_topic;
+            std::string channel_info_topic; 
+            // Check if the last character is a digit
+            if (std::isdigit(name.first.back())) {                
+                char last_char = name.first.back();                                
+                std::string cam_info_name_param = "image_info" + std::string(1, last_char);                
+                std::string channel_info_name_param = "image_channel_info" + std::string(1, last_char);                                
+                if (this->get_parameter("subscribers." + cam_info_name_param, info_topic)) {
+                  RCLCPP_INFO(this->get_logger(), "Generated parameter %s: %s", cam_info_name_param.c_str(), info_topic.c_str());                                      
+                  CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(this, info_topic, rmw_qos_profile_sensor_data);                  
+                  // cam_info_sub->subscribe(this->shared_from_this(), info_topic, 1);
+                  cameraInfoSubs_.push_back(cam_info_sub);  
+                    if (this->get_parameter("subscribers." + channel_info_name_param, channel_info_topic)) {
+                      ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>(this, channel_info_topic, rmw_qos_profile_sensor_data);                 
+                      // channel_info_sub->subscribe(this->shared_from_this(), channel_info_topic, 1);
+                      channelInfoSubs_.push_back(channel_info_sub);
+                      CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
+                      sync->registerCallback(std::bind(&ElevationMappingNode::imageChannelCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                      cameraChannelSyncs_.push_back(sync);
+                      RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s, Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), channel_info_topic.c_str());
+                    }else{
+                        std::string key = name.first;
+                        channels_[key].push_back("rgb");
+                        // RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s. Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")).c_str() : channel_info_topic.c_str()));
+                        CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
+                        sync->registerCallback(std::bind(&ElevationMappingNode::imageCallback, this, std::placeholders::_1, std::placeholders::_2, key));
+                        cameraSyncs_.push_back(sync);
+                    }
+                }else{
+                  throw std::runtime_error("Info topic is missing for camera: " + camera_topic);
+                }
+            }else{
+              throw std::runtime_error("Error: image param numbering at the end ");
+            }
+            // generate point cloud subscriber
+        }else if(name.first.find("pointcloud_topic") != std::string::npos) {        
+                std::string pointcloud_topic = name.second.as_string();                
+                RCLCPP_INFO(this->get_logger(), "Generated parameter %s:", name.first.c_str());
+                std::string key = name.first;
+                channels_[key].push_back("x");
+                channels_[key].push_back("y");
+                channels_[key].push_back("z");
+              auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+                  this->pointcloudCallback(msg, key);
+              };
+              auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, 1, callback);
+              pointcloudSubs_.push_back(sub);
+                RCLCPP_INFO(this->get_logger(), "Subscribed to PointCloud2 topic: %s", pointcloud_topic.c_str());
+        }
+
+    }
+
+    // get node pointer, pass into Class B
+    // map_ = std::make_shared<ElevationMappingWrapper>(shared_from_this());
+    map_->initialize();
 
 //   // Register map publishers
 //   for (auto itr = publishers.begin(); itr != publishers.end(); ++itr) {
@@ -228,7 +258,10 @@
 //   }
 //   lastStatisticsPublishedTime_ = ros::Time::now();
 //   ROS_INFO("[ElevationMappingCupy] finish initialization");
-// }
+}
+
+  // namespace elevation_mapping_cupy
+
 
 // // Setup map publishers
 // void ElevationMappingNode::setupMapPublishers() {
@@ -300,77 +333,80 @@
 //   mapPubs_[index].publish(msg);
 // }
 
-// void ElevationMappingNode::pointcloudCallback(const sensor_msgs::PointCloud2& cloud, const std::string& key) {
 
-//   //  get channels
-//   auto fields = cloud.fields;
-//   std::vector<std::string> channels;
+void ElevationMappingNode::pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key) {
+  //  get channels
+  auto fields = cloud->fields;
+  std::vector<std::string> channels;
 
-//   for (int it = 0; it < fields.size(); it++) {
-//     auto& field = fields[it];
-//     channels.push_back(field.name);
-//   }
-//   inputPointCloud(cloud, channels);
+  for (size_t it = 0; it < fields.size(); it++) {
+      auto& field = fields[it];
+      channels.push_back(field.name);
+  }
+  inputPointCloud(cloud, channels);
 
-//   // This is used for publishing as statistics.
-//   pointCloudProcessCounter_++;
-// }
+  // This is used for publishing as statistics.
+  pointCloudProcessCounter_++;
+}
 
-// void ElevationMappingNode::inputPointCloud(const sensor_msgs::PointCloud2& cloud,
-//                                           const std::vector<std::string>& channels) {
-//   auto start = ros::Time::now();
-//   auto* pcl_pc = new pcl::PCLPointCloud2;
-//   pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
-//   pcl_conversions::toPCL(cloud, *pcl_pc);
+void ElevationMappingNode::inputPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud,
+                                           const std::vector<std::string>& channels) {
+    auto start = this->now();
+    auto* pcl_pc = new pcl::PCLPointCloud2;
+    pcl::PCLPointCloud2ConstPtr cloudPtr(pcl_pc);
+    pcl_conversions::toPCL(*cloud, *pcl_pc);
 
-//   //  get channels
-//   auto fields = cloud.fields;
-//   uint array_dim = channels.size();
+    // Get channels
+    auto fields = cloud->fields;
+    uint array_dim = channels.size();
 
-//   RowMatrixXd points = RowMatrixXd(pcl_pc->width * pcl_pc->height, array_dim);
+    RowMatrixXd points = RowMatrixXd(pcl_pc->width * pcl_pc->height, array_dim);
 
-//   for (unsigned int i = 0; i < pcl_pc->width * pcl_pc->height; ++i) {
-//     for (unsigned int j = 0; j < channels.size(); ++j) {
-//       float temp;
-//       uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
-//       memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
-//       points(i, j) = static_cast<double>(temp);
-//     }
-//   }
-//   //  get pose of sensor in map frame
-//   tf::StampedTransform transformTf;
-//   std::string sensorFrameId = cloud.header.frame_id;
-//   auto timeStamp = cloud.header.stamp;
-//   Eigen::Affine3d transformationSensorToMap;
-//   try {
-//     transformListener_.waitForTransform(mapFrameId_, sensorFrameId, timeStamp, ros::Duration(1.0));
-//     transformListener_.lookupTransform(mapFrameId_, sensorFrameId, timeStamp, transformTf);
-//     poseTFToEigen(transformTf, transformationSensorToMap);
-//   } catch (tf::TransformException& ex) {
-//     ROS_ERROR("%s", ex.what());
-//     return;
-//   }
+    for (unsigned int i = 0; i < pcl_pc->width * pcl_pc->height; ++i) {
+        for (unsigned int j = 0; j < channels.size(); ++j) {
+            float temp;
+            uint point_idx = i * pcl_pc->point_step + pcl_pc->fields[j].offset;
+            memcpy(&temp, &pcl_pc->data[point_idx], sizeof(float));
+            points(i, j) = static_cast<double>(temp);
+        }
+    }
 
-//   double positionError{0.0};
-//   double orientationError{0.0};
-//   {
-//     std::lock_guard<std::mutex> lock(errorMutex_);
-//     positionError = positionError_;
-//     orientationError = orientationError_;
-//   }
-//   map_.input(points, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError,
-//              orientationError);
+    // Get pose of sensor in map frame
+    geometry_msgs::msg::TransformStamped transformStamped;
+    std::string sensorFrameId = cloud->header.frame_id;
+    auto timeStamp = cloud->header.stamp;
+    Eigen::Affine3d transformationSensorToMap;
+    try {
+        transformStamped = tfBuffer_->lookupTransform(mapFrameId_, sensorFrameId, tf2::TimePointZero);
+        transformationSensorToMap = tf2::transformToEigen(transformStamped);
+    } catch (tf2::TransformException& ex) {
+        RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+        return;
+    }
 
-//   if (enableDriftCorrectedTFPublishing_) {
-//     publishMapToOdom(map_.get_additive_mean_error());
-//   }
+    double positionError{0.0};
+    double orientationError{0.0};
+    {
+        std::lock_guard<std::mutex> lock(errorMutex_);
+        positionError = positionError_;
+        orientationError = orientationError_;
+    }
 
-//   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(points.size()),
-//                      (ros::Time::now() - start).toSec());
-//   ROS_DEBUG_THROTTLE(1.0, "positionError: %f ", positionError);
-//   ROS_DEBUG_THROTTLE(1.0, "orientationError: %f ", orientationError);
+    // map_.input(points, channels, transformationSensorToMap.rotation(), transformationSensorToMap.translation(), positionError,
+    //            orientationError);
 
-// }
+    // if (enableDriftCorrectedTFPublishing_) {
+    //     publishMapToOdom(map_.get_additive_mean_error());
+    // }
+
+    RCLCPP_DEBUG(this->get_logger(), "ElevationMap processed a point cloud (%i points) in %f sec.", static_cast<int>(points.size()),
+                 (this->now() - start).seconds());
+    RCLCPP_DEBUG(this->get_logger(), "positionError: %f ", positionError);
+    RCLCPP_DEBUG(this->get_logger(), "orientationError: %f ", orientationError);
+}
+
+
+
 
 // void ElevationMappingNode::inputImage(const sensor_msgs::ImageConstPtr& image_msg,
 //                                       const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
@@ -445,24 +481,25 @@
 //                    distortionCoeffs, distortion_model, image.rows, image.cols);
 // }
 
-// void ElevationMappingNode::imageCallback(const sensor_msgs::ImageConstPtr& image_msg,
-//                                          const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
-//                                          const std::string& key) {
-//   auto start = ros::Time::now();
-//   inputImage(image_msg, camera_info_msg, channels_[key]);
-//   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
-// }
+void ElevationMappingNode::imageCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& image_msg,
+                                         const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info_msg,
+                                         const std::string& key) {
+  auto start = this->now();
+  // inputImage(image_msg, camera_info_msg, channels_[key]);
+  RCLCPP_DEBUG(this->get_logger(), "ElevationMap imageCallback processed an image in %f sec.", (this->now() - start).seconds());
+}
 
-// void ElevationMappingNode::imageChannelCallback(const sensor_msgs::ImageConstPtr& image_msg,
-//                                          const sensor_msgs::CameraInfoConstPtr& camera_info_msg,
-//                                          const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg) {
-//   auto start = ros::Time::now();
-//   // Default channels and fusion methods for image is rgb and image_color
-//   std::vector<std::string> channels;
-//   channels = channel_info_msg->channels;
-//   inputImage(image_msg, camera_info_msg, channels);
-//   ROS_DEBUG_THROTTLE(1.0, "ElevationMap processed an image in %f sec.", (ros::Time::now() - start).toSec());
-// }
+
+void ElevationMappingNode::imageChannelCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& image_msg,
+                                                const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info_msg, 
+                                                const std::shared_ptr<const elevation_map_msgs::msg::ChannelInfo>& channel_info_msg) {
+auto start = this->now();
+// Default channels and fusion methods for image is rgb and image_color
+// std::vector<std::string> channels;
+// channels = channel_info_msg->channels;
+// inputImage(image_msg, camera_info_msg, channels);
+RCLCPP_DEBUG(this->get_logger(), "ElevationMap imageChannelCallback processed an image in %f sec.", (this->now() - start).seconds());
+}
 
 // void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
 //   tf::StampedTransform transformTf;
@@ -817,4 +854,4 @@
 //   tfBroadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), mapFrameId_, correctedMapFrameId_));
 // }
 
-// }  // namespace elevation_mapping_cupy
+}  // namespace elevation_mapping_cupy

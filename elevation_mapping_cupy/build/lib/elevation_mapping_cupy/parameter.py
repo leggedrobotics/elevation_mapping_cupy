@@ -289,12 +289,12 @@ class Parameter(Serializable):
         self.true_map_length = self.true_cell_n * self.resolution
 
 
-# if __name__ == "__main__":
-#     param = Parameter()
-#     print(param)
-#     print(param.resolution)
-#     param.set_value("resolution", 0.1)
-#     print(param.resolution)
+if __name__ == "__main__":
+    param = Parameter()
+    print(param)
+    print(param.resolution)
+    param.set_value("resolution", 0.1)
+    print(param.resolution)
 
-#     print("names ", param.get_names())
-#     print("types ", param.get_types())
+    print("names ", param.get_names())
+    print("types ", param.get_types())
