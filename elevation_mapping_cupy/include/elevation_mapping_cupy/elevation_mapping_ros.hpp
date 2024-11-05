@@ -96,7 +96,7 @@ class ElevationMappingNode : public rclcpp::Node {
 
  private:
   void readParameters();
-//   void setupMapPublishers();
+  void setupMapPublishers();
   void pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key);    
   void inputPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::vector<std::string>& channels);
 //   void inputImage(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::vector<std::string>& channels);
@@ -122,7 +122,7 @@ void imageChannelCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& 
 //   void initializeWithTF();
 //   void publishMapToOdom(double error);
 //   void publishStatistics(const ros::TimerEvent&);
-//   void publishMapOfIndex(int index);
+  void publishMapOfIndex(int index);
 
 //   visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) const;
   

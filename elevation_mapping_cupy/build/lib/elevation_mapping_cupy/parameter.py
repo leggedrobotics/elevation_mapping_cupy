@@ -171,13 +171,13 @@ class Parameter(Serializable):
     time_interval: float = 0.1  # Time layer is updated with this interval.
 
     max_variance: float = 1.0  # maximum variance for each cell.
-    dilation_size: float = 2  # dilation filter size before traversability filter.
-    dilation_size_initialize: float = 10  # dilation size after the init.
+    dilation_size: int = 2  # dilation filter size before traversability filter.
+    dilation_size_initialize: int = 10  # dilation size after the init.
     drift_compensation_alpha: float = 1.0  # drift compensation alpha for smoother update of drift compensation.
 
     traversability_inlier: float = 0.1  # cells with higher traversability are used for drift compensation.
-    wall_num_thresh: float = 100  # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
-    min_height_drift_cnt: float = 100  # drift compensation only happens if the valid cells are more than this number.
+    wall_num_thresh: int = 100  # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+    min_height_drift_cnt: int = 100  # drift compensation only happens if the valid cells are more than this number.
 
     max_ray_length: float = 2.0  # maximum length for ray tracing.
     cleanup_step: float = 0.01  # substitute this value from validity layer at visibility cleanup.
@@ -210,7 +210,7 @@ class Parameter(Serializable):
     position_noise_thresh: float = 0.1  # if the position change is bigger than this value, the drift compensation happens.
     orientation_noise_thresh: float = 0.1  # if the orientation change is bigger than this value, the drift compensation happens.
 
-    plugin_config_file: str = "config/plugin_config.yaml"  # configuration file for the plugin
+    # plugin_config_file: str = "config/plugin_config.yaml"  # configuration file for the plugin
     weight_file: str = "config/weights.dat"  # weight file for traversability filter
 
     initial_variance: float = 10.0  # initial variance for each cell.
@@ -289,12 +289,12 @@ class Parameter(Serializable):
         self.true_map_length = self.true_cell_n * self.resolution
 
 
-if __name__ == "__main__":
-    param = Parameter()
-    print(param)
-    print(param.resolution)
-    param.set_value("resolution", 0.1)
-    print(param.resolution)
+# if __name__ == "__main__":
+#     param = Parameter()
+#     print(param)
+#     print(param.resolution)
+#     param.set_value("resolution", 0.1)
+#     print(param.resolution)
 
-    print("names ", param.get_names())
-    print("types ", param.get_types())
+#     print("names ", param.get_names())
+#     print("types ", param.get_types())

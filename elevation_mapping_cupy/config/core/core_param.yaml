@@ -1,6 +1,14 @@
 elevation_mapping:
   ros__parameters:
     #### Basic parameters ########
+    cell_n: 10000                                    # number of cells in the map.
+    data_type: 'float32'                            # data type for the map.
+    average_weight: 0.5
+    drift_compensation_variance_inlier: 0.1
+    checker_layer: 'traversability'                # layer name for checking the validity of the cell.
+    min_filter_size: 5                            # size of the filter for min filter.
+    min_filter_iteration: 3                      # number of iterations for min filter.
+    initialized_variance: 10.0                     # initial variance for each cell.    
     resolution: 0.04                                # resolution in m.
     map_length: 8.0                                 # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
@@ -95,11 +103,14 @@ elevation_mapping:
     #    channel_info_topic_name: '/camera/channel_info'
     
     subscribers:
-      pointcloud_topic1: '/a200/sensors/camera_1/points'      
-
-      image_topic1: '/a200/sensors/camera_0/color/image'        
-      image_info1: '/a200/sensors/camera_0/color/camera_info'
-      # image_channel_info1: '/front_cam/channel_info'  
+      pointcloud1:
+        topic_name: '/a200/sensors/camera_1/points'      
+        data_type: 'pointcloud'
+      image1:
+        topic_name: '/a200/sensors/camera_0/color/image'        
+        info_name: '/a200/sensors/camera_0/color/camera_info'
+        data_type: 'image'
+        # channel_name: '/front_cam/channel_info'  
 
       # image_topic2: '/camera/rgb/image_raw2'        
       # image_info2: '/camera/depth/camera_info2'
@@ -120,7 +131,7 @@ elevation_mapping:
     #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 
     publishers:
-      elevation_map_raw:
+      elevation_map_raw:        
         layers: ['elevation', 'traversability', 'variance','rgb']
         basic_layers: ['elevation']
         fps: 5.0

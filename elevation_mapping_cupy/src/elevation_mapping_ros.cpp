@@ -21,6 +21,19 @@
 
 namespace elevation_mapping_cupy {
 
+std::vector<std::string> extract_unique_names(const std::map<std::string, rclcpp::Parameter>& subscriber_params) {
+    std::set<std::string> unique_names_set;
+    for (const auto& param : subscriber_params) {
+        std::size_t pos = param.first.find('.');
+        if (pos != std::string::npos) {
+            std::string name = param.first.substr(0, pos);
+            unique_names_set.insert(name);
+        }
+    }
+    return std::vector<std::string>(unique_names_set.begin(), unique_names_set.end());
+}
+
+
 ElevationMappingNode::ElevationMappingNode()
     : rclcpp::Node("elevation_mapping_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)),     
       node_(std::shared_ptr<ElevationMappingNode>(this, [](auto *) {})),
@@ -95,7 +108,12 @@ ElevationMappingNode::ElevationMappingNode()
   RCLCPP_INFO(this->get_logger(), "always_clear_with_initializer: %s", alwaysClearWithInitializer_ ? "true" : "false");
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
-  
+     
+  // map_ = std::make_shared<ElevationMappingWrapper>();
+  // map_->initialize(node_);
+
+
+
   std::map<std::string, rclcpp::Parameter> subscriber_params, publisher_params;  
   if (!this->get_parameters("subscribers", subscriber_params)) {
     RCLCPP_FATAL(this->get_logger(), "There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
@@ -106,121 +124,117 @@ ElevationMappingNode::ElevationMappingNode()
     rclcpp::shutdown();
   }
     
-    for (const auto& name : subscriber_params) {     
-        if (name.first.find("image_topic") != std::string::npos) {            
-            std::string camera_topic = name.second.as_string();     
-            // setup image subscriber
-            std::string transport_hint = "compressed";
-            std::size_t ind = camera_topic.find(transport_hint);  // Find if compressed is in the topic name
-            if (ind != std::string::npos) {
-              transport_hint = camera_topic.substr(ind, camera_topic.length());  // Get the hint as the last part
-              camera_topic.erase(ind - 1, camera_topic.length());                // We remove the hint from the topic
-            } else {
-              transport_hint = "raw";  // In the default case we assume raw topic
-            }                        
-            // Create a standard ROS2 subscription for the image topic            
-            ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(this, camera_topic, rmw_qos_profile_sensor_data);        
-            // image_sub->subscribe(this->shared_from_this(), camera_topic, 1);            
+   
+    auto unique_sub_names = extract_unique_names(subscriber_params);
+    for (const auto& sub_name : unique_sub_names) {  
+        std::string data_type;
+      if(this->get_parameter("subscribers." + sub_name + ".data_type", data_type)){
+          // image           
+          if(data_type == "image"){
+            std::string camera_topic;
+            std::string info_topic;
+            this->get_parameter("subscribers." + sub_name + ".topic_name", camera_topic);
+            this->get_parameter("subscribers." + sub_name + ".info_name", info_topic);
+            RCLCPP_INFO(this->get_logger(), "camera_topic  %s: %s", sub_name.c_str(), camera_topic.c_str());
+            RCLCPP_INFO(this->get_logger(), "info_name  %s: %s", sub_name.c_str(), info_topic.c_str());
+
+            // std::string transport_hint = "compressed";
+            // std::size_t ind = camera_topic.find(transport_hint);  // Find if compressed is in the topic name
+            // if (ind != std::string::npos) {
+            //   transport_hint = camera_topic.substr(ind, camera_topic.length());  // Get the hint as the last part
+            //   camera_topic.erase(ind - 1, camera_topic.length());                // We remove the hint from the topic
+            // } else {
+            //   transport_hint = "raw";  // In the default case we assume raw topic
+            // }                        
+            
+            ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(this, camera_topic, rmw_qos_profile_sensor_data);                    
             imageSubs_.push_back(image_sub);                                
 
-          
-            
-            
+            CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(this, info_topic, rmw_qos_profile_sensor_data);                                    
+            cameraInfoSubs_.push_back(cam_info_sub);  
 
-            std::string info_topic;
             std::string channel_info_topic; 
-            // Check if the last character is a digit
-            if (std::isdigit(name.first.back())) {                
-                char last_char = name.first.back();                                
-                std::string cam_info_name_param = "image_info" + std::string(1, last_char);                
-                std::string channel_info_name_param = "image_channel_info" + std::string(1, last_char);                                
-                if (this->get_parameter("subscribers." + cam_info_name_param, info_topic)) {
-                  RCLCPP_INFO(this->get_logger(), "Generated parameter %s: %s", cam_info_name_param.c_str(), info_topic.c_str());                                      
-                  CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(this, info_topic, rmw_qos_profile_sensor_data);                  
-                  // cam_info_sub->subscribe(this->shared_from_this(), info_topic, 1);
-                  cameraInfoSubs_.push_back(cam_info_sub);  
-                    if (this->get_parameter("subscribers." + channel_info_name_param, channel_info_topic)) {
-                      ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>(this, channel_info_topic, rmw_qos_profile_sensor_data);                 
-                      // channel_info_sub->subscribe(this->shared_from_this(), channel_info_topic, 1);
-                      channelInfoSubs_.push_back(channel_info_sub);
-                      CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
-                      sync->registerCallback(std::bind(&ElevationMappingNode::imageChannelCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-                      cameraChannelSyncs_.push_back(sync);
-                      RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s, Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), channel_info_topic.c_str());
-                    }else{
-                        std::string key = name.first;
-                        channels_[key].push_back("rgb");
-                        // RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s. Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")).c_str() : channel_info_topic.c_str()));
-                        CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-                        sync->registerCallback(std::bind(&ElevationMappingNode::imageCallback, this, std::placeholders::_1, std::placeholders::_2, key));
-                        cameraSyncs_.push_back(sync);
-                    }
-                }else{
-                  throw std::runtime_error("Info topic is missing for camera: " + camera_topic);
-                }
+            if (this->get_parameter("subscribers." + sub_name + ".channel_name", channel_info_topic)) {
+              ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>(this, channel_info_topic, rmw_qos_profile_sensor_data);                                       
+              channelInfoSubs_.push_back(channel_info_sub);
+              CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
+              sync->registerCallback(std::bind(&ElevationMappingNode::imageChannelCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+              cameraChannelSyncs_.push_back(sync);
+              RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s, Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), channel_info_topic.c_str());
             }else{
-              throw std::runtime_error("Error: image param numbering at the end ");
+                std::string key = sub_name;
+                channels_[key].push_back("rgb");
+                // RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s. Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")).c_str() : channel_info_topic.c_str()));
+                CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
+                sync->registerCallback(std::bind(&ElevationMappingNode::imageCallback, this, std::placeholders::_1, std::placeholders::_2, key));
+                cameraSyncs_.push_back(sync);
             }
-            // generate point cloud subscriber
-        }else if(name.first.find("pointcloud_topic") != std::string::npos) {        
-                std::string pointcloud_topic = name.second.as_string();                
-                RCLCPP_INFO(this->get_logger(), "Generated parameter %s:", name.first.c_str());
-                std::string key = name.first;
-                channels_[key].push_back("x");
-                channels_[key].push_back("y");
-                channels_[key].push_back("z");
-              auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+          }else if(data_type == "pointcloud"){
+            std::string pointcloud_topic;
+            this->get_parameter("subscribers." + sub_name + ".topic_name", pointcloud_topic);                                    
+            std::string key = sub_name;
+            channels_[key].push_back("x");
+            channels_[key].push_back("y");
+            channels_[key].push_back("z");
+            auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
                   this->pointcloudCallback(msg, key);
               };
               auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, 1, callback);
               pointcloudSubs_.push_back(sub);
                 RCLCPP_INFO(this->get_logger(), "Subscribed to PointCloud2 topic: %s", pointcloud_topic.c_str());
-        }
+          }
+      }
+    }
+ 
+    
+    
+    auto unique_pub_names = extract_unique_names(publisher_params);
+
+    // for (const auto& pub_name : unique_pub_names) {  
+    //   std::string topic_name = pub_name;      
+    //   std::vector<std::string> layers_list;
+    //   std::vector<std::string> basic_layers_list;      
+    //   double fps;
+    //   this->get_parameter("publishers." + pub_name + ".layers", layers_list)
+    //   this->get_parameter("publishers." + pub_name + ".basic_layers", basic_layers_list)
+    //   this->get_parameter("publishers." + pub_name + ".fps", fps)
+    // }
+
+    for (const auto& pub_name : unique_pub_names) {  
+    std::string topic_name = pub_name;
+    double fps;
+    std::vector<std::string> layers_list;
+    std::vector<std::string> basic_layers_list;      
+
+    this->get_parameter("publishers." + pub_name + ".layers", layers_list);
+    this->get_parameter("publishers." + pub_name + ".basic_layers", basic_layers_list);
+    this->get_parameter("publishers." + pub_name + ".fps", fps);
+
+    if (fps > updateGridMapFps) {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f "
+        "fps.",
+        topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
+    }
+
+    // Make publishers
+    auto pub = this->create_publisher<grid_map_msgs::msg::GridMap>(topic_name, 1);
+    RCLCPP_INFO(this->get_logger(), "Publishing map to topic %s", topic_name.c_str());
+    mapPubs_.push_back(pub);
+
+    // Register map layers
+    map_layers_.push_back(layers_list);
+    map_basic_layers_.push_back(basic_layers_list);
+
+    // Register map fps
+    map_fps_.push_back(fps);
+    map_fps_unique_.insert(fps);
 
     }
 
-    // get node pointer, pass into Class B
-    // map_ = std::make_shared<ElevationMappingWrapper>(shared_from_this());
-    map_->initialize();
 
-//   // Register map publishers
-//   for (auto itr = publishers.begin(); itr != publishers.end(); ++itr) {
-//     // Parse params
-//     std::string topic_name = itr->first;
-//     std::vector<std::string> layers_list;
-//     std::vector<std::string> basic_layers_list;
-//     auto layers = itr->second["layers"];
-//     auto basic_layers = itr->second["basic_layers"];
-//     double fps = itr->second["fps"];
-
-//     if (fps > updateGridMapFps) {
-//       ROS_WARN(
-//           "[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f "
-//           "fps.",
-//           topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
-//     }
-
-//     for (int32_t i = 0; i < layers.size(); ++i) {
-//       layers_list.push_back(static_cast<std::string>(layers[i]));
-//     }
-
-//     for (int32_t i = 0; i < basic_layers.size(); ++i) {
-//       basic_layers_list.push_back(static_cast<std::string>(basic_layers[i]));
-//     }
-
-//     // Make publishers
-//     ros::Publisher pub = nh_.advertise<grid_map_msgs::GridMap>(topic_name, 1);
-//     mapPubs_.push_back(pub);
-
-//     // Register map layers
-//     map_layers_.push_back(layers_list);
-//     map_basic_layers_.push_back(basic_layers_list);
-
-//     // Register map fps
-//     map_fps_.push_back(fps);
-//     map_fps_unique_.insert(fps);
-//   }
-//   setupMapPublishers();
+  setupMapPublishers();
 
 //   pointPub_ = nh_.advertise<sensor_msgs::PointCloud2>("elevation_map_points", 1);
 //   alivePub_ = nh_.advertise<std_msgs::Empty>("alive", 1);
@@ -264,74 +278,75 @@ ElevationMappingNode::ElevationMappingNode()
 
 
 // // Setup map publishers
-// void ElevationMappingNode::setupMapPublishers() {
-//   // Find the layers with highest fps.
-//   float max_fps = -1;
-//   // Create timers for each unique map frequencies
-//   for (auto fps : map_fps_unique_) {
-//     // Which publisher to call in the timer callback
-//     std::vector<int> indices;
-//     // If this fps is max, update the map layers.
-//     if (fps >= max_fps) {
-//       max_fps = fps;
-//       map_layers_all_.clear();
-//     }
-//     for (int i = 0; i < map_fps_.size(); i++) {
-//       if (map_fps_[i] == fps) {
-//         indices.push_back(i);
-//         // If this fps is max, add layers
-//         if (fps >= max_fps) {
-//           for (const auto layer : map_layers_[i]) {
-//             map_layers_all_.insert(layer);
-//           }
-//         }
-//       }
-//     }
-//     // Callback funtion.
-//     // It publishes to specific topics.
-//     auto cb = [this, indices](const ros::TimerEvent&) {
-//       for (int i : indices) {
-//         publishMapOfIndex(i);
-//       }
-//     };
-//     double duration = 1.0 / (fps + 0.00001);
-//     mapTimers_.push_back(nh_.createTimer(ros::Duration(duration), cb));
-//   }
-// }
+void ElevationMappingNode::setupMapPublishers() {
+  // Find the layers with highest fps.
+  float max_fps = -1;
+  // Create timers for each unique map frequencies
+  for (auto fps : map_fps_unique_) {
+    // Which publisher to call in the timer callback
+    std::vector<int> indices;
+    // If this fps is max, update the map layers.
+    if (fps >= max_fps) {
+      max_fps = fps;
+      map_layers_all_.clear();
+    }
+    for (int i = 0; i < map_fps_.size(); i++) {
+      if (map_fps_[i] == fps) {
+        indices.push_back(i);
+        // If this fps is max, add layers
+        if (fps >= max_fps) {
+          for (const auto layer : map_layers_[i]) {
+            map_layers_all_.insert(layer);
+          }
+        }
+      }
+    }
+    // Callback funtion.
+    // It publishes to specific topics.
+    auto cb = [this, indices]() -> void {
+      for (int i : indices) {
+      publishMapOfIndex(i);
+      }
+    };
+    double duration = 1.0 / (fps + 0.00001);
+    mapTimers_.push_back(this->create_wall_timer(std::chrono::duration<double>(duration), cb));
+  }
+}
 
-// void ElevationMappingNode::publishMapOfIndex(int index) {
-//   // publish the map layers of index
-//   if (!isGridmapUpdated_) {
-//     return;
-//   }
-//   grid_map_msgs::GridMap msg;
-//   std::vector<std::string> layers;
 
-//   {  // need continuous lock between adding layers and converting to message. Otherwise updateGridmap can reset the data not in
-//      // map_layers_all_
-//     std::lock_guard<std::mutex> lock(mapMutex_);
-//     for (const auto& layer : map_layers_[index]) {
-//       const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
-//       if (is_layer_in_all && gridMap_.exists(layer)) {
-//         layers.push_back(layer);
-//       } else if (map_.exists_layer(layer)) {
-//         // if there are layers which is not in the syncing layer.
-//         ElevationMappingWrapper::RowMatrixXf map_data;
-//         map_.get_layer_data(layer, map_data);
-//         gridMap_.add(layer, map_data);
-//         layers.push_back(layer);
-//       }
-//     }
-//     if (layers.empty()) {
-//       return;
-//     }
+void ElevationMappingNode::publishMapOfIndex(int index) {
+  // publish the map layers of index
+  if (!isGridmapUpdated_) {
+    return;
+  }
+  grid_map_msgs::msg::GridMap msg;
+  std::vector<std::string> layers;
 
-//     grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
-//   }
+  // {  // need continuous lock between adding layers and converting to message. Otherwise updateGridmap can reset the data not in
+  //    // map_layers_all_
+  //   std::lock_guard<std::mutex> lock(mapMutex_);
+  //   for (const auto& layer : map_layers_[index]) {
+  //     const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
+  //     if (is_layer_in_all && gridMap_.exists(layer)) {
+  //       layers.push_back(layer);
+  //     } else if (map_.exists_layer(layer)) {
+  //       // if there are layers which is not in the syncing layer.
+  //       ElevationMappingWrapper::RowMatrixXf map_data;
+  //       map_.get_layer_data(layer, map_data);
+  //       gridMap_.add(layer, map_data);
+  //       layers.push_back(layer);
+  //     }
+  //   }
+  //   if (layers.empty()) {
+  //     return;
+  //   }
 
-//   msg.basic_layers = map_basic_layers_[index];
-//   mapPubs_[index].publish(msg);
-// }
+  //   grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
+  // }
+
+  msg.basic_layers = map_basic_layers_[index];
+  mapPubs_[index]->publish(msg);
+}
 
 
 void ElevationMappingNode::pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key) {
@@ -487,6 +502,7 @@ void ElevationMappingNode::imageCallback(const std::shared_ptr<const sensor_msgs
   auto start = this->now();
   // inputImage(image_msg, camera_info_msg, channels_[key]);
   RCLCPP_DEBUG(this->get_logger(), "ElevationMap imageCallback processed an image in %f sec.", (this->now() - start).seconds());
+  
 }
 
 

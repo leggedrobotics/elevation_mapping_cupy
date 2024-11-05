@@ -43,9 +43,9 @@ class ElevationMappingWrapper {
   using RowMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 
-  ElevationMappingWrapper(rclcpp::Node::SharedPtr node); 
+  ElevationMappingWrapper(); 
 
-  void initialize();
+  void initialize(const std::shared_ptr<rclcpp::Node>& node);
 
   void input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R, const Eigen::VectorXd& t,
              const double positionNoise, const double orientationNoise);
@@ -65,8 +65,9 @@ class ElevationMappingWrapper {
   void addNormalColorLayer(grid_map::GridMap& map);
   
  private:  
-  rclcpp::Node::SharedPtr node_;
-  py::object setParameters();  
+  
+  std::shared_ptr<rclcpp::Node> node_;
+  void setParameters();  
  
   py::object map_;
   py::object param_;
