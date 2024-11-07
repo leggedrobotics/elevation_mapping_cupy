@@ -65,7 +65,7 @@ set(dependencies
 
 # Include directories
 include_directories(
-  include
+  include    
   ${PYTHON_INCLUDE_DIRS}
   ${Eigen3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}

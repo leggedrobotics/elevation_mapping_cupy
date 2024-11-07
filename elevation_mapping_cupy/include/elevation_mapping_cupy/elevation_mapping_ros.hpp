@@ -26,8 +26,8 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <std_srvs/srv/empty.hpp>
 #include <std_srvs/srv/set_bool.hpp>
+#include <std_srvs/srv/empty.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/empty.hpp>
 #include <std_msgs/msg/string.hpp>
@@ -56,6 +56,7 @@
 #include <elevation_map_msgs/srv/check_safety.hpp>
 #include <elevation_map_msgs/srv/initialize.hpp>
 #include <elevation_map_msgs/msg/channel_info.hpp>
+#include <elevation_map_msgs/msg/statistics.hpp>
 
 #include "elevation_mapping_cupy/elevation_mapping_wrapper.hpp"
 
@@ -108,19 +109,29 @@ void imageChannelCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& 
 //   void pointCloudChannelCallback(const sensor_msgs::PointCloud2& cloud, const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg);
 //   // void multiLayerImageCallback(const elevation_map_msgs::MultiLayerImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
 //   void publishAsPointCloud(const grid_map::GridMap& map) const;
-//   bool getSubmap(grid_map_msgs::GetGridMap::Request& request, grid_map_msgs::GetGridMap::Response& response);
+bool getSubmap( const std::shared_ptr<grid_map_msgs::srv::GetGridMap::Request> request, std::shared_ptr<grid_map_msgs::srv::GetGridMap::Response> response);
+
+
 //   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
-//   bool initializeMap(elevation_map_msgs::Initialize::Request& request, elevation_map_msgs::Initialize::Response& response);
-//   bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
-//   bool clearMapWithInitializer(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    
+  void initializeMap(const std::shared_ptr<elevation_map_msgs::srv::Initialize::Request> request, std::shared_ptr<elevation_map_msgs::srv::Initialize::Response> response);
+   
+  
+  // bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+
+
+void clearMap(const std::shared_ptr<std_srvs::srv::Empty::Request> request, std::shared_ptr<std_srvs::srv::Empty::Response> response);
+void clearMapWithInitializer(const std::shared_ptr<std_srvs::srv::Empty::Request> request, std::shared_ptr<std_srvs::srv::Empty::Response> response);
+
+
 //   bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
 //   void updatePose(const ros::TimerEvent&);
 //   void updateVariance(const ros::TimerEvent&);
 //   void updateTime(const ros::TimerEvent&);
 //   void updateGridMap(const ros::TimerEvent&);
 //   void publishNormalAsArrow(const grid_map::GridMap& map) const;
-//   void initializeWithTF();
-//   void publishMapToOdom(double error);
+  void initializeWithTF();
+  void publishMapToOdom(double error);
 //   void publishStatistics(const ros::TimerEvent&);
   void publishMapOfIndex(int index);
 
@@ -143,10 +154,10 @@ void imageChannelCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& 
   std::shared_ptr<tf2_ros::Buffer> tfBuffer_;
 
 
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr alivePub_;
+  rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr alivePub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointPub_;
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr normalPub_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr statisticsPub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr normalPub_;
+  rclcpp::Publisher<elevation_map_msgs::msg::Statistics>::SharedPtr statisticsPub_;
   rclcpp::Service<grid_map_msgs::srv::GetGridMap>::SharedPtr rawSubmapService_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr clearMapService_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr clearMapWithInitializerService_;
