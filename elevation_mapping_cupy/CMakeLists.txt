@@ -41,6 +41,10 @@ find_package(tf2_eigen REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(python_cmake_module REQUIRED)
 
+
+_ament_cmake_python_register_environment_hook()
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR script/${PROJECT_NAME})
+
 # List dependencies for ament_target_dependencies
 set(dependencies
   rclcpp
@@ -112,7 +116,7 @@ install(
 )
 
 
-ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR script/${PROJECT_NAME})
+
 
 install(PROGRAMS  
   DESTINATION lib/${PROJECT_NAME}

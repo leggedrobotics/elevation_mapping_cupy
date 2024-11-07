@@ -64,11 +64,12 @@ elevation_mapping:
     enable_pointcloud_publishing: false
     enable_drift_corrected_TF_publishing: false
     enable_normal_color: false                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
+    enable_normal: false
 
     #### Traversability filter ########
     use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
-    weight_file: '/config/core/weights.dat'               # Weight file for traversability filter
-
+    weight_file: '/share/elevation_mapping_cupy/config/core/weights.dat'               # Weight file for traversability filter
+    plugin_config_file: '/share/elevation_mapping_cupy/config/core/plugin_config.yaml'               # Configuration file for the plugin.  
     #### Upper bound ########
     use_only_above_for_upper_bound: false
 

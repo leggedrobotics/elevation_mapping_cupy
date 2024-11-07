@@ -210,7 +210,7 @@ class Parameter(Serializable):
     position_noise_thresh: float = 0.1  # if the position change is bigger than this value, the drift compensation happens.
     orientation_noise_thresh: float = 0.1  # if the orientation change is bigger than this value, the drift compensation happens.
 
-    # plugin_config_file: str = "config/plugin_config.yaml"  # configuration file for the plugin
+    plugin_config_file: str = "config/plugin_config.yaml"  # configuration file for the plugin
     weight_file: str = "config/weights.dat"  # weight file for traversability filter
 
     initial_variance: float = 10.0  # initial variance for each cell.
@@ -225,7 +225,7 @@ class Parameter(Serializable):
     cell_n: int = None  # number of cells in the map
     true_cell_n: int = None  # true number of cells in the map
 
-    def load_weights(self, filename):
+    def load_weights(self, filename: str):
         """
         Load weights from a file into the model's parameters.
         

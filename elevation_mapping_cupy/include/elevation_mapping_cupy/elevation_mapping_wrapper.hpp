@@ -37,6 +37,8 @@ namespace py = pybind11;
 
 namespace elevation_mapping_cupy {
 
+std::vector<std::string> extract_unique_names(const std::map<std::string, rclcpp::Parameter>& subscriber_params);
+
 class ElevationMappingWrapper {
  public:
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;

@@ -5,6 +5,8 @@
 import os
 from typing import List, Any, Tuple, Union
 
+from rclpy.logging import get_logger
+from ament_index_python.packages import get_package_prefix
 import numpy as np
 import threading
 import subprocess
@@ -41,6 +43,7 @@ from elevation_mapping_cupy.traversability_polygon import (
 )
 
 import cupy as cp
+
 
 xp = cp
 pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
@@ -97,26 +100,31 @@ class ElevationMap:
 
         
         self.compile_kernels()
-
+        get_logger('elevation_mapping').info("Finished compiling kernels.")
         self.compile_image_kernels()
+        get_logger('elevation_mapping').info("Finished compiling image kernels.")
+        self.semantic_map.initialize_fusion()
+        get_logger('elevation_mapping').info("Finished compiling semantic_map kernels.")
 
-        # self.semantic_map.initialize_fusion()
+        weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
+        package_prefix = get_package_prefix('elevation_mapping_cupy')
+        get_logger('elevation_mapping').info("weight file : ." + str(package_prefix) + str(weight_file))
+        param.load_weights(package_prefix+weight_file)
 
-        # weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
-        # param.load_weights(weight_file)
+        if param.use_chainer:
+            self.traversability_filter = get_filter_chainer(param.w1, param.w2, param.w3, param.w_out)
+        else:
+            self.traversability_filter = get_filter_torch(param.w1, param.w2, param.w3, param.w_out)
+        
+        self.untraversable_polygon = xp.zeros((1, 2))
 
-        # if param.use_chainer:
-        #     self.traversability_filter = get_filter_chainer(param.w1, param.w2, param.w3, param.w_out)
-        # else:
-        #     self.traversability_filter = get_filter_torch(param.w1, param.w2, param.w3, param.w_out)
-        # self.untraversable_polygon = xp.zeros((1, 2))
+       # Plugins
+        self.plugin_manager = PluginManager(cell_n=self.cell_n)
+        plugin_config_file = subprocess.getoutput('echo "' + param.plugin_config_file + '"')
+        get_logger('elevation_mapping').info("plugin file : ." + str(package_prefix) + str(plugin_config_file))
+        self.plugin_manager.load_plugin_settings(package_prefix+plugin_config_file)
 
-        # # Plugins
-        # self.plugin_manager = PluginManager(cell_n=self.cell_n)
-        # plugin_config_file = subprocess.getoutput('echo "' + param.plugin_config_file + '"')
-        # self.plugin_manager.load_plugin_settings(plugin_config_file)
-
-        # self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance, xp=cp, method="points")
+        self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance, xp=cp, method="points")
 
     def clear(self):
         """Reset all the layers of the elevation & the semantic map."""

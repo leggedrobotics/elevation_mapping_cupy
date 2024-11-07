@@ -21,6 +21,19 @@
 
 namespace elevation_mapping_cupy {
 
+std::vector<std::string> extract_unique_names(const std::map<std::string, rclcpp::Parameter>& subscriber_params) {
+    std::set<std::string> unique_names_set;
+    for (const auto& param : subscriber_params) {
+        std::size_t pos = param.first.find('.');
+        if (pos != std::string::npos) {
+            std::string name = param.first.substr(0, pos);
+            unique_names_set.insert(name);
+        }
+    }
+    return std::vector<std::string>(unique_names_set.begin(), unique_names_set.end());
+}
+
+
 ElevationMappingWrapper::ElevationMappingWrapper(){}
 
 void ElevationMappingWrapper::initialize(const std::shared_ptr<rclcpp::Node>& node){
@@ -41,9 +54,11 @@ void ElevationMappingWrapper::initialize(const std::shared_ptr<rclcpp::Node>& no
 
   auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
   auto parameter = py::module::import("elevation_mapping_cupy.parameter");
-  param_ = parameter.attr("Parameter")();  
+  param_ = parameter.attr("Parameter")();    
   setParameters();  
   map_ = elevation_mapping.attr("ElevationMap")(param_);
+  RCLCPP_INFO(node_->get_logger(), "ElevationMappingWrapper has been initialized");
+  
 }
 
 // /**
@@ -51,9 +66,6 @@ void ElevationMappingWrapper::initialize(const std::shared_ptr<rclcpp::Node>& no
 //  *  Search for the same name within the name space.
 //  */
 void ElevationMappingWrapper::setParameters() {
-  
-  // auto parameter = py::module::import("elevation_mapping_cupy.parameter");
-  // auto param_ = parameter.attr("Parameter")();
   
   // Get all parameters names and types.
   py::list paramNames = param_.attr("get_names")();
@@ -110,108 +122,91 @@ void ElevationMappingWrapper::setParameters() {
       // rclcpp::Parameter subscribers;
       std::vector<std::string> parameter_prefixes;
       auto parameters = node_->list_parameters(parameter_prefixes, 2); // List all parameters with a maximum depth of 10
-      for (const auto& param_name : parameters.names) {
-        if (param_name.find("subscribers") != std::string::npos) {
-            RCLCPP_WARN(node_->get_logger(), "Subscriber : %s", param_name.c_str());
-      
 
-            // const char* const name = param_name.c_str();
-            // std::string subscriber_params;
-            // node_->get_parameter(param_name, subscriber);
-            // const auto& subscriber_params = subscriber.second;
-            // if (!sub_dict.contains(name)) {
-            //   sub_dict[name] = py::dict();
-            // }
-            // for (auto iterat : subscriber_params) {
-            //   const char* const key = iterat.first.c_str();
-            //   const auto val = iterat.second;
-            //   std::vector<std::string> arr;
-            //   switch (val.getType()) {
-            //     case XmlRpc::XmlRpcValue::TypeString:
-            //       sub_dict[name][key] = static_cast<std::string>(val);
-            //       break;
-            //     case XmlRpc::XmlRpcValue::TypeInt:
-            //       sub_dict[name][key] = static_cast<int>(val);
-            //       break;
-            //     case XmlRpc::XmlRpcValue::TypeDouble:
-            //       sub_dict[name][key] = static_cast<double>(val);
-            //       break;
-            //     case XmlRpc::XmlRpcValue::TypeBoolean:
-            //       sub_dict[name][key] = static_cast<bool>(val);
-            //       break;
-            //     case XmlRpc::XmlRpcValue::TypeArray:
-            //       for (int32_t i = 0; i < val.size(); ++i) {
-            //         auto elem = static_cast<std::string>(val[i]);
-            //         arr.push_back(elem);
-            //       }
-            //       sub_dict[name][key] = arr;
-            //       arr.clear();
-            //       break;
-            //     case XmlRpc::XmlRpcValue::TypeStruct:
-            //       break;
-            //     default:
-            //       sub_dict[name][key] = py::cast(val);
-            //       break;
-            //   }
-            // }
+
+    std::map<std::string, rclcpp::Parameter> subscriber_params;  
+    if (!node_->get_parameters("subscribers", subscriber_params)) {
+      RCLCPP_FATAL(node_->get_logger(), "There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
+      rclcpp::shutdown();
+    }       
+    auto unique_sub_names = extract_unique_names(subscriber_params);
+    for (const auto& name : unique_sub_names) {      
+        const char* const name_c = name.c_str();    
+        if (!sub_dict.contains(name_c)) {
+              sub_dict[name_c] = py::dict();
+            }
+      std::string topic_name;
+      if(node_->get_parameter("subscribers." + name + ".topic_name", topic_name)){               
+          const char* topic_name_cstr = "topic_name";
+          sub_dict[name_c][topic_name_cstr] = static_cast<std::string>(topic_name);
+          std::string data_type;
+          if(node_->get_parameter("subscribers." + name + ".data_type", data_type)){
+            const char* data_type_cstr = "data_type";
+            sub_dict[name_c][data_type_cstr] = static_cast<std::string>(data_type);
+          }
+          std::string info_name;
+          if(node_->get_parameter("subscribers." + name + ".data_type", info_name)){
+            const char* info_name_cstr = "info_name";
+            sub_dict[name_c][info_name_cstr] = static_cast<std::string>(info_name);
+          }
+          std::string channel_name;
+          if(node_->get_parameter("subscribers." + name + ".data_type", channel_name)){
+            const char* channel_name_cstr = "channel_name";
+            sub_dict[name_c][channel_name_cstr] = static_cast<std::string>(channel_name);
           }
       }
+    }
+
+             
+      
   param_.attr("subscriber_cfg") = sub_dict;
 
 
+  // point cloud channel fusion
+  std::map<std::string, rclcpp::Parameter> pointcloud_channel_fusions_params;  
+  if (node_->get_parameters("pointcloud_channel_fusions", pointcloud_channel_fusions_params)) {
+        py::dict pointcloud_channel_fusion_dict;
+        for (const auto& param : pointcloud_channel_fusions_params) {
+            std::string param_name = param.first;            
+            std::string param_value = param.second.as_string();
+            // Extract the string after "pointcloud_channel_fusions."            
+            pointcloud_channel_fusion_dict[param_name.c_str()] = param_value;            
+        }
+        // Print the dictionary for debugging
+        for (auto item : pointcloud_channel_fusion_dict) {
+            RCLCPP_INFO(node_->get_logger(), "pointcloud_channel_fusions Key: %s, Value: %s", std::string(py::str(item.first)).c_str(), std::string(py::str(item.second)).c_str());
+        }
+  } else {
+    RCLCPP_WARN(node_->get_logger(), "No parameters found for 'pointcloud_channel_fusions'");
+  }
 
-  //     // point cloud channel fusion
-  //     if (!node_->has_parameter("pointcloud_channel_fusions")) {
-  //       RCLCPP_WARN(node_->get_logger(), "No pointcloud_channel_fusions parameter found. Using default values.");
-  //     } else {
-  //       rclcpp::Parameter pointcloud_channel_fusion;
-  //       node_->get_parameter("pointcloud_channel_fusions", pointcloud_channel_fusion);
+  // image channel fusion
+  std::map<std::string, rclcpp::Parameter> image_channel_fusions_params;  
+  if (node_->get_parameters("image_channel_fusions", image_channel_fusions_params)) {
+        py::dict image_channel_fusion_dict;
+        for (const auto& param : image_channel_fusions_params) {
+            std::string param_name = param.first;            
+            std::string param_value = param.second.as_string();
+            // Extract the string after "pointcloud_channel_fusions."            
+            image_channel_fusion_dict[param_name.c_str()] = param_value;            
+        }
+        // Print the dictionary for debugging
+        for (auto item : image_channel_fusion_dict) {
+            RCLCPP_INFO(node_->get_logger(), "image_channel_fusions Key: %s, Value: %s", std::string(py::str(item.first)).c_str(), std::string(py::str(item.second)).c_str());
+        }
+  } else {
+    RCLCPP_WARN(node_->get_logger(), "No parameters found for 'image_channel_fusions'");
+  }
 
-  //       py::dict pointcloud_channel_fusion_dict;
-  //       auto pointcloud_channel_fusion_map = pointcloud_channel_fusion.as_string_array();
-  //       for (const auto& channel_fusion : pointcloud_channel_fusion_map) {
-  //         const char* const fusion_name = channel_fusion.c_str();          
-  //         std::string fusion;
-  //         node_->get_parameter(fusion_name, fusion);
-  //         if (!pointcloud_channel_fusion_dict.contains(fusion_name)) {
-  //           pointcloud_channel_fusion_dict[fusion_name] = fusion;
-  //         }
-  //       }
-  //       RCLCPP_INFO_STREAM(node_->get_logger(), "pointcloud_channel_fusion_dict: " << pointcloud_channel_fusion_dict);
-  //       param_.attr("pointcloud_channel_fusions") = pointcloud_channel_fusion_dict;
-  //     }
 
-    
-  //     // image channel fusion
-  //     if (!node_->has_parameter("image_channel_fusions")) {
-  //       RCLCPP_WARN(node_->get_logger(), "No image_channel_fusions parameter found. Using default values.");
-  //     } else {
-  //       rclcpp::Parameter image_channel_fusion;
-  //       node_->get_parameter("image_channel_fusions", image_channel_fusion);
+      param_.attr("update")();
+      resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
+      map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
+      map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
 
-  //       py::dict image_channel_fusion_dict;
-  //       auto image_channel_fusion_map = image_channel_fusion.as_string_array();
-  //       for (const auto& channel_fusion : image_channel_fusion_map) {
-  //         const char* const channel_fusion_name = channel_fusion.c_str();
-  //         std::string fusion;          
-  //         node_->get_parameter(channel_fusion_name, fusion);
-  //         if (!image_channel_fusion_dict.contains(channel_fusion_name)) {
-  //           image_channel_fusion_dict[channel_fusion_name] = fusion;
-  //         }
-  //       }
-  //       RCLCPP_INFO_STREAM(node_->get_logger(), "image_channel_fusion_dict: " << image_channel_fusion_dict);
-  //       param_.attr("image_channel_fusions") = image_channel_fusion_dict;
-  //     }
-
-  //     param_.attr("update")();
-  //     resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
-  //     map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
-  //     map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
-
-  //     node_->declare_parameter<bool>("enable_normal", false);
-  //     node_->declare_parameter<bool>("enable_normal_color", false);
-  //     enable_normal_ = node_->get_parameter("enable_normal").as_bool();
-  //     enable_normal_color_ = node_->get_parameter("enable_normal_color").as_bool();
+      
+      enable_normal_ = node_->get_parameter("enable_normal").as_bool();
+      enable_normal_color_ = node_->get_parameter("enable_normal_color").as_bool();
 
 }
 

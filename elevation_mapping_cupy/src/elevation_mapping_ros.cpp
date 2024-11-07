@@ -21,17 +21,6 @@
 
 namespace elevation_mapping_cupy {
 
-std::vector<std::string> extract_unique_names(const std::map<std::string, rclcpp::Parameter>& subscriber_params) {
-    std::set<std::string> unique_names_set;
-    for (const auto& param : subscriber_params) {
-        std::size_t pos = param.first.find('.');
-        if (pos != std::string::npos) {
-            std::string name = param.first.substr(0, pos);
-            unique_names_set.insert(name);
-        }
-    }
-    return std::vector<std::string>(unique_names_set.begin(), unique_names_set.end());
-}
 
 
 ElevationMappingNode::ElevationMappingNode()
@@ -59,9 +48,6 @@ ElevationMappingNode::ElevationMappingNode()
   bool enablePointCloudPublishing(false);
   
   py::gil_scoped_acquire acquire;
-  auto math = py::module::import("math");
-  double root_two = math.attr("sqrt")(2.0).cast<double>();  
-  RCLCPP_INFO(this->get_logger(), "The square root of 2 is: %f", root_two);
 
   this->get_parameter("initialize_frame_id", initialize_frame_id_);
   this->get_parameter("initialize_tf_offset", initialize_tf_offset_);  
@@ -109,8 +95,8 @@ ElevationMappingNode::ElevationMappingNode()
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
      
-  // map_ = std::make_shared<ElevationMappingWrapper>();
-  // map_->initialize(node_);
+  map_ = std::make_shared<ElevationMappingWrapper>();
+  map_->initialize(node_);
 
 
 
@@ -190,46 +176,38 @@ ElevationMappingNode::ElevationMappingNode()
     
     auto unique_pub_names = extract_unique_names(publisher_params);
 
-    // for (const auto& pub_name : unique_pub_names) {  
-    //   std::string topic_name = pub_name;      
-    //   std::vector<std::string> layers_list;
-    //   std::vector<std::string> basic_layers_list;      
-    //   double fps;
-    //   this->get_parameter("publishers." + pub_name + ".layers", layers_list)
-    //   this->get_parameter("publishers." + pub_name + ".basic_layers", basic_layers_list)
-    //   this->get_parameter("publishers." + pub_name + ".fps", fps)
-    // }
+    
 
     for (const auto& pub_name : unique_pub_names) {  
-    std::string topic_name = pub_name;
-    double fps;
-    std::vector<std::string> layers_list;
-    std::vector<std::string> basic_layers_list;      
+        std::string topic_name = pub_name;
+        double fps;
+        std::vector<std::string> layers_list;
+        std::vector<std::string> basic_layers_list;      
 
-    this->get_parameter("publishers." + pub_name + ".layers", layers_list);
-    this->get_parameter("publishers." + pub_name + ".basic_layers", basic_layers_list);
-    this->get_parameter("publishers." + pub_name + ".fps", fps);
+        this->get_parameter("publishers." + pub_name + ".layers", layers_list);
+        this->get_parameter("publishers." + pub_name + ".basic_layers", basic_layers_list);
+        this->get_parameter("publishers." + pub_name + ".fps", fps);
 
-    if (fps > updateGridMapFps) {
-      RCLCPP_WARN(
-        this->get_logger(),
-        "[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f "
-        "fps.",
-        topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
-    }
+        if (fps > updateGridMapFps) {
+          RCLCPP_WARN(
+            this->get_logger(),
+            "[ElevationMappingCupy] fps for topic %s is larger than map_acquire_fps (%f > %f). The topic data will be only updated at %f "
+            "fps.",
+            topic_name.c_str(), fps, updateGridMapFps, updateGridMapFps);
+        }
 
-    // Make publishers
-    auto pub = this->create_publisher<grid_map_msgs::msg::GridMap>(topic_name, 1);
-    RCLCPP_INFO(this->get_logger(), "Publishing map to topic %s", topic_name.c_str());
-    mapPubs_.push_back(pub);
+        // Make publishers
+        auto pub = this->create_publisher<grid_map_msgs::msg::GridMap>(topic_name, 1);
+        RCLCPP_INFO(this->get_logger(), "Publishing map to topic %s", topic_name.c_str());
+        mapPubs_.push_back(pub);
 
-    // Register map layers
-    map_layers_.push_back(layers_list);
-    map_basic_layers_.push_back(basic_layers_list);
+        // Register map layers
+        map_layers_.push_back(layers_list);
+        map_basic_layers_.push_back(basic_layers_list);
 
-    // Register map fps
-    map_fps_.push_back(fps);
-    map_fps_unique_.insert(fps);
+        // Register map fps
+        map_fps_.push_back(fps);
+        map_fps_unique_.insert(fps);
 
     }
 
@@ -319,31 +297,36 @@ void ElevationMappingNode::publishMapOfIndex(int index) {
   if (!isGridmapUpdated_) {
     return;
   }
+  
+  
+  std::unique_ptr<grid_map_msgs::msg::GridMap> msg_ptr;
   grid_map_msgs::msg::GridMap msg;
+
   std::vector<std::string> layers;
 
-  // {  // need continuous lock between adding layers and converting to message. Otherwise updateGridmap can reset the data not in
-  //    // map_layers_all_
-  //   std::lock_guard<std::mutex> lock(mapMutex_);
-  //   for (const auto& layer : map_layers_[index]) {
-  //     const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
-  //     if (is_layer_in_all && gridMap_.exists(layer)) {
-  //       layers.push_back(layer);
-  //     } else if (map_.exists_layer(layer)) {
-  //       // if there are layers which is not in the syncing layer.
-  //       ElevationMappingWrapper::RowMatrixXf map_data;
-  //       map_.get_layer_data(layer, map_data);
-  //       gridMap_.add(layer, map_data);
-  //       layers.push_back(layer);
-  //     }
-  //   }
-  //   if (layers.empty()) {
-  //     return;
-  //   }
+   {  // need continuous lock between adding layers and converting to message. Otherwise updateGridmap can reset the data not in
+     // map_layers_all_
+    std::lock_guard<std::mutex> lock(mapMutex_);
+    for (const auto& layer : map_layers_[index]) {
+      const bool is_layer_in_all = map_layers_all_.find(layer) != map_layers_all_.end();
+      if (is_layer_in_all && gridMap_.exists(layer)) {
+        layers.push_back(layer);
+      } else if (map_->exists_layer(layer)) {
+        // if there are layers which is not in the syncing layer.
+        ElevationMappingWrapper::RowMatrixXf map_data;
+        map_->get_layer_data(layer, map_data);
+        gridMap_.add(layer, map_data);
+        layers.push_back(layer);
+      }
+    }
+    if (layers.empty()) {
+      return;
+    }
 
-  //   grid_map::GridMapRosConverter::toMessage(gridMap_, layers, msg);
-  // }
-
+    msg_ptr = grid_map::GridMapRosConverter::toMessage(gridMap_, layers);
+    msg= *msg_ptr;
+  }
+   
   msg.basic_layers = map_basic_layers_[index];
   mapPubs_[index]->publish(msg);
 }
