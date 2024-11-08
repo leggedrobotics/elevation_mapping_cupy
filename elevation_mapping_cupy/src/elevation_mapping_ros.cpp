@@ -234,35 +234,40 @@ clearMapWithInitializerService_ = this->create_service<std_srvs::srv::Empty>(
 initializeMapService_ = this->create_service<elevation_map_msgs::srv::Initialize>(
         "initialize", std::bind(&ElevationMappingNode::initializeMap, this, std::placeholders::_1, std::placeholders::_2));
 
+setPublishPointService_ = this->create_service<std_srvs::srv::SetBool>(
+      "set_publish_points", std::bind(&ElevationMappingNode::setPublishPoint, this, std::placeholders::_1, std::placeholders::_2));
 
-// setPublishPointService_ = this->create_service<std_srvs::srv::SetBool>(
-//     "set_publish_points", std::bind(&ElevationMappingNode::setPublishPoint, this, std::placeholders::_1, std::placeholders::_2));
 // checkSafetyService_ = this->create_service<std_srvs::srv::Empty>(
 //     "check_safety", std::bind(&ElevationMappingNode::checkSafety, this, std::placeholders::_1, std::placeholders::_2));
 
 
-//   if (updateVarianceFps > 0) {
-//     double duration = 1.0 / (updateVarianceFps + 0.00001);
-//     updateVarianceTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updateVariance, this, false, true);
-//   }
-//   if (timeInterval > 0) {
-//     double duration = timeInterval;
-//     updateTimeTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updateTime, this, false, true);
-//   }
-//   if (updatePoseFps > 0) {
-//     double duration = 1.0 / (updatePoseFps + 0.00001);
-//     updatePoseTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updatePose, this, false, true);
-//   }
-//   if (updateGridMapFps > 0) {
-//     double duration = 1.0 / (updateGridMapFps + 0.00001);
-//     updateGridMapTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::updateGridMap, this, false, true);
-//   }
-//   if (publishStatisticsFps > 0) {
-//     double duration = 1.0 / (publishStatisticsFps + 0.00001);
-//     publishStatisticsTimer_ = nh_.createTimer(ros::Duration(duration), &ElevationMappingNode::publishStatistics, this, false, true);
-//   }
-//   lastStatisticsPublishedTime_ = ros::Time::now();
-//   ROS_INFO("[ElevationMappingCupy] finish initialization");
+  if (updateVarianceFps > 0) {
+    double duration = 1.0 / (updateVarianceFps + 0.00001);    
+    updateVarianceTimer_ = this->create_wall_timer(std::chrono::duration<double>(duration),
+            std::bind(&ElevationMappingNode::updateVariance, this));
+  }
+ if (timeInterval > 0) {
+        double duration = timeInterval;
+        updateTimeTimer_ = this->create_wall_timer(std::chrono::duration<double>(duration),
+            std::bind(&ElevationMappingNode::updateTime, this));
+    }
+    if (updatePoseFps > 0) {
+        double duration = 1.0 / (updatePoseFps + 0.00001);
+        updatePoseTimer_ = this->create_wall_timer(std::chrono::duration<double>(duration),
+            std::bind(&ElevationMappingNode::updatePose, this));
+    }
+    if (updateGridMapFps > 0) {
+        double duration = 1.0 / (updateGridMapFps + 0.00001);
+        updateGridMapTimer_ = this->create_wall_timer(std::chrono::duration<double>(duration),
+            std::bind(&ElevationMappingNode::updateGridMap, this));
+    }
+    if (publishStatisticsFps > 0) {
+        double duration = 1.0 / (publishStatisticsFps + 0.00001);
+        publishStatisticsTimer_ = this->create_wall_timer(std::chrono::duration<double>(duration),
+            std::bind(&ElevationMappingNode::publishStatistics, this));
+    }
+    lastStatisticsPublishedTime_ = this->now();
+    RCLCPP_INFO(this->get_logger(), "[ElevationMappingCupy] finish initialization");
 }
 
   // namespace elevation_mapping_cupy
@@ -513,45 +518,51 @@ auto start = this->now();
 RCLCPP_DEBUG(this->get_logger(), "ElevationMap imageChannelCallback processed an image in %f sec.", (this->now() - start).seconds());
 }
 
-// void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
-//   tf::StampedTransform transformTf;
-//   const auto& timeStamp = ros::Time::now();
-//   Eigen::Affine3d transformationBaseToMap;
-//   try {
-//     transformListener_.waitForTransform(mapFrameId_, baseFrameId_, timeStamp, ros::Duration(1.0));
-//     transformListener_.lookupTransform(mapFrameId_, baseFrameId_, timeStamp, transformTf);
-//     poseTFToEigen(transformTf, transformationBaseToMap);
-//   } catch (tf::TransformException& ex) {
-//     ROS_ERROR("%s", ex.what());
-//     return;
-//   }
 
-//   // This is to check if the robot is moving. If the robot is not moving, drift compensation is disabled to avoid creating artifacts.
-//   Eigen::Vector3d position(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
-//   map_.move_to(position, transformationBaseToMap.rotation().transpose());
-//   Eigen::Vector3d position3(transformTf.getOrigin().x(), transformTf.getOrigin().y(), transformTf.getOrigin().z());
-//   Eigen::Vector4d orientation(transformTf.getRotation().x(), transformTf.getRotation().y(), transformTf.getRotation().z(),
-//                               transformTf.getRotation().w());
-//   lowpassPosition_ = positionAlpha_ * position3 + (1 - positionAlpha_) * lowpassPosition_;
-//   lowpassOrientation_ = orientationAlpha_ * orientation + (1 - orientationAlpha_) * lowpassOrientation_;
-//   {
-//     std::lock_guard<std::mutex> lock(errorMutex_);
-//     positionError_ = (position3 - lowpassPosition_).norm();
-//     orientationError_ = (orientation - lowpassOrientation_).norm();
-//   }
+void ElevationMappingNode::updatePose() {
+  geometry_msgs::msg::TransformStamped transformStamped;
+  const auto& timeStamp = this->now();
+  Eigen::Affine3d transformationBaseToMap;
+  try {
+    transformStamped = tfBuffer_->lookupTransform(mapFrameId_, baseFrameId_, timeStamp, tf2::durationFromSec(1.0));
+    transformationBaseToMap = tf2::transformToEigen(transformStamped);
+  } catch (tf2::TransformException& ex) {
+    RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+    return;
+  }
 
-//   if (useInitializerAtStart_) {
-//     ROS_INFO("Clearing map with initializer.");
-//     initializeWithTF();
-//     useInitializerAtStart_ = false;
-//   }
-// }
+  // This is to check if the robot is moving. If the robot is not moving, drift compensation is disabled to avoid creating artifacts.
+  Eigen::Vector3d position(transformStamped.transform.translation.x,
+                           transformStamped.transform.translation.y,
+                           transformStamped.transform.translation.z);
+  map_->move_to(position, transformationBaseToMap.rotation().transpose());
+  Eigen::Vector3d position3(transformStamped.transform.translation.x,
+                            transformStamped.transform.translation.y,
+                            transformStamped.transform.translation.z);
+  Eigen::Vector4d orientation(transformStamped.transform.rotation.x,
+                              transformStamped.transform.rotation.y,
+                              transformStamped.transform.rotation.z,
+                              transformStamped.transform.rotation.w);
+  lowpassPosition_ = positionAlpha_ * position3 + (1 - positionAlpha_) * lowpassPosition_;
+  lowpassOrientation_ = orientationAlpha_ * orientation + (1 - orientationAlpha_) * lowpassOrientation_;
+  {
+    std::lock_guard<std::mutex> lock(errorMutex_);
+    positionError_ = (position3 - lowpassPosition_).norm();
+    orientationError_ = (orientation - lowpassOrientation_).norm();
+  }
 
-// void ElevationMappingNode::publishAsPointCloud(const grid_map::GridMap& map) const {
-//   sensor_msgs::PointCloud2 msg;
-//   grid_map::GridMapRosConverter::toPointCloud(map, "elevation", msg);
-//   pointPub_.publish(msg);
-// }
+  if (useInitializerAtStart_) {
+    RCLCPP_INFO(this->get_logger(), "Clearing map with initializer.");
+    initializeWithTF();
+    useInitializerAtStart_ = false;
+  }
+}
+
+void ElevationMappingNode::publishAsPointCloud(const grid_map::GridMap& map) const {
+  sensor_msgs::msg::PointCloud2 msg;
+  grid_map::GridMapRosConverter::toPointCloud(map, "elevation", msg);
+  pointPub_->publish(msg);
+}
 
 
 bool ElevationMappingNode::getSubmap(
@@ -723,49 +734,52 @@ void ElevationMappingNode::initializeWithTF() {
 //   return true;
 // }
 
-// bool ElevationMappingNode::setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response) {
-//   enablePointCloudPublishing_ = request.data;
-//   response.success = true;
-//   return true;
-// }
 
-// void ElevationMappingNode::updateVariance(const ros::TimerEvent&) {
-//   map_.update_variance();
-// }
 
-// void ElevationMappingNode::updateTime(const ros::TimerEvent&) {
-//   map_.update_time();
-// }
+void ElevationMappingNode::setPublishPoint(const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+                                           std::shared_ptr<std_srvs::srv::SetBool::Response> response) {    
+    enablePointCloudPublishing_ = request->data;
+    response->success = true;    
+}
 
-// void ElevationMappingNode::publishStatistics(const ros::TimerEvent&) {
-//   ros::Time now = ros::Time::now();
-//   double dt = (now - lastStatisticsPublishedTime_).toSec();
-//   lastStatisticsPublishedTime_ = now;
-//   elevation_map_msgs::Statistics msg;
-//   msg.header.stamp = now;
-//   if (dt > 0.0) {
-//     msg.pointcloud_process_fps = pointCloudProcessCounter_ / dt;
-//   }
-//   pointCloudProcessCounter_ = 0;
-//   statisticsPub_.publish(msg);
-// }
 
-// void ElevationMappingNode::updateGridMap(const ros::TimerEvent&) {
-//   std::vector<std::string> layers(map_layers_all_.begin(), map_layers_all_.end());
-//   std::lock_guard<std::mutex> lock(mapMutex_);
-//   map_.get_grid_map(gridMap_, layers);
-//   gridMap_.setTimestamp(ros::Time::now().toNSec());
-//   alivePub_.publish(std_msgs::Empty());
+void ElevationMappingNode::updateVariance() {
+  map_->update_variance();
+}
 
-//   // Mostly debug purpose
-//   if (enablePointCloudPublishing_) {
-//     publishAsPointCloud(gridMap_);
-//   }
-//   if (enableNormalArrowPublishing_) {
-//     publishNormalAsArrow(gridMap_);
-//   }
-//   isGridmapUpdated_ = true;
-// }
+void ElevationMappingNode::updateTime() {
+  map_->update_time();
+}
+
+void ElevationMappingNode::publishStatistics() {
+  auto now = this->now();
+  double dt = (now - lastStatisticsPublishedTime_).seconds();
+  lastStatisticsPublishedTime_ = now;
+  elevation_map_msgs::msg::Statistics msg;
+  msg.header.stamp = now;
+  if (dt > 0.0) {
+    msg.pointcloud_process_fps = pointCloudProcessCounter_ / dt;
+  }
+  pointCloudProcessCounter_ = 0;
+  statisticsPub_->publish(msg);
+}
+
+void ElevationMappingNode::updateGridMap() {
+  std::vector<std::string> layers(map_layers_all_.begin(), map_layers_all_.end());
+  std::lock_guard<std::mutex> lock(mapMutex_);
+  map_->get_grid_map(gridMap_, layers);
+  gridMap_.setTimestamp(this->now().nanoseconds());
+  alivePub_->publish(std_msgs::msg::Empty());
+
+  // Mostly debug purpose
+  if (enablePointCloudPublishing_) {
+    publishAsPointCloud(gridMap_);
+  }
+  if (enableNormalArrowPublishing_) {
+    publishNormalAsArrow(gridMap_);
+  }
+  isGridmapUpdated_ = true;
+}
 
 void ElevationMappingNode::initializeMap(const std::shared_ptr<elevation_map_msgs::srv::Initialize::Request> request,
                                          std::shared_ptr<elevation_map_msgs::srv::Initialize::Response> response) {
@@ -813,65 +827,68 @@ void ElevationMappingNode::initializeMap(const std::shared_ptr<elevation_map_msg
   response->success = true;
 }
 
-// void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) const {
-//   auto startTime = ros::Time::now();
+void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) const {
+  auto startTime = this->now();
 
-//   const auto& normalX = map["normal_x"];
-//   const auto& normalY = map["normal_y"];
-//   const auto& normalZ = map["normal_z"];
-//   double scale = 0.1;
+  const auto& normalX = map["normal_x"];
+  const auto& normalY = map["normal_y"];
+  const auto& normalZ = map["normal_z"];
+  double scale = 0.1;
 
-//   visualization_msgs::MarkerArray markerArray;
-//   // For each cell in map.
-//   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
-//     if (!map.isValid(*iterator, "elevation")) {
-//       continue;
-//     }
-//     grid_map::Position3 p;
-//     map.getPosition3("elevation", *iterator, p);
-//     Eigen::Vector3d start = p;
-//     const auto i = iterator.getLinearIndex();
-//     Eigen::Vector3d normal(normalX(i), normalY(i), normalZ(i));
-//     Eigen::Vector3d end = start + normal * scale;
-//     if (normal.norm() < 0.1) {
-//       continue;
-//     }
-//     markerArray.markers.push_back(vectorToArrowMarker(start, end, i));
-//   }
-//   normalPub_.publish(markerArray);
-//   ROS_INFO_THROTTLE(1.0, "publish as normal in %f sec.", (ros::Time::now() - startTime).toSec());
-// }
+  visualization_msgs::msg::MarkerArray markerArray;
+  // For each cell in map.
+  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
+    if (!map.isValid(*iterator, "elevation")) {
+      continue;
+    }
+    grid_map::Position3 p;
+    map.getPosition3("elevation", *iterator, p);
+    Eigen::Vector3d start = p;
+    const auto i = iterator.getLinearIndex();
+    Eigen::Vector3d normal(normalX(i), normalY(i), normalZ(i));
+    Eigen::Vector3d end = start + normal * scale;
+    if (normal.norm() < 0.1) {
+      continue;
+    }
+    markerArray.markers.push_back(vectorToArrowMarker(start, end, i));
+  }
+  normalPub_->publish(markerArray);
+  double elapsed_time = (this->now() - startTime).seconds();
+  RCLCPP_INFO(this->get_logger(), "Initializing ElevationMappingNode...");(this->get_logger(), std::chrono::seconds(1), "publish as normal in %f sec.", elapsed_time);      
+}
 
-// visualization_msgs::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end,
-//                                                                      const int id) const {
-//   visualization_msgs::Marker marker;
-//   marker.header.frame_id = mapFrameId_;
-//   marker.header.stamp = ros::Time::now();
-//   marker.ns = "normal";
-//   marker.id = id;
-//   marker.type = visualization_msgs::Marker::ARROW;
-//   marker.action = visualization_msgs::Marker::ADD;
-//   marker.points.resize(2);
-//   marker.points[0].x = start.x();
-//   marker.points[0].y = start.y();
-//   marker.points[0].z = start.z();
-//   marker.points[1].x = end.x();
-//   marker.points[1].y = end.y();
-//   marker.points[1].z = end.z();
-//   marker.pose.orientation.x = 0.0;
-//   marker.pose.orientation.y = 0.0;
-//   marker.pose.orientation.z = 0.0;
-//   marker.pose.orientation.w = 1.0;
-//   marker.scale.x = 0.01;
-//   marker.scale.y = 0.01;
-//   marker.scale.z = 0.01;
-//   marker.color.a = 1.0;  // Don't forget to set the alpha!
-//   marker.color.r = 0.0;
-//   marker.color.g = 1.0;
-//   marker.color.b = 0.0;
 
-//   return marker;
-// }
+
+visualization_msgs::msg::Marker ElevationMappingNode::vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end,
+                                                                         const int id) const {
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = mapFrameId_;
+  marker.header.stamp = this->now();
+  marker.ns = "normal";
+  marker.id = id;
+  marker.type = visualization_msgs::msg::Marker::ARROW;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.points.resize(2);
+  marker.points[0].x = start.x();
+  marker.points[0].y = start.y();
+  marker.points[0].z = start.z();
+  marker.points[1].x = end.x();
+  marker.points[1].y = end.y();
+  marker.points[1].z = end.z();
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.01;
+  marker.scale.y = 0.01;
+  marker.scale.z = 0.01;
+  marker.color.a = 1.0;  // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+
+  return marker;
+}
 
 
 void ElevationMappingNode::publishMapToOdom(double error) {

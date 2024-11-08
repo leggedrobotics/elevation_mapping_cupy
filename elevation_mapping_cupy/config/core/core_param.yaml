@@ -1,7 +1,7 @@
 elevation_mapping:
   ros__parameters:
     #### Basic parameters ########
-    cell_n: 10000                                    # number of cells in the map.
+    cell_n: 40000                                    # number of cells in the map.
     data_type: 'float32'                            # data type for the map.
     average_weight: 0.5
     drift_compensation_variance_inlier: 0.1
@@ -9,8 +9,8 @@ elevation_mapping:
     min_filter_size: 5                            # size of the filter for min filter.
     min_filter_iteration: 3                      # number of iterations for min filter.
     initialized_variance: 10.0                     # initial variance for each cell.    
-    resolution: 0.04                                # resolution in m.
-    map_length: 8.0                                 # map's size in m.
+    resolution: 0.1                                # resolution in m.  
+    map_length: 20.0                                 # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
     mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
     outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
@@ -105,7 +105,7 @@ elevation_mapping:
     
     subscribers:
       pointcloud1:
-        topic_name: '/a200/sensors/camera_1/points'      
+        topic_name: '/a200/sensors/camera_0/points'      
         data_type: 'pointcloud'
       image1:
         topic_name: '/a200/sensors/camera_0/color/image'        

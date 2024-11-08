@@ -108,34 +108,33 @@ void imageChannelCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& 
 
 //   void pointCloudChannelCallback(const sensor_msgs::PointCloud2& cloud, const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg);
 //   // void multiLayerImageCallback(const elevation_map_msgs::MultiLayerImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
-//   void publishAsPointCloud(const grid_map::GridMap& map) const;
+void publishAsPointCloud(const grid_map::GridMap& map) const;
 bool getSubmap( const std::shared_ptr<grid_map_msgs::srv::GetGridMap::Request> request, std::shared_ptr<grid_map_msgs::srv::GetGridMap::Response> response);
 
 
 //   bool checkSafety(elevation_map_msgs::CheckSafety::Request& request, elevation_map_msgs::CheckSafety::Response& response);
     
-  void initializeMap(const std::shared_ptr<elevation_map_msgs::srv::Initialize::Request> request, std::shared_ptr<elevation_map_msgs::srv::Initialize::Response> response);
-   
-  
-  // bool clearMap(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
-
-
+void initializeMap(const std::shared_ptr<elevation_map_msgs::srv::Initialize::Request> request, std::shared_ptr<elevation_map_msgs::srv::Initialize::Response> response);  
 void clearMap(const std::shared_ptr<std_srvs::srv::Empty::Request> request, std::shared_ptr<std_srvs::srv::Empty::Response> response);
 void clearMapWithInitializer(const std::shared_ptr<std_srvs::srv::Empty::Request> request, std::shared_ptr<std_srvs::srv::Empty::Response> response);
 
 
-//   bool setPublishPoint(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
-//   void updatePose(const ros::TimerEvent&);
-//   void updateVariance(const ros::TimerEvent&);
-//   void updateTime(const ros::TimerEvent&);
-//   void updateGridMap(const ros::TimerEvent&);
-//   void publishNormalAsArrow(const grid_map::GridMap& map) const;
-  void initializeWithTF();
-  void publishMapToOdom(double error);
-//   void publishStatistics(const ros::TimerEvent&);
-  void publishMapOfIndex(int index);
 
-//   visualization_msgs::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) const;
+void setPublishPoint(const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+                        std::shared_ptr<std_srvs::srv::SetBool::Response> response);
+
+
+void updateVariance();
+void updateTime();
+void updatePose();
+void updateGridMap();
+void publishStatistics();
+
+void publishNormalAsArrow(const grid_map::GridMap& map) const;
+void initializeWithTF();
+void publishMapToOdom(double error);
+void publishMapOfIndex(int index);
+visualization_msgs::msg::Marker vectorToArrowMarker(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const int id) const;
   
   rclcpp::Node::SharedPtr node_;
   // image_transport::ImageTransport it_;
