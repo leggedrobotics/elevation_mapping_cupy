@@ -14,7 +14,7 @@
 
 // Pybind
 #include <pybind11/embed.h>  // everything needed for embedding
-
+#include <rclcpp/qos.hpp>
 // ROS
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <image_transport/image_transport.hpp>

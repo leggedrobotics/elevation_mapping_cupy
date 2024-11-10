@@ -1,7 +1,7 @@
 elevation_mapping:
   ros__parameters:
-    #### Basic parameters ########    
-    enable_normal_arrow_publishing: false
+    #### Basic parameters ########
+    enable_normal_arrow_publishing: true
     cell_n: 40000                                    # number of cells in the map.
     data_type: 'float32'                            # data type for the map.
     average_weight: 0.5
@@ -11,7 +11,7 @@ elevation_mapping:
     min_filter_iteration: 3                      # number of iterations for min filter.
     initialized_variance: 10.0                     # initial variance for each cell.    
     resolution: 0.1                                # resolution in m.  
-    map_length: 20.0                                  # map's size in m.
+    map_length: 20.0                                 # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
     mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
     outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
@@ -65,7 +65,7 @@ elevation_mapping:
     enable_pointcloud_publishing: false
     enable_drift_corrected_TF_publishing: false
     enable_normal_color: true                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
-    enable_normal: true
+    
 
     #### Traversability filter ########
     use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
@@ -104,23 +104,22 @@ elevation_mapping:
     #    camera_info_topic_name: '/camera/depth/camera_info'
     #    channel_info_topic_name: '/camera/channel_info'
     
+    
     subscribers:
       pointcloud1:
-        # topic_name: '/ouster/points'   
-        topic_name: '/a200/sensors/camera_0/points'      
+        # topic_name: '/ouster/points'      
+        topic_name: '/a200/sensors/camera_0/points'    
         data_type: 'pointcloud'
-      # image1:
-      #   topic_name: '/a200/sensors/camera_0/color/image'        
-      #   info_name: '/a200/sensors/camera_0/color/camera_info'
-      #   data_type: 'image'
+      image1:
+        topic_name: '/a200/sensors/camera_0/color/image'        
+        info_name: '/a200/sensors/camera_0/color/camera_info'
+        data_type: 'image'
         # channel_name: '/front_cam/channel_info'  
 
       # image_topic2: '/camera/rgb/image_raw2'        
       # image_info2: '/camera/depth/camera_info2'
       # image_channel_info1: '/front_cam/channel_info'  
 
-      
-      
       # image: # for semantic images
       #   topic_name: '/front_cam/semantic_image'
       #   camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
@@ -135,17 +134,17 @@ elevation_mapping:
 
     publishers:
       elevation_map_raw:        
-        layers: ['elevation', 'traversability', 'variance','normal_x', 'normal_y', 'normal_z']
+        layers: ['elevation', 'traversability', 'variance','rgb', 'normal_x', 'normal_y', 'normal_z']
         basic_layers: ['elevation']
         fps: 5.0
-      # elevation_map_recordable:
-      #   layers: ['elevation', 'traversability']
-      #   basic_layers: ['elevation', 'traversability']
-      #   fps: 2.0
-      # elevation_map_filter:
-      #   layers: ['min_filter', 'smooth', 'inpaint', 'elevation']
-      #   basic_layers: ['min_filter']
-      #   fps: 3.0
+      elevation_map_recordable:
+        layers: ['elevation', 'traversability']
+        basic_layers: ['elevation', 'traversability']
+        fps: 2.0
+      elevation_map_filter:
+        layers: ['min_filter', 'smooth', 'inpaint', 'elevation']
+        basic_layers: ['min_filter']
+        fps: 3.0
 
 
   # plugun info

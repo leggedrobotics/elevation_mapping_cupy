@@ -132,29 +132,29 @@ ElevationMappingNode::ElevationMappingNode()
             // } else {
             //   transport_hint = "raw";  // In the default case we assume raw topic
             // }                        
-            
-            ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(this, camera_topic, rmw_qos_profile_sensor_data);                    
-            imageSubs_.push_back(image_sub);                                
 
-            CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(this, info_topic, rmw_qos_profile_sensor_data);                                    
-            cameraInfoSubs_.push_back(cam_info_sub);  
+              ImageSubscriberPtr image_sub = std::make_shared<ImageSubscriber>(this, camera_topic, rmw_qos_profile_sensor_data);                    
+              imageSubs_.push_back(image_sub);                                
 
-            std::string channel_info_topic; 
-            if (this->get_parameter("subscribers." + sub_name + ".channel_name", channel_info_topic)) {
-              ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>(this, channel_info_topic, rmw_qos_profile_sensor_data);                                       
-              channelInfoSubs_.push_back(channel_info_sub);
-              CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
-              sync->registerCallback(std::bind(&ElevationMappingNode::imageChannelCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-              cameraChannelSyncs_.push_back(sync);
-              RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s, Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), channel_info_topic.c_str());
-            }else{
-                std::string key = sub_name;
-                channels_[key].push_back("rgb");
-                // RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s. Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")).c_str() : channel_info_topic.c_str()));
-                CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
-                sync->registerCallback(std::bind(&ElevationMappingNode::imageCallback, this, std::placeholders::_1, std::placeholders::_2, key));
-                cameraSyncs_.push_back(sync);
-            }
+              CameraInfoSubscriberPtr cam_info_sub = std::make_shared<CameraInfoSubscriber>(this, info_topic, rmw_qos_profile_sensor_data);                                    
+              cameraInfoSubs_.push_back(cam_info_sub);  
+
+              std::string channel_info_topic; 
+              if (this->get_parameter("subscribers." + sub_name + ".channel_name", channel_info_topic)) {
+                ChannelInfoSubscriberPtr channel_info_sub = std::make_shared<ChannelInfoSubscriber>(this, channel_info_topic, rmw_qos_profile_sensor_data);                                       
+                channelInfoSubs_.push_back(channel_info_sub);
+                CameraChannelSyncPtr sync = std::make_shared<CameraChannelSync>(CameraChannelPolicy(10), *image_sub, *cam_info_sub, *channel_info_sub);
+                sync->registerCallback(std::bind(&ElevationMappingNode::imageChannelCallback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                cameraChannelSyncs_.push_back(sync);
+                RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s, Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), channel_info_topic.c_str());
+              }else{
+                  std::string key = sub_name;
+                  channels_[key].push_back("rgb");
+                  // RCLCPP_INFO(this->get_logger(), "Subscribed to Image topic: %s, Camera info topic: %s. Channel info topic: %s", camera_topic.c_str(), info_topic.c_str(), (channel_info_topic.empty() ? ("Not found. Using channels: " + boost::algorithm::join(channels_[key], ", ")).c_str() : channel_info_topic.c_str()));
+                  CameraSyncPtr sync = std::make_shared<CameraSync>(CameraPolicy(10), *image_sub, *cam_info_sub);
+                  sync->registerCallback(std::bind(&ElevationMappingNode::imageCallback, this, std::placeholders::_1, std::placeholders::_2, key));
+                  cameraSyncs_.push_back(sync);
+              }
           }else if(data_type == "pointcloud"){
             std::string pointcloud_topic;
             this->get_parameter("subscribers." + sub_name + ".topic_name", pointcloud_topic);                                    
@@ -162,10 +162,13 @@ ElevationMappingNode::ElevationMappingNode()
             channels_[key].push_back("x");
             channels_[key].push_back("y");
             channels_[key].push_back("z");
+            rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
+            auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
             auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
                   this->pointcloudCallback(msg, key);
               };
-              auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, 1, callback);
+              auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, qos, callback);
               pointcloudSubs_.push_back(sub);
                 RCLCPP_INFO(this->get_logger(), "Subscribed to PointCloud2 topic: %s", pointcloud_topic.c_str());
           }
@@ -356,8 +359,8 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::msg::PointCloud
   std::vector<std::string> channels;
 
   for (size_t it = 0; it < fields.size(); it++) {
-      auto& field = fields[it];
-      channels.push_back(field.name);
+          auto& field = fields[it];      
+          channels.push_back(field.name);
   }
   inputPointCloud(cloud, channels);
 
@@ -775,6 +778,7 @@ void ElevationMappingNode::updateGridMap() {
   if (enablePointCloudPublishing_) {
     publishAsPointCloud(gridMap_);
   }
+  
   if (enableNormalArrowPublishing_) {
     publishNormalAsArrow(gridMap_);
   }
@@ -852,9 +856,7 @@ void ElevationMappingNode::publishNormalAsArrow(const grid_map::GridMap& map) co
     }
     markerArray.markers.push_back(vectorToArrowMarker(start, end, i));
   }
-  normalPub_->publish(markerArray);
-  double elapsed_time = (this->now() - startTime).seconds();
-  RCLCPP_INFO(this->get_logger(), "Initializing ElevationMappingNode...");(this->get_logger(), std::chrono::seconds(1), "publish as normal in %f sec.", elapsed_time);      
+  normalPub_->publish(markerArray);  
 }
 
 
