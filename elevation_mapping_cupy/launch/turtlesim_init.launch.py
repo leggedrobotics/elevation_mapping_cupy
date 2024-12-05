@@ -146,24 +146,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # # RViz Node
-    # rviz_node = Node(
-    #     package='rviz2',
-    #     executable='rviz2',
-    #     name='rviz2',
-    #     arguments=['-d', rviz_config],
-    #     parameters=[{'use_sim_time': use_sim_time}],
-    #     output='screen'
-    # )
-
-    # # Add Joint State Publisher
-    # joint_state_publisher_node = Node(
-    #     package='joint_state_publisher',
-    #     executable='joint_state_publisher',
-    #     name='joint_state_publisher',
-    #     parameters=[{'use_sim_time': use_sim_time}]
-    # )
-
     # Define LaunchDescription variable
     ld = LaunchDescription()
 
