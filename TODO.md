@@ -1,0 +1,11 @@
+- [x] Compile "elevation_mapping_msgs" with ROS2
+- [x] Compile "elevation_mapping_cupy" with ROS2
+- [x] Compile "semantic_sensor" with ROS2
+- [x] Compile "convex_plane_decomposition_msgs" with ROS2
+- [ ] Compile "convex_plane_decomposition" with ROS2
+- [x] Compile "grid_map_filters_rsl" with ROS2
+- [x] Compile "cgal5_ament" with ROS2
+
+- [x] Run "elevation_mapping_cupy" with ROS2
+- [ ] Run "semantic_sensor" with ROS2
+- [ ] Run "convex_plane_decomposition" with ROS2
