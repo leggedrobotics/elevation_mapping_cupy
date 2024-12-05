@@ -3,7 +3,7 @@ project(convex_plane_decomposition)
 
 # Catkin dependencies
 set(CATKIN_PACKAGE_DEPENDENCIES
-  cgal5_catkin
+  cgal5_ament
   grid_map_core
   grid_map_cv
   grid_map_filters_rsl
