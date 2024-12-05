@@ -26,6 +26,7 @@ from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import MultiArrayLayout as MAL
 from std_msgs.msg import MultiArrayDimension as MAD
 from geometry_msgs.msg import TransformStamped
+from rclpy.serialization import serialize_message
 
 # Custom module imports
 from elevation_mapping_cupy import ElevationMap, Parameter
@@ -81,14 +82,11 @@ class ElevationMappingNode(Node):
         self.register_publishers()
         self.register_timers()
 
-        # Initialize last timestamp
+        # timestamp of latest pcd or image msg
         self._last_t = None
 
-        # Initialize transform storage with thread safety
-        self._transform_lock = threading.Lock()
-        self._current_transform = None
-
-    def initialize_elevation_mapping(self):
+    def initialize_elevation_mapping(self) -> None:
+        """Initialize the elevation mapping module."""
         self.param.update()
         self._pointcloud_process_counter = 0
         self._image_process_counter = 0
@@ -99,16 +97,14 @@ class ElevationMappingNode(Node):
         self._map_q = None
         self._map_t = None
 
-    def initialize_ros(self):
-        # Initialize TF buffer and listener with increased cache time
+    def initialize_ros(self) -> None:
+        """Initialize ROS-related components such as TF buffer and listener."""
         self._tf_buffer = tf2_ros.Buffer()
-        # Initialize TransformListener
         self._listener = tf2_ros.TransformListener(self._tf_buffer, self)
-
-        # Retrieve ROS parameters
         self.get_ros_params()
 
-    def get_ros_params(self):
+    def get_ros_params(self) -> None:
+        """Retrieve ROS parameters from the node."""
         # Get parameters with default values
         self.use_chainer = self.get_parameter('use_chainer').get_parameter_value().bool_value
         self.weight_file = self.get_parameter('weight_file').get_parameter_value().string_value
@@ -196,12 +192,11 @@ class ElevationMappingNode(Node):
         for param_name, param_value in params.items():
             self.get_logger().info(f"Parameter '{param_name}': {param_value.value}")
 
-    def register_subscribers(self):
+    def register_subscribers(self) -> None:
+        """Register ROS subscribers for pointclouds and images."""
         # Initialize CvBridge if needed
-        for config in self.my_subscribers.values():
-            if config.get("data_type") == "image":
-                self.cv_bridge = CvBridge()
-                break
+        if any(config.get("data_type") == "image" for config in self.my_subscribers.values()):
+            self.cv_bridge = CvBridge()
 
         # Dictionaries to hold subscribers
         pointcloud_subs = {}
@@ -257,7 +252,8 @@ class ElevationMappingNode(Node):
             f"Registered {len(pointcloud_subs)} pointcloud subscribers and {len(image_subs)} image subscribers."
         )
 
-    def register_publishers(self):
+    def register_publishers(self) -> None:
+        """Register ROS publishers for elevation maps."""
         self._publishers_dict = {}
         self._publishers_timers = []
 
@@ -275,15 +271,12 @@ class ElevationMappingNode(Node):
 
             self.get_logger().info(f"Publisher '{pub_key}' registered on topic '{topic_name}' with {fps} Hz.")
 
-    def register_timers(self):
-        # Remove separate transform_updater and update_pose timers
-        # Register the combined timer instead
+    def register_timers(self) -> None:
+        """Register ROS timers for pose update, variance update, and time update."""
         self.time_pose_update = self.create_timer(
             0.1,
             self.pose_update
         )
-
-        # Register additional timers without the ReentrantCallbackGroup
         self.timer_variance = self.create_timer(
             1.0 / self.update_variance_fps,
             self.update_variance
@@ -293,12 +286,17 @@ class ElevationMappingNode(Node):
             self.update_time
         )
 
-        self.get_logger().info("Combined transform and pose updater timer, variance, and time timers registered.")
+    def publish_map(self, key: str) -> None:
+        """
+        Publish the elevation map on the specified topic.
 
-    def publish_map(self, key):
+        Args:
+            key (str): The key identifying which publisher to use.
+        """
         if self._map_q is None:
             self.get_logger().info("No map pose available for publishing.")
             return
+
         gm = GridMap()
         gm.header.frame_id = self.map_frame
         gm.header.stamp = self.get_clock().now().to_msg()
@@ -314,6 +312,7 @@ class ElevationMappingNode(Node):
         gm.info.pose.orientation.z = 0.0  # self._map_q.z
         gm.layers = []
         gm.basic_layers = self.my_publishers[key]["basic_layers"]
+
         for layer in self.my_publishers[key].get("layers", []):
             gm.layers.append(layer)
             self._map.get_map_with_name_ref(layer, self._map_data)
@@ -331,7 +330,15 @@ class ElevationMappingNode(Node):
 
         self._publishers_dict[key].publish(gm)
 
-    def image_callback(self, camera_msg, camera_info_msg, sub_key):
+    def image_callback(self, camera_msg: Image, camera_info_msg: CameraInfo, sub_key: str) -> None:
+        """
+        Callback function for synchronized image and camera info messages.
+
+        Args:
+            camera_msg (Image): The image message.
+            camera_info_msg (CameraInfo): The camera info message.
+            sub_key (str): The subscriber key identifier.
+        """
         # Store timestamps
         self._last_t = camera_msg.header.stamp
         
@@ -381,9 +388,15 @@ class ElevationMappingNode(Node):
         except Exception as e:
             self.get_logger().error(f"[image_callback] Unexpected error: {str(e)}")
 
-    def pointcloud_callback(self, msg, sub_key):
+    def pointcloud_callback(self, msg: PointCloud2, sub_key: str) -> None:
+        """
+        Callback function for point cloud messages.
+
+        Args:
+            msg (PointCloud2): The point cloud message.
+            sub_key (str): The subscriber key identifier.
+        """        
         self._last_t = msg.header.stamp
-        self._pointcloud_stamp = msg.header.stamp
         channels = ["x", "y", "z"] + self.param.subscriber_cfg[sub_key].get("channels", [])
 
         try:
@@ -398,12 +411,13 @@ class ElevationMappingNode(Node):
 
         frame_sensor_id = msg.header.frame_id
         try:
+            # Add a timeout to wait for the transform to become available
             transform_sensor_to_odom = self._tf_buffer.lookup_transform(
                 self.map_frame,
                 frame_sensor_id,
-                self._pointcloud_stamp
+                self._last_t,
             )
-            
+
             t = transform_sensor_to_odom.transform.translation
             q = transform_sensor_to_odom.transform.rotation
             t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
@@ -413,25 +427,22 @@ class ElevationMappingNode(Node):
             self._pointcloud_process_counter += 1
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            self.get_logger().warn(f"[pointcloud_callback] Transform lookup failed: {e}")
+            self.get_logger().debug(f"[pointcloud_callback] Transform lookup failed: {e}")
         except Exception as e:
             self.get_logger().error(f"[pointcloud_callback] Unexpected error: {str(e)}")
 
-    def pose_update(self):
+    def pose_update(self) -> None:
+        """Update the pose based on the latest transform."""
         if self._last_t is None:
             self.get_logger().debug("No timestamp available for pose update.")
             return
-
+ 
         try:
             transform = self._tf_buffer.lookup_transform(
                 self.map_frame,
                 self.base_frame,
                 self._last_t
             )
-
-            # Update the current transform with thread safety
-            with self._transform_lock:
-                self._current_transform = transform
 
             # Update the pose
             t = transform.transform.translation
@@ -448,65 +459,32 @@ class ElevationMappingNode(Node):
         except Exception as e:
             self.get_logger().error(f"[pose_update] Unexpected error: {str(e)}")
 
-    def update_variance(self):
+    def update_variance(self) -> None:
         self._map.update_variance()
         self.get_logger().debug("Variance updated.")
 
-    def update_time(self):
+    def update_time(self) -> None:
         self._map.update_time()
         self.get_logger().debug("Time updated.")
 
-    def get_current_transform(self):
-        """Thread-safe method to retrieve the latest transform."""
-        with self._transform_lock:
-            return self._current_transform
-
-    def print_tf_frames(self):
-        """Print all available transforms in the TF buffer with timestamp"""
-        try:
-            # Get current timestamp
-            current_time = self.get_clock().now()
-
-            # Try to get the specific transform from odom to base_footprint
-            try:
-                transform = self._tf_buffer.lookup_transform(
-                    self.map_frame,
-                    'base_footprint',
-                    rclpy.time.Time(),  # get the latest transform
-                    rclpy.duration.Duration(seconds=2.0)
-                )
-                self.get_logger().info(f"\nOdom to base_footprint transform timestamp: "
-                                       f"{transform.header.stamp.sec}.{transform.header.stamp.nanosec}")
-            except (tf2_ros.LookupException, tf2_ros.ConnectivityException,
-                    tf2_ros.ExtrapolationException) as e:
-                self.get_logger().warn(f"Could not lookup odom to base_footprint transform: {e}")
-
-            # Get all frame IDs
-            frames = self._tf_buffer.all_frames_as_string()
-            # Uncomment the line below if you want to log all available TF frames
-            # self.get_logger().info(f"Available TF frames:\n{frames}")
-        except Exception as e:
-            self.get_logger().error(f"Failed to get TF frames: {e}")
-
-    def destroy_node(self):
+    def destroy_node(self) -> None:
         super().destroy_node()
 
 
-def main(args=None):
+def main(args=None) -> None:
+    """Main entry point for the elevation mapping node."""
     rclpy.init(args=args)
     node = ElevationMappingNode()
 
-    # Initialize a MultiThreadedExecutor instead of SingleThreadedExecutor
+    # Use a SingleThreadedExecutor as per original implementation
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
 
     try:
-        # Use the executor to spin
         executor.spin()
     except KeyboardInterrupt:
         node.get_logger().info("Shutting down ElevationMappingNode.")
     finally:
-        # Shutdown the executor and destroy the node
         executor.shutdown()
         node.destroy_node()
         rclpy.shutdown()
