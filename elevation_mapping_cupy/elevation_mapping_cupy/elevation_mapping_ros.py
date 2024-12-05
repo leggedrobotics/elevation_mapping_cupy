@@ -332,22 +332,11 @@ class ElevationMappingNode(Node):
         self._publishers_dict[key].publish(gm)
 
     def image_callback(self, camera_msg, camera_info_msg, sub_key):
-        # Get pose of image
-        ti = camera_msg.header.stamp
-        self._last_t = ti
-
-        # Retrieve the latest transform
-        transform = self.get_current_transform()
-        if transform is None:
-            self.get_logger().warn("No available transform for image_callback.")
-            return
-
-        t = transform.transform.translation
-        q = transform.transform.rotation
-        t_np = np.array([t.x, t.y, t.z])
-        R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3]
-
+        # Store timestamps
+        self._last_t = camera_msg.header.stamp
+        
         try:
+            # Convert image using cv_bridge
             semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
         except Exception as e:
             self.get_logger().error(f"CV Bridge conversion failed: {e}")
@@ -359,18 +348,38 @@ class ElevationMappingNode(Node):
         else:
             semantic_img = [semantic_img]
 
+        # Get camera parameters
         K = np.array(camera_info_msg.k, dtype=np.float32).reshape(3, 3)
         D = np.array(camera_info_msg.d, dtype=np.float32).reshape(-1, 1)
 
         if not np.all(D == 0.0):
             self.get_logger().warn("Camera distortion coefficients are not zero. Undistortion not implemented.")
 
-        # Process image
-        self._map.input_image(
-            sub_key, semantic_img, R, t_np, K, D, camera_info_msg.height, camera_info_msg.width
-        )
-        self._image_process_counter += 1
-        self.get_logger().debug(f"Images processed: {self._image_process_counter}")
+        # Get transform from camera frame to map frame
+        try:
+            transform_camera_to_map = self._tf_buffer.lookup_transform(
+                self.map_frame,
+                camera_msg.header.frame_id,
+                camera_msg.header.stamp
+            )
+            
+            t = transform_camera_to_map.transform.translation
+            q = transform_camera_to_map.transform.rotation
+            t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
+            R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
+            
+            # Process image
+            self._map.input_image(
+                sub_key, semantic_img, R, t_np, K, D, 
+                camera_info_msg.height, camera_info_msg.width
+            )
+            self._image_process_counter += 1
+            self.get_logger().debug(f"Images processed: {self._image_process_counter}")
+
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            self.get_logger().warn(f"[image_callback] Transform lookup failed: {e}")
+        except Exception as e:
+            self.get_logger().error(f"[image_callback] Unexpected error: {str(e)}")
 
     def pointcloud_callback(self, msg, sub_key):
         self._last_t = msg.header.stamp
@@ -434,8 +443,6 @@ class ElevationMappingNode(Node):
             self._map_t = t
             self._map_q = q
 
-            self.get_logger().debug("Pose updated.")
-
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             self.get_logger().warn(f"[pose_update] Transform lookup failed: {e}")
         except Exception as e:
@@ -448,7 +455,6 @@ class ElevationMappingNode(Node):
     def update_time(self):
         self._map.update_time()
         self.get_logger().debug("Time updated.")
-
 
     def get_current_transform(self):
         """Thread-safe method to retrieve the latest transform."""
