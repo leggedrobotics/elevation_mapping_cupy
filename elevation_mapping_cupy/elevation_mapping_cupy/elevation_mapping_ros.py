@@ -10,7 +10,6 @@ import time  # Import time module for benchmarking
 # ROS 2 imports
 import rclpy
 from rclpy.node import Node
-from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 import ros2_numpy as rnp
 from sensor_msgs.msg import PointCloud2, Image, CameraInfo
@@ -53,9 +52,6 @@ class ElevationMappingNode(Node):
             'elevation_mapping_node',
             automatically_declare_parameters_from_overrides=True
         )
-
-        # Create a ReentrantCallbackGroup for subscriptions and timers
-        self.callback_group = ReentrantCallbackGroup()
 
         # Get package share directory
         self.root = get_package_share_directory("elevation_mapping_cupy")
@@ -249,13 +245,12 @@ class ElevationMappingNode(Node):
                     history=rclpy.qos.HistoryPolicy.KEEP_LAST
                 )
 
-                # Create subscription with ReentrantCallbackGroup
+                # Create subscription without passing callback_group
                 subscription = self.create_subscription(
                     PointCloud2,
                     topic_name,
                     partial(self.pointcloud_callback, sub_key=key),
-                    qos_profile,
-                    callback_group=self.callback_group  # Assign ReentrantCallbackGroup
+                    qos_profile
                 )
                 pointcloud_subs[key] = subscription
 
@@ -278,8 +273,7 @@ class ElevationMappingNode(Node):
             fps = pub_config.get("fps", 1.0)
             timer = self.create_timer(
                 1.0 / fps,
-                partial(self.publish_map, key=pub_key),
-                callback_group=self.callback_group  # Assign ReentrantCallbackGroup
+                partial(self.publish_map, key=pub_key)
             )
             self._publishers_timers.append(timer)
 
@@ -290,26 +284,22 @@ class ElevationMappingNode(Node):
         # Register the combined timer instead
         self.time_pose_update = self.create_timer(
             0.1,
-            self.pose_update,
-            callback_group=self.callback_group  # Assign ReentrantCallbackGroup
+            self.pose_update
         )
 
-        # Register additional timers with the ReentrantCallbackGroup
+        # Register additional timers without the ReentrantCallbackGroup
         self.timer_variance = self.create_timer(
             1.0 / self.update_variance_fps,
-            self.update_variance,
-            callback_group=self.callback_group  # Assign ReentrantCallbackGroup
+            self.update_variance
         )
         self.timer_time = self.create_timer(
             self.time_interval,
-            self.update_time,
-            callback_group=self.callback_group  # Assign ReentrantCallbackGroup
+            self.update_time
         )
 
         self.get_logger().info("Combined transform and pose updater timer, variance, and time timers registered.")
 
     def publish_map(self, key):
-        self.get_logger().info("publish_map entered")
         if self._map_q is None:
             self.get_logger().info("No map pose available for publishing.")
             return
@@ -331,22 +321,19 @@ class ElevationMappingNode(Node):
         for layer in self.my_publishers[key].get("layers", []):
             gm.layers.append(layer)
             self._map.get_map_with_name_ref(layer, self._map_data)
-            
             arr = Float32MultiArray()
             arr.layout = MAL()
             N = self._map_data.shape[0]
             arr.layout.dim.append(MAD(label="column_index", size=N, stride=int(N * N)))
             arr.layout.dim.append(MAD(label="row_index", size=N, stride=N))
-            
             # Convert to a Python list to satisfy the message requirements
             arr.data = self._map_data.T.flatten().tolist()
-            
             gm.data.append(arr)
+
         gm.outer_start_index = 0
         gm.inner_start_index = 0
 
         self._publishers_dict[key].publish(gm)
-
 
     def image_callback(self, camera_msg, camera_info_msg, sub_key):
         # Get pose of image
@@ -391,7 +378,6 @@ class ElevationMappingNode(Node):
 
 
     def pointcloud_callback(self, msg, sub_key):
-        start_time = time.time()
         self._last_t = msg.header.stamp
         self._pointcloud_stamp = msg.header.stamp
         channels = ["x", "y", "z"] + self.param.subscriber_cfg[sub_key].get("channels", [])
@@ -524,7 +510,7 @@ def main(args=None):
     node = ElevationMappingNode()
 
     # Initialize a MultiThreadedExecutor instead of SingleThreadedExecutor
-    executor = rclpy.executors.MultiThreadedExecutor()
+    executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
 
     try:
