@@ -285,10 +285,12 @@ class SemanticSegmentationNode:
         feat_msg.header.frame_id = self.header.frame_id
         self.feat_im_pub.publish(feat_msg)
 
-
-if __name__ == "__main__":
+def main():
     arg = sys.argv[1]
     sensor_name = arg
     rospy.init_node("semantic_segmentation_node", anonymous=True, log_level=rospy.INFO)
     node = SemanticSegmentationNode(sensor_name)
     rospy.spin()
+
+if __name__ == "__main__":
+    main()

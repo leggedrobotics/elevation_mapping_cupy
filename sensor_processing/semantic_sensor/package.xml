@@ -9,7 +9,7 @@
 
     <url type="website">https://github.com/leggedrobotics/elevation_mapping_semantic_cupy</url>
 
-    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_python</buildtool_depend>
     <depend>rclpy</depend>
     <depend>tf2_ros</depend>
     <depend>sensor_msgs</depend>
@@ -18,4 +18,7 @@
 
     <exec_depend>python3</exec_depend>
 
+    <export>
+        <build_type>ament_python</build_type>
+    </export>
 </package>

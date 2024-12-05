@@ -5,7 +5,7 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='semantic_sensor',
-            executable='image_node.py',
+            executable='image_node',
             name='semantic_image',
             arguments=['front_cam_image'],
             output='screen',

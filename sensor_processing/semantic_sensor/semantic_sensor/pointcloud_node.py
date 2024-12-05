@@ -360,9 +360,12 @@ class PointcloudNode:
         # pc2.header.frame_id = self.param.cam_frame
         self.pcl_pub.publish(pc2)
 
-
-if __name__ == "__main__":
+def main():
+    arg = sys.argv[1]
     sensor_name = sys.argv[1]
     rospy.init_node("semantic_pointcloud_node", anonymous=True, log_level=rospy.INFO)
     node = PointcloudNode(sensor_name)
     rospy.spin()
+
+if __name__ == "__main__":
+    main()
