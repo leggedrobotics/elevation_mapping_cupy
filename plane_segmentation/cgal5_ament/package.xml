@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cgal5_ament</name>
+  <version>0.0.1</version>
+  <description>ROS2 package integrating CGAL</description>
+  <maintainer email="lterenzi@ethz.ch">Lorenzo Terenzi</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <!-- Buildtool dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Build dependencies -->
+  <depend>Boost</depend>
+
+  <!-- Export dependencies -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
