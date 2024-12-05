@@ -1,30 +1,47 @@
 <?xml version="1.0"?>
 <package format="3">
-    <name>elevation_mapping_cupy</name>
-    <version>2.0.0</version>
-    <description>The elevation mapping on GPU</description>
+  <name>elevation_mapping_cupy</name>
+  <version>2.0.0</version>
+  <description>Elevation mapping on GPU</description>
+  <maintainer email="your.email@example.com">Your Name</maintainer>
+  <license>MIT</license>
 
-    <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
+  <!-- Build tool dependencies -->
+  <buildtool_depend>ament_python</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <license>MIT</license>
+  <!-- Core ROS2 dependencies -->
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>elevation_map_msgs</depend>
+  <depend>grid_map_msgs</depend>
+  <depend>grid_map_ros</depend>
+  <depend>image_transport</depend>
+  <depend>pcl_ros</depend>
+  <depend>pybind11</depend>
+  <depend>ros2_numpy</depend>
+  <depend>tf2_ros</depend>
+  <depend>message_filters</depend>
+  <depend>cv_bridge</depend>
+  <depend>ament_index_python</depend>
+  <depend>tf_transformations</depend>
 
-    <!-- Update buildtool dependencies -->
-    <buildtool_depend>ament_cmake</buildtool_depend>
-    <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <!-- Additional dependencies -->
+  <depend>rviz2</depend>
+  <depend>gazebo_ros</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>opencv-python</depend>
+  
+  <!-- Export dependencies -->
+  <build_export_depend>ament_python</build_export_depend>
+  <exec_depend>ament_python</exec_depend>
 
-    <!-- ROS2 Dependencies -->
-    <depend>rclpy</depend>
-    <depend>std_msgs</depend>
-    <depend>sensor_msgs</depend>
-    <depend>geometry_msgs</depend>
-    <depend>elevation_map_msgs</depend>
-    <depend>grid_map_msgs</depend>
-    <depend>grid_map_ros</depend>
-    <depend>image_transport</depend>
-    <depend>pcl_ros</depend>
-    <depend>pybind11</depend>
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
 
-    <export>
-      <build_type>ament_python</build_type>
-    </export>
+  <!-- Additional metadata -->
+  <url type="repository">https://github.com/yourrepo/elevation_mapping_cupy</url>
 </package>

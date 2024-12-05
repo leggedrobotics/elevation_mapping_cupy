@@ -41,6 +41,7 @@ from elevation_mapping_cupy.traversability_polygon import (
 )
 
 import cupy as cp
+import rclpy  # Import rclpy for ROS 2 logging
 
 xp = cp
 pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
@@ -56,6 +57,9 @@ class ElevationMap:
         Args:
             param (elevation_mapping_cupy.parameter.Parameter):
         """
+        # Initialize the ROS logger
+        self.logger = rclpy.logging.get_logger('elevation_map')
+
         self.param = param
         self.data_type = self.param.data_type
         self.resolution = param.resolution
@@ -315,23 +319,17 @@ class ElevationMap:
         t -= self.center
 
     def update_map_with_kernel(self, points_all, channels, R, t, position_noise, orientation_noise):
-        """Update map with new measurement.
-
-        Args:
-            points_all (cupy._core.core.ndarray):
-            channels (List[str]):
-            R (cupy._core.core.ndarray):
-            t (cupy._core.core.ndarray):
-            position_noise (float):
-            orientation_noise (float):
-        """
+        """Update map with new measurement."""
         self.new_map *= 0.0
         error = cp.array([0.0], dtype=cp.float32)
         error_cnt = cp.array([0], dtype=cp.float32)
         points = points_all[:, :3]
-        # additional_fusion = self.get_fusion_of_pcl(channels)
+
         with self.map_lock:
             self.shift_translation_to_map_center(t)
+            
+            # Log before kernel execution
+            
             self.error_counting_kernel(
                 self.elevation_map,
                 points,
@@ -344,6 +342,7 @@ class ElevationMap:
                 error_cnt,
                 size=(points.shape[0]),
             )
+            
             if (
                 self.param.enable_drift_compensation
                 and error_cnt > self.param.min_height_drift_cnt
@@ -356,6 +355,8 @@ class ElevationMap:
                 self.additive_mean_error += self.mean_error
                 if np.abs(self.mean_error) < self.param.max_drift:
                     self.elevation_map[0] += self.mean_error * self.param.drift_compensation_alpha
+
+            
             self.add_points_kernel(
                 cp.array([0.0], dtype=self.data_type),
                 cp.array([0.0], dtype=self.data_type),
@@ -367,13 +368,16 @@ class ElevationMap:
                 self.new_map,
                 size=(points.shape[0]),
             )
+            
+            # Log after adding points
+
             self.average_map_kernel(self.new_map, self.elevation_map, size=(self.cell_n * self.cell_n))
 
             self.semantic_map.update_layers_pointcloud(points_all, channels, R, t, self.new_map)
 
             if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
-            # dilation before traversability_filter
+
             self.traversability_input *= 0.0
             self.dilation_filter_kernel(
                 self.elevation_map[5],
@@ -382,13 +386,13 @@ class ElevationMap:
                 self.traversability_mask_dummy,
                 size=(self.cell_n * self.cell_n),
             )
-            # calculate traversability
+
             traversability = self.traversability_filter(self.traversability_input)
             self.elevation_map[3][3:-3, 3:-3] = traversability.reshape(
                 (traversability.shape[2], traversability.shape[3])
             )
 
-        # calculate normal vectors
+        # Log final state
         self.update_normal(self.traversability_input)
 
     def clear_overlap_map(self, t):
@@ -455,6 +459,12 @@ class ElevationMap:
             None:
         """
         raw_points = cp.asarray(raw_points, dtype=self.data_type)
+        
+        # Check for the sanity of the raw points
+        min_points = cp.min(raw_points, axis=0)
+        max_points = cp.max(raw_points, axis=0)
+        mean_points = cp.mean(raw_points, axis=0)
+                
         additional_channels = channels[3:]
         raw_points = raw_points[~cp.isnan(raw_points[:, :3]).any(axis=1)]
         self.update_map_with_kernel(

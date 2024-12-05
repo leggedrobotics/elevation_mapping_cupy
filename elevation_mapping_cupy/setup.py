@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from glob import glob
 import os
 
 package_name = 'elevation_mapping_cupy'
@@ -21,9 +22,13 @@ setup(
             'elevation_mapping_node = elevation_mapping_cupy.elevation_mapping_ros:main',
         ],
     },
-    # Remove data_files for package.xml
     data_files=[
-        # Add the launch file
-        (os.path.join('share', package_name, 'launch'), ['launch/elevation_mapping_launch.py']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        *[(os.path.join('share', package_name, os.path.dirname(yaml_file)), [yaml_file]) for yaml_file in glob('config/**/*.yaml', recursive=True)],
+        # also the .*dat files
+        *[(os.path.join('share', package_name, os.path.dirname(dat_file)), [dat_file]) for dat_file in glob('config/**/*.dat', recursive=True)],
+        # add rviz files
+        *[(os.path.join('share', package_name, os.path.dirname(rviz_file)), [rviz_file]) for rviz_file in glob('rviz/**/*.rviz', recursive=True)],
+        (os.path.join('share', package_name), ['package.xml']),
     ],
 )
