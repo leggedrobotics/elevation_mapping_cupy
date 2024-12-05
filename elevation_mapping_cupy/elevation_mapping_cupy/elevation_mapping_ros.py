@@ -88,10 +88,6 @@ class ElevationMappingNode(Node):
         self._transform_lock = threading.Lock()
         self._current_transform = None
 
-        # Initialize ThreadPoolExecutor for pointcloud processing
-        self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        self.get_logger().info("ThreadPoolExecutor initialized with 2 workers.")
-
     def initialize_elevation_mapping(self):
         self.param.update()
         self._pointcloud_process_counter = 0
@@ -376,7 +372,6 @@ class ElevationMappingNode(Node):
         self._image_process_counter += 1
         self.get_logger().debug(f"Images processed: {self._image_process_counter}")
 
-
     def pointcloud_callback(self, msg, sub_key):
         self._last_t = msg.header.stamp
         self._pointcloud_stamp = msg.header.stamp
@@ -394,36 +389,24 @@ class ElevationMappingNode(Node):
 
         frame_sensor_id = msg.header.frame_id
         try:
-            # Await the transform lookup
             transform_sensor_to_odom = self._tf_buffer.lookup_transform(
                 self.map_frame,
                 frame_sensor_id,
                 self._pointcloud_stamp
             )
             
-            # Process the transform directly here instead of using callback
             t = transform_sensor_to_odom.transform.translation
             q = transform_sensor_to_odom.transform.rotation
             t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
             R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
             
-            # Submit the processing to the executor
-            self.thread_pool.submit(self.process_pointcloud, points['xyz'], channels, R, t_np, sub_key)
+            self._map.input_pointcloud(points['xyz'], channels, R, t_np, 0, 0)
+            self._pointcloud_process_counter += 1
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            self.get_logger().warn(f"Transform lookup failed: {e}")
+            self.get_logger().warn(f"[pointcloud_callback] Transform lookup failed: {e}")
         except Exception as e:
-            self.get_logger().error(f"Unexpected error in pointcloud_callback: {str(e)}")
-
-    def process_pointcloud(self, xyz, channels, R, t_np, sub_key):
-        try:
-            callback_start = time.time()
-            self._map.input_pointcloud(xyz, channels, R, t_np, 0, 0)
-            self._pointcloud_process_counter += 1
-            callback_end = time.time()
-            self.get_logger().info(f"[process_pointcloud] input_pointcloud execution time: {callback_end - callback_start:.4f} seconds")
-        except Exception as e:
-            self.get_logger().error(f"Error processing pointcloud in separate thread: {str(e)}")
+            self.get_logger().error(f"[pointcloud_callback] Unexpected error: {str(e)}")
 
     def pose_update(self):
         if self._last_t is None:
@@ -454,9 +437,9 @@ class ElevationMappingNode(Node):
             self.get_logger().debug("Pose updated.")
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            self.get_logger().warn(f"Transform lookup failed in pose_update: {e}")
+            self.get_logger().warn(f"[pose_update] Transform lookup failed: {e}")
         except Exception as e:
-            self.get_logger().error(f"Unexpected error in pose_update: {str(e)}")
+            self.get_logger().error(f"[pose_update] Unexpected error: {str(e)}")
 
     def update_variance(self):
         self._map.update_variance()
@@ -500,8 +483,6 @@ class ElevationMappingNode(Node):
             self.get_logger().error(f"Failed to get TF frames: {e}")
 
     def destroy_node(self):
-        self.get_logger().info("Shutting down ThreadPoolExecutor.")
-        self.thread_pool.shutdown(wait=True)
         super().destroy_node()
 
 
