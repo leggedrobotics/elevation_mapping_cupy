@@ -48,6 +48,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/voxel_grid.h>
 
 // OpenCV
 #include <opencv2/core.hpp>
@@ -89,23 +90,28 @@ class ElevationMappingNode : public rclcpp::Node {
   using CameraChannelSyncPtr = std::shared_ptr<CameraChannelSync>;
 
   // Subscriber and Synchronizer for Pointcloud messages
-  using PointCloudSubscriber = message_filters::Subscriber<sensor_msgs::msg::PointCloud2>;
-  using PointCloudSubscriberPtr = std::shared_ptr<PointCloudSubscriber>;
-  using PointCloudPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::PointCloud2, elevation_map_msgs::msg::ChannelInfo>;
-  using PointCloudSync = message_filters::Synchronizer<PointCloudPolicy>;
-  using PointCloudSyncPtr = std::shared_ptr<PointCloudSync>;
+  // using PointCloudSubscriber = message_filters::Subscriber<sensor_msgs::msg::PointCloud2>;
+  // using PointCloudSubscriberPtr = std::shared_ptr<PointCloudSubscriber>;
+  // using PointCloudPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::PointCloud2, elevation_map_msgs::msg::ChannelInfo>;
+  // using PointCloudSync = message_filters::Synchronizer<PointCloudPolicy>;
+  // using PointCloudSyncPtr = std::shared_ptr<PointCloudSync>;
 
  private:
-  void readParameters();
-  void setupMapPublishers();
-  void pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key);    
-  void inputPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::vector<std::string>& channels);
-//   void inputImage(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg, const std::vector<std::string>& channels);
+void readParameters();
+void setupMapPublishers();
+void pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key);    
+void inputPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::vector<std::string>& channels);
+  
+void inputImage(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg,
+                  const sensor_msgs::msg::CameraInfo::ConstSharedPtr& camera_info_msg,
+                  const std::vector<std::string>& channels);
+
+
 // void imageCallback(const sensor_msgs::msg::Image::SharedPtr image_msg, const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg, const std::string& key);
 // void imageChannelCallback(const sensor_msgs::msg::Image::SharedPtr image_msg, const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg, const elevation_map_msgs::msg::ChannelInfo::SharedPtr channel_info_msg);
-void imageCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& image_msg, const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info_msg, const std::string& key);
-void imageChannelCallback(const std::shared_ptr<const sensor_msgs::msg::Image>& image_msg, const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info_msg, const std::shared_ptr<const elevation_map_msgs::msg::ChannelInfo>& channel_info_msg);
-
+void imageCallback(const sensor_msgs::msg::Image::SharedPtr cloud, const std::string& key);
+void imageChannelCallback(const elevation_map_msgs::msg::ChannelInfo::SharedPtr chennel_info, const std::string& key);
+void imageInfoCallback(const sensor_msgs::msg::CameraInfo::SharedPtr image_info, const std::string& key);
 //   void pointCloudChannelCallback(const sensor_msgs::PointCloud2& cloud, const elevation_map_msgs::ChannelInfoConstPtr& channel_info_msg);
 //   // void multiLayerImageCallback(const elevation_map_msgs::MultiLayerImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& camera_info_msg);
 void publishAsPointCloud(const grid_map::GridMap& map) const;
@@ -139,12 +145,18 @@ visualization_msgs::msg::Marker vectorToArrowMarker(const Eigen::Vector3d& start
   rclcpp::Node::SharedPtr node_;
   // image_transport::ImageTransport it_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> pointcloudSubs_;
-  std::vector<ImageSubscriberPtr> imageSubs_;
-  std::vector<CameraInfoSubscriberPtr> cameraInfoSubs_;
-  std::vector<ChannelInfoSubscriberPtr> channelInfoSubs_;
-  std::vector<CameraSyncPtr> cameraSyncs_;
-  std::vector<CameraChannelSyncPtr> cameraChannelSyncs_;
-  std::vector<PointCloudSyncPtr> pointCloudSyncs_;
+
+  std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> imageSubs_;
+  std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> cameraInfoSubs_;
+  std::vector<rclcpp::Subscription<elevation_map_msgs::msg::ChannelInfo>::SharedPtr> channelInfoSubs_;
+  
+
+  // std::vector<ImageSubscriberPtr> imageSubs_;
+  // std::vector<CameraInfoSubscriberPtr> cameraInfoSubs_;
+  // std::vector<ChannelInfoSubscriberPtr> channelInfoSubs_;
+  // std::vector<CameraSyncPtr> cameraSyncs_;
+  // std::vector<CameraChannelSyncPtr> cameraChannelSyncs_;
+  // std::vector<PointCloudSyncPtr> pointCloudSyncs_;
   std::vector<rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr> mapPubs_;
   
 
@@ -206,6 +218,7 @@ visualization_msgs::msg::Marker vectorToArrowMarker(const Eigen::Vector3d& start
 
     double positionAlpha_;
     double orientationAlpha_;
+    double voxel_filter_size_;
 
     double recordableFps_;
     std::atomic_bool enablePointCloudPublishing_;
@@ -215,6 +228,9 @@ visualization_msgs::msg::Marker vectorToArrowMarker(const Eigen::Vector3d& start
     double initializeTfGridSize_;
     bool alwaysClearWithInitializer_;
     std::atomic_int pointCloudProcessCounter_;
+
+    std::map<std::string, std::pair<sensor_msgs::msg::CameraInfo, bool>> imageInfoReady_;
+    std::map<std::string, std::pair<elevation_map_msgs::msg::ChannelInfo, bool>> imageChannelReady_;
 };
 
 }  // namespace elevation_mapping_cupy

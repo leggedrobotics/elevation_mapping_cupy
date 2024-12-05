@@ -205,7 +205,7 @@ void ElevationMappingWrapper::setParameters() {
       map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
 
       
-      enable_normal_ = node_->get_parameter("enable_normal").as_bool();
+      
       enable_normal_color_ = node_->get_parameter("enable_normal_color").as_bool();
 
 }
