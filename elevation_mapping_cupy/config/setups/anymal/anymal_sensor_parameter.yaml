@@ -1,81 +1,83 @@
-plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/anymal/anymal_plugin_config.yaml'
+/elevation_mapping_node:
+  ros__parameters:
+    plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/anymal/anymal_plugin_config.yaml'
 
-pointcloud_channel_fusions:
-  rgb: 'color'
-  default: 'average'
+    pointcloud_channel_fusions:
+      rgb: 'color'
+      default: 'average'
 
-image_channel_fusions:
-  rgb: 'color'
-  default: 'exponential'
-  feat_.*: 'exponential'
-  sem_.*: 'exponential'
+    image_channel_fusions:
+      rgb: 'color'
+      default: 'exponential'
+      feat_.*: 'exponential'
+      sem_.*: 'exponential'
 
-#### Publishers ########
-# topic_name:
-#   layers:               # Choose from 'elevation', 'variance', 'traversability', 'time', 'normal_x', 'normal_y', 'normal_z', 'color', plugin_layer_names
-#   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
-#   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
+    #### Publishers ########
+    # topic_name:
+    #   layers:               # Choose from 'elevation', 'variance', 'traversability', 'time', 'normal_x', 'normal_y', 'normal_z', 'color', plugin_layer_names
+    #   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
+    #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
 
-publishers:
-  elevation_map_raw:
-    layers: ['elevation', 'traversability', 'variance', 'rgb', 'upper_bound']
-    basic_layers: ['elevation', 'traversability']
-    fps: 5.0
+    publishers:
+      elevation_map_raw:
+        layers: ['elevation', 'traversability', 'variance', 'rgb', 'upper_bound']
+        basic_layers: ['elevation', 'traversability']
+        fps: 5.0
 
-  elevation_map_recordable:
-    layers: ['elevation', 'traversability', 'variance', 'rgb']
-    basic_layers: ['elevation', 'traversability']
-    fps: 2.0
+      elevation_map_recordable:
+        layers: ['elevation', 'traversability', 'variance', 'rgb']
+        basic_layers: ['elevation', 'traversability']
+        fps: 2.0
 
-  filtered_elevation_map:
-    layers: ['inpaint', 'smooth', 'min_filter', 'upper_bound']
-    basic_layers: ['inpaint']
-    fps: 5.0
+      filtered_elevation_map:
+        layers: ['inpaint', 'smooth', 'min_filter', 'upper_bound']
+        basic_layers: ['inpaint']
+        fps: 5.0
 
-#### Subscribers ########
-subscribers:
-  front_upper_depth:
-    topic_name: /depth_camera_front_upper/point_cloud_self_filtered
-    data_type: pointcloud
+    #### Subscribers ########
+    subscribers:
+      front_upper_depth:
+        topic_name: /depth_camera_front_upper/point_cloud_self_filtered
+        data_type: pointcloud
 
-  front_lower_depth:
-    topic_name: /depth_camera_front_lower/point_cloud_self_filtered
-    data_type: pointcloud
+      front_lower_depth:
+        topic_name: /depth_camera_front_lower/point_cloud_self_filtered
+        data_type: pointcloud
 
-  rear_upper_depth:
-    topic_name: /depth_camera_rear_upper/point_cloud_self_filtered
-    data_type: pointcloud
+      rear_upper_depth:
+        topic_name: /depth_camera_rear_upper/point_cloud_self_filtered
+        data_type: pointcloud
 
-  rear_lower_depth:
-    topic_name: /depth_camera_rear_lower/point_cloud_self_filtered
-    data_type: pointcloud
+      rear_lower_depth:
+        topic_name: /depth_camera_rear_lower/point_cloud_self_filtered
+        data_type: pointcloud
 
-  left_depth:
-    topic_name: /depth_camera_left/point_cloud_self_filtered
-    data_type: pointcloud
+      left_depth:
+        topic_name: /depth_camera_left/point_cloud_self_filtered
+        data_type: pointcloud
 
-  right_depth:
-    topic_name: /depth_camera_right/point_cloud_self_filtered
-    data_type: pointcloud
+      right_depth:
+        topic_name: /depth_camera_right/point_cloud_self_filtered
+        data_type: pointcloud
 
-  front_wide_angle:
-    topic_name: /wide_angle_camera_front/image_color_rect/compressed
-    camera_info_topic_name: /wide_angle_camera_front/camera_info
-    data_type: image
+      front_wide_angle:
+        topic_name: /wide_angle_camera_front/image_color_rect/compressed
+        camera_info_topic_name: /wide_angle_camera_front/camera_info
+        data_type: image
 
-  rear_wide_angle:
-    topic_name: /wide_angle_camera_rear/image_color_rect/compressed
-    camera_info_topic_name: /wide_angle_camera_rear/camera_info
-    data_type: image
+      rear_wide_angle:
+        topic_name: /wide_angle_camera_rear/image_color_rect/compressed
+        camera_info_topic_name: /wide_angle_camera_rear/camera_info
+        data_type: image
 
-  velodyne:
-    topic_name: /point_cloud_filter/lidar/point_cloud_filtered
-    data_type: pointcloud
+      velodyne:
+        topic_name: /point_cloud_filter/lidar/point_cloud_filtered
+        data_type: pointcloud
 
-  front_bpearl:
-    topic_name: /robot_self_filter/bpearl_front/point_cloud
-    data_type: pointcloud
+      front_bpearl:
+        topic_name: /robot_self_filter/bpearl_front/point_cloud
+        data_type: pointcloud
 
-  rear_bpearl:
-    topic_name: /robot_self_filter/bpearl_rear/point_cloud
-    data_type: pointcloud
+      rear_bpearl:
+        topic_name: /robot_self_filter/bpearl_rear/point_cloud
+        data_type: pointcloud
