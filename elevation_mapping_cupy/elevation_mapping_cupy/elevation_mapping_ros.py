@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import os
 from functools import partial
-import threading
-import time  # Import time module for benchmarking
 
 # ROS 2 imports
 import rclpy
@@ -25,7 +21,6 @@ from grid_map_msgs.msg import GridMap
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import MultiArrayLayout as MAL
 from std_msgs.msg import MultiArrayDimension as MAD
-from geometry_msgs.msg import TransformStamped
 from rclpy.serialization import serialize_message
 
 # Custom module imports
@@ -51,7 +46,12 @@ class ElevationMappingNode(Node):
         # Initialize the node without passing callback_group to super()
         super().__init__(
             'elevation_mapping_node',
-            automatically_declare_parameters_from_overrides=True
+            automatically_declare_parameters_from_overrides=True,
+            # Add this parameter to enable sim time
+            allow_undeclared_parameters=True,
+            parameter_overrides=[
+                rclpy.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)
+            ]
         )
 
         # Get package share directory
@@ -412,14 +412,14 @@ class ElevationMappingNode(Node):
         frame_sensor_id = msg.header.frame_id
         try:
             # Add a timeout to wait for the transform to become available
-            transform_sensor_to_odom = self._tf_buffer.lookup_transform(
+            transform_sensor_to_map = self._tf_buffer.lookup_transform(
                 self.map_frame,
                 frame_sensor_id,
                 self._last_t,
             )
 
-            t = transform_sensor_to_odom.transform.translation
-            q = transform_sensor_to_odom.transform.rotation
+            t = transform_sensor_to_map.transform.translation
+            q = transform_sensor_to_map.transform.rotation
             t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
             R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
             
