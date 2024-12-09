@@ -1,8 +1,8 @@
 ## ROS2 Elevation Mapping Cupy 
- **Status**: Under Development 🚧
+ **Status**: Image and Pointcloud subscribers done
 ### Features 
 - **Point cloud-based map update**: *Functional*
-- **Image-based map update**: *Ongoing development*
+- **Image-based map update**: *Functional*
 
 ### Dependencies -
 - **ROS 2 Humble**
