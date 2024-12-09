@@ -4,6 +4,10 @@
 - **Point cloud-based map update**: *Functional*
 - **Image-based map update**: *Functional*
 
+
+![HILS in Jetson AGX Orin]https://github.com/user-attachments/assets/120d7f41-e54a-4fdf-af30-3e09cd5061a1
+
+
 ### Dependencies -
 - **ROS 2 Humble**
 - **CUDA 12.4**
