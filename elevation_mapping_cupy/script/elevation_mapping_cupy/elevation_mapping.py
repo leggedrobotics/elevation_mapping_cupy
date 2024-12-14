@@ -613,6 +613,10 @@ class ElevationMap:
 
         """
         return self.process_map_for_publish(self.elevation_map[0], fill_nan=True, add_z=True)
+    
+    def get_is_valid(self):
+        m = xp.where(self.elevation_map[2] > 0.5, 1.0, 0.0)
+        return m[1:-1, 1:-1]
 
     def get_variance(self):
         """Get the variance layer.
@@ -741,6 +745,8 @@ class ElevationMap:
             if name == "elevation":
                 m = self.get_elevation()
                 use_stream = False
+            elif name == "is_valid": 
+                m = self.get_is_valid() 
             elif name == "variance":
                 m = self.get_variance()
             elif name == "traversability":

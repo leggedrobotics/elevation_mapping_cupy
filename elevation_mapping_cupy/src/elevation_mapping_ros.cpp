@@ -422,7 +422,7 @@ void ElevationMappingNode::inputPointCloud(const sensor_msgs::msg::PointCloud2::
     
     // apply the voxel filtering     
     pcl::PCLPointCloud2::Ptr pcl_pc (new pcl::PCLPointCloud2());
-    pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter;
+    // pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter;
     voxel_filter.setInputCloud(raw_pcl_pc);
     voxel_filter.setLeafSize(voxel_filter_size_,voxel_filter_size_,voxel_filter_size_);
     voxel_filter.filter(*pcl_pc);   
@@ -580,7 +580,7 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::msg::Image::SharedPt
     channels = imageChannelReady_[key].first.channels;
     inputImage(image_msg, camera_info_msg, channels);
   }
-    RCLCPP_INFO(this->get_logger(), "ElevationMap imageChannelCallback processed an image in %f sec.", (this->now() - start).seconds());
+    RCLCPP_DEBUG(this->get_logger(), "ElevationMap imageChannelCallback processed an image in %f sec.", (this->now() - start).seconds());
 }
 
 

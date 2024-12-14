@@ -1,13 +1,13 @@
 elevation_mapping:
   ros__parameters:
     #### Basic parameters ########
-    voxel_filter_size: 0.05
+    voxel_filter_size: 0.1
     enable_normal_arrow_publishing: true
-    cell_n: 40000                                    # number of cells in the map.
+    cell_n: 10000                                    # number of cells in the map.
     data_type: 'float32'                            # data type for the map.
     average_weight: 0.5
     drift_compensation_variance_inlier: 0.1
-    checker_layer: 'traversability'                # layer name for checking the validity of the cell.
+    checker_layer: 'elevation'                # layer name for checking the validity of the cell.
     min_filter_size: 5                            # size of the filter for min filter.
     min_filter_iteration: 3                      # number of iterations for min filter.
     initialized_variance: 10.0                     # initial variance for each cell.    
@@ -87,7 +87,7 @@ elevation_mapping:
     
     pointcloud_channel_fusions:
       rgb: 'color'                # 'color' fusion is used for the 'rgb' channel
-      default: 'average'          # 'average' fusion is used for channels not listed here
+      default: 'averagelate'          # 'average' fusion is used for channels not listed here
 
     image_channel_fusions:
       rgb: 'color'                # 'color' fusion is used for the 'rgb' channel
@@ -143,7 +143,7 @@ elevation_mapping:
     publishers:
       elevation_map_raw:        
         # layers: ['elevation', 'traversability', 'variance','rgb', 'normal_x', 'normal_y', 'normal_z', 'feat_0','feat_1','feat_2','feat_3','feat_4','feat_5','feat_6','feat_7','feat_8','feat_9']
-        layers: ['elevation', 'traversability', 'variance','rgb', 'normal_x', 'normal_y', 'normal_z', 'feat_0','feat_1','feat_2']
+        layers: ['is_valid','elevation', 'variance','rgb', 'normal_x', 'normal_y', 'normal_z', 'feat_0','feat_1','feat_2']
         basic_layers: ['elevation']
         fps: 5.0
       # elevation_map_recordable:
