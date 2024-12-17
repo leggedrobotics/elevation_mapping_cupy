@@ -1,7 +1,0 @@
-<launch>
-    <!-- Semantic pointcloud node -->
-    <node pkg="semantic_sensor" type="pointcloud_node.py" name="semantic_pointcloud" args="front_cam"
-          output="screen">
-        <rosparam command="load" file="$(find semantic_sensor)/config/sensor_parameter.yaml"/>
-    </node>
-</launch>

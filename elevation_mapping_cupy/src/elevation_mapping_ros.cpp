@@ -182,14 +182,17 @@ ElevationMappingNode::ElevationMappingNode()
             channels_[key].push_back("y");
             channels_[key].push_back("z");
 
-            rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
-            auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+            // rmw_qos_profile_t qos_profile = rmw_qos_profile_default;
+            // auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+            rmw_qos_profile_t sensor_qos_profile = rmw_qos_profile_sensor_data;
+            auto sensor_qos = rclcpp::QoS(rclcpp::QoSInitialization(sensor_qos_profile.history, sensor_qos_profile.depth), sensor_qos_profile);
 
 
             auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
                   this->pointcloudCallback(msg, key);
               };
-              auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, qos, callback);
+              auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, sensor_qos, callback);
               pointcloudSubs_.push_back(sub);
                 RCLCPP_INFO(this->get_logger(), "Subscribed to PointCloud2 topic: %s", pointcloud_topic.c_str());
           }
@@ -422,7 +425,7 @@ void ElevationMappingNode::inputPointCloud(const sensor_msgs::msg::PointCloud2::
     
     // apply the voxel filtering     
     pcl::PCLPointCloud2::Ptr pcl_pc (new pcl::PCLPointCloud2());
-    pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter;
+    // pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter;
     voxel_filter.setInputCloud(raw_pcl_pc);
     voxel_filter.setLeafSize(voxel_filter_size_,voxel_filter_size_,voxel_filter_size_);
     voxel_filter.filter(*pcl_pc);   
@@ -579,8 +582,8 @@ void ElevationMappingNode::imageCallback(const sensor_msgs::msg::Image::SharedPt
     std::vector<std::string> channels;    
     channels = imageChannelReady_[key].first.channels;
     inputImage(image_msg, camera_info_msg, channels);
-  }
-    RCLCPP_INFO(this->get_logger(), "ElevationMap imageChannelCallback processed an image in %f sec.", (this->now() - start).seconds());
+  }  
+    RCLCPP_DEBUG(this->get_logger(), "ElevationMap imageChannelCallback processed an image in %f sec.", (this->now() - start).seconds());       
 }
 
 

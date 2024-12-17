@@ -70,6 +70,7 @@ include_directories(
   ${Eigen3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${pybind11_INCLUDE_DIRS}
+  ${elevation_map_msgs_INCLUDE_DIRS}
 )
 
 # Declare C++ library

@@ -219,6 +219,7 @@ visualization_msgs::msg::Marker vectorToArrowMarker(const Eigen::Vector3d& start
     double positionAlpha_;
     double orientationAlpha_;
     double voxel_filter_size_;
+    pcl::VoxelGrid<pcl::PCLPointCloud2> voxel_filter;
 
     double recordableFps_;
     std::atomic_bool enablePointCloudPublishing_;
