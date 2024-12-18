@@ -60,7 +60,7 @@ elevation_mapping:
 
     #### Feature toggles ########
     enable_edge_sharpen: true
-    enable_visibility_cleanup: true
+    enable_visibility_cleanup: false
     enable_drift_compensation: true
     enable_overlap_clearance: true
     enable_pointcloud_publishing: false
