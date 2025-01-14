@@ -189,11 +189,40 @@ ElevationMappingNode::ElevationMappingNode()
             auto sensor_qos = rclcpp::QoS(rclcpp::QoSInitialization(sensor_qos_profile.history, sensor_qos_profile.depth), sensor_qos_profile);
 
 
-            auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
-                  this->pointcloudCallback(msg, key);
-              };
-              auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, sensor_qos, callback);
-              pointcloudSubs_.push_back(sub);
+            // point_cloud_transport::Subscriber pct_sub = pct.subscribe(
+            //     "pct/point_cloud", 100,
+            //     [node](const sensor_msgs::msg::PointCloud2::ConstSharedPtr & msg)
+            //     {
+            //       RCLCPP_INFO_STREAM(
+            //         node->get_logger(),
+            //         "Message received, number of points is: " << msg->width * msg->height);
+            //     }, {});
+            // point_cloud_transport::Subscriber sub = pct.subscribe(pointcloud_topic, 100, callback, {}, transport_hint.get())
+
+
+            auto callback_transport = [this, key](const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) {
+            this->pointcloudtransportCallback(msg, key);
+            };
+
+            // Create transport hints (e.g., "draco")
+            // auto transport_hint = std::make_shared<point_cloud_transport::TransportHints>("draco");
+            
+
+            // Use PointCloudTransport to create a subscriber
+            point_cloud_transport::PointCloudTransport pct(node_);
+            auto sub_transport = pct.subscribe(pointcloud_topic, 100, callback_transport);
+
+            // Add the subscriber to the vector to manage its lifetime
+            pointcloudtransportSubs_.push_back(sub_transport);
+
+
+            // auto callback = [this, key](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
+            //       this->pointcloudCallback(msg, key);
+            //   };
+              
+            //   auto sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(pointcloud_topic, sensor_qos, callback);
+            
+            //   pointcloudSubs_.push_back(sub);
                 RCLCPP_INFO(this->get_logger(), "Subscribed to PointCloud2 topic: %s", pointcloud_topic.c_str());
           }
       }
@@ -400,6 +429,23 @@ imageChannelReady_[key] = std::make_pair(*channel_info, true);
     }
 }
 
+
+void ElevationMappingNode::pointcloudtransportCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud, const std::string& key) {
+  
+  //  get channels
+  auto fields = cloud->fields;
+  std::vector<std::string> channels;
+
+  for (size_t it = 0; it < fields.size(); it++) {
+      auto& field = fields[it];
+      channels.push_back(field.name);
+  }
+  inputPointCloud(cloud, channels);
+
+  // This is used for publishing as statistics.
+  pointCloudProcessCounter_++;
+}
+
 void ElevationMappingNode::pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key) {
   //  get channels
   auto fields = cloud->fields;
@@ -415,7 +461,7 @@ void ElevationMappingNode::pointcloudCallback(const sensor_msgs::msg::PointCloud
   pointCloudProcessCounter_++;
 }
 
-void ElevationMappingNode::inputPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud,
+void ElevationMappingNode::inputPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud,
                                            const std::vector<std::string>& channels) {
     auto start = this->now();
     // auto* raw_pcl_pc = new pcl::PCLPointCloud2;
@@ -640,10 +686,13 @@ bool ElevationMappingNode::getSubmap(
   Eigen::Isometry3d transformationOdomToMap;
   geometry_msgs::msg::Pose pose;          
   grid_map::Position requestedSubmapPosition(request->position_x, request->position_y);
+  
+  
   if (requestedFrameId != mapFrameId_) {
     geometry_msgs::msg::TransformStamped transformStamped;
-    const auto& timeStamp = this->now();
+    
     try {
+      const auto& timeStamp = this->now();
       transformStamped = tfBuffer_->lookupTransform(requestedFrameId, mapFrameId_, timeStamp, tf2::durationFromSec(1.0));      
     
     
@@ -691,6 +740,7 @@ bool ElevationMappingNode::getSubmap(
     response->map = *msg_ptr;
 
   }
+  
   return isSuccess;
 }
 

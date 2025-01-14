@@ -109,7 +109,8 @@ elevation_mapping:
     subscribers:
       pointcloud1:
         # topic_name: '/ouster/points'      
-        topic_name: '/camera/camera/depth/color/points'    
+        # topic_name: '/left/zed_node_1/point_cloud/cloud_registered'            
+        topic_name: '/left/zed_node/point_cloud/cloud_registered'            
         data_type: 'pointcloud'
       image1:
         topic_name: '/feat_processing_node/semantic_feat'

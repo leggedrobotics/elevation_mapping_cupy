@@ -40,7 +40,7 @@ find_package(pcl_ros REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(python_cmake_module REQUIRED)
-
+find_package(point_cloud_transport REQUIRED)
 
 _ament_cmake_python_register_environment_hook()
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR script/${PROJECT_NAME})
@@ -61,6 +61,7 @@ set(dependencies
   pcl_ros
   message_filters
   tf2_eigen
+  point_cloud_transport
 )
 
 # Include directories

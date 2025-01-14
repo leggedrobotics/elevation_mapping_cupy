@@ -15,8 +15,9 @@
 // Pybind
 #include <pybind11/embed.h>  // everything needed for embedding
 #include <rclcpp/qos.hpp>
-// ROS
+// ROS2
 #include <geometry_msgs/msg/polygon_stamped.hpp>
+#include <point_cloud_transport/point_cloud_transport.hpp>
 #include <image_transport/image_transport.hpp>
 #include <image_transport/subscriber_filter.hpp>
 #include "message_filters/subscriber.h"
@@ -100,7 +101,9 @@ class ElevationMappingNode : public rclcpp::Node {
 void readParameters();
 void setupMapPublishers();
 void pointcloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::string& key);    
-void inputPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const std::vector<std::string>& channels);
+void pointcloudtransportCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud, const std::string& key);    
+
+void inputPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud, const std::vector<std::string>& channels);
   
 void inputImage(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg,
                   const sensor_msgs::msg::CameraInfo::ConstSharedPtr& camera_info_msg,
@@ -145,6 +148,9 @@ visualization_msgs::msg::Marker vectorToArrowMarker(const Eigen::Vector3d& start
   rclcpp::Node::SharedPtr node_;
   // image_transport::ImageTransport it_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> pointcloudSubs_;
+
+  // std::vector<point_cloud_transport::Subscriber>::SharedPtr> pointcloudtransportSubs_;
+  std::vector<point_cloud_transport::Subscriber> pointcloudtransportSubs_;
 
   std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> imageSubs_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> cameraInfoSubs_;

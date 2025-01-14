@@ -15,6 +15,7 @@
     <depend>std_srvs</depend>    
     <depend>sensor_msgs</depend>
     <depend>geometry_msgs</depend>
+    <depend>point_cloud_transport</depend>    
     
     <depend>message_filters</depend>
     <depend>grid_map_msgs</depend>
