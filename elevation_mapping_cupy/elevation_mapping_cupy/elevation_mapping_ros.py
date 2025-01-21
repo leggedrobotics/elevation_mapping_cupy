@@ -3,7 +3,6 @@ import numpy as np
 import os
 from functools import partial
 
-# ROS 2 imports
 import rclpy
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
@@ -12,23 +11,16 @@ from sensor_msgs.msg import PointCloud2, Image, CameraInfo
 from sensor_msgs_py import point_cloud2
 from tf_transformations import quaternion_matrix
 import tf2_ros
-
 import message_filters
 from cv_bridge import CvBridge
 from rclpy.duration import Duration
-# Message imports
 from grid_map_msgs.msg import GridMap
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import MultiArrayLayout as MAL
 from std_msgs.msg import MultiArrayDimension as MAD
 from rclpy.serialization import serialize_message
-
-# Custom module imports
 from elevation_mapping_cupy import ElevationMap, Parameter
 
-import concurrent.futures
-
-# Define point cloud data types
 PDC_DATATYPE = {
     "1": np.int8,
     "2": np.uint8,
@@ -40,53 +32,41 @@ PDC_DATATYPE = {
     "8": np.float64,
 }
 
-
 class ElevationMappingNode(Node):
     def __init__(self):
-        # Initialize the node without passing callback_group to super()
         super().__init__(
             'elevation_mapping_node',
             automatically_declare_parameters_from_overrides=True,
-            # Add this parameter to enable sim time
             allow_undeclared_parameters=True,
             parameter_overrides=[
                 rclpy.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)
             ]
         )
-
-        # Get package share directory
         self.root = get_package_share_directory("elevation_mapping_cupy")
         weight_file = os.path.join(self.root, "config/core/weights.dat")
         plugin_config_file = os.path.join(self.root, "config/core/plugin_config.yaml")
 
-        # Initialize Parameters
+        # Initialize parameters with some defaults
         self.param = Parameter(
             use_chainer=False,
             weight_file=weight_file,
             plugin_config_file=plugin_config_file
         )
 
-        self.node_name = "elevation_mapping"
-
-        # Initialize ROS components
+        # Read ROS parameters (including YAML)
         self.initialize_ros()
+        self.set_param_values_from_ros()
 
-        # Assign subscriber configuration to parameters
+        # Overwrite subscriber_cfg from loaded YAML
         self.param.subscriber_cfg = self.my_subscribers
 
-        # Initialize Elevation Mapping
         self.initialize_elevation_mapping()
-
-        # Register ROS subscribers, publishers, and timers
         self.register_subscribers()
         self.register_publishers()
         self.register_timers()
-
-        # timestamp of latest pcd or image msg
         self._last_t = None
 
     def initialize_elevation_mapping(self) -> None:
-        """Initialize the elevation mapping module."""
         self.param.update()
         self._pointcloud_process_counter = 0
         self._image_process_counter = 0
@@ -94,18 +74,17 @@ class ElevationMappingNode(Node):
         self._map_data = np.zeros(
             (self._map.cell_n - 2, self._map.cell_n - 2), dtype=np.float32
         )
+        self.get_logger().info(f"Initialized map with length: {self._map.map_length}, resolution: {self._map.resolution}, cells: {self._map.cell_n}")
+
         self._map_q = None
         self._map_t = None
 
     def initialize_ros(self) -> None:
-        """Initialize ROS-related components such as TF buffer and listener."""
         self._tf_buffer = tf2_ros.Buffer()
         self._listener = tf2_ros.TransformListener(self._tf_buffer, self)
         self.get_ros_params()
 
     def get_ros_params(self) -> None:
-        """Retrieve ROS parameters from the node."""
-        # Get parameters with default values
         self.use_chainer = self.get_parameter('use_chainer').get_parameter_value().bool_value
         self.weight_file = self.get_parameter('weight_file').get_parameter_value().string_value
         self.plugin_config_file = self.get_parameter('plugin_config_file').get_parameter_value().string_value
@@ -128,36 +107,7 @@ class ElevationMappingNode(Node):
         self.enable_normal_arrow_publishing = self.get_parameter('enable_normal_arrow_publishing').get_parameter_value().bool_value
         self.enable_drift_corrected_TF_publishing = self.get_parameter('enable_drift_corrected_TF_publishing').get_parameter_value().bool_value
         self.use_initializer_at_start = self.get_parameter('use_initializer_at_start').get_parameter_value().bool_value
-
-        # Log parameters
-        self.get_logger().info("\n=== Loaded Parameters ===")
-        self.get_logger().info(f"use_chainer: {self.use_chainer}")
-        self.get_logger().info(f"weight_file: {self.weight_file}")
-        self.get_logger().info(f"plugin_config_file: {self.plugin_config_file}")
-        self.get_logger().info(f"initialize_frame_id: {self.initialize_frame_id}")
-        self.get_logger().info(f"initialize_tf_offset: {self.initialize_tf_offset}")
-        self.get_logger().info(f"map_frame: {self.map_frame}")
-        self.get_logger().info(f"base_frame: {self.base_frame}")
-        self.get_logger().info(f"corrected_map_frame: {self.corrected_map_frame}")
-        self.get_logger().info(f"initialize_method: {self.initialize_method}")
-        self.get_logger().info(f"position_lowpass_alpha: {self.position_lowpass_alpha}")
-        self.get_logger().info(f"orientation_lowpass_alpha: {self.orientation_lowpass_alpha}")
-        self.get_logger().info(f"recordable_fps: {self.recordable_fps}")
-        self.get_logger().info(f"update_variance_fps: {self.update_variance_fps}")
-        self.get_logger().info(f"time_interval: {self.time_interval}")
-        self.get_logger().info(f"update_pose_fps: {self.update_pose_fps}")
-        self.get_logger().info(f"initialize_tf_grid_size: {self.initialize_tf_grid_size}")
-        self.get_logger().info(f"map_acquire_fps: {self.map_acquire_fps}")
-        self.get_logger().info(f"publish_statistics_fps: {self.publish_statistics_fps}")
-        self.get_logger().info(f"enable_pointcloud_publishing: {self.enable_pointcloud_publishing}")
-        self.get_logger().info(f"enable_normal_arrow_publishing: {self.enable_normal_arrow_publishing}")
-        self.get_logger().info(f"enable_drift_corrected_TF_publishing: {self.enable_drift_corrected_TF_publishing}")
-        self.get_logger().info(f"use_initializer_at_start: {self.use_initializer_at_start}")
-        self.get_logger().info("=======================\n")
-
-        # Retrieve subscribers using prefix
         subscribers_params = self.get_parameters_by_prefix('subscribers')
-        self.get_logger().info(f"Subscribers params: {subscribers_params}")
         self.my_subscribers = {}
         for param_name, param_value in subscribers_params.items():
             parts = param_name.split('.')
@@ -166,12 +116,7 @@ class ElevationMappingNode(Node):
                 if sub_key not in self.my_subscribers:
                     self.my_subscribers[sub_key] = {}
                 self.my_subscribers[sub_key][sub_param] = param_value.value
-            else:
-                self.get_logger().warn(f"Unexpected subscriber parameter format: {param_name}")
-
-        # Retrieve publishers using prefix
         publishers_params = self.get_parameters_by_prefix('publishers')
-        self.get_logger().info(f"Publishers params: {publishers_params}")
         self.my_publishers = {}
         for param_name, param_value in publishers_params.items():
             parts = param_name.split('.')
@@ -180,25 +125,88 @@ class ElevationMappingNode(Node):
                 if pub_key not in self.my_publishers:
                     self.my_publishers[pub_key] = {}
                 self.my_publishers[pub_key][pub_param] = param_value.value
-            else:
-                self.get_logger().warn(f"Unexpected publisher parameter format: {param_name}")
 
-        # Log loaded subscribers and publishers for debugging
-        self.get_logger().info(f"Loaded Subscribers: {self.my_subscribers}")
-        self.get_logger().info(f"Loaded Publishers: {self.my_publishers}")
 
-        # If you want to list all parameters for debugging
-        params = self.get_parameters_by_prefix('')
-        for param_name, param_value in params.items():
-            self.get_logger().info(f"Parameter '{param_name}': {param_value.value}")
+    def set_param_values_from_ros(self):
+        # Assign to self.param so it won't use defaults
+        # Use try/except so missing params won't cause errors
+        try: self.param.resolution = self.get_parameter('resolution').get_parameter_value().double_value
+        except: pass
+        try: self.param.map_length = self.get_parameter('map_length').get_parameter_value().double_value
+        except: pass
+        try: self.param.sensor_noise_factor = self.get_parameter('sensor_noise_factor').get_parameter_value().double_value
+        except: pass
+        try: self.param.mahalanobis_thresh = self.get_parameter('mahalanobis_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.outlier_variance = self.get_parameter('outlier_variance').get_parameter_value().double_value
+        except: pass
+        try: 
+            # The YAML has 'drift_compensation_variance_inler', but our param is 'drift_compensation_variance_inlier'
+            self.param.drift_compensation_variance_inlier = self.get_parameter('drift_compensation_variance_inler').get_parameter_value().double_value
+        except: pass
+        try: self.param.max_drift = self.get_parameter('max_drift').get_parameter_value().double_value
+        except: pass
+        try: self.param.drift_compensation_alpha = self.get_parameter('drift_compensation_alpha').get_parameter_value().double_value
+        except: pass
+        try: self.param.time_variance = self.get_parameter('time_variance').get_parameter_value().double_value
+        except: pass
+        try: self.param.max_variance = self.get_parameter('max_variance').get_parameter_value().double_value
+        except: pass
+        try: self.param.initial_variance = self.get_parameter('initial_variance').get_parameter_value().double_value
+        except: pass
+        try: self.param.traversability_inlier = self.get_parameter('traversability_inlier').get_parameter_value().double_value
+        except: pass
+        try: self.param.dilation_size = self.get_parameter('dilation_size').get_parameter_value().integer_value
+        except: pass
+        try: self.param.wall_num_thresh = self.get_parameter('wall_num_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.min_height_drift_cnt = self.get_parameter('min_height_drift_cnt').get_parameter_value().double_value
+        except: pass
+        try: self.param.position_noise_thresh = self.get_parameter('position_noise_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.orientation_noise_thresh = self.get_parameter('orientation_noise_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.min_valid_distance = self.get_parameter('min_valid_distance').get_parameter_value().double_value
+        except: pass
+        try: self.param.max_height_range = self.get_parameter('max_height_range').get_parameter_value().double_value
+        except: pass
+        try: self.param.ramped_height_range_a = self.get_parameter('ramped_height_range_a').get_parameter_value().double_value
+        except: pass
+        try: self.param.ramped_height_range_b = self.get_parameter('ramped_height_range_b').get_parameter_value().double_value
+        except: pass
+        try: self.param.ramped_height_range_c = self.get_parameter('ramped_height_range_c').get_parameter_value().double_value
+        except: pass
+        try: self.param.max_ray_length = self.get_parameter('max_ray_length').get_parameter_value().double_value
+        except: pass
+        try: self.param.cleanup_step = self.get_parameter('cleanup_step').get_parameter_value().double_value
+        except: pass
+        try: self.param.cleanup_cos_thresh = self.get_parameter('cleanup_cos_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.safe_thresh = self.get_parameter('safe_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.safe_min_thresh = self.get_parameter('safe_min_thresh').get_parameter_value().double_value
+        except: pass
+        try: self.param.max_unsafe_n = self.get_parameter('max_unsafe_n').get_parameter_value().integer_value
+        except: pass
+        try: self.param.overlap_clear_range_xy = self.get_parameter('overlap_clear_range_xy').get_parameter_value().double_value
+        except: pass
+        try: self.param.overlap_clear_range_z = self.get_parameter('overlap_clear_range_z').get_parameter_value().double_value
+        except: pass
+        try: self.param.enable_edge_sharpen = self.get_parameter('enable_edge_sharpen').get_parameter_value().bool_value
+        except: pass
+        try: self.param.enable_visibility_cleanup = self.get_parameter('enable_visibility_cleanup').get_parameter_value().bool_value
+        except: pass
+        try: self.param.enable_drift_compensation = self.get_parameter('enable_drift_compensation').get_parameter_value().bool_value
+        except: pass
+        try: self.param.enable_overlap_clearance = self.get_parameter('enable_overlap_clearance').get_parameter_value().bool_value
+        except: pass
+        try: self.param.use_only_above_for_upper_bound = self.get_parameter('use_only_above_for_upper_bound').get_parameter_value().bool_value
+        except: pass
 
     def register_subscribers(self) -> None:
-        """Register ROS subscribers for pointclouds and images."""
-        # Initialize CvBridge if needed
         if any(config.get("data_type") == "image" for config in self.my_subscribers.values()):
             self.cv_bridge = CvBridge()
 
-        # Dictionaries to hold subscribers
         pointcloud_subs = {}
         image_subs = {}
 
@@ -207,8 +215,6 @@ class ElevationMappingNode(Node):
             if data_type == "image":
                 topic_name_camera = config.get("topic_name_camera", "/camera/image")
                 topic_name_camera_info = config.get("topic_name_camera_info", "/camera/camera_info")
-
-                # Initialize message_filters Subscribers without passing callback_group
                 camera_sub = message_filters.Subscriber(
                     self,
                     Image,
@@ -219,14 +225,11 @@ class ElevationMappingNode(Node):
                     CameraInfo,
                     topic_name_camera_info
                 )
-
-                # Synchronize image and camera info
                 image_sync = message_filters.ApproximateTimeSynchronizer(
                     [camera_sub, camera_info_sub], queue_size=10, slop=0.5
                 )
                 image_sync.registerCallback(partial(self.image_callback, sub_key=key))
                 image_subs[key] = image_sync
-
             elif data_type == "pointcloud":
                 topic_name = config.get("topic_name", "/pointcloud")
                 qos_profile = rclpy.qos.QoSProfile(
@@ -235,8 +238,6 @@ class ElevationMappingNode(Node):
                     durability=rclpy.qos.DurabilityPolicy.VOLATILE,
                     history=rclpy.qos.HistoryPolicy.KEEP_LAST
                 )
-
-                # Create subscription without passing callback_group
                 subscription = self.create_subscription(
                     PointCloud2,
                     topic_name,
@@ -245,20 +246,12 @@ class ElevationMappingNode(Node):
                 )
                 pointcloud_subs[key] = subscription
 
-            else:
-                self.get_logger().warn(f"Unknown data_type '{data_type}' for subscriber '{key}'")
-
-        self.get_logger().info(
-            f"Registered {len(pointcloud_subs)} pointcloud subscribers and {len(image_subs)} image subscribers."
-        )
-
     def register_publishers(self) -> None:
-        """Register ROS publishers for elevation maps."""
         self._publishers_dict = {}
         self._publishers_timers = []
 
         for pub_key, pub_config in self.my_publishers.items():
-            topic_name = f"/{self.node_name}/{pub_key}"
+            topic_name = f"/{self.get_name()}/{pub_key}"
             publisher = self.create_publisher(GridMap, topic_name, 10)
             self._publishers_dict[pub_key] = publisher
 
@@ -269,10 +262,7 @@ class ElevationMappingNode(Node):
             )
             self._publishers_timers.append(timer)
 
-            self.get_logger().info(f"Publisher '{pub_key}' registered on topic '{topic_name}' with {fps} Hz.")
-
     def register_timers(self) -> None:
-        """Register ROS timers for pose update, variance update, and time update."""
         self.time_pose_update = self.create_timer(
             0.1,
             self.pose_update
@@ -287,16 +277,8 @@ class ElevationMappingNode(Node):
         )
 
     def publish_map(self, key: str) -> None:
-        """
-        Publish the elevation map on the specified topic.
-
-        Args:
-            key (str): The key identifying which publisher to use.
-        """
         if self._map_q is None:
-            self.get_logger().info("No map pose available for publishing.")
             return
-
         gm = GridMap()
         gm.header.frame_id = self.map_frame
         gm.header.stamp = self.get_clock().now().to_msg()
@@ -306,10 +288,10 @@ class ElevationMappingNode(Node):
         gm.info.pose.position.x = self._map_t.x
         gm.info.pose.position.y = self._map_t.y
         gm.info.pose.position.z = 0.0
-        gm.info.pose.orientation.w = 1.0  # self._map_q.w
-        gm.info.pose.orientation.x = 0.0  # self._map_q.x
-        gm.info.pose.orientation.y = 0.0  # self._map_q.y
-        gm.info.pose.orientation.z = 0.0  # self._map_q.z
+        gm.info.pose.orientation.w = 1.0
+        gm.info.pose.orientation.x = 0.0
+        gm.info.pose.orientation.y = 0.0
+        gm.info.pose.orientation.z = 0.0
         gm.layers = []
         gm.basic_layers = self.my_publishers[key]["basic_layers"]
 
@@ -321,174 +303,116 @@ class ElevationMappingNode(Node):
             N = self._map_data.shape[0]
             arr.layout.dim.append(MAD(label="column_index", size=N, stride=int(N * N)))
             arr.layout.dim.append(MAD(label="row_index", size=N, stride=N))
-            # Convert to a Python list to satisfy the message requirements
             arr.data = self._map_data.T.flatten().tolist()
             gm.data.append(arr)
 
         gm.outer_start_index = 0
         gm.inner_start_index = 0
-
         self._publishers_dict[key].publish(gm)
 
-    def image_callback(self, camera_msg: Image, camera_info_msg: CameraInfo, sub_key: str) -> None:
-        """
-        Callback function for synchronized image and camera info messages.
-
-        Args:
-            camera_msg (Image): The image message.
-            camera_info_msg (CameraInfo): The camera info message.
-            sub_key (str): The subscriber key identifier.
-        """
-        # Store timestamps
-        self._last_t = camera_msg.header.stamp
-        
+    def safe_lookup_transform(self, target_frame, source_frame, time):
         try:
-            # Convert image using cv_bridge
-            semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
-        except Exception as e:
-            self.get_logger().error(f"CV Bridge conversion failed: {e}")
-            return
+            return self._tf_buffer.lookup_transform(
+                target_frame,
+                source_frame,
+                time
+            )
+        except tf2_ros.ExtrapolationException:
+            return self._tf_buffer.lookup_transform(
+                target_frame,
+                source_frame,
+                rclpy.time.Time()
+            )
 
-        # Ensure image is grayscale or split channels
+    def image_callback(self, camera_msg: Image, camera_info_msg: CameraInfo, sub_key: str) -> None:
+        self._last_t = camera_msg.header.stamp
+        try:
+            semantic_img = self.cv_bridge.imgmsg_to_cv2(camera_msg, desired_encoding="passthrough")
+        except:
+            return
         if len(semantic_img.shape) != 2:
             semantic_img = [semantic_img[:, :, k] for k in range(semantic_img.shape[2])]
         else:
             semantic_img = [semantic_img]
 
-        # Get camera parameters
         K = np.array(camera_info_msg.k, dtype=np.float32).reshape(3, 3)
         D = np.array(camera_info_msg.d, dtype=np.float32).reshape(-1, 1)
 
-        if not np.all(D == 0.0):
-            self.get_logger().warn("Camera distortion coefficients are not zero. Undistortion not implemented.")
-
-        # Get transform from camera frame to map frame
-        try:
-            transform_camera_to_map = self._tf_buffer.lookup_transform(
-                self.map_frame,
-                camera_msg.header.frame_id,
-                camera_msg.header.stamp
-            )
-            
-            t = transform_camera_to_map.transform.translation
-            q = transform_camera_to_map.transform.rotation
-            t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
-            R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
-            
-            # Process image
-            self._map.input_image(
-                sub_key, semantic_img, R, t_np, K, D, 
-                camera_info_msg.height, camera_info_msg.width
-            )
-            self._image_process_counter += 1
-            self.get_logger().debug(f"Images processed: {self._image_process_counter}")
-
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            self.get_logger().warn(f"[image_callback] Transform lookup failed: {e}")
-        except Exception as e:
-            self.get_logger().error(f"[image_callback] Unexpected error: {str(e)}")
+        transform_camera_to_map = self.safe_lookup_transform(
+            self.map_frame,
+            camera_msg.header.frame_id,
+            camera_msg.header.stamp
+        )
+        t = transform_camera_to_map.transform.translation
+        q = transform_camera_to_map.transform.rotation
+        t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
+        R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
+        self._map.input_image(
+            sub_key, semantic_img, R, t_np, K, D,
+            camera_info_msg.height, camera_info_msg.width
+        )
+        self._image_process_counter += 1
 
     def pointcloud_callback(self, msg: PointCloud2, sub_key: str) -> None:
-        """
-        Callback function for point cloud messages.
-
-        Args:
-            msg (PointCloud2): The point cloud message.
-            sub_key (str): The subscriber key identifier.
-        """        
         self._last_t = msg.header.stamp
         channels = ["x", "y", "z"] + self.param.subscriber_cfg[sub_key].get("channels", [])
-
         try:
             points = rnp.numpify(msg)
-        except Exception as e:
-            self.get_logger().error(f"Failed to numpify pointcloud: {e}")
+        except:
             return
-
         if points['xyz'].size == 0:
-            self.get_logger().warn("Received empty point cloud.")
             return
-
         frame_sensor_id = msg.header.frame_id
-        try:
-            # Add a timeout to wait for the transform to become available
-            transform_sensor_to_map = self._tf_buffer.lookup_transform(
-                self.map_frame,
-                frame_sensor_id,
-                self._last_t,
-            )
-
-            t = transform_sensor_to_map.transform.translation
-            q = transform_sensor_to_map.transform.rotation
-            t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
-            R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
-            
-            self._map.input_pointcloud(points['xyz'], channels, R, t_np, 0, 0)
-            self._pointcloud_process_counter += 1
-
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            self.get_logger().debug(f"[pointcloud_callback] Transform lookup failed: {e}")
-        except Exception as e:
-            self.get_logger().error(f"[pointcloud_callback] Unexpected error: {str(e)}")
+        transform_sensor_to_map = self.safe_lookup_transform(
+            self.map_frame,
+            frame_sensor_id,
+            msg.header.stamp
+        )
+        t = transform_sensor_to_map.transform.translation
+        q = transform_sensor_to_map.transform.rotation
+        t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
+        R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
+        self._map.input_pointcloud(points['xyz'], channels, R, t_np, 0, 0)
+        self._pointcloud_process_counter += 1
 
     def pose_update(self) -> None:
-        """Update the pose based on the latest transform."""
         if self._last_t is None:
-            self.get_logger().debug("No timestamp available for pose update.")
             return
- 
-        try:
-            transform = self._tf_buffer.lookup_transform(
-                self.map_frame,
-                self.base_frame,
-                self._last_t
-            )
-
-            # Update the pose
-            t = transform.transform.translation
-            q = transform.transform.rotation
-            trans = np.array([t.x, t.y, t.z], dtype=np.float32)
-            rot = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
-
-            self._map.move_to(trans, rot)
-            self._map_t = t
-            self._map_q = q
-
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            self.get_logger().warn(f"[pose_update] Transform lookup failed: {e}")
-        except Exception as e:
-            self.get_logger().error(f"[pose_update] Unexpected error: {str(e)}")
+        transform = self.safe_lookup_transform(
+            self.map_frame,
+            self.base_frame,
+            self._last_t
+        )
+        t = transform.transform.translation
+        q = transform.transform.rotation
+        trans = np.array([t.x, t.y, t.z], dtype=np.float32)
+        rot = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
+        self._map.move_to(trans, rot)
+        self._map_t = t
+        self._map_q = q
 
     def update_variance(self) -> None:
         self._map.update_variance()
-        self.get_logger().debug("Variance updated.")
 
     def update_time(self) -> None:
         self._map.update_time()
-        self.get_logger().debug("Time updated.")
 
     def destroy_node(self) -> None:
         super().destroy_node()
 
-
 def main(args=None) -> None:
-    """Main entry point for the elevation mapping node."""
     rclpy.init(args=args)
     node = ElevationMappingNode()
-
-    # Use a SingleThreadedExecutor as per original implementation
     executor = rclpy.executors.SingleThreadedExecutor()
     executor.add_node(node)
-
     try:
         executor.spin()
     except KeyboardInterrupt:
-        node.get_logger().info("Shutting down ElevationMappingNode.")
+        pass
     finally:
         executor.shutdown()
         node.destroy_node()
         rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

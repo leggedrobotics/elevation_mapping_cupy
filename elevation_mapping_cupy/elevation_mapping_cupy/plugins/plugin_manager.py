@@ -132,7 +132,6 @@ class PluginManager(object):
         self.plugin_names = self.get_plugin_names()
 
     def load_plugin_settings(self, file_path: str):
-        print("Start loading plugins...")
         cfg = YAML().load(open(file_path, "r"))
         plugin_params = []
         extra_params = []

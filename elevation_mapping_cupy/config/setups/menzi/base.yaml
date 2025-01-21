@@ -1,0 +1,25 @@
+elevation_mapping_node:
+  ros__parameters:
+    pointcloud_channel_fusions:
+      rgb: 'color'
+      default: 'average'
+
+    image_channel_fusions:
+      rgb: 'color'
+      default: 'exponential'
+      feat_.*: 'exponential'
+
+    subscribers:
+      front_cam:
+        topic_name: '/ouster_points_self_filtered'
+        data_type: pointcloud
+
+    publishers:
+      elevation_map_raw:
+        layers: ['elevation', 'traversability', 'variance','rgb']
+        basic_layers: ['elevation']
+        fps: 5.0
+      elevation_map_filter:
+        layers: ['min_filter', 'smooth', 'inpaint', 'elevation']
+        basic_layers: ['min_filter']
+        fps: 3.0

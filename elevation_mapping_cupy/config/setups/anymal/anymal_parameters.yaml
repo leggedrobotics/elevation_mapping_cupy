@@ -1,7 +1,7 @@
 /elevation_mapping_node:
   ros__parameters:
     #### Basic parameters ########
-    resolution: 0.04                                # resolution in m.
+    resolution: 0.04                               # resolution in m.
     map_length: 8                                   # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
     mahalanobis_thresh: 2.0                         # points outside this distance is outlier.

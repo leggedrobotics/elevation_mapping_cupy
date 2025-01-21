@@ -108,7 +108,7 @@ def generate_launch_description():
     robot_description_content = Command([
         'cat ',
         PathJoinSubstitution([
-            turtlebot3_description_dir, 'urdf', 'turtlebot3_waffle_camera.urdf'
+            turtlebot3_description_dir, 'urdf', 'turtlebot3_waffle.urdf'
         ])
     ])
 
@@ -150,7 +150,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Add the declared arguments
-    # ld.add_action(use_sim_time_arg)
+    ld.add_action(use_sim_time_arg)
     # ld.add_action(rviz_config_arg)
     ld.add_action(model_arg)
     ld.add_action(x_pos_arg)
