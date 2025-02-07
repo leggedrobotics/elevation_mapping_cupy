@@ -41,7 +41,7 @@ class SemanticMap:
         self.new_map = xp.zeros((self.amount_layer_names, self.param.cell_n, self.param.cell_n), param.data_type,)
         # which layers should be reset to zero at each update, per default everyone,
         # if a layer should not be reset, it is defined in compile_kernels function
-        self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool8)
+        self.delete_new_layers = cp.ones(self.new_map.shape[0], cp.bool_)
         self.fusion_manager = FusionManager(self.param)
 
     def clear(self):
@@ -94,7 +94,7 @@ class SemanticMap:
             self.new_map = cp.append(
                 self.new_map, cp.zeros((1, self.param.cell_n, self.param.cell_n), dtype=self.param.data_type), axis=0,
             )
-            self.delete_new_layers = cp.append(self.delete_new_layers, cp.array([1], dtype=cp.bool8))
+            self.delete_new_layers = cp.append(self.delete_new_layers, cp.array([1], dtype=cp.bool_))
 
     def pad_value(self, x, shift_value, idx=None, value=0.0):
         """Create a padding of the map along x,y-axis according to amount that has shifted.

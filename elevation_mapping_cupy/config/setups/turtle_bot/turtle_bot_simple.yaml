@@ -13,6 +13,7 @@
       front_cam:
         topic_name: '/intel_realsense_r200_depth/points'
         data_type: pointcloud
+        channels: ['rgb']
 
     publishers:
       elevation_map_raw:

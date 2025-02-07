@@ -20,7 +20,7 @@ elevation_mapping_node:
     orientation_noise_thresh: 0.01                  # if the orientation change is bigger than this value, the drift compensation happens.
     position_lowpass_alpha: 0.2                     # lowpass filter alpha used for detecting movements.
     orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
-    min_valid_distance: 4.0                         # points with shorter distance will be filtered out.
+    min_valid_distance: 0.1                         # points with shorter distance will be filtered out.
     max_height_range: 10.5                           # points higher than this value from sensor will be filtered out
     ramped_height_range_a: 0.3                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
     ramped_height_range_b: 1.0                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
@@ -44,9 +44,9 @@ elevation_mapping_node:
     overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
     overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
 
-    map_frame: 'World'                               # The map frame where the odometry source uses.
-    base_frame: 'BASE'                    # The robot's base frame. This frame will be a center of the map.
-    corrected_map_frame: 'World'
+    map_frame: 'odom'                               # The map frame where the odometry source uses.
+    base_frame: 'base_link'                    # The robot's base frame. This frame will be a center of the map.
+    corrected_map_frame: 'odom'
     
 
     # map_frame: 'World'                               # The map frame where the odometry source uses.

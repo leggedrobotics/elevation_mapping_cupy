@@ -14,10 +14,10 @@
 
   <!-- Build Dependencies -->
   <build_depend>ament_cmake</build_depend>
-  <build_depend>cmake_clang_tools</build_depend>
+  <!-- <build_depend>cmake_clang_tools</build_depend> -->
   <build_depend>grid_map_cv</build_depend>
   <build_depend>grid_map_core</build_depend>
-  <build_depend>Eigen3</build_depend>
+  <build_depend>eigen</build_depend>
   
   <!-- Build and Execution Dependencies -->
   <depend>rosidl_runtime_cpp</depend>

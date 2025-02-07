@@ -7,7 +7,7 @@
   <license>MIT</license>
 
   <!-- Build tool dependencies -->
-  <buildtool_depend>ament_python</buildtool_depend>
+  <!-- <buildtool_depend>ament_python</buildtool_depend> -->
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <!-- Core ROS2 dependencies -->
@@ -21,20 +21,31 @@
   <depend>image_transport</depend>
   <depend>pcl_ros</depend>
   <depend>pybind11</depend>
+  <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
   <depend>ros2_numpy</depend>
+  <!-- Numpy version needs to be <2.0.0 -->
+  <depend>numpy</depend>
   <depend>tf2_ros</depend>
   <depend>message_filters</depend>
   <depend>cv_bridge</depend>
   <depend>ament_index_python</depend>
   <depend>tf_transformations</depend>
 
+
   <!-- Additional dependencies -->
   <depend>rviz2</depend>
   <depend>gazebo_ros</depend>
   <depend>robot_state_publisher</depend>
+  <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
   <depend>opencv-python</depend>
+  <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+  <!-- <depend>trimesh</depend> -->
+  <!--TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+  <depend>cupy-cuda12x</depend>
+  <depend>simple-parsing</depend>
   
   <!-- Export dependencies -->
+  <!-- Might need to change to ament_cmake_python -->
   <build_export_depend>ament_python</build_export_depend>
   <exec_depend>ament_python</exec_depend>
 
