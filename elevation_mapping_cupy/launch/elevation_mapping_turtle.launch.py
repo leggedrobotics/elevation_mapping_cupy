@@ -4,6 +4,7 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.descriptions import ParameterFile
 
 
 def generate_launch_description():
@@ -47,11 +48,11 @@ def generate_launch_description():
     )
     elevation_mapping_node = Node(
         package='elevation_mapping_cupy',
-        executable='elevation_mapping_node.py',
+        executable='elevation_mapping_node',
         name='elevation_mapping_node',
         output='screen',
         parameters=[
-            core_param_path, 
+            ParameterFile(core_param_path, allow_substs=True), 
             turtle_param_path,
             {'use_sim_time': use_sim_time}
         ]
