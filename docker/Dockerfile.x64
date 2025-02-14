@@ -1,46 +1,208 @@
-FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04
+# syntax=docker/dockerfile:1.4
 
-# Set noninteractive mode for apt-get
-ENV DEBIAN_FRONTEND=noninteractive
+# Base image
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS base
 
-# Preconfigure tzdata
-RUN echo "Etc/UTC" > /etc/timezone && \
-    ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
-    apt-get update && apt-get install -y tzdata && \
-    dpkg-reconfigure --frontend noninteractive tzdata
+# Metadata
+LABEL description="ROS2 environment with CUDA support"
+LABEL version="1.0"
 
-# Install Python
-RUN apt-get update && apt-get install -y \
-    python3.8 \
-    python3-pip \
-    git
+# Build arguments
+ARG ROS_DISTRO=humble
+ARG USERNAME=ros
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG RMW_NAME=zenoh
 
-# Install PyTorch
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt
-RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.UTF-8 \
+    LC_ALL=${LANG}\
+    TZ=UTC \
+    PYTHONUNBUFFERED=1 \
+    ROS_DISTRO=${ROS_DISTRO} \
+    ROS_ROOT=/opt/ros/${ROS_DISTRO} \
+    AMENT_PREFIX_PATH=/opt/ros/${ROS_DISTRO} \
+    COLCON_PREFIX_PATH=/opt/ros/${ROS_DISTRO} \
+    LD_LIBRARY_PATH=/opt/ros/${ROS_DISTRO}/lib:/usr/local/cuda/lib64 \
+    PATH=/opt/ros/${ROS_DISTRO}/bin:/usr/src/tensorrt/bin:/usr/local/cuda/bin:$PATH \
+    PYTHONPATH=/opt/ros/${ROS_DISTRO}/lib/python3.10/site-packages \
+    # Used by various ROS2 packages
+    RMW_IMPLEMENTATION=rmw_${RMW_NAME}_cpp \
+    # Should be the same as above but with dashes instead of underscores
+    RMW_IMPLEMENTATION_DASH=rmw-${RMW_NAME}-cpp
 
-# Install other Python packages
-RUN pip3 install cupy-cuda11x scikit-learn
-RUN pip3 install 'git+https://github.com/facebookresearch/detectron2.git'
+# Install basic utilities and dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt update && apt install -y --no-install-recommends \
+        locales \
+        tzdata \
+        curl \
+        gnupg2 \
+        lsb-release \
+        sudo \
+        software-properties-common \
+        wget \
+        git \
+        git-lfs \
+        nano \
+    && locale-gen ${LANG} \
+    && update-locale LC_ALL=${LC_ALL} LANG=${LANG}\
+    && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && dpkg-reconfigure -f ${DEBIAN_FRONTEND} tzdata \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install ROS
-RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list'
+# Install ROS2
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null \
+    && apt update && apt install -y --no-install-recommends \
+        ros-${ROS_DISTRO}-ros-base \
+        python3-argcomplete \
+        ros-${ROS_DISTRO}-${RMW_IMPLEMENTATION_DASH} \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-noetic-desktop-full
+# Development stage
+FROM base AS dev
 
-# Install ROS packages
-RUN apt install -y ros-noetic-pybind11-catkin \
-    ros-noetic-grid-map-core ros-noetic-grid-map-msgs ros-noetic-grid-map-ros ros-noetic-grid-map-rviz-plugin \
-    libopencv-dev \
-    libeigen3-dev \
-    libgmp-dev \
-    libmpfr-dev \
-    libboost-all-dev \
-    ros-noetic-turtlebot3-gazebo ros-noetic-turtlebot3-teleop \
-    ros-noetic-ros-numpy
+# Install development tools and dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt update && apt install -y --no-install-recommends \
+        bash-completion \
+        build-essential \
+        cmake \
+        gdb \
+        openssh-client \
+        python3-pip \
+        vim \
+        doxygen \
+        graphviz \
+        python3-sphinx \
+        python3-breathe \
+        ros-dev-tools \
+        ros-${ROS_DISTRO}-ament-* \
+        python3-rosdep \
+        libxine2-dev \
+        libtiff5-dev \
+        libpostproc-dev \
+        libopencv-dev \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install catkin-tools
-ENV TURTLEBOT3_MODEL=waffle
+# Initialize rosdep
+RUN rosdep init && rosdep update
+
+# Pytorch
+# Used by elevation_mapping_cupy
+RUN python3 -m pip install -U --extra-index-url https://download.pytorch.org/whl/cu121 \
+    torch \
+    torchvision \
+    torchaudio
+
+# Install Python packages
+RUN python3 -m pip install \
+    # colcon extension to enable easier workspace cleaning
+    colcon-clean\
+    # Almost all ros2 packages
+    rosdoc2\
+    # sphinx is used across packages for documentation
+    sphinx_rtd_theme \
+    sphinx-multiversion \
+    sphinx-copybutton\
+    sphinx-tabs\
+    # For VS Code python code formatting I think?
+    autopep8\
+    # Used by multiple packages for linting I think?
+    flake8-builtins\
+    flake8-comprehensions\
+    flake8-docstrings\
+    flake8-import-order\
+    flake8-class-newline\
+    flake8-blind-except\
+    flake8-quotes\
+    # For Python code formatting. Not sure what package uses it
+    # black==21.12b0\
+    #### For elevation_mapping_cupy ####
+    ruamel.yaml\
+    scikit-learn\
+    shapely\
+    opencv-python\
+    cupy-cuda12x\
+    scipy\
+    simple-parsing\
+    "numpy<2.0.0" 
+
+# Needed for elevation_mapping_cupy to not have run-time errors
+RUN python3 -m pip install transforms3d -U
+
+# Set up non-root user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Set up autocompletion and source ROS environment for user
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc \
+    && echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> /home/$USERNAME/.bashrc
+
+# For building GPU supported containers?
+# Install NVIDIA Container Toolkit
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+    && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
+    && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list \
+    && apt update && apt install -y nvidia-container-toolkit \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    apt update && apt install -y --no-install-recommends \
+    # For elevation_mapping_cupy
+    libboost-all-dev\
+    && apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt update && \
+    DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt install -y \
+    #### For elevation_mapping_cupy ####
+    ros-${ROS_DISTRO}-grid-map-msgs\
+    ros-${ROS_DISTRO}-grid-map-ros\
+    ros-${ROS_DISTRO}-image-transport\
+    ros-${ROS_DISTRO}-pcl-ros\
+    ros-${ROS_DISTRO}-cv-bridge\
+    ros-${ROS_DISTRO}-tf-transformations\
+    ros-${ROS_DISTRO}-rviz2\
+    ros-${ROS_DISTRO}-gazebo-ros\
+    ros-${ROS_DISTRO}-grid-map-cv\
+    ros-${ROS_DISTRO}-grid-map-core\
+    ros-${ROS_DISTRO}-grid-map-demos\
+    ##################################
+    #### For debugging elevation_mapping_cupy by setting up turtlebot3_simulations####
+    # ros-${ROS_DISTRO}-turtlebot3*\
+    ros-${ROS_DISTRO}-camera-calibration-parsers\
+    ros-${ROS_DISTRO}-camera-info-manager\
+    ros-${ROS_DISTRO}-gazebo-plugins\
+    ros-${ROS_DISTRO}-turtlebot3-msgs\
+    ros-${ROS_DISTRO}-turtlebot3-teleop\
+    ros-${ROS_DISTRO}-gazebo-ros-pkgs\
+    ##############################################
+    && apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+# Switch to non-root user
+USER $USERNAME
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD ros2 topic list > /dev/null 2>&1 || exit 1
+
+# Set ID to value not used by others on your network
+ENV ROS_DOMAIN_ID=12
+
+# For elevation_mapping_cupy
+ENV TURTLEBOT3_MODEL=waffle_realsense_depth
+
+# Set the default command to bash
+CMD ["bash"]
