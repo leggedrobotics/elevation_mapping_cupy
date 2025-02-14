@@ -19,10 +19,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'elevation_mapping_node = elevation_mapping_cupy.elevation_mapping_ros:main',
+            'elevation_mapping_node.py = elevation_mapping_cupy.elevation_mapping_node:main',
         ],
     },
     data_files=[
+        ('share/ament_index/resource_index/packages',['resource/' + package_name]),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         *[(os.path.join('share', package_name, os.path.dirname(yaml_file)), [yaml_file]) for yaml_file in glob('config/**/*.yaml', recursive=True)],
         # also the .*dat files

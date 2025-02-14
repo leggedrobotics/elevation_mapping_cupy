@@ -32,7 +32,7 @@ Now launch the turtlebot3 in Gazebo with the following command:
 ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
 ``` 
 
-Launch the elevation mapping node with the configs for the turtle:
+Launch the elevation mapping node with the configs for the turtle. Set use_python_node to true to use it instead of the cpp node:
 ```bash
-ros2 launch elevation_mapping_cupy elevation_mapping_turtle.launch.py 
+ros2 launch elevation_mapping_cupy elevation_mapping_turtle.launch.py use_python_node:=false
 ```

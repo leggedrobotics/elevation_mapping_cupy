@@ -6,11 +6,16 @@
     <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
     <license>MIT</license>
 
+    <!-- Comment out these lines to build only with python -->
     <buildtool_depend>ament_cmake</buildtool_depend>
     <buildtool_depend>ament_cmake_python</buildtool_depend>
 
+    <!-- Comment in to build only with python -->
+    <!-- <buildtool_depend>ament_python</buildtool_depend> -->
+
     <!-- Core ROS2 dependencies -->
     <depend>rclpy</depend>
+    <!-- Comment out to build only with python -->
     <depend>rclcpp</depend>
     <depend>std_msgs</depend>
     <depend>std_srvs</depend>    
@@ -55,8 +60,10 @@
     <test_depend>ament_lint_common</test_depend>
 
     <export>
-        <!-- <build_type>ament_cmake_python</build_type> -->
+        <!-- Comment out to build only with python -->
         <build_type>ament_cmake</build_type>
+        <!-- Comment in to build only with python -->
+        <!-- <build_type>ament_python</build_type> -->
     </export>
 
 </package>
