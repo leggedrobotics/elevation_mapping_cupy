@@ -5,8 +5,6 @@
 import os
 from typing import List, Any, Tuple, Union
 
-import rclpy  # Import rclpy for ROS 2 logging
-from ament_index_python.packages import get_package_prefix
 import numpy as np
 import threading
 import subprocess
@@ -16,7 +14,6 @@ from elevation_mapping_cupy.traversability_filter import (
     get_filter_torch,
 )
 from elevation_mapping_cupy.parameter import Parameter
-
 
 from elevation_mapping_cupy.kernels import (
     add_points_kernel,
@@ -44,6 +41,7 @@ from elevation_mapping_cupy.traversability_polygon import (
 )
 
 import cupy as cp
+import rclpy  # Import rclpy for ROS 2 logging
 
 xp = cp
 pool = cp.cuda.MemoryPool(cp.cuda.malloc_managed)
@@ -61,6 +59,7 @@ class ElevationMap:
         """
         # Initialize the ROS logger
         self.logger = rclpy.logging.get_logger('elevation_map')
+
         self.param = param
         self.data_type = self.param.data_type
         self.resolution = param.resolution
@@ -101,29 +100,24 @@ class ElevationMap:
         self.additive_mean_error = 0.0
 
         self.compile_kernels()
-        self.logger.info("Finished compiling kernels.")
+
         self.compile_image_kernels()
-        self.logger.info("Finished compiling image kernels.")
+
         self.semantic_map.initialize_fusion()
-        self.logger.info("Finished compiling semantic_map kernels.")
 
         weight_file = subprocess.getoutput('echo "' + param.weight_file + '"')
-        package_prefix = get_package_prefix('elevation_mapping_cupy')
-        self.logger.info("weight file : ." + str(package_prefix) + str(weight_file))
-        param.load_weights(package_prefix+weight_file)
+        param.load_weights(weight_file)
 
         if param.use_chainer:
             self.traversability_filter = get_filter_chainer(param.w1, param.w2, param.w3, param.w_out)
         else:
             self.traversability_filter = get_filter_torch(param.w1, param.w2, param.w3, param.w_out)
-        
         self.untraversable_polygon = xp.zeros((1, 2))
 
         # Plugins
         self.plugin_manager = PluginManager(cell_n=self.cell_n)
         plugin_config_file = subprocess.getoutput('echo "' + param.plugin_config_file + '"')
-        self.logger.info("plugin file : ." + str(package_prefix) + str(plugin_config_file))
-        self.plugin_manager.load_plugin_settings(package_prefix+plugin_config_file)
+        self.plugin_manager.load_plugin_settings(plugin_config_file)
 
         self.map_initializer = MapInitializer(self.initial_variance, param.initialized_variance, xp=cp, method="points")
 
@@ -359,7 +353,7 @@ class ElevationMap:
         error = cp.array([0.0], dtype=cp.float32)
         error_cnt = cp.array([0], dtype=cp.float32)
         points = points_all[:, :3]
-        # additional_fusion = self.get_fusion_of_pcl(channels)
+
         with self.map_lock:
             self.shift_translation_to_map_center(t)
             
@@ -982,8 +976,7 @@ if __name__ == "__main__":
         plugin_config_file="../config/plugin_config.yaml",
     )
     param.additional_layers = ["rgb", "grass", "tree", "people"]
-    # param.fusion_algorithms = ["color", "class_bayesian", "class_bayesian", "class_bayesian"]
-    param.fusion_algorithms = ["image_color", "pointcloud_color", "pointcloud_class_average"]
+    param.fusion_algorithms = ["color", "class_bayesian", "class_bayesian", "class_bayesian"]
     param.update()
     elevation = ElevationMap(param)
     layers = [
