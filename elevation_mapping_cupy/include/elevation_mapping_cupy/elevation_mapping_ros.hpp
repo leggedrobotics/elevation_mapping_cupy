@@ -68,7 +68,7 @@ namespace elevation_mapping_cupy {
 
 class ElevationMappingNode : public rclcpp::Node {
  public:
-  ElevationMappingNode();
+  ElevationMappingNode(const rclcpp::NodeOptions& options);
   using RowMatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   using ColMatrixXf = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 

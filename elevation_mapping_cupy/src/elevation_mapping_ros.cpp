@@ -22,9 +22,8 @@
 namespace elevation_mapping_cupy {
 
 
-
-ElevationMappingNode::ElevationMappingNode()
-    : rclcpp::Node("elevation_mapping_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true)),     
+ElevationMappingNode::ElevationMappingNode(const rclcpp::NodeOptions& options)
+    : Node("elevation_mapping_node", options),
       node_(std::shared_ptr<ElevationMappingNode>(this, [](auto *) {})),
       // it_(node_),
       lowpassPosition_(0, 0, 0),
@@ -35,7 +34,8 @@ ElevationMappingNode::ElevationMappingNode()
       orientationAlpha_(0.1),
       enablePointCloudPublishing_(false),
       isGridmapUpdated_(false){
-      RCLCPP_INFO(this->get_logger(), "Initializing ElevationMappingNode...");
+  
+  RCLCPP_INFO(this->get_logger(), "Initializing ElevationMappingNode...");
 
   tfBroadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(*this);// ROS2构造TransformBroadcaster
   tfBuffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -93,6 +93,7 @@ ElevationMappingNode::ElevationMappingNode()
   RCLCPP_INFO(this->get_logger(), "enable_drift_corrected_TF_publishing: %s", enableDriftCorrectedTFPublishing_ ? "true" : "false");
   RCLCPP_INFO(this->get_logger(), "use_initializer_at_start: %s", useInitializerAtStart_ ? "true" : "false");
   RCLCPP_INFO(this->get_logger(), "always_clear_with_initializer: %s", alwaysClearWithInitializer_ ? "true" : "false");
+  RCLCPP_INFO(this->get_logger(), "voxel_filter_size: %f", voxel_filter_size_);
 
   enablePointCloudPublishing_ = enablePointCloudPublishing;
      

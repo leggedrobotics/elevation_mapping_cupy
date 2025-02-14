@@ -46,11 +46,6 @@ void ElevationMappingWrapper::initialize(const std::shared_ptr<rclcpp::Node>& no
   auto threading = py::module::import("threading");
   py::gil_scoped_acquire acquire;
 
-  auto sys = py::module::import("sys");
-  auto path = sys.attr("path");
-  std::string module_path = ament_index_cpp::get_package_share_directory("elevation_mapping_cupy");
-  module_path = module_path + "/script";
-  path.attr("insert")(0, module_path);
 
   auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
   auto parameter = py::module::import("elevation_mapping_cupy.parameter");
@@ -117,45 +112,45 @@ void ElevationMappingWrapper::setParameters() {
       }
     
   }
+  
+  py::dict sub_dict;
+  // rclcpp::Parameter subscribers;
+  std::vector<std::string> parameter_prefixes;
+  auto parameters = node_->list_parameters(parameter_prefixes, 2); // List all parameters with a maximum depth of 10
 
-      py::dict sub_dict;
-      // rclcpp::Parameter subscribers;
-      std::vector<std::string> parameter_prefixes;
-      auto parameters = node_->list_parameters(parameter_prefixes, 2); // List all parameters with a maximum depth of 10
 
-
-    std::map<std::string, rclcpp::Parameter> subscriber_params;  
-    if (!node_->get_parameters("subscribers", subscriber_params)) {
-      RCLCPP_FATAL(node_->get_logger(), "There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
-      rclcpp::shutdown();
-    }       
-    auto unique_sub_names = extract_unique_names(subscriber_params);
-    for (const auto& name : unique_sub_names) {      
-        const char* const name_c = name.c_str();    
-        if (!sub_dict.contains(name_c)) {
-              sub_dict[name_c] = py::dict();
-            }
-      std::string topic_name;
-      if(node_->get_parameter("subscribers." + name + ".topic_name", topic_name)){               
-          const char* topic_name_cstr = "topic_name";
-          sub_dict[name_c][topic_name_cstr] = static_cast<std::string>(topic_name);
-          std::string data_type;
-          if(node_->get_parameter("subscribers." + name + ".data_type", data_type)){
-            const char* data_type_cstr = "data_type";
-            sub_dict[name_c][data_type_cstr] = static_cast<std::string>(data_type);
+  std::map<std::string, rclcpp::Parameter> subscriber_params;  
+  if (!node_->get_parameters("subscribers", subscriber_params)) {
+    RCLCPP_FATAL(node_->get_logger(), "There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
+    rclcpp::shutdown();
+  }
+  auto unique_sub_names = extract_unique_names(subscriber_params);
+  for (const auto& name : unique_sub_names) {      
+      const char* const name_c = name.c_str();    
+      if (!sub_dict.contains(name_c)) {
+            sub_dict[name_c] = py::dict();
           }
-          std::string info_name;
-          if(node_->get_parameter("subscribers." + name + ".data_type", info_name)){
-            const char* info_name_cstr = "info_name";
-            sub_dict[name_c][info_name_cstr] = static_cast<std::string>(info_name);
-          }
-          std::string channel_name;
-          if(node_->get_parameter("subscribers." + name + ".data_type", channel_name)){
-            const char* channel_name_cstr = "channel_name";
-            sub_dict[name_c][channel_name_cstr] = static_cast<std::string>(channel_name);
-          }
-      }
+    std::string topic_name;
+    if(node_->get_parameter("subscribers." + name + ".topic_name", topic_name)){               
+        const char* topic_name_cstr = "topic_name";
+        sub_dict[name_c][topic_name_cstr] = static_cast<std::string>(topic_name);
+        std::string data_type;
+        if(node_->get_parameter("subscribers." + name + ".data_type", data_type)){
+          const char* data_type_cstr = "data_type";
+          sub_dict[name_c][data_type_cstr] = static_cast<std::string>(data_type);
+        }
+        std::string info_name;
+        if(node_->get_parameter("subscribers." + name + ".data_type", info_name)){
+          const char* info_name_cstr = "info_name";
+          sub_dict[name_c][info_name_cstr] = static_cast<std::string>(info_name);
+        }
+        std::string channel_name;
+        if(node_->get_parameter("subscribers." + name + ".data_type", channel_name)){
+          const char* channel_name_cstr = "channel_name";
+          sub_dict[name_c][channel_name_cstr] = static_cast<std::string>(channel_name);
+        }
     }
+  }
 
              
       
@@ -199,14 +194,17 @@ void ElevationMappingWrapper::setParameters() {
   }
 
 
-      param_.attr("update")();
-      resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
-      map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
-      map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
-
-      
-      
-      enable_normal_color_ = node_->get_parameter("enable_normal_color").as_bool();
+    // Update the cell_n parameters based on the map length and resolution
+  RCLCPP_INFO(node_->get_logger(), "Updating cell_n parameters based on map length and resolution");
+  param_.attr("update")();
+  resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
+  map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
+  map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
+  RCLCPP_INFO(node_->get_logger(), "cell_n: %d", map_n_);
+  RCLCPP_INFO(node_->get_logger(), "resolution: %f", resolution_);
+  RCLCPP_INFO(node_->get_logger(), "true_map_length: %f", map_length_);
+  
+  enable_normal_color_ = node_->get_parameter("enable_normal_color").as_bool();
 
 }
 
