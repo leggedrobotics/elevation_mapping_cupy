@@ -46,7 +46,7 @@ def calculate_area(polygon):
 def calculate_untraversable_polygon(over_thresh):
     x, y = cp.where(over_thresh > 0.5)
     points = cp.stack([x, y]).T
-    convex_hull = MultiPoint(points).convex_hull
+    convex_hull = MultiPoint(points.get()).convex_hull
     if convex_hull.is_empty or convex_hull.geom_type == "Point" or convex_hull.geom_type == "LineString":
         return None
     else:

@@ -1,0 +1,197 @@
+elevation_mapping:
+  ros__parameters:
+    #### Basic parameters ########
+    voxel_filter_size: 0.05
+    enable_normal_arrow_publishing: true
+    cell_n: 40000                                    # number of cells in the map.
+    data_type: 'float32'                            # data type for the map.
+    average_weight: 0.5
+    drift_compensation_variance_inlier: 0.1
+    checker_layer: 'traversability'                # layer name for checking the validity of the cell.
+    min_filter_size: 5                            # size of the filter for min filter.
+    min_filter_iteration: 3                      # number of iterations for min filter.
+    initialized_variance: 10.0                     # initial variance for each cell.    
+    resolution: 0.1                                # resolution in m.  
+    map_length: 20.0                                 # map's size in m.
+    sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
+    mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
+    outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
+    drift_compensation_variance_inler: 0.05         # cells under this value is used for drift compensation.
+    max_drift: 0.1                                  # drift compensation happens only the drift is smaller than this value (for safety)
+    drift_compensation_alpha: 0.1                   # drift compensation alpha for smoother update of drift compensation
+    time_variance: 0.0001                           # add this value when update_variance is called.
+    max_variance: 100.0                             # maximum variance for each cell.
+    initial_variance: 1000.0                        # initial variance for each cell.
+    traversability_inlier: 0.9                      # cells with higher traversability are used for drift compensation.
+    dilation_size: 3                                # dilation filter size before traversability filter.
+    wall_num_thresh: 20                             # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+    min_height_drift_cnt: 100                       # drift compensation only happens if the valid cells are more than this number.
+    position_noise_thresh: 0.01                     # if the position change is bigger than this value, the drift compensation happens.
+    orientation_noise_thresh: 0.01                  # if the orientation change is bigger than this value, the drift compensation happens.
+    position_lowpass_alpha: 0.2                     # lowpass filter alpha used for detecting movements.
+    orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
+    min_valid_distance: 0.5                         # points with shorter distance will be filtered out.
+    max_height_range: 1.0                           # points higher than this value from sensor will be filtered out to disable ceiling.
+    ramped_height_range_a: 0.3                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+    ramped_height_range_b: 1.0                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+    ramped_height_range_c: 0.2                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+    update_variance_fps: 5.0                        # fps for updating variance.
+    update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
+    time_interval: 0.1                              # Time layer is updated with this interval.
+    map_acquire_fps: 5.0                            # Raw map is fetched from GPU memory in this fps.
+    publish_statistics_fps: 1.0                     # Publish statistics topic in this fps.
+
+    max_ray_length: 10.0                            # maximum length for ray tracing.
+    cleanup_step: 0.1                               # subtitute this value from validity layer at visibiltiy cleanup.
+    cleanup_cos_thresh: 0.1                         # subtitute this value from validity layer at visibiltiy cleanup.
+
+    safe_thresh: 0.7                                # if traversability is smaller, it is counted as unsafe cell.
+    safe_min_thresh: 0.4                            # polygon is unsafe if there exists lower traversability than this.
+    max_unsafe_n: 10                                # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
+
+    overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
+    overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
+    pose_topic: '/a200/robot/gt_odom'
+    map_frame: 'map'                               # The map frame where the odometry source uses.
+    base_frame: 'base_link'                    # The robot's base frame. This frame will be a center of the map.
+    corrected_map_frame: 'map_corrected'               # The map frame where the drift corrected map is published.
+
+
+
+    #### Feature toggles ########
+    enable_edge_sharpen: true
+    enable_visibility_cleanup: true
+    enable_drift_compensation: true
+    enable_overlap_clearance: true
+    enable_pointcloud_publishing: false
+    enable_drift_corrected_TF_publishing: false
+    enable_normal_color: true                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
+    
+
+    #### Traversability filter ########
+    use_chainer: false                              # Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
+    weight_file: '/share/elevation_mapping_cupy/config/core/weights.dat'               # Weight file for traversability filter
+    plugin_config_file: '/share/elevation_mapping_cupy/config/core/plugin_config.yaml'               # Configuration file for the plugin.  
+    #### Upper bound ########
+    use_only_above_for_upper_bound: false
+
+    #### Initializer ########
+    initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
+    initialize_frame_id: ['base_link']   # One tf (like ['footprint'] ) initializes a square around it.
+    initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
+    dilation_size_initialize: 2                                         # dilation size after the init.
+    initialize_tf_grid_size: 0.5                                        # This is not used if number of tf is more than 3.
+    use_initializer_at_start: true                                      # Use initializer when the node starts.
+
+    #### Default Plugins ########
+    
+    pointcloud_channel_fusions:
+      rgb: 'color'                # 'color' fusion is used for the 'rgb' channel
+      default: 'latest'          # 'average' fusion is used for channels not listed here
+
+    image_channel_fusions:
+      rgb: 'color'                # 'color' fusion is used for the 'rgb' channel
+      default: 'latest'      # 'exponential' fusion is used for channels not listed here
+      feat_.*: 'latest'      # 'exponential' fusion is also used for any channel starting with 'feat_' Regular expressions can be used for channel names
+
+    #### Subscribers ########
+    #  pointcloud_sensor_name:
+    #    topic_name: '/sensor/pointcloud_semantic'
+    #    data_type:  pointcloud  # pointcloud or image
+    #
+    #  image_sensor_name:
+    #    topic_name: '/camera/image_semantic'
+    #    data_type:  image  # pointcloud or image
+    #    camera_info_topic_name: '/camera/depth/camera_info'
+    #    channel_info_topic_name: '/camera/channel_info'
+    
+    
+    subscribers:
+      pointcloud1:
+        # topic_name: '/ouster/points'      
+        topic_name: '/a200/sensors/camera_0/points'    
+        data_type: 'pointcloud'
+      image1:
+        topic_name: '/feat_processing_node/semantic_seg_feat'        
+        info_name: '/feat_processing_node/a200/sensors/camera_0/color/camera_info_resized'
+        channel_name: '/feat_processing_node/feat_channel_info'
+        data_type: 'image'
+      # image2:
+      #   topic_name: '/a200/sensors/camera_0/color/image'        
+      #   info_name: '/a200/sensors/camera_0/color/camera_info'
+      #   data_type: 'image'
+        # channel_name: '/front_cam/channel_info'  
+
+        # channel_name: '/front_cam/channel_info'
+
+      # image_topic2: '/camera/rgb/image_raw2'        
+      # image_info2: '/camera/depth/camera_info2'
+      # image_channel_info1: '/front_cam/channel_info'  
+
+      # image: # for semantic images
+      #   topic_name: '/front_cam/semantic_image'
+      #   camera_info_topic_name: '/front_cam/camera/depth/camera_info_resized'
+      #   channel_info_topic_name: '/front_cam/channel_info'  
+      #   data_type: image
+
+    #### Publishers ########
+    # topic_name:
+    #   layers:               # Choose from 'elevation', 'variance', 'traversability', 'time', 'normal_x', 'normal_y', 'normal_z', 'color', plugin_layer_names
+    #   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
+    #   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
+
+    publishers:
+      elevation_map_raw:        
+        layers: ['elevation', 'traversability', 'variance','rgb', 'normal_x', 'normal_y', 'normal_z', 'feat_0','feat_1','feat_2','feat_3','feat_4']
+        basic_layers: ['elevation']
+        fps: 5.0
+      elevation_map_recordable:
+        layers: ['elevation', 'traversability']
+        basic_layers: ['elevation', 'traversability']
+        fps: 2.0
+      elevation_map_filter:
+        layers: ['min_filter', 'smooth', 'inpaint', 'elevation']
+        basic_layers: ['min_filter']
+        fps: 3.0
+
+
+  # plugun info
+
+    min_filter:                                   
+      enable: True                                # whether to load this plugin
+      fill_nan: False                             # Fill nans to invalid cells of elevation layer.
+      is_height_layer: True                       # If this is a height layer (such as elevation) or not (such as traversability)
+      layer_name: "min_filter"                    # The layer name.
+      extra_params:                               # These params are passed to the plugin class on initialization.
+        dilation_size: 1                          # The patch size to apply
+        iteration_n: 30                           # The number of iterations
+
+    # Apply smoothing.
+    smooth_filter:
+      enable: True
+      fill_nan: False
+      is_height_layer: True
+      layer_name: "smooth"
+      extra_params:
+        input_layer_name: "min_filter"
+
+    # Apply inpainting using opencv
+    inpainting:
+      enable: True
+      fill_nan: False
+      is_height_layer: True
+      layer_name: "inpaint"
+      extra_params:
+        method: "telea"                           # telea or ns
+
+    # Apply smoothing for inpainted layer
+    erosion:
+      enable: True
+      fill_nan: False
+      is_height_layer: False
+      layer_name: "erosion"
+      extra_params:
+        input_layer_name: "traversability"
+        dilation_size: 3
+        iteration_n: 20
+        reverse: True

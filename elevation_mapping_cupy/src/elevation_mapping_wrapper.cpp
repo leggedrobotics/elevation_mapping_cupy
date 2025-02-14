@@ -12,162 +12,202 @@
 #include <pcl/common/projection_matrix.h>
 
 // ROS
-#include <ros/package.h>
+#include <rclcpp/rclcpp.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <utility>
 
+
+
 namespace elevation_mapping_cupy {
 
-ElevationMappingWrapper::ElevationMappingWrapper() {}
+std::vector<std::string> extract_unique_names(const std::map<std::string, rclcpp::Parameter>& subscriber_params) {
+    std::set<std::string> unique_names_set;
+    for (const auto& param : subscriber_params) {
+        std::size_t pos = param.first.find('.');
+        if (pos != std::string::npos) {
+            std::string name = param.first.substr(0, pos);
+            unique_names_set.insert(name);
+        }
+    }
+    return std::vector<std::string>(unique_names_set.begin(), unique_names_set.end());
+}
 
-void ElevationMappingWrapper::initialize(ros::NodeHandle& nh) {
+
+ElevationMappingWrapper::ElevationMappingWrapper(){}
+
+void ElevationMappingWrapper::initialize(const std::shared_ptr<rclcpp::Node>& node){
+    if (!node) {
+        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Invalid node shared pointer");
+        return;
+    }
+    node_ = node;
   // Add the elevation_mapping_cupy path to sys.path
   auto threading = py::module::import("threading");
   py::gil_scoped_acquire acquire;
 
   auto sys = py::module::import("sys");
   auto path = sys.attr("path");
-  std::string module_path = ros::package::getPath("elevation_mapping_cupy");
+  std::string module_path = ament_index_cpp::get_package_share_directory("elevation_mapping_cupy");
   module_path = module_path + "/script";
   path.attr("insert")(0, module_path);
 
   auto elevation_mapping = py::module::import("elevation_mapping_cupy.elevation_mapping");
   auto parameter = py::module::import("elevation_mapping_cupy.parameter");
-  param_ = parameter.attr("Parameter")();
-  setParameters(nh);
+  param_ = parameter.attr("Parameter")();    
+  setParameters();  
   map_ = elevation_mapping.attr("ElevationMap")(param_);
+  RCLCPP_INFO(node_->get_logger(), "ElevationMappingWrapper has been initialized");
+  
 }
 
-/**
- *  Load ros parameters into Parameter class.
- *  Search for the same name within the name space.
- */
-void ElevationMappingWrapper::setParameters(ros::NodeHandle& nh) {
+// /**
+//  *  Load ros parameters into Parameter class.
+//  *  Search for the same name within the name space.
+//  */
+void ElevationMappingWrapper::setParameters() {
+  
   // Get all parameters names and types.
   py::list paramNames = param_.attr("get_names")();
   py::list paramTypes = param_.attr("get_types")();
   py::gil_scoped_acquire acquire;
 
-  // Try to find the parameter in the ros parameter server.
-  // If there was a parameter, set it to the Parameter variable.
-  for (int i = 0; i < paramNames.size(); i++) {
+  // // Try to find the parameter in the ROS parameter server.
+  // // If there was a parameter, set it to the Parameter variable.
+  for (size_t i = 0; i < paramNames.size(); i++) {
     std::string type = py::cast<std::string>(paramTypes[i]);
     std::string name = py::cast<std::string>(paramNames[i]);
+    RCLCPP_INFO(node_->get_logger(), "type: %s, name %s", type.c_str(), name.c_str());
     if (type == "float") {
-      float param;
-      if (nh.getParam(name, param)) {
-        param_.attr("set_value")(name, param);
+    float param;
+      if (node_->get_parameter(name, param)) {
+          RCLCPP_INFO(node_->get_logger(), "Retrieved parameter: %s value: %f", name.c_str(), param);
+          param_.attr("set_value")(name, param);
+          RCLCPP_INFO(node_->get_logger(), "Set parameter: %s value: %f", name.c_str(), param);
+      } else {
+          RCLCPP_WARN(node_->get_logger(), "Parameter not found or invalid: %s", name.c_str());
       }
-    } else if (type == "str") {
-      std::string param;
-      if (nh.getParam(name, param)) {
-        param_.attr("set_value")(name, param);
-      }
-    } else if (type == "bool") {
-      bool param;
-      if (nh.getParam(name, param)) {
-        param_.attr("set_value")(name, param);
-      }
-    } else if (type == "int") {
-      int param;
-      if (nh.getParam(name, param)) {
-        param_.attr("set_value")(name, param);
-      }
-    }
-  }
-
-  XmlRpc::XmlRpcValue subscribers;
-  nh.getParam("subscribers", subscribers);
-
-  py::dict sub_dict;
-  for (auto& subscriber : subscribers) {
-    const char* const name = subscriber.first.c_str();
-    const auto& subscriber_params = subscriber.second;
-    if (!sub_dict.contains(name)) {
-      sub_dict[name] = py::dict();
-    }
-    for (auto iterat : subscriber_params) {
-      const char* const key = iterat.first.c_str();
-      const auto val = iterat.second;
-      std::vector<std::string> arr;
-      switch (val.getType()) {
-        case XmlRpc::XmlRpcValue::TypeString:
-          sub_dict[name][key] = static_cast<std::string>(val);
-          break;
-        case XmlRpc::XmlRpcValue::TypeInt:
-          sub_dict[name][key] = static_cast<int>(val);
-          break;
-        case XmlRpc::XmlRpcValue::TypeDouble:
-          sub_dict[name][key] = static_cast<double>(val);
-          break;
-        case XmlRpc::XmlRpcValue::TypeBoolean:
-          sub_dict[name][key] = static_cast<bool>(val);
-          break;
-        case XmlRpc::XmlRpcValue::TypeArray:
-          for (int32_t i = 0; i < val.size(); ++i) {
-            auto elem = static_cast<std::string>(val[i]);
-            arr.push_back(elem);
+      } else if (type == "str") {
+          std::string param;
+          if (node_->get_parameter(name, param)) {
+              RCLCPP_INFO(node_->get_logger(), "Retrieved parameter: %s value: %s", name.c_str(), param.c_str());
+              param_.attr("set_value")(name, param);
+              RCLCPP_INFO(node_->get_logger(), "Set parameter: %s value: %s", name.c_str(), param.c_str());
+          } else {
+              RCLCPP_WARN(node_->get_logger(), "Parameter not found or invalid: %s", name.c_str());
           }
-          sub_dict[name][key] = arr;
-          arr.clear();
-          break;
-        case XmlRpc::XmlRpcValue::TypeStruct:
-          break;
-        default:
-          sub_dict[name][key] = py::cast(val);
-          break;
+      } else if (type == "bool") {
+          bool param;
+          if (node_->get_parameter(name, param)) {
+              RCLCPP_INFO(node_->get_logger(), "Retrieved parameter: %s value: %s", name.c_str(), param ? "true" : "false");
+              param_.attr("set_value")(name, param);
+              RCLCPP_INFO(node_->get_logger(), "Set parameter: %s value: %s", name.c_str(), param ? "true" : "false");
+          } else {
+              RCLCPP_WARN(node_->get_logger(), "Parameter not found or invalid: %s", name.c_str());
+          }
+      } else if (type == "int") {
+          int param;
+          if (node_->get_parameter(name, param)) {
+              RCLCPP_INFO(node_->get_logger(), "Retrieved parameter: %s value: %d", name.c_str(), param);
+              param_.attr("set_value")(name, param);
+              RCLCPP_INFO(node_->get_logger(), "Set parameter: %s value: %d", name.c_str(), param);
+          } else {
+              RCLCPP_WARN(node_->get_logger(), "Parameter not found or invalid: %s", name.c_str());
+          }
+      }
+    
+  }
+
+      py::dict sub_dict;
+      // rclcpp::Parameter subscribers;
+      std::vector<std::string> parameter_prefixes;
+      auto parameters = node_->list_parameters(parameter_prefixes, 2); // List all parameters with a maximum depth of 10
+
+
+    std::map<std::string, rclcpp::Parameter> subscriber_params;  
+    if (!node_->get_parameters("subscribers", subscriber_params)) {
+      RCLCPP_FATAL(node_->get_logger(), "There aren't any subscribers to be configured, the elevation mapping cannot be configured. Exit");
+      rclcpp::shutdown();
+    }       
+    auto unique_sub_names = extract_unique_names(subscriber_params);
+    for (const auto& name : unique_sub_names) {      
+        const char* const name_c = name.c_str();    
+        if (!sub_dict.contains(name_c)) {
+              sub_dict[name_c] = py::dict();
+            }
+      std::string topic_name;
+      if(node_->get_parameter("subscribers." + name + ".topic_name", topic_name)){               
+          const char* topic_name_cstr = "topic_name";
+          sub_dict[name_c][topic_name_cstr] = static_cast<std::string>(topic_name);
+          std::string data_type;
+          if(node_->get_parameter("subscribers." + name + ".data_type", data_type)){
+            const char* data_type_cstr = "data_type";
+            sub_dict[name_c][data_type_cstr] = static_cast<std::string>(data_type);
+          }
+          std::string info_name;
+          if(node_->get_parameter("subscribers." + name + ".data_type", info_name)){
+            const char* info_name_cstr = "info_name";
+            sub_dict[name_c][info_name_cstr] = static_cast<std::string>(info_name);
+          }
+          std::string channel_name;
+          if(node_->get_parameter("subscribers." + name + ".data_type", channel_name)){
+            const char* channel_name_cstr = "channel_name";
+            sub_dict[name_c][channel_name_cstr] = static_cast<std::string>(channel_name);
+          }
       }
     }
-  }
+
+             
+      
   param_.attr("subscriber_cfg") = sub_dict;
 
-  // point cloud channel fusion
-  if (!nh.hasParam("pointcloud_channel_fusions")) {
-    ROS_WARN("No pointcloud_channel_fusions parameter found. Using default values.");
-  }
-  else {
-    XmlRpc::XmlRpcValue pointcloud_channel_fusion;
-    nh.getParam("pointcloud_channel_fusions", pointcloud_channel_fusion);
 
-    py::dict pointcloud_channel_fusion_dict;
-    for (auto& channel_fusion : pointcloud_channel_fusion) {
-      const char* const name = channel_fusion.first.c_str();
-      std::string fusion = static_cast<std::string>(channel_fusion.second);
-      if (!pointcloud_channel_fusion_dict.contains(name)) {
-        pointcloud_channel_fusion_dict[name] = fusion;
-      }
-    }
-    ROS_INFO_STREAM("pointcloud_channel_fusion_dict: " << pointcloud_channel_fusion_dict);
-    param_.attr("pointcloud_channel_fusions") = pointcloud_channel_fusion_dict;
+  // point cloud channel fusion
+  std::map<std::string, rclcpp::Parameter> pointcloud_channel_fusions_params;  
+  if (node_->get_parameters("pointcloud_channel_fusions", pointcloud_channel_fusions_params)) {
+        py::dict pointcloud_channel_fusion_dict;
+        for (const auto& param : pointcloud_channel_fusions_params) {
+            std::string param_name = param.first;            
+            std::string param_value = param.second.as_string();
+            // Extract the string after "pointcloud_channel_fusions."            
+            pointcloud_channel_fusion_dict[param_name.c_str()] = param_value;            
+        }
+        // Print the dictionary for debugging
+        for (auto item : pointcloud_channel_fusion_dict) {
+            RCLCPP_INFO(node_->get_logger(), "pointcloud_channel_fusions Key: %s, Value: %s", std::string(py::str(item.first)).c_str(), std::string(py::str(item.second)).c_str());
+        }
+  } else {
+    RCLCPP_WARN(node_->get_logger(), "No parameters found for 'pointcloud_channel_fusions'");
   }
 
   // image channel fusion
-  if (!nh.hasParam("image_channel_fusions")) {
-    ROS_WARN("No image_channel_fusions parameter found. Using default values.");
-  }
-  else {
-    XmlRpc::XmlRpcValue image_channel_fusion;
-    nh.getParam("image_channel_fusions", image_channel_fusion);
-
-    py::dict image_channel_fusion_dict;
-    for (auto& channel_fusion : image_channel_fusion) {
-      const char* const name = channel_fusion.first.c_str();
-      std::string fusion = static_cast<std::string>(channel_fusion.second);
-      if (!image_channel_fusion_dict.contains(name)) {
-        image_channel_fusion_dict[name] = fusion;
-      }
-    }
-    ROS_INFO_STREAM("image_channel_fusion_dict: " << image_channel_fusion_dict);
-    param_.attr("image_channel_fusions") = image_channel_fusion_dict;
+  std::map<std::string, rclcpp::Parameter> image_channel_fusions_params;  
+  if (node_->get_parameters("image_channel_fusions", image_channel_fusions_params)) {
+        py::dict image_channel_fusion_dict;
+        for (const auto& param : image_channel_fusions_params) {
+            std::string param_name = param.first;            
+            std::string param_value = param.second.as_string();
+            // Extract the string after "pointcloud_channel_fusions."            
+            image_channel_fusion_dict[param_name.c_str()] = param_value;            
+        }
+        // Print the dictionary for debugging
+        for (auto item : image_channel_fusion_dict) {
+            RCLCPP_INFO(node_->get_logger(), "image_channel_fusions Key: %s, Value: %s", std::string(py::str(item.first)).c_str(), std::string(py::str(item.second)).c_str());
+        }
+  } else {
+    RCLCPP_WARN(node_->get_logger(), "No parameters found for 'image_channel_fusions'");
   }
 
-  param_.attr("update")();
-  resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
-  map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
-  map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
 
-  nh.param<bool>("enable_normal", enable_normal_, false);
-  nh.param<bool>("enable_normal_color", enable_normal_color_, false);
+      param_.attr("update")();
+      resolution_ = py::cast<float>(param_.attr("get_value")("resolution"));
+      map_length_ = py::cast<float>(param_.attr("get_value")("true_map_length"));
+      map_n_ = py::cast<int>(param_.attr("get_value")("true_cell_n"));
+
+      
+      
+      enable_normal_color_ = node_->get_parameter("enable_normal_color").as_bool();
+
 }
 
 void ElevationMappingWrapper::input(const RowMatrixXd& points, const std::vector<std::string>& channels, const RowMatrixXd& R,

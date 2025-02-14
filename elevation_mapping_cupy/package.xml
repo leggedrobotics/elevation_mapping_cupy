@@ -1,57 +1,62 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>elevation_mapping_cupy</name>
-  <version>2.0.0</version>
-  <description>Elevation mapping on GPU</description>
-  <maintainer email="your.email@example.com">Your Name</maintainer>
-  <license>MIT</license>
+    <name>elevation_mapping_cupy</name>
+    <version>2.0.0</version>
+    <description>Elevation mapping on GPU</description>
+    <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
+    <license>MIT</license>
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_python</buildtool_depend>
 
-  <!-- Build tool dependencies -->
-  <!-- <buildtool_depend>ament_python</buildtool_depend> -->
-  <buildtool_depend>ament_cmake</buildtool_depend>
+    <!-- Core ROS2 dependencies -->
+    <depend>rclpy</depend>
+    <depend>rclcpp</depend>
+    <depend>std_msgs</depend>
+    <depend>std_srvs</depend>    
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>point_cloud_transport</depend>    
+    <depend>message_filters</depend>
+    <depend>elevation_map_msgs</depend>
+    <depend>grid_map_msgs</depend>
+    <depend>grid_map_ros</depend>
+    <depend>image_transport</depend>
+    <depend>pcl_ros</depend>
+    <depend>pybind11</depend>
+      <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+    <depend>ros2_numpy</depend>
+    <!-- Numpy version needs to be <2.0.0 -->
+    <depend>numpy</depend>
+    <depend>tf2_ros</depend>
+    <depend>message_filters</depend>
+    <depend>cv_bridge</depend>
+    <depend>ament_index_python</depend>
+    <depend>tf_transformations</depend>
 
-  <!-- Core ROS2 dependencies -->
-  <depend>rclpy</depend>
-  <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>elevation_map_msgs</depend>
-  <depend>grid_map_msgs</depend>
-  <depend>grid_map_ros</depend>
-  <depend>image_transport</depend>
-  <depend>pcl_ros</depend>
-  <depend>pybind11</depend>
-  <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-  <depend>ros2_numpy</depend>
-  <!-- Numpy version needs to be <2.0.0 -->
-  <depend>numpy</depend>
-  <depend>tf2_ros</depend>
-  <depend>message_filters</depend>
-  <depend>cv_bridge</depend>
-  <depend>ament_index_python</depend>
-  <depend>tf_transformations</depend>
 
+    <!-- Additional dependencies -->
+    <depend>rviz2</depend>
+    <depend>gazebo_ros</depend>
+    <depend>robot_state_publisher</depend>
+    <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+    <depend>opencv-python</depend>
+    <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+    <!-- <depend>trimesh</depend> -->
+    <!--TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+    <depend>cupy-cuda12x</depend>
+    <depend>simple-parsing</depend>
+    
+    <!-- Export dependencies -->
+    <!-- Might need to change to ament_cmake_python -->
+    <build_export_depend>ament_python</build_export_depend>
+    <exec_depend>ament_python</exec_depend>
 
-  <!-- Additional dependencies -->
-  <depend>rviz2</depend>
-  <depend>gazebo_ros</depend>
-  <depend>robot_state_publisher</depend>
-  <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-  <depend>opencv-python</depend>
-  <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-  <depend>cupy-cuda12x</depend>
-  <!--TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-  <depend>simple-parsing</depend>
-  
-  <!-- Export dependencies -->
-  <!-- Might need to change to ament_cmake_python -->
-  <build_export_depend>ament_python</build_export_depend>
-  <exec_depend>ament_python</exec_depend>
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_lint_common</test_depend>
 
-  <export>
-    <build_type>ament_python</build_type>
-  </export>
+    <export>
+        <build_type>ament_python</build_type>
+        <build_type>ament_cmake</build_type>
+    </export>
 
-  <!-- Additional metadata -->
-  <url type="repository">https://github.com/yourrepo/elevation_mapping_cupy</url>
 </package>
