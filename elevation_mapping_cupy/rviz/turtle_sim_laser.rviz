@@ -243,7 +243,6 @@ Visualization Manager:
         Value: /intel_realsense_r200_rgb/image_raw
       Value: false
       Visibility:
-        "": true
         Grid: true
         GridMap: true
         GridMapFiltered: true
@@ -306,14 +305,14 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /elevation_mapping_node/elevation_map_raw
       Use Rainbow: true
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Class: grid_map_rviz_plugin/GridMap
       Color: 200; 200; 200
       Color Layer: elevation
       Color Transformer: IntensityLayer
-      Enabled: true
+      Enabled: false
       Height Layer: smooth
       Height Transformer: GridMapLayer
       History Length: 1
