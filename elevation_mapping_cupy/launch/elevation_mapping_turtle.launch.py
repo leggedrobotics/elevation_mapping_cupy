@@ -3,7 +3,8 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.descriptions import ParameterFile
 
 
@@ -37,6 +38,13 @@ def generate_launch_description():
     )
     rviz_config = LaunchConfiguration('rviz_config')
 
+    use_python_node_arg = DeclareLaunchArgument(
+        'use_python_node',
+        default_value='false',
+        description='Use the Python node if true'
+    )
+    use_python_node = LaunchConfiguration('use_python_node')
+
     # RViz Node
     rviz_node = Node(
         package='rviz2',
@@ -46,6 +54,20 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
         output='screen'
     )
+    elevation_mapping_node_py = Node(
+        package='elevation_mapping_cupy',
+        executable='elevation_mapping_node.py',
+        name='elevation_mapping_node',
+        output='screen',
+        parameters=[
+            ParameterFile(core_param_path, allow_substs=True), 
+            turtle_param_path,
+            {'use_sim_time': use_sim_time}
+        ],
+        condition=IfCondition(use_python_node)
+        # condition=IfCondition(PythonExpression(use_python_node))
+    )
+
     elevation_mapping_node = Node(
         package='elevation_mapping_cupy',
         executable='elevation_mapping_node',
@@ -55,12 +77,16 @@ def generate_launch_description():
             ParameterFile(core_param_path, allow_substs=True), 
             turtle_param_path,
             {'use_sim_time': use_sim_time}
-        ]
-    )
+        ],
+        condition=UnlessCondition(use_python_node)
+        # condition=UnlessCondition(PythonExpression(use_python_node))
+        )
     
     return LaunchDescription([
         use_sim_time_arg,
         rviz_config_arg,
+        use_python_node_arg,
+        elevation_mapping_node_py,
         elevation_mapping_node,
         rviz_node
     ])
