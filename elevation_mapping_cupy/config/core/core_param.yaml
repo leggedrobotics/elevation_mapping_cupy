@@ -1,14 +1,12 @@
 elevation_mapping_node:
   ros__parameters:
     #### Basic parameters ########
-    # voxel_filter_size: 0.1
-    # average_weight: 0.5
-    # drift_compensation_variance_inlier: 0.1
-    # checker_layer: 'elevation'                # layer name for checking the validity of the cell.
-    # min_filter_size: 5                            # size of the filter for min filter.
-    # min_filter_iteration: 3                      # number of iterations for min filter.
-    # initialized_variance: 10.0                     # initial variance for each cell.    
-    resolution: 0.25                                # resolution in m.  
+    voxel_filter_size: 0.1
+    average_weight: 0.5
+    drift_compensation_variance_inlier: 0.1
+    checker_layer: 'elevation'                # layer name for checking the validity of the cell.
+    initialized_variance: 10.0                     # initial variance for each cell.    
+    resolution: 0.1                                # resolution in m.  
     map_length: 20.0                                 # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
     mahalanobis_thresh: 2.0                         # points outside this distance is outlier.

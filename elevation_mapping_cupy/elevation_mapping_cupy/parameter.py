@@ -84,10 +84,6 @@ class Parameter(Serializable):
                       (Default: ``20``)
         checker_layer: Layer used for checking safety.  
                        (Default: ``"traversability"``)
-        min_filter_size: The minimum size for the filter.  
-                         (Default: ``5``)
-        min_filter_iteration: The minimum number of iterations for the filter.  
-                              (Default: ``3``)
         max_drift: The maximum drift for the compensation.  
                    (Default: ``0.10``)
         overlap_clear_range_xy: XY range [m] for clearing overlapped area. This defines the valid area for overlap clearance. (used for multi floor setting)  
@@ -192,9 +188,6 @@ class Parameter(Serializable):
     safe_min_thresh: float = 0.5  # polygon is unsafe if there exists lower traversability than this.
     max_unsafe_n: int = 20  # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
     checker_layer: str = "traversability"  # layer used for checking safety
-
-    min_filter_size: int = 5  # minimum size for the filter
-    min_filter_iteration: int = 3  # minimum number of iterations for the filter
 
     max_drift: float = 0.10  # maximum drift for the compensation
 

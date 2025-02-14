@@ -233,9 +233,11 @@ ElevationMappingNode::ElevationMappingNode()
     auto unique_pub_names = extract_unique_names(publisher_params);
 
     
+    std::string node_name = this->get_name();
 
     for (const auto& pub_name : unique_pub_names) {  
-        std::string topic_name = pub_name;
+        // Namespacing published topics under node_name
+        std::string topic_name = node_name + "/" + pub_name;  
         double fps;
         std::vector<std::string> layers_list;
         std::vector<std::string> basic_layers_list;      
