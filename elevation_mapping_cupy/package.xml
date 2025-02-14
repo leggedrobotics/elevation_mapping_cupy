@@ -39,9 +39,8 @@
   <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
   <depend>opencv-python</depend>
   <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-  <!-- <depend>trimesh</depend> -->
-  <!--TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
   <depend>cupy-cuda12x</depend>
+  <!--TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
   <depend>simple-parsing</depend>
   
   <!-- Export dependencies -->
