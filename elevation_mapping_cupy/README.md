@@ -36,3 +36,8 @@ Launch the elevation mapping node with the configs for the turtle. Set use_pytho
 ```bash
 ros2 launch elevation_mapping_cupy elevation_mapping_turtle.launch.py use_python_node:=false
 ```
+
+If you want to drive the turtlebot around using the keyboard then run:
+```bash
+ros2 run turtlebot3_teleop teleop_keyboard 
+```
