@@ -61,10 +61,10 @@
 				"ms-iot.vscode-ros",
 				"alefragnani.Bookmarks",
 				"ms-vscode.live-server"
-
+				
 			]
 		}
 	},
-	"workspaceMount": "source=${localWorkspaceFolder}/../,target=/workspace/src,type=bind",
-	"workspaceFolder": "/workspace/src"
+	"workspaceMount": "source=${localWorkspaceFolder}/,target=/home/ros/workspace/src/elevation_mapping_cupy/,type=bind",
+	"workspaceFolder": "/home/ros/workspace/src/elevation_mapping_cupy/"
 }

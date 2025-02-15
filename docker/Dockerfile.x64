@@ -190,7 +190,17 @@ RUN apt update && \
     && apt clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Development stage
+FROM dev as dev2
+ARG WORKSPACE="/home/ros/workspace"
 
+# Print workspace to terminal
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    echo "Workspace: ${WORKSPACE}"
+
+RUN mkdir -p ${WORKSPACE}/src/elevation_mapping_cupy && chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}
+RUN echo "if [ -f ${WORKSPACE}/install/setup.bash ]; then source ${WORKSPACE}/install/setup.bash; fi" >> /home/ros/.bashrc
+WORKDIR ${WORKSPACE}
 # Switch to non-root user
 USER $USERNAME
 
