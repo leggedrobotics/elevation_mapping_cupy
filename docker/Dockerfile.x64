@@ -95,7 +95,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN rosdep init && rosdep update
 
 # Pytorch
-# Used by elevation_mapping_cupy
+# Used by elevation_mapping_cupy and not rosdep resolvable for cuda version
 RUN python3 -m pip install -U --extra-index-url https://download.pytorch.org/whl/cu121 \
     torch \
     torchvision \
@@ -121,21 +121,21 @@ RUN python3 -m pip install \
     flake8-import-order\
     flake8-class-newline\
     flake8-blind-except\
-    flake8-quotes\
+    flake8-quotes
     # For Python code formatting. Not sure what package uses it
     # black==21.12b0\
     #### For elevation_mapping_cupy ####
-    ruamel.yaml\
-    scikit-learn\
-    shapely\
-    opencv-python\
-    cupy-cuda12x\
-    scipy\
-    simple-parsing\
-    "numpy<2.0.0" 
+    # ruamel.yaml\ # replacing with apt python-ruamel.yaml
+    # scikit-learn\ # replacing with apt python3-sklearn - might not be needeed
+    # shapely\ # replacing with apt python3-shapely
+    # opencv-python\ # replacing with apt installed python3-opencv
+    # cupy-cuda12x\ # extra rosdeps
+    # scipy\ # apt install scipy instead
+    # simple-parsing\ # extra rosdeps
+    # "numpy<2.0.0" # extra rosdeps
 
 # Needed for elevation_mapping_cupy to not have run-time errors
-RUN python3 -m pip install transforms3d -U
+# RUN python3 -m pip install transforms3d -U # Replacing with rosdep python3-transforms3d
 
 # Set up non-root user
 RUN groupadd --gid $USER_GID $USERNAME \
@@ -156,51 +156,57 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    apt update && apt install -y --no-install-recommends \
+# RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#     apt update && apt install -y --no-install-recommends \
     # For elevation_mapping_cupy
-    libboost-all-dev\
-    && apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    # libboost-all-dev\ # resolved by rosdep as boost
+    # && apt clean && \
+    # rm -rf /var/lib/apt/lists/*
 
-RUN apt update && \
-    DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt install -y \
+# RUN apt update && \
+    # DEBIAN_FRONTEND=${DEBIAN_FRONTEND} apt install -y \
     #### For elevation_mapping_cupy ####
-    ros-${ROS_DISTRO}-grid-map-msgs\
-    ros-${ROS_DISTRO}-grid-map-ros\
-    ros-${ROS_DISTRO}-image-transport\
-    ros-${ROS_DISTRO}-pcl-ros\
-    ros-${ROS_DISTRO}-cv-bridge\
-    ros-${ROS_DISTRO}-tf-transformations\
-    ros-${ROS_DISTRO}-rviz2\
-    ros-${ROS_DISTRO}-gazebo-ros\
-    ros-${ROS_DISTRO}-grid-map-cv\
-    ros-${ROS_DISTRO}-grid-map-core\
-    ros-${ROS_DISTRO}-grid-map-demos\
+    # ros-${ROS_DISTRO}-grid-map-msgs\ # rosdep grid_map_msgs
+    # ros-${ROS_DISTRO}-grid-map-ros\ # rosdep grid_map_ros
+    # ros-${ROS_DISTRO}-image-transport\ # rosdep image_transport
+    # ros-${ROS_DISTRO}-pcl-ros\# rosdep pcl_ros
+    # ros-${ROS_DISTRO}-cv-bridge\ # rosdep cv_bridge
+    # ros-${ROS_DISTRO}-tf-transformations\ # rosdep tf-transformations
+    # ros-${ROS_DISTRO}-rviz2\ # rosdep rviz2
+    # ros-${ROS_DISTRO}-gazebo-ros\ # replacing with rosdep gazebo_ros_pkgs 
+    # ros-${ROS_DISTRO}-grid-map-cv\ # rosdep grid_map_cv
+    # ros-${ROS_DISTRO}-grid-map-core\ # rosdep grid_map_core
+    # ros-${ROS_DISTRO}-grid-map-demos\ # rosdep grid_map_demos
     ##################################
     #### For debugging elevation_mapping_cupy by setting up turtlebot3_simulations####
     # ros-${ROS_DISTRO}-turtlebot3*\
-    ros-${ROS_DISTRO}-camera-calibration-parsers\
-    ros-${ROS_DISTRO}-camera-info-manager\
-    ros-${ROS_DISTRO}-gazebo-plugins\
-    ros-${ROS_DISTRO}-turtlebot3-msgs\
-    ros-${ROS_DISTRO}-turtlebot3-teleop\
-    ros-${ROS_DISTRO}-gazebo-ros-pkgs\
+    # ros-${ROS_DISTRO}-camera-calibration-parsers\
+    # ros-${ROS_DISTRO}-camera-info-manager\
+    # ros-${ROS_DISTRO}-gazebo-plugins\
+    # ros-${ROS_DISTRO}-turtlebot3-msgs\
+    # ros-${ROS_DISTRO}-turtlebot3-teleop\
+    # ros-${ROS_DISTRO}-gazebo-ros-pkgs\ # replacing with rosdep gazebo_ros_pkgs
     ##############################################
-    && apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    # && apt clean && \
+    # rm -rf /var/lib/apt/lists/*
 
 # Development stage
 FROM dev as dev2
 ARG WORKSPACE="/home/ros/workspace"
 
-# Print workspace to terminal
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    echo "Workspace: ${WORKSPACE}"
-
 RUN mkdir -p ${WORKSPACE}/src/elevation_mapping_cupy && chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}
 RUN echo "if [ -f ${WORKSPACE}/install/setup.bash ]; then source ${WORKSPACE}/install/setup.bash; fi" >> /home/ros/.bashrc
 WORKDIR ${WORKSPACE}
+
+# TODO: move up later before commiting
+# Setup rosdep
+# COPY extra_rosdeps.yaml /etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml
+RUN ln -s /home/ros/workspace/src/elevation_mapping_cupy/docker/extra_rosdeps.yaml /etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml
+RUN --mount=type=cache,target=/var/cache/apt \
+    rosdep init \
+    && echo "yaml file:///home/ros/workspace/src/elevation_mapping_cupy/docker/extra_rosdeps.yaml" | tee /etc/ros/rosdep/sources.list.d/00-emcupy-rosdeps.list \
+    && rosdep update
+
 # Switch to non-root user
 USER $USERNAME
 

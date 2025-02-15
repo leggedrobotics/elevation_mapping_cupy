@@ -29,11 +29,11 @@
     <depend>grid_map_ros</depend>
     <depend>image_transport</depend>
     <depend>pcl_ros</depend>
-    <depend>pybind11</depend>
-      <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+    <depend>pybind11-dev</depend>
     <depend>ros2_numpy</depend>
+    <depend>python3-scipy</depend>
     <!-- Numpy version needs to be <2.0.0 -->
-    <depend>numpy</depend>
+    <depend>numpy_lessthan_2</depend>
     <depend>tf2_ros</depend>
     <depend>cv_bridge</depend>
     <depend>ament_index_python</depend>
@@ -42,15 +42,25 @@
 
     <!-- Additional dependencies -->
     <depend>rviz2</depend>
-    <depend>gazebo_ros</depend>
+    <!-- <depend>gazebo_ros</depend> -->
     <depend>robot_state_publisher</depend>
-    <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-    <depend>opencv-python</depend>
-    <!-- TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
-    <!-- <depend>trimesh</depend> -->
-    <!--TODO: This is not resolved by rosdep. Need to either add to extra_rosdeps.yaml or find correct name -->
+    <depend>python3-opencv</depend>
     <depend>cupy-cuda12x</depend>
     <depend>simple-parsing</depend>
+    <depend>python3-shapely</depend>
+    <depend>python3-ruamel.yaml</depend>
+    <depend>boost</depend>
+    <depend>python3-transforms3d</depend>
+
+    <!-- For turtlebot3 simulation -->
+    <depend>gazebo_ros_pkgs</depend>
+    <depend>turtlebot3_msgs</depend>
+    <depend>turtlebot3_teleop</depend>
+    <depend>camera_info_manager</depend>
+    <depend>camera_calibration_parsers</depend>
+
+    <!-- Only used for semantic sensors I think -->
+    <!-- <depend>python3-sklearn</depend> -->
     
     <!-- Export dependencies -->
     <!-- <build_export_depend>ament_cmake_python</build_export_depend> -->
