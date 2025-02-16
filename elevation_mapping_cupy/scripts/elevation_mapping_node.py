@@ -5,6 +5,7 @@ from functools import partial
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSPresetProfiles
 from ament_index_python.packages import get_package_share_directory
 import ros2_numpy as rnp
 from sensor_msgs.msg import PointCloud2, Image, CameraInfo
@@ -232,12 +233,15 @@ class ElevationMappingNode(Node):
                 image_subs[key] = image_sync
             elif data_type == "pointcloud":
                 topic_name = config.get("topic_name", "/pointcloud")
-                qos_profile = rclpy.qos.QoSProfile(
-                    depth=10,
-                    reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
-                    durability=rclpy.qos.DurabilityPolicy.VOLATILE,
-                    history=rclpy.qos.HistoryPolicy.KEEP_LAST
-                )
+                # qos_profile = rclpy.qos.QoSProfile(
+                #     depth=10,
+                #     reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
+                #     durability=rclpy.qos.DurabilityPolicy.VOLATILE,
+                #     history=rclpy.qos.HistoryPolicy.KEEP_LAST
+                # )
+                # qos_profile = QoSPresetProfiles.get_from_short_key("sensor_data")
+                # qos_profile = rclpy.qos.QoSProfile(depth=10)
+                qos_profile = 10
                 subscription = self.create_subscription(
                     PointCloud2,
                     topic_name,
@@ -355,12 +359,14 @@ class ElevationMappingNode(Node):
 
     def pointcloud_callback(self, msg: PointCloud2, sub_key: str) -> None:
         self._last_t = msg.header.stamp
-        channels = ["x", "y", "z"] + self.param.subscriber_cfg[sub_key].get("channels", [])
+        # self.get_logger().info(f"Received pointcloud with {msg.width} points")
+        additional_channels = self.param.subscriber_cfg[sub_key].get("channels", [])
+        channels = ["x", "y", "z"] + additional_channels
         try:
             points = rnp.numpify(msg)
         except:
             return
-        if points['xyz'].size == 0:
+        if points['x'].size == 0:
             return
         frame_sensor_id = msg.header.frame_id
         transform_sensor_to_map = self.safe_lookup_transform(
@@ -372,7 +378,16 @@ class ElevationMappingNode(Node):
         q = transform_sensor_to_map.transform.rotation
         t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
         R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
-        self._map.input_pointcloud(points['xyz'], channels, R, t_np, 0, 0)
+        pts = rnp.point_cloud2.get_xyz_points(points)
+        # TODO: This is probably expensive. Consider modifying rnp or input_pointcloud()
+        # Append additional channels to pts
+        for channel in additional_channels:
+            if channel in points.dtype.names:
+                data = points[channel].flatten()
+                if data.ndim == 1:
+                    data = data[:, np.newaxis]
+                pts = np.hstack((pts, data))
+        self._map.input_pointcloud(pts, channels, R, t_np, 0, 0)
         self._pointcloud_process_counter += 1
 
     def pose_update(self) -> None:

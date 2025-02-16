@@ -57,8 +57,6 @@ class ElevationMap:
         Args:
             param (elevation_mapping_cupy.parameter.Parameter):
         """
-        # Initialize the ROS logger
-        self.logger = rclpy.logging.get_logger('elevation_map')
 
         self.param = param
         self.data_type = self.param.data_type
@@ -243,25 +241,6 @@ class ElevationMap:
         self.min_filtered_mask = cp.zeros((self.cell_n, self.cell_n), dtype=self.data_type)
         self.mask = cp.zeros((self.cell_n, self.cell_n), dtype=self.data_type)
 
-        # Log parameter values before kernel initialization
-        self.logger.info("Initializing add_points_kernel with parameters:")
-        self.logger.info(f"  resolution: {self.resolution}")
-        self.logger.info(f"  cell_n: {self.cell_n}")
-        self.logger.info(f"  sensor_noise_factor: {self.param.sensor_noise_factor}")
-        self.logger.info(f"  mahalanobis_thresh: {self.param.mahalanobis_thresh}")
-        self.logger.info(f"  outlier_variance: {self.param.outlier_variance}")
-        self.logger.info(f"  wall_num_thresh: {self.param.wall_num_thresh}")
-        self.logger.info(f"  max_ray_length: {self.param.max_ray_length}")
-        self.logger.info(f"  cleanup_step: {self.param.cleanup_step}")
-        self.logger.info(f"  min_valid_distance: {self.param.min_valid_distance}")
-        self.logger.info(f"  max_height_range: {self.param.max_height_range}")
-        self.logger.info(f"  cleanup_cos_thresh: {self.param.cleanup_cos_thresh}")
-        self.logger.info(f"  ramped_height_range_a: {self.param.ramped_height_range_a}")
-        self.logger.info(f"  ramped_height_range_b: {self.param.ramped_height_range_b}")
-        self.logger.info(f"  ramped_height_range_c: {self.param.ramped_height_range_c}")
-        self.logger.info(f"  enable_edge_sharpen: {self.param.enable_edge_sharpen}")
-        self.logger.info(f"  enable_visibility_cleanup: {self.param.enable_visibility_cleanup}")
-
         self.add_points_kernel = add_points_kernel(
             self.resolution,
             self.cell_n,
@@ -339,7 +318,16 @@ class ElevationMap:
         t -= self.center
 
     def update_map_with_kernel(self, points_all, channels, R, t, position_noise, orientation_noise):
-        """Update map with new measurement."""
+        """Update map with new measurement.
+
+        Args:
+            points_all (cupy._core.core.ndarray):
+            channels (List[str]):
+            R (cupy._core.core.ndarray):
+            t (cupy._core.core.ndarray):
+            position_noise (float):
+            orientation_noise (float):
+        """
         self.new_map *= 0.0
         error = cp.array([0.0], dtype=cp.float32)
         error_cnt = cp.array([0], dtype=cp.float32)

@@ -1,0 +1,70 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+{
+	"name": "Demo Elevation Mapping CUPY Workspace",
+	"dockerFile": "../docker/Dockerfile.x64",
+	"context": "../",
+	"remoteUser": "ros",
+	"runArgs": [
+		"--network=host",
+		"--cap-add=SYS_PTRACE",
+		"--cap-add=SYS_NICE",
+		"--security-opt=seccomp:unconfined",
+		"--security-opt=apparmor:unconfined",
+		// "--volume=/tmp/.X11-unix:/tmp/.X11-unix",
+		"--volume=/mnt/wslg:/mnt/wslg",
+		"--ipc=host",
+		"--pid=host",
+		"--runtime=nvidia",
+		"--gpus=all",
+		"--privileged",
+		"--ulimit=rtprio=98",
+		"--ulimit=rttime=-1",
+		"--ulimit=memlock=8428281856",
+		"--name=emcupy-ros2-devcontainer"
+	],
+	"containerEnv": {
+		"DISPLAY": "${localEnv:DISPLAY}", // Needed for GUI try ":0" for windows
+		"WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
+		"XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
+		"PULSE_SERVER": "${localEnv:PULSE_SERVER}",
+		"LIBGL_ALWAYS_SOFTWARE": "1" // Needed for software rendering of opengl
+	},
+	"mounts": [
+	    "source=/dev,target=/dev,type=bind,consistency=cached"
+	//     "source=~/bag_files,target=/workspaces/vscode-container-workspace/bag_files,type=bind,consistency=cached"
+	],
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"remote.autoForwardPorts": false,
+				"remote.autoForwardPortsSource": "output",
+				"otherPortsAttributes": { "onAutoForward" : "ignore" }
+			},
+			"extensions": [
+				"althack.ament-task-provider",
+				"betwo.b2-catkin-tools",
+				"DotJoshJohnson.xml",
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.cmake-tools",
+				"ms-python.python",
+				"ms-vscode.cpptools",
+				"redhat.vscode-yaml",
+				"smilerobotics.urdf",
+				"streetsidesoftware.code-spell-checker",
+				"twxs.cmake",
+				"yzhang.markdown-all-in-one",
+				"zachflower.uncrustify",
+				"mhutchie.git-graph",
+				"eamodio.gitlens",
+				"ms-vscode.cpptools-extension-pack",
+				"usernamehw.errorlens",
+				"ms-iot.vscode-ros",
+				"alefragnani.Bookmarks",
+				"ms-vscode.live-server"
+				
+			]
+		}
+	},
+	"workspaceMount": "source=${localWorkspaceFolder}/,target=/home/ros/workspace/src/elevation_mapping_cupy/,type=bind",
+	"workspaceFolder": "/home/ros/workspace/src/elevation_mapping_cupy/"
+}

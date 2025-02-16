@@ -1,47 +1,79 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>elevation_mapping_cupy</name>
-  <version>2.0.0</version>
-  <description>Elevation mapping on GPU</description>
-  <maintainer email="your.email@example.com">Your Name</maintainer>
-  <license>MIT</license>
+    <name>elevation_mapping_cupy</name>
+    <version>2.0.0</version>
+    <description>Elevation mapping on GPU</description>
+    <maintainer email="takahiro.miki1992@gmail.com">Takahiro Miki</maintainer>
+    <license>MIT</license>
 
-  <!-- Build tool dependencies -->
-  <buildtool_depend>ament_python</buildtool_depend>
-  <buildtool_depend>ament_cmake</buildtool_depend>
+    <!-- Comment out these lines to build only with python -->
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_python</buildtool_depend>
 
-  <!-- Core ROS2 dependencies -->
-  <depend>rclpy</depend>
-  <depend>std_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>elevation_map_msgs</depend>
-  <depend>grid_map_msgs</depend>
-  <depend>grid_map_ros</depend>
-  <depend>image_transport</depend>
-  <depend>pcl_ros</depend>
-  <depend>pybind11</depend>
-  <depend>ros2_numpy</depend>
-  <depend>tf2_ros</depend>
-  <depend>message_filters</depend>
-  <depend>cv_bridge</depend>
-  <depend>ament_index_python</depend>
-  <depend>tf_transformations</depend>
+    <!-- Comment in to build only with python -->
+    <!-- <buildtool_depend>ament_python</buildtool_depend> -->
 
-  <!-- Additional dependencies -->
-  <depend>rviz2</depend>
-  <depend>gazebo_ros</depend>
-  <depend>robot_state_publisher</depend>
-  <depend>opencv-python</depend>
-  
-  <!-- Export dependencies -->
-  <build_export_depend>ament_python</build_export_depend>
-  <exec_depend>ament_python</exec_depend>
+    <!-- Core ROS2 dependencies -->
+    <depend>rclpy</depend>
+    <!-- Comment out to build only with python -->
+    <depend>rclcpp</depend>
+    <depend>std_msgs</depend>
+    <depend>std_srvs</depend>    
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <!-- Might need to remove point_cloud_transport if not used -->
+    <depend>point_cloud_transport</depend>
+    <depend>message_filters</depend>
+    <depend>elevation_map_msgs</depend>
+    <depend>grid_map_msgs</depend>
+    <depend>grid_map_ros</depend>
+    <depend>image_transport</depend>
+    <depend>pcl_ros</depend>
+    <depend>pybind11-dev</depend>
+    <depend>ros2_numpy</depend>
+    <depend>python3-scipy</depend>
+    <!-- Numpy version needs to be <2.0.0 -->
+    <depend>numpy_lessthan_2</depend>
+    <depend>tf2_ros</depend>
+    <depend>cv_bridge</depend>
+    <depend>ament_index_python</depend>
+    <depend>tf_transformations</depend>
 
-  <export>
-    <build_type>ament_python</build_type>
-  </export>
 
-  <!-- Additional metadata -->
-  <url type="repository">https://github.com/yourrepo/elevation_mapping_cupy</url>
+    <!-- Additional dependencies -->
+    <depend>rviz2</depend>
+    <!-- <depend>gazebo_ros</depend> -->
+    <depend>robot_state_publisher</depend>
+    <depend>python3-opencv</depend>
+    <depend>cupy-cuda12x</depend>
+    <depend>simple-parsing</depend>
+    <depend>python3-shapely</depend>
+    <depend>python3-ruamel.yaml</depend>
+    <depend>boost</depend>
+    <depend>python3-transforms3d</depend>
+
+    <!-- For turtlebot3 simulation -->
+    <depend>gazebo_ros_pkgs</depend>
+    <depend>turtlebot3_msgs</depend>
+    <depend>turtlebot3_teleop</depend>
+    <depend>camera_info_manager</depend>
+    <depend>camera_calibration_parsers</depend>
+
+    <!-- Only used for semantic sensors I think -->
+    <!-- <depend>python3-sklearn</depend> -->
+    
+    <!-- Export dependencies -->
+    <!-- <build_export_depend>ament_cmake_python</build_export_depend> -->
+    <!-- <exec_depend>ament_cmake_python</exec_depend> -->
+
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_lint_common</test_depend>
+
+    <export>
+        <!-- Comment out to build only with python -->
+        <build_type>ament_cmake</build_type>
+        <!-- Comment in to build only with python -->
+        <!-- <build_type>ament_python</build_type> -->
+    </export>
+
 </package>

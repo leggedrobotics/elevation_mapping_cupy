@@ -1,7 +1,7 @@
-/elevation_mapping_node:
+elevation_mapping:
   ros__parameters:
     #### Plugins ########
-    plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/core/plugin_config.yaml'
+    plugin_config_file: '$(find_package_share elevation_mapping_cupy)/config/core/plugin_config.yaml'
 
     #### Channel Fusions ########
     pointcloud_channel_fusions:
@@ -51,9 +51,9 @@
         basic_layers: ['elevation']
         fps: 5.0
       elevation_map_recordable:
-      layers: ['elevation', 'traversability']
-      basic_layers: ['elevation', 'traversability']
-      fps: 2.0
+        layers: ['elevation', 'traversability']
+        basic_layers: ['elevation', 'traversability']
+        fps: 2.0
       elevation_map_filter:
         layers: ['min_filter', 'smooth', 'inpaint', 'elevation']
         basic_layers: ['min_filter']

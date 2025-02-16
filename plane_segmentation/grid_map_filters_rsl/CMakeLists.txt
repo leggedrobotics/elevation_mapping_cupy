@@ -73,9 +73,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 
 # Clang tools (optional)
-find_package(cmake_clang_tools QUIET)
-if(cmake_clang_tools_FOUND)
-  add_default_clang_tooling()
-endif()
+# find_package(cmake_clang_tools QUIET)
+# if(cmake_clang_tools_FOUND)
+#   add_default_clang_tooling()
+# endif()
 
 ament_package()

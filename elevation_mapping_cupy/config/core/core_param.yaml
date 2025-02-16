@@ -1,11 +1,16 @@
 elevation_mapping_node:
   ros__parameters:
     #### Basic parameters ########
-    resolution: 0.1                                # resolution in m.
-    map_length: 15.0                               # map's size in m.
+    voxel_filter_size: 0.1
+    average_weight: 0.5
+    drift_compensation_variance_inlier: 0.1
+    checker_layer: 'elevation'                # layer name for checking the validity of the cell.
+    initialized_variance: 10.0                     # initial variance for each cell.    
+    resolution: 0.1                                # resolution in m.  
+    map_length: 20.0                                 # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
     mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
-    outlier_variance: 0.0`1                          # if point is outlier, add this value to the cell.
+    outlier_variance: 0.01                          # if point is outlier, add this value to the cell.
     drift_compensation_variance_inler: 0.05         # cells under this value is used for drift compensation.
     max_drift: 0.1                                  # drift compensation happens only the drift is smaller than this value (for safety)
     drift_compensation_alpha: 0.1                   # drift compensation alpha for smoother update of drift compensation
@@ -20,13 +25,13 @@ elevation_mapping_node:
     orientation_noise_thresh: 0.01                  # if the orientation change is bigger than this value, the drift compensation happens.
     position_lowpass_alpha: 0.2                     # lowpass filter alpha used for detecting movements.
     orientation_lowpass_alpha: 0.2                  # lowpass filter alpha used for detecting movements.
-    min_valid_distance: 4.0                         # points with shorter distance will be filtered out.
-    max_height_range: 10.5                           # points higher than this value from sensor will be filtered out
+    min_valid_distance: 0.1                         # points with shorter distance will be filtered out.
+    max_height_range: 10.5                          # points higher than this value from sensor will be filtered out to disable ceiling.
     ramped_height_range_a: 0.3                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
     ramped_height_range_b: 1.0                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
     ramped_height_range_c: 0.2                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
     update_variance_fps: 5.0                        # fps for updating variance.
-    update_pose_fps: 3.0                           # fps for updating pose and shift the center of map.
+    update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
     time_interval: 0.1                              # Time layer is updated with this interval.
     map_acquire_fps: 5.0                            # Raw map is fetched from GPU memory in this fps.
     publish_statistics_fps: 1.0                     # Publish statistics topic in this fps.
@@ -43,21 +48,17 @@ elevation_mapping_node:
 
     overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
     overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
+    # pose_topic: '/dlio/odom_node/odom'
+    map_frame: 'odom'                               # The map frame where the odometry source uses.
+    base_frame: 'base_link'                    # The robot's base frame. This frame will be a center of the map.
+    corrected_map_frame: 'odom'
 
-    map_frame: 'World'                               # The map frame where the odometry source uses.
-    base_frame: 'BASE'                    # The robot's base frame. This frame will be a center of the map.
-    corrected_map_frame: 'World'
-    
-
-    # map_frame: 'World'                               # The map frame where the odometry source uses.
-    # base_frame: 'BASE'                    # The robot's base frame. This frame will be a center of the map.
-    # corrected_map_frame: 'World'
 
     #### Feature toggles ########
     enable_edge_sharpen: true
     enable_visibility_cleanup: true
     enable_drift_compensation: true
-    enable_overlap_clearance: true`
+    enable_overlap_clearance: true
     enable_pointcloud_publishing: false
     enable_drift_corrected_TF_publishing: false
     enable_normal_color: false                      # If true, the map contains 'color' layer corresponding to normal. Add 'color' layer to the publishers setting if you want to visualize.
@@ -71,10 +72,10 @@ elevation_mapping_node:
 
     #### Initializer ########
     initialize_method: 'linear'                                         # Choose one from 'nearest', 'linear', 'cubic'
-    initialize_frame_id: 'nearest'                             # One tf (like ['footprint'] ) initializes a square around it.
+    initialize_frame_id: ['base_link']   # One tf (like ['footprint'] ) initializes a square around it.
     initialize_tf_offset: [0.0, 0.0, 0.0, 0.0]                          # z direction. Should be same number as initialize_frame_id.
     dilation_size_initialize: 2                                         # dilation size after the init.
-    initialize_tf_grid_size: 50                                        # This is not used if number of tf is more than 3.
+    initialize_tf_grid_size: 1.0                                        # This is not used if number of tf is more than 3.
     use_initializer_at_start: true                                      # Use initializer when the node starts.
 
     #### Default Plugins ########

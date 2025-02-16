@@ -84,10 +84,6 @@ class Parameter(Serializable):
                       (Default: ``20``)
         checker_layer: Layer used for checking safety.  
                        (Default: ``"traversability"``)
-        min_filter_size: The minimum size for the filter.  
-                         (Default: ``5``)
-        min_filter_iteration: The minimum number of iterations for the filter.  
-                              (Default: ``3``)
         max_drift: The maximum drift for the compensation.  
                    (Default: ``0.10``)
         overlap_clear_range_xy: XY range [m] for clearing overlapped area. This defines the valid area for overlap clearance. (used for multi floor setting)  
@@ -171,13 +167,13 @@ class Parameter(Serializable):
     time_interval: float = 0.1  # Time layer is updated with this interval.
 
     max_variance: float = 1.0  # maximum variance for each cell.
-    dilation_size: float = 2  # dilation filter size before traversability filter.
-    dilation_size_initialize: float = 10  # dilation size after the init.
+    dilation_size: int = 2  # dilation filter size before traversability filter.
+    dilation_size_initialize: int = 10  # dilation size after the init.
     drift_compensation_alpha: float = 1.0  # drift compensation alpha for smoother update of drift compensation.
 
     traversability_inlier: float = 0.1  # cells with higher traversability are used for drift compensation.
-    wall_num_thresh: float = 100  # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
-    min_height_drift_cnt: float = 100  # drift compensation only happens if the valid cells are more than this number.
+    wall_num_thresh: int = 100  # if there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+    min_height_drift_cnt: int = 100  # drift compensation only happens if the valid cells are more than this number.
 
     max_ray_length: float = 2.0  # maximum length for ray tracing.
     cleanup_step: float = 0.01  # substitute this value from validity layer at visibility cleanup.
@@ -192,9 +188,6 @@ class Parameter(Serializable):
     safe_min_thresh: float = 0.5  # polygon is unsafe if there exists lower traversability than this.
     max_unsafe_n: int = 20  # if the number of cells under safe_thresh exceeds this value, polygon is unsafe.
     checker_layer: str = "traversability"  # layer used for checking safety
-
-    min_filter_size: int = 5  # minimum size for the filter
-    min_filter_iteration: int = 3  # minimum number of iterations for the filter
 
     max_drift: float = 0.10  # maximum drift for the compensation
 
@@ -225,7 +218,7 @@ class Parameter(Serializable):
     cell_n: int = None  # number of cells in the map
     true_cell_n: int = None  # true number of cells in the map
 
-    def load_weights(self, filename):
+    def load_weights(self, filename: str):
         """
         Load weights from a file into the model's parameters.
         

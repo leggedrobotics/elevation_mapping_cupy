@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <!-- Build dependencies -->
-  <depend>Boost</depend>
+  <depend>boost</depend>
 
   <!-- Export dependencies -->
   <export>

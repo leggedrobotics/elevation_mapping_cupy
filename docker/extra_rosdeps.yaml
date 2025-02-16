@@ -1,0 +1,12 @@
+numpy_lessthan_2:
+  ubuntu:
+    pip:
+      packages: ["numpy<2.0.0"]
+simple-parsing:
+  ubuntu:
+    pip:
+      packages: [simple-parsing]
+cupy-cuda12x:
+  ubuntu:
+    pip:
+      packages: [cupy-cuda12x]
