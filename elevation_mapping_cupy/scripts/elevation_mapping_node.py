@@ -383,7 +383,7 @@ class ElevationMappingNode(Node):
         # Append additional channels to pts
         for channel in additional_channels:
             if channel in points.dtype.names:
-                data = points[channel]
+                data = points[channel].flatten()
                 if data.ndim == 1:
                     data = data[:, np.newaxis]
                 pts = np.hstack((pts, data))
