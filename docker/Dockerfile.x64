@@ -91,9 +91,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Initialize rosdep
-RUN rosdep init && rosdep update
-
 # Pytorch
 # Used by elevation_mapping_cupy and not rosdep resolvable for cuda version
 RUN python3 -m pip install -U --extra-index-url https://download.pytorch.org/whl/cu121 \
@@ -192,7 +189,7 @@ RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
 
 # Development stage
 FROM dev as dev2
-ARG WORKSPACE="/home/ros/workspace"
+ARG WORKSPACE="/home/${USERNAME}/workspace"
 
 RUN mkdir -p ${WORKSPACE}/src/elevation_mapping_cupy && chown -R ${USER_UID}:${USER_GID} /home/${USERNAME}
 RUN echo "if [ -f ${WORKSPACE}/install/setup.bash ]; then source ${WORKSPACE}/install/setup.bash; fi" >> /home/ros/.bashrc
@@ -200,12 +197,15 @@ WORKDIR ${WORKSPACE}
 
 # TODO: move up later before commiting
 # Setup rosdep
-# COPY extra_rosdeps.yaml /etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml
-RUN ln -s /home/ros/workspace/src/elevation_mapping_cupy/docker/extra_rosdeps.yaml /etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml
-RUN --mount=type=cache,target=/var/cache/apt \
-    rosdep init \
-    && echo "yaml file:///home/ros/workspace/src/elevation_mapping_cupy/docker/extra_rosdeps.yaml" | tee /etc/ros/rosdep/sources.list.d/00-emcupy-rosdeps.list \
-    && rosdep update
+# Could cache this, but since we are linking extra-rosdeps.yaml instead of copying this doesn't do anything
+# RUN --mount=type=cache,target=/home/${USERNAME}/.ros/rosdep/sources.cache \
+RUN rosdep init \
+    && ln -s ${WORKSPACE}/src/elevation_mapping_cupy/docker/extra_rosdeps.yaml /etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml\
+    && echo "yaml file:///etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml" | tee /etc/ros/rosdep/sources.list.d/00-emcupy-rosdeps.list 
+# Linking only works if you don't run rosdep update here and wait until it is loaded, otherwise can use copy
+# The benefit is that you can update the rosdeps in your workspace and they will be used
+# COPY docker/extra_rosdeps.yaml /etc/ros/rosdep/sources.list.d/emcupy-rosdeps.yaml
+# RUN rosdep update
 
 # Switch to non-root user
 USER $USERNAME
