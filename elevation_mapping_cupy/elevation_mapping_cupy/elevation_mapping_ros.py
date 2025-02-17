@@ -37,11 +37,9 @@ class ElevationMappingNode(Node):
         super().__init__(
             'elevation_mapping_node',
             automatically_declare_parameters_from_overrides=True,
-            allow_undeclared_parameters=True,
-            parameter_overrides=[
-                rclpy.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)
-            ]
+            allow_undeclared_parameters=True
         )
+
         self.root = get_package_share_directory("elevation_mapping_cupy")
         weight_file = os.path.join(self.root, "config/core/weights.dat")
         plugin_config_file = os.path.join(self.root, "config/core/plugin_config.yaml")
