@@ -132,7 +132,7 @@ class ElevationMap:
         self.mean_error = 0.0
         self.additive_mean_error = 0.0
 
-    def get_position(self, position):
+    def get_center_position(self, position):
         """Return the position of the map center.
 
         Args:
