@@ -6,19 +6,22 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.conditions import IfCondition
 
+
 def generate_launch_description():
     package_name = 'elevation_mapping_cupy'
     share_dir = get_package_share_directory(package_name)
 
     # Define paths
-    core_param_path = os.path.join(share_dir, 'config', 'core', 'core_param.yaml')
+    core_param_path = os.path.join(
+        share_dir, 'config', 'core', 'core_param.yaml')
 
     # Declare launch arguments
     robot_param_arg = DeclareLaunchArgument(
         'robot_config',
         # default_value='turtle_bot/turle_bot_simple.yaml',
         default_value='menzi/base.yaml',
-        description='Name of the robot-specific config file within config/setups/'
+        description='Name of the robot-specific config file within '
+                    'config/setups/'
     )
 
     launch_rviz_arg = DeclareLaunchArgument(
@@ -35,20 +38,22 @@ def generate_launch_description():
 
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='false',
+        default_value='true',
         description='Use simulation clock if true'
     )
 
     # Get launch configurations
     robot_config = LaunchConfiguration('robot_config')
-    robot_param_path = PathJoinSubstitution([share_dir, 'config', 'setups', robot_config])
+    robot_param_path = PathJoinSubstitution(
+        [share_dir, 'config', 'setups', robot_config])
     launch_rviz = LaunchConfiguration('launch_rviz')
     rviz_config = LaunchConfiguration('rviz_config')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Verify core config exists
     if not os.path.exists(core_param_path):
-        raise FileNotFoundError(f"Config file {core_param_path} does not exist")
+        raise FileNotFoundError(
+            f"Config file {core_param_path} does not exist")
 
     # Define nodes
     elevation_mapping_node = Node(
