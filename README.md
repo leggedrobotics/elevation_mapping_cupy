@@ -56,8 +56,6 @@ Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberge
 }
 ```
 
-If you use the Multi-modal Elevation Mapping for color or semantic layers, please cite the following paper:
-
 [MEM: Multi-Modal Elevation Mapping for Robotics and Learning](https://arxiv.org/abs/2309.16818v1)
 
 Gian Erni, Jonas Frey, Takahiro Miki, Matias Mattamala, Marco Hutter
