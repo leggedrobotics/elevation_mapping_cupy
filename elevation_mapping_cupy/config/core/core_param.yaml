@@ -2,7 +2,7 @@ elevation_mapping_node:
   ros__parameters:
     #### Basic parameters ########
     resolution: 0.1                                # resolution in m.
-    map_length: 15.0                               # map's size in m.
+    map_length: 20.0                               # map's size in m.
     sensor_noise_factor: 0.05                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
     mahalanobis_thresh: 2.0                         # points outside this distance is outlier.
     outlier_variance: 0.0`1                          # if point is outlier, add this value to the cell.
@@ -44,9 +44,9 @@ elevation_mapping_node:
     overlap_clear_range_xy: 4.0                     # xy range [m] for clearing overlapped area. this defines the valid area for overlap clearance. (used for multi floor setting)
     overlap_clear_range_z: 2.0                      # z range [m] for clearing overlapped area. cells outside this range will be cleared. (used for multi floor setting)
 
-    map_frame: 'World'                               # The map frame where the odometry source uses.
+    map_frame: 'BASE'                               # The map frame where the odometry source uses.
     base_frame: 'BASE'                    # The robot's base frame. This frame will be a center of the map.
-    corrected_map_frame: 'World'
+    corrected_map_frame: 'BASE'
     
 
     # map_frame: 'World'                               # The map frame where the odometry source uses.
