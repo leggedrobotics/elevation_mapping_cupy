@@ -500,7 +500,7 @@ void ElevationMappingNode::updatePose(const ros::TimerEvent&) {
 
 void ElevationMappingNode::publishAsPointCloud(const grid_map::GridMap& map) const {
   sensor_msgs::PointCloud2 msg;
-  grid_map::GridMapRosConverter::toPointCloud(map, "elevation", msg);
+  grid_map::GridMapRosConverter::toPointCloud(map, {"elevation"}, "elevation", msg);
   pointPub_.publish(msg);
 }
 
