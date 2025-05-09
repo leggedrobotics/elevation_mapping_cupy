@@ -279,10 +279,11 @@ class ElevationMappingNode(Node):
             return
         gm = GridMap()
         gm.header.frame_id = self.map_frame
-        gm.header.stamp = self.get_clock().now().to_msg()
+        gm.header.stamp = self._last_t if self._last_t is not None else self.get_clock().now().to_msg()
         gm.info.resolution = self._map.resolution
-        gm.info.length_x = self._map.map_length
-        gm.info.length_y = self._map.map_length
+        actual_map_length = (self._map.cell_n - 2) * self._map.resolution
+        gm.info.length_x = actual_map_length
+        gm.info.length_y = actual_map_length
         gm.info.pose.position.x = self._map_t.x
         gm.info.pose.position.y = self._map_t.y
         gm.info.pose.position.z = 0.0
@@ -296,12 +297,12 @@ class ElevationMappingNode(Node):
         for layer in self.my_publishers[key].get("layers", []):
             gm.layers.append(layer)
             self._map.get_map_with_name_ref(layer, self._map_data)
+            map_data_for_gridmap = np.flip(self._map_data, axis=1)
             arr = Float32MultiArray()
             arr.layout = MAL()
-            N = self._map_data.shape[0]
-            arr.layout.dim.append(MAD(label="column_index", size=N, stride=int(N * N)))
-            arr.layout.dim.append(MAD(label="row_index", size=N, stride=N))
-            arr.data = self._map_data.T.flatten().tolist()
+            arr.layout.dim.append(MAD(label="column_index", size=map_data_for_gridmap.shape[1], stride=map_data_for_gridmap.shape[0] * map_data_for_gridmap.shape[1]))
+            arr.layout.dim.append(MAD(label="row_index", size=map_data_for_gridmap.shape[0], stride=map_data_for_gridmap.shape[0]))
+            arr.data = map_data_for_gridmap.flatten().tolist()
             gm.data.append(arr)
 
         gm.outer_start_index = 0
