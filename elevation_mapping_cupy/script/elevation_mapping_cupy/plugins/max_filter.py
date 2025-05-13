@@ -93,6 +93,8 @@ class MaxFilter(PluginBase):
         layer_names: List[str],
         plugin_layers: cp.ndarray,
         plugin_layer_names: List[str],
+        *args,
+        
     ) -> cp.ndarray:
         self.max_filtered = elevation_map[0].copy()
         self.max_filtered_mask = elevation_map[2].copy()
