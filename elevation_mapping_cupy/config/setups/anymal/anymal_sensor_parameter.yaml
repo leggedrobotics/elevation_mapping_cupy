@@ -28,7 +28,7 @@ publishers:
     fps: 2.0
 
   filtered_elevation_map:
-    layers: ['inpaint', 'smooth', 'min_filter', 'upper_bound']
+    layers: ['inpaint', 'smooth', 'min_filter', 'max_filter', 'upper_bound']
     basic_layers: ['inpaint']
     fps: 5.0
 
