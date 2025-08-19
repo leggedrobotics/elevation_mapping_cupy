@@ -782,6 +782,25 @@ class ElevationMap:
                 p = self.plugin_manager.get_param_with_name(name)
                 xp = self.xp_of_array(m)
                 m = self.process_map_for_publish(m, fill_nan=p.fill_nan, add_z=p.is_height_layer, xp=xp)
+            elif name == "rgb":
+                # Special handling for rgb layer - check if any semantic layer uses color fusion
+                color_layer = None
+                for layer_name in self.semantic_map.layer_names:
+                    if (layer_name in self.semantic_map.layer_specs_points and 
+                        self.semantic_map.layer_specs_points[layer_name] == "color"):
+                        color_layer = layer_name
+                        break
+                    elif (layer_name in self.semantic_map.layer_specs_image and 
+                          self.semantic_map.layer_specs_image[layer_name] == "color"):
+                        color_layer = layer_name
+                        break
+                
+                if color_layer:
+                    # Get the RGB data from the color layer
+                    m = self.semantic_map.get_rgb(color_layer)
+                else:
+                    # No RGB data available, return silently
+                    return
             else:
                 print("Layer {} is not in the map".format(name))
                 return
