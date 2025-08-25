@@ -431,8 +431,8 @@ def dilation_filter_kernel(width, height, dilation_size):
                         int idx = get_relative_map_idx(i, dx, dy, 0);
                         if (!is_inside(idx)) {continue;}
                         U valid = mask[idx];
-                        if(valid > 0.5 && dx + dy < distance) {
-                            distance = dx + dy;
+                        if(valid > 0.5 && abs(dx) + abs(dy) < distance) {
+                            distance = abs(dx) + abs(dy);
                             near_value = map[idx];
                         }
                     }
