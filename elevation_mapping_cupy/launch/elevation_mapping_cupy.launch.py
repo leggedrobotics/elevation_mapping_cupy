@@ -11,7 +11,7 @@ def generate_launch_description():
         launch_ros.actions.SetParameter(name='use_sim_time', value=True),
         Node(
             package='elevation_mapping_cupy',
-            executable='elevation_mapping_node',
+            executable='elevation_mapping_node.py',
             name='elevation_mapping',
             parameters=[
                 PathJoinSubstitution([

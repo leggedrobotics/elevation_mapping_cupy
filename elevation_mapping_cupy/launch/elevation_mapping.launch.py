@@ -58,7 +58,7 @@ def generate_launch_description():
     # Define nodes
     elevation_mapping_node = Node(
         package=package_name,
-        executable='elevation_mapping_node',
+        executable='elevation_mapping_node.py',
         name='elevation_mapping_node',
         output='screen',
         parameters=[
