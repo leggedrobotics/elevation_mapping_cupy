@@ -151,7 +151,8 @@ class ElevationMap:
         delta_position_xy = delta_pixel * self.resolution
         self.center[:2] += xp.asarray(delta_position_xy)
         self.center[2] += xp.asarray(delta_position[2])
-        self.shift_map_xy(delta_pixel)
+        dy_dx = xp.array([delta_pixel[1], delta_pixel[0]])
+        self.shift_map_xy(dy_dx)
         self.shift_map_z(-delta_position[2])
 
     def move_to(self, position, R):
@@ -169,7 +170,8 @@ class ElevationMap:
         delta_xy = delta_pixel * self.resolution
         self.center[:2] += delta_xy
         self.center[2] += delta[2]
-        self.shift_map_xy(-delta_pixel)
+        dy_dx = xp.array([delta_pixel[1], delta_pixel[0]])
+        self.shift_map_xy(-dy_dx)
         self.shift_map_z(-delta[2])
 
     def pad_value(self, x, shift_value, idx=None, value=0.0):
