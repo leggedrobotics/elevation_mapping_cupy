@@ -1,0 +1,59 @@
+plugin_config_file: '$(rospack find elevation_mapping_cupy)/config/setups/anymal/anymal_plugin_config.yaml'
+
+pointcloud_channel_fusions:
+  rgb: 'color'
+  default: 'average'
+
+image_channel_fusions:
+  rgb: 'color'
+  default: 'exponential'
+  feat_.*: 'exponential'
+  sem_.*: 'exponential'
+
+#### Publishers ########
+# topic_name:
+#   layers:               # Choose from 'elevation', 'variance', 'traversability', 'time', 'normal_x', 'normal_y', 'normal_z', 'color', plugin_layer_names
+#   basic_layers:         # basic_layers for valid cell computation (e.g. Rviz): Choose a subset of `layers`.
+#   fps:                  # Publish rate. Use smaller value than `map_acquire_fps`.
+
+publishers:
+  elevation_map_raw:
+    layers: ['elevation', 'traversability', 'variance', 'rgb', 'upper_bound']
+    basic_layers: ['elevation', 'traversability']
+    fps: 2.0
+
+  elevation_map_recordable:
+    layers: ['elevation', 'traversability', 'variance', 'rgb']
+    basic_layers: ['elevation', 'traversability']
+    fps: 5.0
+
+  filtered_elevation_map:
+    layers: ['inpaint', 'smooth', 'min_filter', 'max_filter', 'upper_bound']
+    basic_layers: ['inpaint']
+    fps: 1.0
+
+#### Subscribers ########
+subscribers:
+  # face_depth:
+  #   topic_name: /camera_face/depth/color/points
+  #   data_type: pointcloud
+
+  chin_depth:
+    topic_name: /camera_chin/depth/color/points
+    data_type: pointcloud
+
+  left_depth:
+    topic_name: /camera_left/depth/color/points
+    data_type: pointcloud
+
+  right_depth:
+    topic_name: /camera_right/depth/color/points
+    data_type: pointcloud
+
+  rear_depth:
+    topic_name: /camera_rear/depth/color/points_norobot
+    data_type: pointcloud
+
+  lidar_depth:
+    topic_name: /livox/lidar_norobot
+    data_type: pointcloud
