@@ -1,5 +1,5 @@
 #### Basic parameters ########
-resolution: 0.025                                # resolution in m.
+resolution: 0.02                                # resolution in m.
 map_length: 3                                  # map's size in m.
 sensor_noise_factor: 0.1                       # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).
 mahalanobis_thresh: 1.0                         # points outside this distance is outlier.
@@ -24,7 +24,7 @@ ramped_height_range_a: 0.3                      # if z > max(d - ramped_height_r
 ramped_height_range_b: 1.0                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
 ramped_height_range_c: 0.2                      # if z > max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
 update_variance_fps: 5.0                        # fps for updating variance.
-update_pose_fps: 10.0                           # fps for updating pose and shift the center of map.
+update_pose_fps: 60.0                           # fps for updating pose and shift the center of map.
 time_interval: 0.1                              # Time layer is updated with this interval.
 map_acquire_fps: 5.0                            # Raw map is fetched from GPU memory in this fps.
 publish_statistics_fps: 1.0                     # Publish statistics topic in this fps.
