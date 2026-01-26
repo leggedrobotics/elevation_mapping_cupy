@@ -39,7 +39,8 @@ subscribers:
   #   data_type: pointcloud
 
   chin_depth:
-    topic_name: /camera_chin/depth/color/points
+    # topic_name: /camera_chin/depth/color/points
+    topic_name: /camera_chin/depth/color/points_norobot
     data_type: pointcloud
 
   left_depth:
@@ -54,6 +55,6 @@ subscribers:
     topic_name: /camera_rear/depth/color/points_norobot
     data_type: pointcloud
 
-  lidar_depth:
-    topic_name: /livox/lidar_norobot
-    data_type: pointcloud
+  # lidar_depth:
+  #   topic_name: /livox/lidar_norobot
+  #   data_type: pointcloud
