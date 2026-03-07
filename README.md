@@ -4,6 +4,12 @@
 
 [Documentation](https://leggedrobotics.github.io/elevation_mapping_cupy/)
 
+## Branch Selection
+
+- `main` is the legacy ROS1 / catkin branch.
+- `ros2` is the official ROS2 Jazzy branch: https://github.com/leggedrobotics/elevation_mapping_cupy/tree/ros2
+- The published documentation site tracks the `ros2` branch.
+
 ## Overview
 
 The Elevaton Mapping CuPy software package represents an advancement in robotic navigation and locomotion.
