@@ -8,7 +8,6 @@
 
 - `main` is the legacy ROS1 / catkin branch.
 - `ros2` is the official ROS2 Jazzy branch: https://github.com/leggedrobotics/elevation_mapping_cupy/tree/ros2
-- ROS2 branch maintainer: Lorenzo Terenzi.
 - The published documentation site tracks the `ros2` branch.
 
 ## Overview
