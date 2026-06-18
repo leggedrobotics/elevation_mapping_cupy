@@ -5,85 +5,77 @@
 import cupy as cp
 
 
+class TraversabilityFilterCupy:
+    def __init__(self, w1, w2, w3, w_out, device="cuda", use_bias=False, use_cupy=True):
+        if use_bias:
+            raise NotImplementedError("TraversabilityFilterCupy does not support bias weights")
+        self.w1 = cp.asarray(w1, dtype=cp.float32)
+        self.w2 = cp.asarray(w2, dtype=cp.float32)
+        self.w3 = cp.asarray(w3, dtype=cp.float32)
+        self.w_out = cp.asarray(w_out, dtype=cp.float32)
+        self._validate_weights()
+
+    def _validate_weights(self):
+        expected = {
+            "w1": (4, 1, 3, 3),
+            "w2": (4, 1, 3, 3),
+            "w3": (4, 1, 3, 3),
+            "w_out": (1, 12, 1, 1),
+        }
+        actual = {
+            "w1": self.w1.shape,
+            "w2": self.w2.shape,
+            "w3": self.w3.shape,
+            "w_out": self.w_out.shape,
+        }
+        for name, shape in expected.items():
+            if actual[name] != shape:
+                raise ValueError(f"{name} must have shape {shape}, got {actual[name]}")
+
+    @staticmethod
+    def _dilated_conv2d(image, weights, dilation):
+        height, width = image.shape
+        out_channels = weights.shape[0]
+        out_height = height - 2 * dilation
+        out_width = width - 2 * dilation
+        if out_height <= 0 or out_width <= 0:
+            raise ValueError(
+                f"Input elevation map is too small for dilation={dilation}: "
+                f"shape={image.shape}"
+            )
+
+        output = cp.zeros((1, out_channels, out_height, out_width), dtype=cp.float32)
+        for row in range(3):
+            row_start = row * dilation
+            for col in range(3):
+                col_start = col * dilation
+                image_window = image[
+                    row_start : row_start + out_height,
+                    col_start : col_start + out_width,
+                ]
+                kernel = weights[:, 0, row, col].reshape(1, out_channels, 1, 1)
+                output += image_window.reshape(1, 1, out_height, out_width) * kernel
+        return output
+
+    def __call__(self, elevation_cupy):
+        elevation = cp.asarray(elevation_cupy, dtype=cp.float32)
+        if elevation.ndim != 2:
+            raise ValueError(f"elevation_cupy must be a 2D array, got shape={elevation.shape}")
+
+        out1 = self._dilated_conv2d(elevation, self.w1, dilation=1)[:, :, 2:-2, 2:-2]
+        out2 = self._dilated_conv2d(elevation, self.w2, dilation=2)[:, :, 1:-1, 1:-1]
+        out3 = self._dilated_conv2d(elevation, self.w3, dilation=3)
+        out = cp.concatenate((out1, out2, out3), axis=1)
+        cost = cp.sum(cp.abs(out) * self.w_out, axis=1, keepdims=True)
+        return cp.exp(-cost)
+
+
 def get_filter_torch(*args, **kwargs):
-    import torch
-    import torch.nn as nn
-
-    class TraversabilityFilter(nn.Module):
-        def __init__(self, w1, w2, w3, w_out, device="cuda", use_bias=False):
-            super(TraversabilityFilter, self).__init__()
-            self.conv1 = nn.Conv2d(1, 4, 3, dilation=1, padding=0, bias=use_bias)
-            self.conv2 = nn.Conv2d(1, 4, 3, dilation=2, padding=0, bias=use_bias)
-            self.conv3 = nn.Conv2d(1, 4, 3, dilation=3, padding=0, bias=use_bias)
-            self.conv_out = nn.Conv2d(12, 1, 1, bias=use_bias)
-
-            # Set weights.
-            self.conv1.weight = nn.Parameter(torch.from_numpy(w1).float())
-            self.conv2.weight = nn.Parameter(torch.from_numpy(w2).float())
-            self.conv3.weight = nn.Parameter(torch.from_numpy(w3).float())
-            self.conv_out.weight = nn.Parameter(torch.from_numpy(w_out).float())
-
-        def __call__(self, elevation_cupy):
-            # Convert cupy tensor to pytorch.
-            elevation_cupy = elevation_cupy.astype(cp.float32)
-            elevation = torch.as_tensor(elevation_cupy, device=self.conv1.weight.device)
-
-            with torch.no_grad():
-                out1 = self.conv1(elevation.view(-1, 1, elevation.shape[0], elevation.shape[1]))
-                out2 = self.conv2(elevation.view(-1, 1, elevation.shape[0], elevation.shape[1]))
-                out3 = self.conv3(elevation.view(-1, 1, elevation.shape[0], elevation.shape[1]))
-
-                out1 = out1[:, :, 2:-2, 2:-2]
-                out2 = out2[:, :, 1:-1, 1:-1]
-                out = torch.cat((out1, out2, out3), dim=1)
-                # out = F.concat((out1, out2, out3), axis=1)
-                out = self.conv_out(out.abs())
-                out = torch.exp(-out)
-                out_cupy = cp.asarray(out)
-
-            return out_cupy
-
-    traversability_filter = TraversabilityFilter(*args, **kwargs).cuda().eval()
-    return traversability_filter
+    return TraversabilityFilterCupy(*args, **kwargs)
 
 
 def get_filter_chainer(*args, **kwargs):
-    import os
-
-    os.environ["CHAINER_WARN_VERSION_MISMATCH"] = "0"
-    import chainer
-    import chainer.links as L
-    import chainer.functions as F
-
-    class TraversabilityFilter(chainer.Chain):
-        def __init__(self, w1, w2, w3, w_out, use_cupy=True):
-            super(TraversabilityFilter, self).__init__()
-            self.conv1 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=1, nobias=True, initialW=w1)
-            self.conv2 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=2, nobias=True, initialW=w2)
-            self.conv3 = L.Convolution2D(1, 4, ksize=3, pad=0, dilate=3, nobias=True, initialW=w3)
-            self.conv_out = L.Convolution2D(12, 1, ksize=1, nobias=True, initialW=w_out)
-
-            if use_cupy:
-                self.conv1.to_gpu()
-                self.conv2.to_gpu()
-                self.conv3.to_gpu()
-                self.conv_out.to_gpu()
-            chainer.config.train = False
-            chainer.config.enable_backprop = False
-
-        def __call__(self, elevation):
-            out1 = self.conv1(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
-            out2 = self.conv2(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
-            out3 = self.conv3(elevation.reshape(-1, 1, elevation.shape[0], elevation.shape[1]))
-
-            out1 = out1[:, :, 2:-2, 2:-2]
-            out2 = out2[:, :, 1:-1, 1:-1]
-            out = F.concat((out1, out2, out3), axis=1)
-            out = self.conv_out(F.absolute(out))
-            return F.exp(-out).array
-
-    traversability_filter = TraversabilityFilter(*args, **kwargs)
-    return traversability_filter
+    return TraversabilityFilterCupy(*args, **kwargs)
 
 
 if __name__ == "__main__":
