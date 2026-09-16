@@ -4,8 +4,8 @@
     resolution: 0.04
     map_length: 8.0
     sensor_noise_factor: 0.05
-    mahalanobis_thresh: 1.5
-    outlier_variance: 0.01
+    mahalanobis_thresh: 3.0
+    outlier_variance: 0.015
     drift_compensation_variance_inlier: 0.05
     max_drift: 0.1
     drift_compensation_alpha: 0.1
@@ -21,7 +21,7 @@
     position_lowpass_alpha: 0.2
     orientation_lowpass_alpha: 0.2
     min_valid_distance: 0.4
-    max_height_range: -0.1
+    max_height_range: -0.0
     ramped_height_range_a: 0.3
     ramped_height_range_b: 1.0
     ramped_height_range_c: 0.2

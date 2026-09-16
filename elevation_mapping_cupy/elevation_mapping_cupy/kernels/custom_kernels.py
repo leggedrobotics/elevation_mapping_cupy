@@ -234,7 +234,9 @@ def add_points_kernel(
 
                     // If point is close or is farther away than ray length, skip.
                     float16 d = (x - nx) * (x - nx) + (y - ny) * (y - ny) + (z - nz) * (z - nz);
-                    if (d < 0.1 || !is_valid(x, y, z, t[0], t[1], t[2])) {continue;}
+                    // Validity is measured from the true sensor origin (sensor_t), not the
+                    // point-cloud frame origin t (odom when a ray_source_frame is set).
+                    if (d < 0.1 || !is_valid(x, y, z, sensor_t[0], sensor_t[1], sensor_t[2])) {continue;}
 
                     // If invalid, do upper bound check, then skip
                     if (nmap_valid < 0.5) {
@@ -269,7 +271,7 @@ def add_points_kernel(
                 }
             }
             p[i * 3]= idx;
-            p[i * 3 + 1] = is_valid(x, y, z, t[0], t[1], t[2]);
+            p[i * 3 + 1] = is_valid(x, y, z, sensor_t[0], sensor_t[1], sensor_t[2]);
             p[i * 3 + 2] = is_inside(idx);
             """
         ).substitute(

@@ -28,6 +28,6 @@
 
     subscribers:
       Livox:
-        topic_name: "/robot/dlio/odom_node/pointcloud/deskewed"
+        topic_name: "/robot/dlio/odom_node/pointcloud/deskewed_self_filtered"
         data_type: "pointcloud"
-        ray_source_frame: "mid360_link"
+        ray_source_frame: "livox_frame"
