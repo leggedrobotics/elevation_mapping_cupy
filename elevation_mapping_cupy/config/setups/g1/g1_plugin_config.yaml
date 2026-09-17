@@ -32,6 +32,10 @@ inpainting:
   layer_name: "inpaint"
   extra_params:
     method: "telea"
+    # ROS 1 behaviour: inpaint the whole invalid mask (the ROS 2 plugin otherwise fills only
+    # bounded holes up to 64 cells and never holes touching the map border)
+    max_hole_area: 0
+    fill_border_holes: True
 
 min_smooth_filter:
   enable: True

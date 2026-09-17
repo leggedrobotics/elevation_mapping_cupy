@@ -64,10 +64,12 @@ def map_utils(
             return r0 * x + r1 * y + r2 * z + t;
         }
         __device__ float point_noise(float16 x, float16 y, float16 z){
-            // Noise model based on squared range in the sensor frame.
-            // This avoids v=0 for flat ground points (z=0) and works for both
-            // depth-camera optical frames (where z is range) and generic frames.
-            return ${sensor_noise_factor} * (x * x + y * y + z * z);
+            // ROS 1 (dev/jj/g1/main) noise model kept on purpose: variance = factor * z^2 with z
+            // in the point-cloud frame. mahalanobis_thresh / outlier_variance in the G1 setup were
+            // tuned against this behaviour. (The ROS 2 port used the squared range from the cloud
+            // origin instead, which for odom-frame clouds grows with the distance from the odom
+            // origin and changes the fusion as the robot walks away.)
+            return ${sensor_noise_factor} * z * z;
         }
 
         __device__ float point_sensor_distance(float16 x, float16 y, float16 z,
