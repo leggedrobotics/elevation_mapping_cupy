@@ -27,9 +27,11 @@ from elevation_mapping_cupy.kernels import finalize_map_kernel
 from elevation_mapping_cupy.kernels import dilation_filter_kernel
 from elevation_mapping_cupy.kernels import normal_filter_kernel
 from elevation_mapping_cupy.kernels import polygon_mask_kernel
+from elevation_mapping_cupy.kernels import image_to_map_correspondence_kernel
 
 from elevation_mapping_cupy.map_initializer import MapInitializer
 from elevation_mapping_cupy.plugins.plugin_manager import PluginManager
+from elevation_mapping_cupy.semantic_map import SemanticMap
 from elevation_mapping_cupy.traversability_polygon import (
     get_masked_traversability,
     is_traversable,
@@ -108,6 +110,7 @@ class ElevationMap:
         self.cell_n = param.cell_n
 
         self.map_lock = threading.Lock()
+        self.semantic_map = SemanticMap(self.param)
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n), dtype=self.data_type)
         self.layer_names = [
             "elevation",
@@ -139,6 +142,11 @@ class ElevationMap:
 
         self.compile_kernels()
 
+        self.compile_image_kernels()
+
+        self.semantic_map.initialize_fusion()
+        self.preallocate_semantic_layers()
+
         # No shell substitutions in research code: param.weight_file is expected to be a real path.
         param.load_weights(param.weight_file)
 
@@ -160,6 +168,7 @@ class ElevationMap:
             self.elevation_map *= 0.0
             # Initial variance
             self.elevation_map[1] += self.initial_variance
+            self.semantic_map.clear()
             self.plugin_manager.reset_layers()
 
         self.mean_error = 0.0
@@ -256,6 +265,8 @@ class ElevationMap:
             self.elevation_map = cp.roll(self.elevation_map, shift_value, axis=(1, 2))
             self.pad_value(self.elevation_map, shift_value, value=0.0)
             self.pad_value(self.elevation_map, shift_value, idx=1, value=self.initial_variance)
+            # Semantic layers live on the same grid and must follow the same [y, x] roll.
+            self.semantic_map.shift_map_xy(shift_value)
             # Plugin layers are computed on-demand; invalidate cache when shifting.
             self.plugin_manager.reset_layers()
 
@@ -339,6 +350,60 @@ class ElevationMap:
         self.polygon_mask_kernel = polygon_mask_kernel(self.cell_n, self.cell_n, self.resolution)
         self.normal_filter_kernel = normal_filter_kernel(self.cell_n, self.cell_n, self.resolution)
 
+    def preallocate_semantic_layers(self):
+        """Create the semantic layers declared by the configured subscribers up front.
+
+        Upstream creates semantic layers lazily, on the first message that carries a channel.
+        That makes `exists_layer`/`get_map_with_name_ref` fail for a layer that is configured
+        but has not been observed yet, which in turn makes a publisher listing that layer throw
+        until the first semantic frame arrives. Creating them eagerly (as zeros) keeps the
+        published layer set stable from startup and is otherwise a no-op: the first real message
+        finds the layer already present.
+        """
+        for config in self.param.subscriber_cfg.values():
+            channels = list(config.get("channels", []) or [])
+            if not channels:
+                continue
+            if config.get("data_type") == "image":
+                channel_fusions = self.param.image_channel_fusions
+                layer_specs = self.semantic_map.layer_specs_image
+            elif config.get("data_type") == "pointcloud":
+                channel_fusions = self.param.pointcloud_channel_fusions
+                layer_specs = self.semantic_map.layer_specs_points
+            else:
+                continue
+            process_channels, _ = self.semantic_map.get_fusion(channels, channel_fusions, layer_specs)
+            for channel in process_channels:
+                self.semantic_map.add_layer(channel)
+
+    def compile_image_kernels(self):
+        """Compile kernels related to processing image messages.
+
+        Only allocated when at least one subscriber is configured with ``data_type: image``.
+        Otherwise the attributes stay None and ``input_image`` raises a clear error instead of
+        the AttributeError the unported ros2 branch would have produced.
+        """
+        self.valid_correspondence = None
+        self.uv_correspondence = None
+        self.image_to_map_correspondence_kernel = None
+
+        for config in self.param.subscriber_cfg.values():
+            if config.get("data_type") == "image":
+                self.valid_correspondence = cp.asarray(
+                    np.zeros((self.cell_n, self.cell_n), dtype=np.bool_), dtype=np.bool_
+                )
+                self.uv_correspondence = cp.asarray(
+                    np.zeros((2, self.cell_n, self.cell_n), dtype=np.float32),
+                    dtype=np.float32,
+                )
+                self.image_to_map_correspondence_kernel = image_to_map_correspondence_kernel(
+                    resolution=self.resolution,
+                    width=self.cell_n,
+                    height=self.cell_n,
+                    tolerance_z_collision=self.param.image_z_collision_tolerance,
+                )
+                break
+
     def shift_translation_to_map_center(self, t):
         """Deduct the map center to get the translation of a point w.r.t. the map center.
 
@@ -414,6 +479,11 @@ class ElevationMap:
                 self.elevation_map,
                 size=(self.cell_n * self.cell_n),
             )
+
+            # Fuse any extra (non-xyz) pointcloud channels into the semantic map. `self.new_map`
+            # is passed as the per-cell hit-count source (layer 2), which `add_points_kernel`
+            # above still accumulates on this branch, and `finalize_map_kernel` only reads.
+            self.semantic_map.update_layers_pointcloud(points_all, channels, R, t, self.new_map)
 
             if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
@@ -523,6 +593,12 @@ class ElevationMap:
     ):
         """Project image channels into the map using the camera calibration and pose."""
 
+        if self.image_to_map_correspondence_kernel is None:
+            raise RuntimeError(
+                "input_image() called but no image kernels were compiled. "
+                "At least one entry in `subscribers` must have `data_type: image`."
+            )
+
         image = np.stack(image, axis=0)
         if len(image.shape) == 2:
             image = image[None]
@@ -583,6 +659,10 @@ class ElevationMap:
                 image_height,
                 image_width,
             )
+            # Plugin layers are generation-cached on this branch; semantic input is a map
+            # change, so the cache has to be invalidated or semantic-derived plugin layers
+            # would be computed once and then frozen.
+            self.plugin_manager.reset_layers()
 
     def update_normal(self, dilated_map):
         """Clear the normal map and then apply the normal kernel with dilated map as input.
@@ -742,6 +822,8 @@ class ElevationMap:
         """
         if name in self.layer_names:
             return True
+        elif name in self.semantic_map.layer_names:
+            return True
         elif name in self.plugin_manager.layer_names:
             return True
         else:
@@ -779,12 +861,17 @@ class ElevationMap:
                 m = self.normal_map.copy()[1, 1:-1, 1:-1]
             elif name == "normal_z":
                 m = self.normal_map.copy()[2, 1:-1, 1:-1]
+            elif name in self.semantic_map.layer_names:
+                m = self.semantic_map.get_map_with_name(name)
             elif name in self.plugin_manager.layer_names:
                 self.plugin_manager.update_with_name(
                     name,
                     self.elevation_map,
                     self.layer_names,
+                    semantic_map=self.semantic_map.semantic_map,
+                    semantic_params=self.semantic_map.layer_names,
                     rotation=self.base_rotation,
+                    elements_to_shift=self.semantic_map.elements_to_shift,
                 )
                 m = self.plugin_manager.get_map_with_name(name)
                 p = self.plugin_manager.get_param_with_name(name)
@@ -905,12 +992,18 @@ class ElevationMap:
         if name in self.layer_names:
             idx = self.layer_names.index(name)
             return_map = self.elevation_map[idx]
+        elif name in self.semantic_map.layer_names:
+            idx = self.semantic_map.layer_names.index(name)
+            return_map = self.semantic_map.semantic_map[idx]
         elif name in self.plugin_manager.layer_names:
             self.plugin_manager.update_with_name(
                 name,
                 self.elevation_map,
                 self.layer_names,
+                semantic_map=self.semantic_map.semantic_map,
+                semantic_params=self.semantic_map.layer_names,
                 rotation=self.base_rotation,
+                elements_to_shift=self.semantic_map.elements_to_shift,
             )
             return_map = self.plugin_manager.get_map_with_name(name)
         else:
@@ -1010,6 +1103,7 @@ class ElevationMap:
         ordered: List[str] = []
         for container in (
             self.layer_names,
+            self.semantic_map.layer_names,
             getattr(self.plugin_manager, "layer_names", []),
         ):
             for name in container:
@@ -1156,6 +1250,13 @@ class ElevationMap:
         if name in getattr(self.plugin_manager, "layer_names", []):
             idx = self.plugin_manager.layer_names.index(name)
             return self.plugin_manager.layers[idx, 1:-1, 1:-1]
+        if name in self.semantic_map.layer_names:
+            idx = self.semantic_map.layer_names.index(name)
+            return self.semantic_map.semantic_map[idx, 1:-1, 1:-1]
+        if allow_semantic_creation:
+            self.semantic_map.add_layer(name)
+            idx = self.semantic_map.layer_names.index(name)
+            return self.semantic_map.semantic_map[idx, 1:-1, 1:-1]
         return None
 
     def _validate_geometry_against_shape(self, shape: Tuple[int, int], geometry: GridGeometry) -> None:

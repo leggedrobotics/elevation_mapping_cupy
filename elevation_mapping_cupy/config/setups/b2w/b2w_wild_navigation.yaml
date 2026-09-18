@@ -1,0 +1,81 @@
+# b2w wild-navigation setup: offline height map + VLM-relabelled semantic layers.
+#
+# Data source is the converted ZED X mission bag
+#   /media/pascalr/T7/SemMemPlannerData/deployment_20260902_waegitalersee/20260902_105007_zedx
+# whose topics were enumerated in Task 1 of the wild-navigation-heightmap plan.
+#
+# HOW THIS CONFIG IS ACTUALLY USED
+# --------------------------------
+# There is NO ROS launch file and no `/elevation_mapping_node` process for this mission. The only
+# consumer is the offline driver `scripts/ablations_comparisons/run_wild_navigation_heightmap.py`,
+# which loads this YAML for its parameter/fusion/plugin/subscriber blocks and then drives
+# `ElevationMap` directly in-process: it unprojects `/zed/zed_node/depth/depth_registered`
+# (+ its `camera_info`) to a point cloud itself and feeds the offline VLM-relabelled 3-channel
+# risk/steppable/preferred_area maps straight into `input_image()`. The `/wild_navigation/points`
+# and `/wild_navigation/semantic_image` topics named in the `subscribers` block below are never
+# published by anything -- they exist only so the subscriber entries declare the channel names and
+# ordering (risk, steppable, preferred_area) that the driver passes to `input_image()`.
+#
+# If someone later builds the ROS-node/launch-file path (depth_image_proc for the cloud, a node
+# republishing the relabelled semantics), the frames below WILL need revisiting: the driver looks
+# up the actual frames from the pose bag at runtime and never reads `map_frame`/`base_frame` from
+# this file, so nothing here is currently exercised.
+#
+#### Frames ############
+# Task 5 established that the converted ZED X bag's own odometry (`/zed/zed_node/odom`,
+# `odom_zedx`) is DEAD -- 0.53 m of reported motion over the whole 489 s mission. The map is
+# therefore driven from the sibling `<mission>_dlio` bag's `/dlio/odom_node/odom`, i.e.
+# `dlio_odom -> base`, with the `base -> zed_camera_link` mount extrinsic taken from whichever
+# sibling on-robot bag carries a `/tf_static`. The exported `.npz` files record
+# `map_frame = 'dlio_odom'` accordingly; the values below mirror that.
+/elevation_mapping_node:
+  ros__parameters:
+    #### Frames ############
+    map_frame: 'dlio_odom'
+    base_frame: 'base'
+    corrected_map_frame: 'dlio_odom'
+    initialize_frame_id: ['base']
+    initialize_tf_offset: [0.0]
+
+    #### Plugins ###########
+    # Relative to the elevation_mapping_cupy package share directory.
+    plugin_config_file: 'config/setups/b2w/b2w_wild_navigation_plugin_config.yaml'
+
+    #### Fusion ############
+    pointcloud_channel_fusions:
+      # Depth-only cloud: no extra channels are fused from the point cloud.
+      none: 'none'
+
+    image_channel_fusions:
+      rgb: 'color'
+      # risk / steppable / preferred_area are continuous [0, 1] scores -> exponential smoothing.
+      default: 'exponential'
+
+    #### Subscribers ########
+    subscribers:
+      zed_rgb:
+        topic_name: '/zed/zed_node/rgb/color/rect/image'
+        camera_info_topic_name: '/zed/zed_node/rgb/color/rect/camera_info'
+        channels: ['rgb']
+        data_type: image
+      wild_navigation_semantics:
+        topic_name: '/wild_navigation/semantic_image'
+        camera_info_topic_name: '/zed/zed_node/rgb/color/rect/camera_info'
+        channels: ['risk', 'steppable', 'preferred_area']
+        data_type: image
+      zed_depth_pointcloud:
+        topic_name: '/wild_navigation/points'
+        data_type: pointcloud
+
+    #### Publishers ########
+    publishers:
+      elevation_map_raw:
+        layers: ['elevation', 'traversability', 'variance', 'rgb',
+                 'risk', 'steppable', 'preferred_area']
+        basic_layers: ['elevation']
+        fps: 5.0
+      elevation_map_wild_navigation:
+        layers: ['elevation', 'inpaint', 'smooth',
+                 'risk', 'steppable', 'preferred_area', 'semantic_traversability']
+        basic_layers: ['elevation']
+        fps: 3.0

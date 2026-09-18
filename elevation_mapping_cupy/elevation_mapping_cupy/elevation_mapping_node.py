@@ -209,6 +209,10 @@ class ElevationMappingNode(Node):
         if self.has_parameter("plugin_config_file"):
             plugin_config_file = self.get_parameter("plugin_config_file").get_parameter_value().string_value
             assert plugin_config_file
+            # Relative paths are resolved against the package share dir so setup YAMLs can
+            # point at a per-robot plugin config without hard-coding an install prefix.
+            if not os.path.isabs(plugin_config_file):
+                plugin_config_file = os.path.join(self.root, plugin_config_file)
             self.param.plugin_config_file = plugin_config_file
         if self.has_parameter("weight_file"):
             weight_file = self.get_parameter("weight_file").get_parameter_value().string_value

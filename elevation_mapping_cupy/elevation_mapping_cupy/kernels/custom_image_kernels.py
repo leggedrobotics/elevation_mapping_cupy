@@ -40,11 +40,23 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
                 return;
             }
             
-            // get current cell position
-            int y0 = i % ${width};
-            int x0 = i / ${width};
-            
-            // gridcell 3D point in worldframe TODO reverse x and y
+            // get current cell position. Map layers are flattened row-major, i = width*row +
+            // col, with row = Y grid index and col = X grid index (see custom_kernels.py's
+            // get_idx()/is_inside(): "Row-Major (Row=Y, Col=X)"). x0/y0 below are therefore the
+            // X/Y grid indices of cell i, matching the (x1, y1) camera-cell indices that
+            // ElevationMap.input_image() computes (x1 from t_cam_map[0]/X, y1 from
+            // t_cam_map[1]/Y). Fixed: previously x0 was read from i/width (i.e. the row/Y
+            // index) and y0 from i%width (col/X index) -- backwards relative to the elevation
+            // kernel's own convention -- so the world position computed for cell i below was
+            // transposed, and every semantic/occlusion sample for cell i was actually taken
+            // from the map's mirror cell across the main diagonal (row<->col swapped). This bit
+            // every risk/steppable/preferred_area/semantic_observed layer produced by the image
+            // path; the elevation layer (produced by the point-cloud path, which was always
+            // consistent with get_idx()) was not affected. See Task 5 report, item 1.
+            int x0 = i % ${width};
+            int y0 = i / ${width};
+
+            // gridcell 3D point in world frame
             float p1 = (x0-(${width}/2)) * ${resolution} + center[0];
             float p2 = (y0-(${height}/2)) * ${resolution} + center[1];
             float p3 = map[cell_idx] +  center[2];
@@ -116,7 +128,10 @@ def image_to_map_correspondence_kernel(resolution, width, height, tolerance_z_co
                 
                 // check if height is invalid
                 if (is_inside_map(x0,y0)){
-                    int idx = y0 + (x0 * ${width});
+                    // row-major flat index: width*row(Y) + col(X), matches get_idx() and the
+                    // decomposition of x0/y0 above. (Was `y0 + x0*width`, i.e. transposed --
+                    // only happened to not crash because this map is always square.)
+                    int idx = ${width} * y0 + x0;
                     if (map[get_map_idx(idx, 2)]){
                         float dis = get_l2_distance(x0_c, y0_c, x0, y0);
                         float rayheight = z0 + ( dis / total_dis * delta_z);

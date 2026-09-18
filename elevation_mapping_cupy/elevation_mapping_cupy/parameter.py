@@ -30,8 +30,10 @@ class Parameter(Serializable):
                                (Default: ``{"rgb": "color", "default": "exponential"}``)
         data_type: The data type for the map.  
                    (Default: ``np.float32``)
-        average_weight: The weight for the average fusion.  
+        average_weight: The weight for the average fusion.
                         (Default: ``0.5``)
+        image_z_collision_tolerance: Vertical slack (m) for image-to-map occlusion checks.
+                        (Default: ``0.10``)
         map_length: The map's size in meters.  
                     (Default: ``8.0``)
         sensor_noise_factor: The point's noise is sensor_noise_factor*z^2 (z is distance from sensor).  
@@ -157,6 +159,9 @@ class Parameter(Serializable):
     image_channel_fusions: dict = field(default_factory=lambda: {"rgb": "color", "default": "exponential"})  # fusion for image channels
     data_type: str = np.float32  # data type for the map
     average_weight: float = 0.5  # weight for the average fusion
+    # Vertical slack (m) used by image_to_map_correspondence_kernel to decide whether a map cell
+    # is occluded by a cell in front of it when projecting an image onto the map.
+    image_z_collision_tolerance: float = 0.10
 
     map_length: float = 8.0  # map's size in m.
     sensor_noise_factor: float = 0.05  # point's noise is sensor_noise_factor*z^2 (z is distance from sensor).

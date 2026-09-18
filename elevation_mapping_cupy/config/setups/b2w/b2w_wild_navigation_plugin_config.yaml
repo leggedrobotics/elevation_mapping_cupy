@@ -1,0 +1,52 @@
+# Plugin chain for the b2w wild-navigation setup.
+#
+# Deliberately NOT config/core/plugin_config.yaml: that one is tuned for a BASE-centred
+# excavator digging map (near_base_height_filter / positive_spike_filter), which is wrong for
+# outdoor hiking terrain. This chain is the plain hole-filling chain plus one semantic layer.
+
+# min_filter fills in minimum value around the invalid cell.
+min_filter:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "min_filter"
+  extra_params:
+    dilation_size: 1
+    iteration_n: 30
+# Apply smoothing.
+smooth_filter:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "smooth"
+  extra_params:
+    input_layer_name: "min_filter"
+# Fill the remaining holes in the smoothed surface.
+inpainting:
+  enable: True
+  fill_nan: False
+  is_height_layer: True
+  layer_name: "inpaint"
+  extra_params:
+    method: "telea"
+    input_layer_name: "smooth"
+    max_hole_area: 25                         # 5x5 cells at 0.1 m resolution
+    fill_border_holes: False
+# Binary traversability derived from the three VLM-relabelled semantic layers.
+#
+# `type` selects the comparison per layer:
+#   "traversability" -> cell votes traversable when value <= threshold  (risk: low is good)
+#   anything else    -> cell votes traversable when value >= threshold  (steppable / preferred:
+#                                                                        high is good)
+# `combine: all` requires every layer to vote traversable. Upstream only supported
+# `combine: any` (an OR), which is not the semantics wanted here.
+semantic_traversability:
+  enable: True
+  fill_nan: False
+  is_height_layer: False
+  layer_name: "semantic_traversability"
+  extra_params:
+    layers: ["risk", "steppable", "preferred_area"]
+    thresholds: [0.5, 0.5, 0.5]
+    type: ["traversability", "semantic", "semantic"]
+    combine: "all"
