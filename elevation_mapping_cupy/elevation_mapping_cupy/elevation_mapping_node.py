@@ -12,7 +12,7 @@ if not hasattr(np, "float"):
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSPresetProfiles
+from rclpy.qos import QoSPresetProfiles, QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from elevation_map_msgs.msg import ChannelInfo
@@ -137,7 +137,26 @@ class ElevationMappingNode(Node):
 
     def initialize_ros(self) -> None:
         self._tf_buffer = tf2_ros.Buffer()
-        self._listener = tf2_ros.TransformListener(self._tf_buffer, self)
+        # The TF listener gets its own node and executor thread (as the ROS 1 tf2 listener had).
+        # With the default listener the /tf callbacks run on this node's single-threaded executor,
+        # which is saturated by the GPU point-cloud processing: the buffer then falls seconds to
+        # minutes behind, pose_update() silently recentres the map on a stale pose (map frozen at
+        # the start position / trailing the robot), and the un-consumed reliable subscription
+        # backs up every /tf publisher on the robot. A separate node is required because rclpy
+        # allows a node in only one executor (spin_thread=True on the same node is a no-op once
+        # main() adds it to its own executor).
+        # /tf is subscribed best-effort so this node can never stall the /tf writers again; tf2
+        # interpolates over dropped samples. /tf_static keeps the transient-local default.
+        self._tf_node = rclpy.create_node(self.get_name() + '_tf_listener', namespace=self.get_namespace())
+        tf_qos = QoSProfile(
+            depth=100,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            durability=DurabilityPolicy.VOLATILE,
+        )
+        self._listener = tf2_ros.TransformListener(
+            self._tf_buffer, self._tf_node, spin_thread=True, qos=tf_qos
+        )
         self.get_ros_params()
 
     def get_ros_params(self) -> None:
@@ -156,6 +175,9 @@ class ElevationMappingNode(Node):
         self.update_variance_fps = self.get_parameter('update_variance_fps').get_parameter_value().double_value
         self.time_interval = self.get_parameter('time_interval').get_parameter_value().double_value
         self.update_pose_fps = self.get_parameter('update_pose_fps').get_parameter_value().double_value
+        if not self.has_parameter('tf_stale_warn_s'):
+            self.declare_parameter('tf_stale_warn_s', 0.5)
+        self.tf_stale_warn_s = self.get_parameter('tf_stale_warn_s').get_parameter_value().double_value
         if not self.has_parameter('cupy_memory_pool_trim_interval_s'):
             self.declare_parameter('cupy_memory_pool_trim_interval_s', 5.0)
         self.cupy_memory_pool_trim_interval_s = float(
@@ -407,7 +429,7 @@ class ElevationMappingNode(Node):
 
     def register_timers(self) -> None:
         self.time_pose_update = self.create_timer(
-            0.1,
+            1.0 / self.update_pose_fps,
             self.pose_update
         )
         self.timer_variance = self.create_timer(
@@ -918,11 +940,22 @@ class ElevationMappingNode(Node):
         except tf2_ros.ExtrapolationException:
             # Time is in the future/past, try with latest available
             try:
-                return self._tf_buffer.lookup_transform(
+                latest = self._tf_buffer.lookup_transform(
                     target_frame,
                     source_frame,
                     rclpy.time.Time()
                 )
+                # The fallback is silent by design, but a stale "latest" transform means the map
+                # is being recentred / ray-traced with an old robot pose. Make that visible.
+                age_s = (self.get_clock().now() - rclpy.time.Time.from_msg(latest.header.stamp)).nanoseconds * 1e-9
+                if age_s > self.tf_stale_warn_s:
+                    self.get_logger().warning(
+                        f"Latest TF '{source_frame}' -> '{target_frame}' is {age_s:.2f} s old "
+                        f"(requested {rclpy.time.Time.from_msg(time).nanoseconds * 1e-9:.3f}); "
+                        "map pose / ray origin are lagging.",
+                        throttle_duration_sec=2.0,
+                    )
+                return latest
             # NOTE: The second lookup can also throw ExtrapolationException (e.g., TF buffer not populated yet,
             # or timestamps are discontinuous during sim resets). If we don't catch it here the whole node dies.
             except (
@@ -1155,6 +1188,14 @@ class ElevationMappingNode(Node):
         self._map.trim_memory_pool()
 
     def destroy_node(self) -> None:
+        # Stop the dedicated TF listener thread/node first.
+        try:
+            if getattr(self, '_listener', None) is not None and getattr(self._listener, 'executor', None) is not None:
+                self._listener.executor.shutdown()
+            if getattr(self, '_tf_node', None) is not None:
+                self._tf_node.destroy_node()
+        except Exception as exc:  # shutdown must never raise
+            self.get_logger().debug(f"TF listener shutdown: {exc}")
         super().destroy_node()
 
 def main(args=None) -> None:
