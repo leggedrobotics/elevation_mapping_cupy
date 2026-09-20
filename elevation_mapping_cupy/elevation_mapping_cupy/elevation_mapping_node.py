@@ -147,7 +147,14 @@ class ElevationMappingNode(Node):
         # main() adds it to its own executor).
         # /tf is subscribed best-effort so this node can never stall the /tf writers again; tf2
         # interpolates over dropped samples. /tf_static keeps the transient-local default.
-        self._tf_node = rclpy.create_node(self.get_name() + '_tf_listener', namespace=self.get_namespace())
+        # use_global_arguments=False: the launch file's `-r __node:=...` remap would otherwise rename
+        # this node to the main node's name (duplicate node names, duplicated parameter services).
+        self._tf_node = rclpy.create_node(
+            self.get_name() + '_tf_listener',
+            namespace=self.get_namespace(),
+            use_global_arguments=False,
+            start_parameter_services=False,
+        )
         tf_qos = QoSProfile(
             depth=100,
             reliability=ReliabilityPolicy.BEST_EFFORT,
