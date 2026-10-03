@@ -864,8 +864,6 @@ class ElevationMappingNode(Node):
             return None
 
     def image_callback(self, camera_msg: Image, camera_info_msg: CameraInfo, sub_key: str) -> None:
-        self._last_t = camera_msg.header.stamp
-
         frame_sensor_id = camera_msg.header.frame_id
         if not frame_sensor_id:
             raise ValueError("Image header.frame_id is empty.")
@@ -913,7 +911,6 @@ class ElevationMappingNode(Node):
         self._image_process_counter += 1
 
     def pointcloud_callback(self, msg: PointCloud2, sub_key: str) -> None:
-        self._last_t = msg.header.stamp
         additional_channels = list(self.param.subscriber_cfg[sub_key].get("channels", []))
         channels = ["x", "y", "z"] + additional_channels
 
@@ -994,7 +991,11 @@ class ElevationMappingNode(Node):
             t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
             R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
 
-        self._map.input_pointcloud(pts, channels, R, t_np, 0, 0)
+        source_stamp_ns = msg.header.stamp.sec * 1_000_000_000 + msg.header.stamp.nanosec
+        self._map.input_pointcloud(pts, channels, R, t_np, 0, 0, source_stamp_ns=source_stamp_ns)
+        # Match observation_age and fused terrain to this source publication;
+        # failed TF/parsing and semantic images cannot retimestamp terrain.
+        self._last_t = msg.header.stamp
         self._pointcloud_process_counter += 1
 
     def pose_update(self) -> None:

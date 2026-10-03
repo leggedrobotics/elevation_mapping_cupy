@@ -99,6 +99,27 @@ publishers:
     fps: 5.0
 ```
 
+### Raw observation age
+
+Publish optional `observation_age` alongside raw `elevation` when a consumer
+needs evidence of new sensor observations. It is seconds since each cell's last
+accepted raw cloud endpoint, measured at the GridMap header's source timestamp.
+It advances by actual cloud timestamp differences, including callback stalls.
+The existing timer-driven `time` layer remains a separate visibility input.
+
+Unknown cells have NaN age. Interpolation, semantic images, map loads, patches,
+initialization and newly exposed shift padding cannot create observation
+evidence. A nonpositive or nonincreasing source stamp clears that evidence;
+only a later strictly increasing cloud can establish it again. Loading a saved
+map ignores its saved observation ages. The layer is read-only to map services.
+Internal float64 ages round upward when exported to GridMap float32 values.
+
+The V5G restore implementation uses sibling branch
+`work/v5g-observation-20261003` in
+`~/moleworks/.worktrees/v5g_goal_restore_20261003/elevation_mapping_cupy`, included
+in `~/moleworks/ros2_ws_v5g_goal_restore_20261003/src/`. Its Moleworks consumer
+requires this layer and does not use legacy `time` as observation evidence.
+
 ## Services
 
 | Service | Type | Purpose |
