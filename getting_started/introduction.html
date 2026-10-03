@@ -1,0 +1,249 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="Elevation Mapping CuPy" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-this-branch-covers">What This Branch Covers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#used-for-various-real-world-applications">Used for Various Real-World Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-features">Key Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subscribed-topics">Subscribed Topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#published-topics">Published Topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#semantics-support">Semantics Support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html">Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes/jazzy_release.html">Jazzy Release</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Introduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/getting_started/introduction.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="introduction">
+<span id="id1"></span><h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code> is a GPU-accelerated elevation mapping stack for ROS2.
+It fuses geometry and optional semantic inputs into a grid map that can be
+published to planners, visualizers, and downstream perception components.</p>
+<p>This documentation describes the official <code class="docutils literal notranslate"><span class="pre">ros2</span></code> branch for ROS2 Jazzy.
+The <code class="docutils literal notranslate"><span class="pre">main</span></code> branch remains the legacy ROS1 line.</p>
+<section id="what-this-branch-covers">
+<h2>What This Branch Covers<a class="headerlink" href="#what-this-branch-covers" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Core elevation mapping in Python with CuPy-backed map updates.</p></li>
+<li><p>Pointcloud fusion, image fusion, and plugin-based post-processing.</p></li>
+<li><p>Semantic fusion through the in-repo <code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> package.</p></li>
+<li><p>TurtleBot3 example launches and integration tests validated on ROS2 Jazzy.</p></li>
+</ul>
+<p>What is not part of the supported ROS2 release surface:</p>
+<ul class="simple">
+<li><p>The historical ROS1/catkin workflow.</p></li>
+<li><p>The legacy plane-segmentation stack.</p></li>
+<li><p>The experimental <code class="docutils literal notranslate"><span class="pre">ros2_cpp</span></code> branch.</p></li>
+</ul>
+</section>
+<section id="used-for-various-real-world-applications">
+<h2>Used for Various Real-World Applications<a class="headerlink" href="#used-for-various-real-world-applications" title="Link to this heading"></a></h2>
+<p>This software package has been used in challenging locomotion and exploration
+settings, from subterranean navigation to multi-modal terrain perception.</p>
+<ul>
+<li><p><strong>DARPA Subterranean Challenge</strong>: This package was used by Team CERBERUS in the DARPA Subterranean Challenge.</p>
+<p><a class="reference external" href="https://www.subt-cerberus.org/">Team Cerberus</a></p>
+<p><a class="reference external" href="https://www.science.org/doi/10.1126/scirobotics.abp9742">CERBERUS in the DARPA Subterranean Challenge (Science Robotics)</a></p>
+</li>
+<li><p><strong>ESA / ESRIC Space Resources Challenge</strong>: This package was used for the Space Resources Challenge.</p>
+<p><a class="reference external" href="https://www.science.org/doi/full/10.1126/scirobotics.ade9548">Scientific exploration of challenging planetary analog environments with a team of legged robots (Science Robotics)</a></p>
+</li>
+</ul>
+</section>
+<section id="key-features">
+<h2>Key Features<a class="headerlink" href="#key-features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Height Drift Compensation</strong>: Tackles state estimation drifts that can create mapping artifacts, ensuring more accurate terrain representation.</p></li>
+<li><p><strong>Visibility Cleanup and Artifact Removal</strong>: Raycasting methods and an exclusion zone feature are designed to remove virtual artifacts and correctly interpret overhanging obstacles.</p></li>
+<li><p><strong>Learning-based Traversability Filter</strong>: Assesses terrain traversability using local geometry, improving path planning and navigation.</p></li>
+<li><p><strong>Multi-Modal Elevation Map (MEM) Framework</strong>: Allows seamless integration of diverse data like geometry, semantics, and RGB information.</p></li>
+<li><p><strong>GPU-Enhanced Efficiency</strong>: Facilitates rapid processing of large data structures, crucial for real-time applications.</p></li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<img alt="Overview of multi-modal elevation map structure" src="../_images/overview.png" />
+<p>Overview of the multi-modal elevation map structure. The framework takes
+multi-modal images and point clouds as input, associates the data with grid
+cells, fuses each channel into map layers, and optionally runs plugins to derive
+secondary layers such as traversability or semantic visualizations.</p>
+</section>
+<section id="subscribed-topics">
+<h2>Subscribed Topics<a class="headerlink" href="#subscribed-topics" title="Link to this heading"></a></h2>
+<p>The subscribed topics are configured under the <code class="docutils literal notranslate"><span class="pre">subscribers</span></code> section of the
+robot setup YAML. A reference configuration is available in
+<code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy/config/core/example_setup.yaml</span></code>.</p>
+<ul>
+<li><p><strong>/&lt;point_cloud_topic&gt;</strong> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/msg/PointCloud2</span></code>)</p>
+<p>The point cloud topic. It can have additional channels for RGB, intensity, and semantic values.</p>
+</li>
+<li><p><strong>/&lt;image_topic&gt;</strong> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/msg/Image</span></code>)</p>
+<p>The image topic. It can carry RGB, semantic probabilities, or feature images.</p>
+</li>
+<li><p><strong>/&lt;camera_info&gt;</strong> (<code class="docutils literal notranslate"><span class="pre">sensor_msgs/msg/CameraInfo</span></code>)</p>
+<p>Camera intrinsics used to project map updates from image space.</p>
+</li>
+<li><p><strong>/&lt;channel_info&gt;</strong> (<code class="docutils literal notranslate"><span class="pre">elevation_map_msgs/msg/ChannelInfo</span></code>)</p>
+<p>Optional channel metadata used to associate image channels with map layers.</p>
+</li>
+<li><p><strong>/tf</strong> and <strong>/tf_static</strong> (ROS2 TF topics)</p>
+<p>Transform tree used to place sensor observations in the map frame.</p>
+</li>
+</ul>
+</section>
+<section id="published-topics">
+<h2>Published Topics<a class="headerlink" href="#published-topics" title="Link to this heading"></a></h2>
+<p>Published topics are configured in the <code class="docutils literal notranslate"><span class="pre">publishers</span></code> section of the robot setup
+YAML. Each publisher specifies a topic name, a layer list, a <code class="docutils literal notranslate"><span class="pre">basic_layers</span></code>
+subset for valid-cell handling, and an output rate.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">publishers</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">your_topic_name</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">'list_of_layer_names'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'layer1'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'layer2'</span><span class="w"> </span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">basic_layers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span><span class="s">'list</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">basic</span><span class="nv"> </span><span class="s">layers'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'layer1'</span><span class="w"> </span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">fps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span>
+</pre></div>
+</div>
+<ul>
+<li><p><strong>elevation_map_raw</strong> (<code class="docutils literal notranslate"><span class="pre">grid_map_msgs/msg/GridMap</span></code>)</p>
+<p>The entire elevation map.</p>
+</li>
+<li><p><strong>elevation_map_recordable</strong> (<code class="docutils literal notranslate"><span class="pre">grid_map_msgs/msg/GridMap</span></code>)</p>
+<p>The entire elevation map with slower update rate for visualization and logging.</p>
+</li>
+<li><p><strong>elevation_map_filter</strong> (<code class="docutils literal notranslate"><span class="pre">grid_map_msgs/msg/GridMap</span></code>)</p>
+<p>The filtered maps using plugins.</p>
+</li>
+</ul>
+</section>
+<section id="semantics-support">
+<h2>Semantics Support<a class="headerlink" href="#semantics-support" title="Link to this heading"></a></h2>
+<p>The semantics workflow consists of two stages:</p>
+<ul class="simple">
+<li><p>A vision model or semantic sensor node produces semantic channels or feature channels.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code> fuses those channels into map layers according to the configured fusion mode.</p></li>
+</ul>
+<p>This branch includes two supported semantic entry points:</p>
+<ul class="simple">
+<li><p><strong>Semantic image fusion</strong> through image topics plus <code class="docutils literal notranslate"><span class="pre">ChannelInfo</span></code> metadata.</p></li>
+<li><p><strong>Semantic pointcloud fusion</strong> through multi-channel point clouds generated by <code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Elevation Mapping CuPy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

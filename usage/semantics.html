@@ -1,0 +1,185 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semantics &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python software" href="../python/index.html" />
+    <link rel="prev" title="Parameters" href="parameters.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Semantics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#semantic-fusion-in-the-elevation-map">Semantic Fusion in the Elevation Map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#semantic-input-producers">Semantic Input Producers</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes/jazzy_release.html">Jazzy Release</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Semantics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/usage/semantics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="semantics">
+<span id="id1"></span><h1>Semantics<a class="headerlink" href="#semantics" title="Link to this heading"></a></h1>
+<p>The elevation map can also include semantic information. On the ROS2 branch the
+workflow consists of two pieces:</p>
+<ul class="simple">
+<li><p>semantic fusion inside <code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code></p></li>
+<li><p>semantic inputs produced by the in-repo <code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> package or an
+external vision model</p></li>
+</ul>
+<section id="semantic-fusion-in-the-elevation-map">
+<h2>Semantic Fusion in the Elevation Map<a class="headerlink" href="#semantic-fusion-in-the-elevation-map" title="Link to this heading"></a></h2>
+<p>Semantic inputs are configured in the robot sensor YAML under the
+<code class="docutils literal notranslate"><span class="pre">subscribers</span></code> section. Each subscriber can define channel names and a fusion
+mode per channel.</p>
+<p>The channel list maps incoming semantic channels to map layers. The fusion list
+defines how each channel is fused into the persistent map.</p>
+<p>Supported fusion modes include:</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">average</span></code></dt><dd><p>Computes a weighted average between the current cell value and the newly
+observed value.</p>
+<p>Use case: dense semantic features</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bayesian_inference</span></code></dt><dd><p>Applies Gaussian Bayesian fusion, using the previous posterior as the next
+prior.</p>
+<p>Use case: continuous semantic features</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">class_average</span></code></dt><dd><p>Averages per-cell class scores while ignoring uninitialized cells.</p>
+<p>Use case: class probabilities</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">class_bayesian</span></code></dt><dd><p>Applies Bayesian fusion on a categorical distribution with a Dirichlet
+prior.</p>
+<p>Use case: class probabilities</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">color</span></code></dt><dd><p>Fuses packed RGB color channels.</p>
+<p>Use case: RGB appearance layers</p>
+</dd>
+</dl>
+</section>
+<section id="semantic-input-producers">
+<h2>Semantic Input Producers<a class="headerlink" href="#semantic-input-producers" title="Link to this heading"></a></h2>
+<p>Sensors do not always publish semantic channels directly. The in-repo
+<code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> package provides two launchable producers:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">semantic_pointcloud.launch.py</span></code> generates a multi-channel pointcloud.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">semantic_image.launch.py</span></code> generates semantic image channels plus
+<code class="docutils literal notranslate"><span class="pre">ChannelInfo</span></code> metadata.</p></li>
+</ul>
+<p>The supported end-to-end ROS2 examples are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">turtlesim_semantic_pointcloud_example.launch.py</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">turtlesim_semantic_image_example.launch.py</span></code></p></li>
+</ul>
+<p>The intended architecture is simple: a vision model produces semantic channels,
+and <code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code> fuses those channels into map layers.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="parameters.html" class="btn btn-neutral float-left" title="Parameters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../python/index.html" class="btn btn-neutral float-right" title="Python software" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

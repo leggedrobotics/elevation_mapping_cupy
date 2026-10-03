@@ -1,0 +1,199 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elevation Mapping CuPy &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="getting_started/introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage/plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage/semantics.html">Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python/index.html">Python</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="release_notes/jazzy_release.html">Jazzy Release</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Elevation Mapping CuPy</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="elevation-mapping-cupy">
+<h1>Elevation Mapping CuPy<a class="headerlink" href="#elevation-mapping-cupy" title="Link to this heading"></a></h1>
+<p>Real-time, GPU-accelerated elevation mapping for ROS 2 Jazzy.</p>
+<a class="reference external image-reference" href="https://github.com/leggedrobotics/elevation_mapping_cupy/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/leggedrobotics/elevation_mapping_cupy?display_name=tag&amp;sort=semver" />
+</a>
+<a class="reference external image-reference" href="https://github.com/leggedrobotics/elevation_mapping_cupy/actions/workflows/documentation.yml"><img alt="Documentation" src="https://github.com/leggedrobotics/elevation_mapping_cupy/actions/workflows/documentation.yml/badge.svg" />
+</a>
+<p>This documentation tracks the actively maintained <code class="docutils literal notranslate"><span class="pre">ros2</span></code> branch. The
+legacy ROS 1 line remains on <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p>
+<section id="highlights">
+<h2>Highlights<a class="headerlink" href="#highlights" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>GPU-accelerated elevation mapping with CuPy.</p></li>
+<li><p>Geometry, RGB, semantic image, and semantic pointcloud fusion.</p></li>
+<li><p>ROS 2 launch files, GridMap services, and GPU integration tests.</p></li>
+<li><p>Deterministic fusion and reproducible performance benchmarks.</p></li>
+</ul>
+</section>
+<section id="start-here">
+<h2>Start here<a class="headerlink" href="#start-here" title="Link to this heading"></a></h2>
+<div class="line-block">
+<div class="line"><a class="reference internal" href="getting_started/introduction.html"><span class="doc">Introduction</span></a> - Branch scope, map inputs, and supported features</div>
+<div class="line"><a class="reference internal" href="getting_started/installation.html"><span class="doc">Installation</span></a> - ROS2 Jazzy installation and build</div>
+<div class="line"><a class="reference internal" href="getting_started/tutorial.html"><span class="doc">Tutorial</span></a> - Launching the node, TurtleBot3 demo, and semantic demos</div>
+<div class="line"><a class="reference internal" href="release_notes/jazzy_release.html"><span class="doc">ROS 2 Jazzy v2.2.0 Release</span></a> - ROS2 Jazzy release status and validation summary</div>
+</div>
+<p>The legacy plane-segmentation stack is not part of the current ROS 2 workspace.
+The supported release surface for this branch is the Python/CuPy elevation
+mapping pipeline plus the restored <code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> package.</p>
+<img alt="Multi-modal elevation mapping overview" src="_images/overview.png" />
+</section>
+<section id="citing">
+<h2>Citing<a class="headerlink" href="#citing" title="Link to this heading"></a></h2>
+<p>If you use <code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code>, please cite the following paper:
+Elevation Mapping for Locomotion and Navigation using GPU</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Elevation Mapping for Locomotion and Navigation using GPU <a class="reference external" href="https://arxiv.org/abs/2204.12876">IROS 2022 paper</a></p>
+<p>Takahiro Miki, Lorenz Wellhausen, Ruben Grandia, Fabian Jenelten, Timon Homberger, Marco Hutter</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">mikielevation2022</span><span class="p">,</span>
+    <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.48550</span><span class="o">/</span><span class="n">ARXIV</span><span class="mf">.2204.12876</span><span class="p">},</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Miki</span><span class="p">,</span> <span class="n">Takahiro</span> <span class="ow">and</span> <span class="n">Wellhausen</span><span class="p">,</span> <span class="n">Lorenz</span> <span class="ow">and</span> <span class="n">Grandia</span><span class="p">,</span> <span class="n">Ruben</span> <span class="ow">and</span> <span class="n">Jenelten</span><span class="p">,</span> <span class="n">Fabian</span> <span class="ow">and</span> <span class="n">Homberger</span><span class="p">,</span> <span class="n">Timon</span> <span class="ow">and</span> <span class="n">Hutter</span><span class="p">,</span> <span class="n">Marco</span><span class="p">},</span>
+    <span class="n">keywords</span> <span class="o">=</span> <span class="p">{</span><span class="n">Robotics</span> <span class="p">(</span><span class="n">cs</span><span class="o">.</span><span class="n">RO</span><span class="p">),</span> <span class="n">FOS</span><span class="p">:</span> <span class="n">Computer</span> <span class="ow">and</span> <span class="n">information</span> <span class="n">sciences</span><span class="p">,</span> <span class="n">FOS</span><span class="p">:</span> <span class="n">Computer</span> <span class="ow">and</span> <span class="n">information</span> <span class="n">sciences</span><span class="p">},</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Elevation</span> <span class="n">Mapping</span> <span class="k">for</span> <span class="n">Locomotion</span> <span class="ow">and</span> <span class="n">Navigation</span> <span class="n">using</span> <span class="n">GPU</span><span class="p">},</span>
+    <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">International</span> <span class="n">Conference</span> <span class="n">on</span> <span class="n">Intelligent</span> <span class="n">Robots</span> <span class="ow">and</span> <span class="n">Systems</span> <span class="p">(</span><span class="n">IROS</span><span class="p">)},</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2022</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Multi-modal elevation mapping if you use color or semantic layers</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>MEM: Multi-Modal Elevation Mapping for Robotics and Learning <a class="reference external" href="https://arxiv.org/abs/2309.16818v1">MEM paper</a></p>
+<p>Gian Erni, Jonas Frey, Takahiro Miki, Matias Mattamala, Marco Hutter</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">Erni2023</span><span class="o">-</span><span class="n">bs</span><span class="p">,</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{MEM}</span><span class="s2">: {Multi-Modal} Elevation Mapping for Robotics and Learning"</span><span class="p">,</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="s2">"Erni, Gian and Frey, Jonas and Miki, Takahiro and Mattamala, Matias and Hutter, Marco"</span><span class="p">,</span>
+    <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">International</span> <span class="n">Conference</span> <span class="n">on</span> <span class="n">Intelligent</span> <span class="n">Robots</span> <span class="ow">and</span> <span class="n">Systems</span> <span class="p">(</span><span class="n">IROS</span><span class="p">)},</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2023</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started/introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#supported-platform">Supported Platform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#workspace-setup">Workspace Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#system-dependencies">System Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-validation">Quick Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#container-workflow">Container Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#release-validation-status">Release Validation Status</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html">Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes/jazzy_release.html">Jazzy Release</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/getting_started/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<p>This page describes the supported installation path for the official
+<code class="docutils literal notranslate"><span class="pre">ros2</span></code> branch.</p>
+<section id="supported-platform">
+<h2>Supported Platform<a class="headerlink" href="#supported-platform" title="Link to this heading"></a></h2>
+<p>The release surface documented here is:</p>
+<ul class="simple">
+<li><p>Ubuntu 24.04</p></li>
+<li><p>ROS2 Jazzy</p></li>
+<li><p>NVIDIA GPU with a working host driver</p></li>
+<li><p>CUDA 12.x userspace for CuPy</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">main</span></code> branch documents the legacy ROS1 line. Do not use those
+instructions for this branch.</p>
+</section>
+<section id="workspace-setup">
+<h2>Workspace Setup<a class="headerlink" href="#workspace-setup" title="Link to this heading"></a></h2>
+<p>Create a ROS2 workspace and clone the <code class="docutils literal notranslate"><span class="pre">ros2</span></code> branch explicitly.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>~/ros2_ws/src
+<span class="nb">cd</span><span class="w"> </span>~/ros2_ws/src
+git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>ros2<span class="w"> </span>https://github.com/leggedrobotics/elevation_mapping_cupy.git
+</pre></div>
+</div>
+<p>Source ROS2 Jazzy before building:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/opt/ros/jazzy/setup.bash
+</pre></div>
+</div>
+</section>
+<section id="system-dependencies">
+<h2>System Dependencies<a class="headerlink" href="#system-dependencies" title="Link to this heading"></a></h2>
+<p>Install ROS dependencies with <code class="docutils literal notranslate"><span class="pre">rosdep</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/ros2_ws
+rosdep<span class="w"> </span>install<span class="w"> </span>--from-paths<span class="w"> </span>src<span class="w"> </span>--ignore-src<span class="w"> </span>--rosdistro<span class="w"> </span>jazzy<span class="w"> </span>-r<span class="w"> </span>-y<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--skip-keys<span class="w"> </span><span class="s2">"cupy-cuda12x numpy_lessthan_2 simple-parsing"</span>
+</pre></div>
+</div>
+<p>The package manifest deliberately depends on a CUDA-specific CuPy wheel and a
+<code class="docutils literal notranslate"><span class="pre">numpy&lt;2</span></code> constraint. If your local <code class="docutils literal notranslate"><span class="pre">rosdep</span></code> database does not provide
+those keys, install them directly with <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"numpy&lt;2.0.0"</span><span class="w"> </span>simple-parsing<span class="w"> </span>cupy-cuda12x
+</pre></div>
+</div>
+<p>If you want to run the restored semantic demos, install a matching
+<code class="docutils literal notranslate"><span class="pre">torchvision</span></code> build for your local PyTorch/CUDA stack:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torchvision
+</pre></div>
+</div>
+</section>
+<section id="build">
+<h2>Build<a class="headerlink" href="#build" title="Link to this heading"></a></h2>
+<p>Build both the core mapping package and the in-repo semantic sensor package.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/ros2_ws
+colcon<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--symlink-install<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--packages-up-to<span class="w"> </span>semantic_sensor<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmake-args<span class="w"> </span>-DBUILD_TESTING<span class="o">=</span>ON
+</pre></div>
+</div>
+<p>Overlay the workspace:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>~/ros2_ws/install/setup.bash
+</pre></div>
+</div>
+</section>
+<section id="quick-validation">
+<h2>Quick Validation<a class="headerlink" href="#quick-validation" title="Link to this heading"></a></h2>
+<p>First confirm that CuPy can see the GPU:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import cupy as cp; print(cp.cuda.runtime.getDeviceCount())"</span>
+</pre></div>
+</div>
+<p>Then run the package tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/ros2_ws
+colcon<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--packages-select<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>--event-handlers<span class="w"> </span>console_direct+
+</pre></div>
+</div>
+<p>For the semantic sensor package unit tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PYTEST_DISABLE_PLUGIN_AUTOLOAD</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>src/elevation_mapping_cupy/sensor_processing/semantic_sensor/test<span class="w"> </span>-q
+</pre></div>
+</div>
+<p>For the ROS2 integration test with the DDS workarounds used in CI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>daemon<span class="w"> </span>stop
+<span class="nv">FASTDDS_BUILTIN_TRANSPORTS</span><span class="o">=</span>UDPv4<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>launch_testing.launch_test<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>src/elevation_mapping_cupy/elevation_mapping_cupy/test/test_tf_gridmap_integration.py
+</pre></div>
+</div>
+</section>
+<section id="container-workflow">
+<h2>Container Workflow<a class="headerlink" href="#container-workflow" title="Link to this heading"></a></h2>
+<p>The repository still ships a Docker workflow under <code class="docutils literal notranslate"><span class="pre">docker/</span></code>. That path is
+useful when you want a pinned ROS2/CUDA userspace, but the container still
+needs GPU access from the host driver.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/ros2_ws/src/elevation_mapping_cupy/docker
+./run.sh
+</pre></div>
+</div>
+</section>
+<section id="release-validation-status">
+<h2>Release Validation Status<a class="headerlink" href="#release-validation-status" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">v2.2.0</span></code> ROS 2/Jazzy release validation used the pinned GPU CI container
+on an NVIDIA RTX 4090. See <a class="reference internal" href="../release_notes/jazzy_release.html"><span class="doc">ROS 2 Jazzy v2.2.0 Release</span></a> for the exact
+test surface and deployment note.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plugins" href="../usage/plugins.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#launch-the-core-node">Launch the Core Node</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-the-turtlebot3-example">Run the TurtleBot3 Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-the-semantic-demos">Run the Semantic Demos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-the-launch-surface">Test the Launch Surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html">Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes/jazzy_release.html">Jazzy Release</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Tutorial</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/getting_started/tutorial.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorial">
+<span id="id1"></span><h1>Tutorial<a class="headerlink" href="#tutorial" title="Link to this heading"></a></h1>
+<p>This tutorial covers the launch files that are part of the supported ROS2/Jazzy
+surface of the <code class="docutils literal notranslate"><span class="pre">ros2</span></code> branch.</p>
+<p>If you want to implement your own post-processing layers, refer to
+<a class="reference internal" href="../usage/plugins.html#plugins"><span class="std std-ref">Plugins</span></a>.</p>
+<section id="launch-the-core-node">
+<h2>Launch the Core Node<a class="headerlink" href="#launch-the-core-node" title="Link to this heading"></a></h2>
+<p>The generic launch file accepts a robot-specific config under
+<code class="docutils literal notranslate"><span class="pre">config/setups/</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/opt/ros/jazzy/setup.bash
+<span class="nb">source</span><span class="w"> </span>~/ros2_ws/install/setup.bash
+
+ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>elevation_mapping.launch.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>robot_config:<span class="o">=</span>menzi/base.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>launch_rviz:<span class="o">=</span><span class="nb">false</span>
+</pre></div>
+</div>
+<p>Use a different setup YAML when targeting another robot:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>elevation_mapping.launch.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>robot_config:<span class="o">=</span>turtle_bot/turtle_bot_simple.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>launch_rviz:<span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+</section>
+<section id="run-the-turtlebot3-example">
+<h2>Run the TurtleBot3 Example<a class="headerlink" href="#run-the-turtlebot3-example" title="Link to this heading"></a></h2>
+<p>Install the simulation packages first:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ros-jazzy-turtlebot3-gazebo<span class="w"> </span>ros-jazzy-turtlebot3-teleop
+</pre></div>
+</div>
+<p>Then launch the TurtleBot3 example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>elevation_mapping_turtle.launch.py
+</pre></div>
+</div>
+<p>Open a second terminal to drive the robot:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>/opt/ros/jazzy/setup.bash
+<span class="nb">source</span><span class="w"> </span>~/ros2_ws/install/setup.bash
+<span class="nb">export</span><span class="w"> </span><span class="nv">TURTLEBOT3_MODEL</span><span class="o">=</span>waffle
+ros2<span class="w"> </span>run<span class="w"> </span>turtlebot3_teleop<span class="w"> </span>teleop_keyboard
+</pre></div>
+</div>
+<p>The usual teleop bindings apply: <code class="docutils literal notranslate"><span class="pre">w</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, <code class="docutils literal notranslate"><span class="pre">s</span></code>, <code class="docutils literal notranslate"><span class="pre">d</span></code>, and <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
+<img alt="Elevation map examples" src="../_images/turtlebot.png" />
+</section>
+<section id="run-the-semantic-demos">
+<h2>Run the Semantic Demos<a class="headerlink" href="#run-the-semantic-demos" title="Link to this heading"></a></h2>
+<p>The semantic workflow is split into two stages:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> generates semantic channels from image or pointcloud
+inputs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code> fuses those channels into map layers.</p></li>
+</ul>
+<p>Pointcloud semantic demo:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_semantic_pointcloud_example.launch.py
+</pre></div>
+</div>
+<p>Image semantic demo:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_semantic_image_example.launch.py
+</pre></div>
+</div>
+<p>Both launches were restored and revalidated on the ROS2 branch. They require
+the <code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> package to be built and sourced, and the image demo may
+require a local <code class="docutils literal notranslate"><span class="pre">torchvision</span></code> install that matches your PyTorch/CUDA build.</p>
+</section>
+<section id="test-the-launch-surface">
+<h2>Test the Launch Surface<a class="headerlink" href="#test-the-launch-surface" title="Link to this heading"></a></h2>
+<p>The release process includes explicit checks for the shipped launches. You can
+run the same coverage locally.</p>
+<p>Launch description checks:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_semantic_image_example.launch.py<span class="w"> </span>--print-description
+ros2<span class="w"> </span>launch<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span>turtlesim_semantic_pointcloud_example.launch.py<span class="w"> </span>--print-description
+</pre></div>
+</div>
+<p>Semantic launch tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>colcon<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--packages-select<span class="w"> </span>elevation_mapping_cupy<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ctest-args<span class="w"> </span>-R<span class="w"> </span>test_semantic_launch_descriptions
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>Missing GPU or <code class="docutils literal notranslate"><span class="pre">libcuda.so.1</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nvidia-smi
+python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import cupy as cp; print(cp.cuda.runtime.getDeviceCount())"</span>
+</pre></div>
+</div>
+<p>Missing <code class="docutils literal notranslate"><span class="pre">torchvision</span></code> for the semantic demos:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>torchvision
+</pre></div>
+</div>
+<p>DDS discovery problems in integration tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>daemon<span class="w"> </span>stop
+<span class="nv">FASTDDS_BUILTIN_TRANSPORTS</span><span class="o">=</span>UDPv4<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>launch_testing.launch_test<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>src/elevation_mapping_cupy/elevation_mapping_cupy/test/test_tf_gridmap_integration.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../usage/plugins.html" class="btn btn-neutral float-right" title="Plugins" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

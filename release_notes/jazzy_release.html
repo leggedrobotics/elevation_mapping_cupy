@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ROS 2 Jazzy v2.2.0 Release &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Elevation mapping cupy" href="../python/elevation_mapping.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html">Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python/index.html">Python</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Jazzy Release</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#release-target">Release Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#highlights">Highlights</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#correctness">Correctness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#throughput">Throughput</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#measured-results">Measured Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validation">Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deployment-note">Deployment Note</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ROS 2 Jazzy v2.2.0 Release</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/release_notes/jazzy_release.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ros-2-jazzy-v2-2-0-release">
+<h1>ROS 2 Jazzy v2.2.0 Release<a class="headerlink" href="#ros-2-jazzy-v2-2-0-release" title="Link to this heading"></a></h1>
+<section id="release-target">
+<h2>Release Target<a class="headerlink" href="#release-target" title="Link to this heading"></a></h2>
+<p>This page describes the <code class="docutils literal notranslate"><span class="pre">v2.2.0</span></code> release from the <code class="docutils literal notranslate"><span class="pre">ros2</span></code> branch.</p>
+<ul class="simple">
+<li><p>ROS distribution: Jazzy</p></li>
+<li><p>Packages:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">elevation_map_msgs</span></code> 2.2.0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">elevation_mapping_cupy</span></code> 2.2.0</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">semantic_sensor</span></code> 2.2.0</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="highlights">
+<h2>Highlights<a class="headerlink" href="#highlights" title="Link to this heading"></a></h2>
+<section id="correctness">
+<h3>Correctness<a class="headerlink" href="#correctness" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Replaced the incorrect dilation distance and row-wrapping behavior with an
+exact Euclidean implementation.</p></li>
+<li><p>Restored float32 point geometry and added early NaN/Inf rejection.</p></li>
+<li><p>Removed point-order-dependent fusion and visibility races using immutable
+snapshots, proposal buffers, and deterministic per-cell finalization.</p></li>
+<li><p>Replaced fixed-step visibility sampling with exact 2D grid DDA traversal.</p></li>
+<li><p>Fixed min-filter buffer aliasing and PointCloud2 row-padding handling.</p></li>
+</ul>
+</section>
+<section id="throughput">
+<h3>Throughput<a class="headerlink" href="#throughput" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Reused mapping buffers and removed redundant reductions, map reads, and host
+synchronizations.</p></li>
+<li><p>Cached plugin results by map generation and used ping-pong min-filter
+buffers.</p></li>
+<li><p>Reduced GridMap message construction overhead by encoding contiguous float32
+bytes directly.</p></li>
+<li><p>Skipped map construction for publishers without subscribers.</p></li>
+<li><p>Switched to CuPy’s device memory pool and made periodic trimming opt-in.</p></li>
+<li><p>Pinned GridMap 2.2.2 as a CI source dependency so the GPU test image builds
+message support against its own ROS 2 middleware ABI.</p></li>
+</ul>
+</section>
+</section>
+<section id="measured-results">
+<h2>Measured Results<a class="headerlink" href="#measured-results" title="Link to this heading"></a></h2>
+<p>Measurements used an NVIDIA RTX 4090, 30 warmups, 200 measured iterations, and
+three independent processes. Tables report the median per-run p95.</p>
+<ul class="simple">
+<li><p>Core mapping callback p95 improved by 55.3–64.2% for deterministic
+10k–100k-point clouds.</p></li>
+<li><p>The in-process ROS callback plus six-layer filtered GridMap preparation
+improved p95 by 26.3–65.8%.</p></li>
+<li><p>Large-radius 602 x 602 dilation improved from 8.704 ms to 0.590 ms p95.</p></li>
+<li><p>A 600 x 600 single-layer GridMap message improved from 10.80 ms to 0.90 ms
+p95.</p></li>
+</ul>
+<p>An equivalent deterministic finalizer was benchmarked in CuPy RawKernel and
+NVIDIA Warp. Warp did not provide a repeatable p95 benefit, so this release
+does not add Warp as a dependency. Full methodology and machine-readable
+results are in <code class="docutils literal notranslate"><span class="pre">docs/development/elevation_mapping_gpu_optimization.md</span></code> and
+<code class="docutils literal notranslate"><span class="pre">benchmarks/results/rtx4090_20260720_summary.json</span></code>.</p>
+</section>
+<section id="validation">
+<h2>Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h2>
+<p>Validation in the isolated ROS 2 Jazzy GPU workspace completed with:</p>
+<ul class="simple">
+<li><p>126 direct GPU unit tests passed.</p></li>
+<li><p>77 colcon tests passed with no errors, failures, or skips.</p></li>
+<li><p>TF/GridMap integration, save/load services, and the synthetic demo launch
+passed.</p></li>
+</ul>
+<p>The full CI script was also run locally on <code class="docutils literal notranslate"><span class="pre">starship</span></code> in the exact pinned
+GPU container image used by <code class="docutils literal notranslate"><span class="pre">jazzy-docker-tests.yml</span></code>
+(<code class="docutils literal notranslate"><span class="pre">sha256:2bef0b5f33c844b6851a06027a1e8f05aae07d36e6962f8d93d129d7d2646963</span></code>).
+It built 10 packages, passed both semantic runtime smokes, and passed all 77
+tests. The GitHub documentation workflow passed. The remote ROS 2 workflow was
+cancelled while queued because this repository does not currently have a
+registered self-hosted runner; the equivalent container command above is the
+release gate used for this tag.</p>
+</section>
+<section id="deployment-note">
+<h2>Deployment Note<a class="headerlink" href="#deployment-note" title="Link to this heading"></a></h2>
+<p>The available workspace did not contain a representative raw Ouster
+PointCloud2 bag. Before robot deployment, replay a representative recorded
+cloud, compare map output, and measure executor, serialization, DDS latency,
+and missed publication deadlines on the target system.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../python/elevation_mapping.html" class="btn btn-neutral float-left" title="Elevation mapping cupy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

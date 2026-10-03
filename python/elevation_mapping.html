@@ -1,0 +1,1942 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elevation mapping cupy &mdash; elevation_mapping_cupy  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ROS 2 Jazzy v2.2.0 Release" href="../release_notes/jazzy_release.html" />
+    <link rel="prev" title="Python software" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            elevation_mapping_cupy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/parameters.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/semantics.html">Semantics</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Library</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Python</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Elevation mapping cupy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry"><code class="docutils literal notranslate"><span class="pre">GridGeometry</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.length_x"><code class="docutils literal notranslate"><span class="pre">GridGeometry.length_x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.length_y"><code class="docutils literal notranslate"><span class="pre">GridGeometry.length_y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.resolution"><code class="docutils literal notranslate"><span class="pre">GridGeometry.resolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.center"><code class="docutils literal notranslate"><span class="pre">GridGeometry.center</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.orientation"><code class="docutils literal notranslate"><span class="pre">GridGeometry.orientation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.bounds_x"><code class="docutils literal notranslate"><span class="pre">GridGeometry.bounds_x</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.bounds_y"><code class="docutils literal notranslate"><span class="pre">GridGeometry.bounds_y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.shape"><code class="docutils literal notranslate"><span class="pre">GridGeometry.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.__init__"><code class="docutils literal notranslate"><span class="pre">GridGeometry.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap"><code class="docutils literal notranslate"><span class="pre">ElevationMap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.__init__"><code class="docutils literal notranslate"><span class="pre">ElevationMap.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.clear"><code class="docutils literal notranslate"><span class="pre">ElevationMap.clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_center_position"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_center_position()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.move"><code class="docutils literal notranslate"><span class="pre">ElevationMap.move()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.move_to"><code class="docutils literal notranslate"><span class="pre">ElevationMap.move_to()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.pad_value"><code class="docutils literal notranslate"><span class="pre">ElevationMap.pad_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_xy"><code class="docutils literal notranslate"><span class="pre">ElevationMap.shift_map_xy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_z"><code class="docutils literal notranslate"><span class="pre">ElevationMap.shift_map_z()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.compile_kernels"><code class="docutils literal notranslate"><span class="pre">ElevationMap.compile_kernels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_translation_to_map_center"><code class="docutils literal notranslate"><span class="pre">ElevationMap.shift_translation_to_map_center()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_map_with_kernel"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_map_with_kernel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.clear_overlap_map"><code class="docutils literal notranslate"><span class="pre">ElevationMap.clear_overlap_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_additive_mean_error"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_additive_mean_error()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_variance"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_variance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_time"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_upper_bound_with_valid_elevation"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_upper_bound_with_valid_elevation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.input_pointcloud"><code class="docutils literal notranslate"><span class="pre">ElevationMap.input_pointcloud()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.input_image"><code class="docutils literal notranslate"><span class="pre">ElevationMap.input_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_normal"><code class="docutils literal notranslate"><span class="pre">ElevationMap.update_normal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.process_map_for_publish"><code class="docutils literal notranslate"><span class="pre">ElevationMap.process_map_for_publish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_elevation"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_elevation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_variance"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_variance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_traversability"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_traversability()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_time"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_observation_age"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_observation_age()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_upper_bound"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_upper_bound()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_is_upper_bound"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_is_upper_bound()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.xp_of_array"><code class="docutils literal notranslate"><span class="pre">ElevationMap.xp_of_array()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.copy_to_cpu"><code class="docutils literal notranslate"><span class="pre">ElevationMap.copy_to_cpu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.trim_memory_pool"><code class="docutils literal notranslate"><span class="pre">ElevationMap.trim_memory_pool()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.exists_layer"><code class="docutils literal notranslate"><span class="pre">ElevationMap.exists_layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_map_with_name_ref"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_map_with_name_ref()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_maps"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_normal_maps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_ref"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_normal_ref()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_layer"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_polygon_traversability"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_polygon_traversability()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_untraversable_polygon"><code class="docutils literal notranslate"><span class="pre">ElevationMap.get_untraversable_polygon()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.initialize_map"><code class="docutils literal notranslate"><span class="pre">ElevationMap.initialize_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.list_layers"><code class="docutils literal notranslate"><span class="pre">ElevationMap.list_layers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.export_layers"><code class="docutils literal notranslate"><span class="pre">ElevationMap.export_layers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.apply_masked_replace"><code class="docutils literal notranslate"><span class="pre">ElevationMap.apply_masked_replace()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.set_full_map"><code class="docutils literal notranslate"><span class="pre">ElevationMap.set_full_map()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams"><code class="docutils literal notranslate"><span class="pre">PluginParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.name"><code class="docutils literal notranslate"><span class="pre">PluginParams.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.layer_name"><code class="docutils literal notranslate"><span class="pre">PluginParams.layer_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.fill_nan"><code class="docutils literal notranslate"><span class="pre">PluginParams.fill_nan</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.is_height_layer"><code class="docutils literal notranslate"><span class="pre">PluginParams.is_height_layer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.__init__"><code class="docutils literal notranslate"><span class="pre">PluginParams.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginBase"><code class="docutils literal notranslate"><span class="pre">PluginBase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginBase.__init__"><code class="docutils literal notranslate"><span class="pre">PluginBase.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginBase.get_layer_data"><code class="docutils literal notranslate"><span class="pre">PluginBase.get_layer_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager"><code class="docutils literal notranslate"><span class="pre">PluginManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.__init__"><code class="docutils literal notranslate"><span class="pre">PluginManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.init"><code class="docutils literal notranslate"><span class="pre">PluginManager.init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.load_plugin_settings"><code class="docutils literal notranslate"><span class="pre">PluginManager.load_plugin_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_names"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_layer_names()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.reset_layers"><code class="docutils literal notranslate"><span class="pre">PluginManager.reset_layers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_names"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_plugin_names()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_index_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_plugin_index_with_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_index_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_layer_index_with_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.update_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.update_with_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_map_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_map_with_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_param_with_name"><code class="docutils literal notranslate"><span class="pre">PluginManager.get_param_with_name()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Release Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../release_notes/jazzy_release.html">Jazzy Release</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">elevation_mapping_cupy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Python software</a></li>
+      <li class="breadcrumb-item active">Elevation mapping cupy</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/python/elevation_mapping.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-elevation_mapping_cupy.elevation_mapping">
+<span id="elevation-mapping-cupy"></span><span id="elevation-mapping"></span><h1>Elevation mapping cupy<a class="headerlink" href="#module-elevation_mapping_cupy.elevation_mapping" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.elevation_mapping.</span></span><span class="sig-name descname"><span class="pre">GridGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length_x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Lightweight holder describing a GridMap’s geometry.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.length_x">
+<span class="sig-name descname"><span class="pre">length_x</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.length_x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.length_y">
+<span class="sig-name descname"><span class="pre">length_y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.length_y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.resolution">
+<span class="sig-name descname"><span class="pre">resolution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.resolution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.center">
+<span class="sig-name descname"><span class="pre">center</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.center" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.orientation">
+<span class="sig-name descname"><span class="pre">orientation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.orientation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.bounds_x">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bounds_x</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.bounds_x" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.bounds_y">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">bounds_y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.bounds_y" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.shape">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">shape</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.shape" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.GridGeometry.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length_x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length_y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.elevation_mapping.</span></span><span class="sig-name descname"><span class="pre">ElevationMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Core elevation mapping class.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Parameter</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>param</strong> (<em>elevation_mapping_cupy.parameter.Parameter</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.clear" title="Link to this definition"></a></dt>
+<dd><p>Reset all the layers of the elevation &amp; the semantic map.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_center_position">
+<span class="sig-name descname"><span class="pre">get_center_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_center_position" title="Link to this definition"></a></dt>
+<dd><p>Return the position of the map center.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>position</strong> (<em>numpy.ndarray</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.move">
+<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_position</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.move" title="Link to this definition"></a></dt>
+<dd><p>Shift the map along all three axes according to the input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delta_position</strong> (<em>numpy.ndarray</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.move_to">
+<span class="sig-name descname"><span class="pre">move_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.move_to" title="Link to this definition"></a></dt>
+<dd><p>Shift the map to an absolute position and update the rotation of the robot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>position</strong> (<em>numpy.ndarray</em>)</p></li>
+<li><p><strong>R</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.pad_value">
+<span class="sig-name descname"><span class="pre">pad_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.pad_value" title="Link to this definition"></a></dt>
+<dd><p>Create a padding of the map along x,y-axis according to amount that has shifted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>shift_value</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>idx</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>int</em><em>, </em><em>None</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>value</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_xy">
+<span class="sig-name descname"><span class="pre">shift_map_xy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_pixel</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_xy" title="Link to this definition"></a></dt>
+<dd><p>Shift the map along the horizontal axes according to the input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delta_pixel</strong> (<em>cupy._core.core.ndarray</em>) – Shift in [x, y] order (world coordinates).
+x corresponds to columns (axis 2), y corresponds to rows (axis 1).</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The map array has shape (layers, height, width) = (layers, rows, cols).
+In row-major convention: axis 1 = rows = Y, axis 2 = cols = X.
+cp.roll with axis=(1, 2) expects [row_shift, col_shift] = [y_shift, x_shift].
+Since delta_pixel is [x, y], we swap to [y, x] for correct axis mapping.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_z">
+<span class="sig-name descname"><span class="pre">shift_map_z</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delta_z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_map_z" title="Link to this definition"></a></dt>
+<dd><p>Shift the relevant layers along the vertical axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delta_z</strong> (<em>cupy._core.core.ndarray</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.compile_kernels">
+<span class="sig-name descname"><span class="pre">compile_kernels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.compile_kernels" title="Link to this definition"></a></dt>
+<dd><p>Compile all kernels belonging to the elevation map.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_translation_to_map_center">
+<span class="sig-name descname"><span class="pre">shift_translation_to_map_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.shift_translation_to_map_center" title="Link to this definition"></a></dt>
+<dd><p>Deduct the map center to get the translation of a point w.r.t. the map center.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<em>cupy._core.core.ndarray</em>) – Absolute point position</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.update_map_with_kernel">
+<span class="sig-name descname"><span class="pre">update_map_with_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points_all</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_stamp_ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_map_with_kernel" title="Link to this definition"></a></dt>
+<dd><p>Update map with new measurement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points_all</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>channels</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>R</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>t</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>position_noise</strong> (<em>float</em>)</p></li>
+<li><p><strong>orientation_noise</strong> (<em>float</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.clear_overlap_map">
+<span class="sig-name descname"><span class="pre">clear_overlap_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.clear_overlap_map" title="Link to this definition"></a></dt>
+<dd><p>Clear overlapping areas around the map center.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>t</strong> (<em>cupy._core.core.ndarray</em>) – Absolute point position</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_additive_mean_error">
+<span class="sig-name descname"><span class="pre">get_additive_mean_error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_additive_mean_error" title="Link to this definition"></a></dt>
+<dd><p>Returns the additive mean error.</p>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.update_variance">
+<span class="sig-name descname"><span class="pre">update_variance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_variance" title="Link to this definition"></a></dt>
+<dd><p>Adds the time variacne to the valid cells.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.update_time">
+<span class="sig-name descname"><span class="pre">update_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_time" title="Link to this definition"></a></dt>
+<dd><p>adds the time interval to the time layer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.update_upper_bound_with_valid_elevation">
+<span class="sig-name descname"><span class="pre">update_upper_bound_with_valid_elevation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_upper_bound_with_valid_elevation" title="Link to this definition"></a></dt>
+<dd><p>Filters all invalid cell’s upper_bound and is_upper_bound layers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.input_pointcloud">
+<span class="sig-name descname"><span class="pre">input_pointcloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position_noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation_noise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_stamp_ns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.input_pointcloud" title="Link to this definition"></a></dt>
+<dd><p>Input the point cloud and fuse the new measurements to update the elevation map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_points</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>channels</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>R</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>t</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>position_noise</strong> (<em>float</em>)</p></li>
+<li><p><strong>orientation_noise</strong> (<em>float</em>)</p></li>
+<li><p><strong>source_stamp_ns</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Raw cloud source timestamp; missing,
+zero or nonincreasing values grant no observation evidence.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.input_image">
+<span class="sig-name descname"><span class="pre">input_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">cupy._core.core.ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy._core.core.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distortion_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.input_image" title="Link to this definition"></a></dt>
+<dd><p>Project image channels into the map using the camera calibration and pose.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.update_normal">
+<span class="sig-name descname"><span class="pre">update_normal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dilated_map</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.update_normal" title="Link to this definition"></a></dt>
+<dd><p>Clear the normal map and then apply the normal kernel with dilated map as input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dilated_map</strong> (<em>cupy._core.core.ndarray</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.process_map_for_publish">
+<span class="sig-name descname"><span class="pre">process_map_for_publish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">cupy</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.process_map_for_publish" title="Link to this definition"></a></dt>
+<dd><p>Process the input_map according to the fill_nan and add_z flags.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_map</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>fill_nan</strong> (<em>bool</em>)</p></li>
+<li><p><strong>add_z</strong> (<em>bool</em>)</p></li>
+<li><p><strong>xp</strong> (<em>module</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>cupy._core.core.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_elevation">
+<span class="sig-name descname"><span class="pre">get_elevation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_elevation" title="Link to this definition"></a></dt>
+<dd><p>Get the elevation layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>elevation layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_variance">
+<span class="sig-name descname"><span class="pre">get_variance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_variance" title="Link to this definition"></a></dt>
+<dd><p>Get the variance layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>variance layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_traversability">
+<span class="sig-name descname"><span class="pre">get_traversability</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_traversability" title="Link to this definition"></a></dt>
+<dd><p>Get the traversability layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>traversability layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_time">
+<span class="sig-name descname"><span class="pre">get_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_time" title="Link to this definition"></a></dt>
+<dd><p>Get the time layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>time layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_observation_age">
+<span class="sig-name descname"><span class="pre">get_observation_age</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_observation_age" title="Link to this definition"></a></dt>
+<dd><p>Seconds since accepted raw cloud observation at the published stamp.</p>
+<p>Round upward when converting float64 ages to GridMap float32, so numeric
+rounding cannot make stale terrain look more recently observed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_upper_bound">
+<span class="sig-name descname"><span class="pre">get_upper_bound</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_upper_bound" title="Link to this definition"></a></dt>
+<dd><p>Get the upper bound layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>upper bound layer</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>upper_bound</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_is_upper_bound">
+<span class="sig-name descname"><span class="pre">get_is_upper_bound</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_is_upper_bound" title="Link to this definition"></a></dt>
+<dd><p>Get the is upper bound layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>layer</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>is_upper_bound</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.xp_of_array">
+<span class="sig-name descname"><span class="pre">xp_of_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.xp_of_array" title="Link to this definition"></a></dt>
+<dd><p>Indicate which library is used for xp.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>array</strong> (<em>cupy._core.core.ndarray</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>either np or cp</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.copy_to_cpu">
+<span class="sig-name descname"><span class="pre">copy_to_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.copy_to_cpu" title="Link to this definition"></a></dt>
+<dd><p>Transforms the data to float32 and if on gpu loads it to cpu.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>)</p></li>
+<li><p><strong>stream</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>cupy.cuda.stream.Stream</em><em>, </em><em>None</em><em>, </em><em>None</em><em>, </em><em>None</em><em>, </em><em>None</em><em>, </em><em>None</em><em>, </em><em>None</em><em>, </em><em>None</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.trim_memory_pool">
+<span class="sig-name descname"><span class="pre">trim_memory_pool</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.trim_memory_pool" title="Link to this definition"></a></dt>
+<dd><p>Release cached CuPy allocator blocks that are not currently in use.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.exists_layer">
+<span class="sig-name descname"><span class="pre">exists_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.exists_layer" title="Link to this definition"></a></dt>
+<dd><p>Check if the layer exists in elevation map or in the semantic map.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Layer name</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Indicates if layer exists.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_map_with_name_ref">
+<span class="sig-name descname"><span class="pre">get_map_with_name_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_map_with_name_ref" title="Link to this definition"></a></dt>
+<dd><p>Load a layer according to the name input to the data input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the layer.</p></li>
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>) – Data structure that contains layer.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_maps">
+<span class="sig-name descname"><span class="pre">get_normal_maps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_maps" title="Link to this definition"></a></dt>
+<dd><p>Get the normal maps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the three normal values for each cell</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>maps</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_ref">
+<span class="sig-name descname"><span class="pre">get_normal_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">normal_x_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normal_y_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normal_z_data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_normal_ref" title="Link to this definition"></a></dt>
+<dd><p>Get the normal maps as reference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>normal_x_data</strong></p></li>
+<li><p><strong>normal_y_data</strong></p></li>
+<li><p><strong>normal_z_data</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_layer">
+<span class="sig-name descname"><span class="pre">get_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_layer" title="Link to this definition"></a></dt>
+<dd><p>Return the layer with the name input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – The layers name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The rqeuested layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>return_map</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_polygon_traversability">
+<span class="sig-name descname"><span class="pre">get_polygon_traversability</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polygon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_polygon_traversability" title="Link to this definition"></a></dt>
+<dd><p>Check if input polygons are traversable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>polygon</strong> (<em>cupy._core.core.ndarray</em>)</p></li>
+<li><p><strong>result</strong> (<em>numpy.ndarray</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Union[None, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.get_untraversable_polygon">
+<span class="sig-name descname"><span class="pre">get_untraversable_polygon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">untraversable_polygon</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.get_untraversable_polygon" title="Link to this definition"></a></dt>
+<dd><p>Copy the untraversable polygons to input untraversable_polygons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>untraversable_polygon</strong> (<em>numpy.ndarray</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.initialize_map">
+<span class="sig-name descname"><span class="pre">initialize_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cubic'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.initialize_map" title="Link to this definition"></a></dt>
+<dd><p>Initializes the map according to some points and using an approximation according to method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>numpy.ndarray</em>)</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Interpolation method [‘linear’, ‘cubic’, ‘nearest’]</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.list_layers">
+<span class="sig-name descname"><span class="pre">list_layers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.list_layers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.export_layers">
+<span class="sig-name descname"><span class="pre">export_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.export_layers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.apply_masked_replace">
+<span class="sig-name descname"><span class="pre">apply_masked_replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry" title="elevation_mapping_cupy.elevation_mapping.GridGeometry"><span class="pre">GridGeometry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.apply_masked_replace" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.elevation_mapping.ElevationMap.set_full_map">
+<span class="sig-name descname"><span class="pre">set_full_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fused_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#elevation_mapping_cupy.elevation_mapping.GridGeometry" title="elevation_mapping_cupy.elevation_mapping.GridGeometry"><span class="pre">GridGeometry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.elevation_mapping.ElevationMap.set_full_map" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.parameter.</span></span><span class="sig-name descname"><span class="pre">Parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Serializable</span></code></p>
+<p>This class holds the parameters for the elevation mapping algorithm.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">resolution</span></span></dt>
+<dd><p>The resolution in meters.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.04</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">subscriber_cfg</span></span></dt>
+<dd><p>The configuration for the subscriber.
+(Default: <code class="docutils literal notranslate"><span class="pre">{</span> <span class="pre">&quot;front_cam&quot;:</span> <span class="pre">{</span> <span class="pre">&quot;channels&quot;:</span> <span class="pre">[&quot;rgb&quot;,</span> <span class="pre">&quot;person&quot;],</span> <span class="pre">&quot;topic_name&quot;:</span> <span class="pre">&quot;/elevation_mapping/pointcloud_semantic&quot;,</span> <span class="pre">&quot;data_type&quot;:</span> <span class="pre">&quot;pointcloud&quot;,</span> <span class="pre">}</span> <span class="pre">}</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">additional_layers</span></span></dt>
+<dd><p>The additional layers for the map.
+(Default: <code class="docutils literal notranslate"><span class="pre">[&quot;color&quot;]</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fusion_algorithms</span></span></dt>
+<dd><p>The list of fusion algorithms.
+(Default: <code class="docutils literal notranslate"><span class="pre">[</span> <span class="pre">&quot;image_color&quot;,</span> <span class="pre">&quot;image_exponential&quot;,</span> <span class="pre">&quot;pointcloud_average&quot;,</span> <span class="pre">&quot;pointcloud_bayesian_inference&quot;,</span> <span class="pre">&quot;pointcloud_class_average&quot;,</span> <span class="pre">&quot;pointcloud_class_bayesian&quot;,</span> <span class="pre">&quot;pointcloud_class_max&quot;,</span> <span class="pre">&quot;pointcloud_color&quot;,</span> <span class="pre">]</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pointcloud_channel_fusions</span></span></dt>
+<dd><p>The fusion for pointcloud channels.
+(Default: <code class="docutils literal notranslate"><span class="pre">{&quot;rgb&quot;:</span> <span class="pre">&quot;color&quot;,</span> <span class="pre">&quot;default&quot;:</span> <span class="pre">&quot;class_average&quot;}</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">image_channel_fusions</span></span></dt>
+<dd><p>The fusion for image channels.
+(Default: <code class="docutils literal notranslate"><span class="pre">{&quot;rgb&quot;:</span> <span class="pre">&quot;color&quot;,</span> <span class="pre">&quot;default&quot;:</span> <span class="pre">&quot;exponential&quot;}</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">data_type</span></span></dt>
+<dd><p>The data type for the map.
+(Default: <code class="docutils literal notranslate"><span class="pre">np.float32</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">average_weight</span></span></dt>
+<dd><p>The weight for the average fusion.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.5</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">map_length</span></span></dt>
+<dd><p>The map’s size in meters.
+(Default: <code class="docutils literal notranslate"><span class="pre">8.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">sensor_noise_factor</span></span></dt>
+<dd><p>The point’s noise is sensor_noise_factor*z^2 (z is distance from sensor).
+(Default: <code class="docutils literal notranslate"><span class="pre">0.05</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">mahalanobis_thresh</span></span></dt>
+<dd><p>Points outside this distance is outlier.
+(Default: <code class="docutils literal notranslate"><span class="pre">2.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">outlier_variance</span></span></dt>
+<dd><p>If point is outlier, add this value to the cell.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.01</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">drift_compensation_variance_inlier</span></span></dt>
+<dd><p>Cells under this value is used for drift compensation.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.1</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">time_variance</span></span></dt>
+<dd><p>Add this value when update_variance is called.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.01</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">time_interval</span></span></dt>
+<dd><p>Time layer is updated with this interval.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.1</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_variance</span></span></dt>
+<dd><p>The maximum variance for each cell.
+(Default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dilation_size</span></span></dt>
+<dd><p>The dilation filter size before traversability filter.
+(Default: <code class="docutils literal notranslate"><span class="pre">2</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dilation_size_initialize</span></span></dt>
+<dd><p>The dilation size after the init.
+(Default: <code class="docutils literal notranslate"><span class="pre">10</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">drift_compensation_alpha</span></span></dt>
+<dd><p>The drift compensation alpha for smoother update of drift compensation.
+(Default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">traversability_inlier</span></span></dt>
+<dd><p>Cells with higher traversability are used for drift compensation.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.1</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">wall_num_thresh</span></span></dt>
+<dd><p>If there are more points than this value, only higher points than the current height are used to make the wall more sharp.
+(Default: <code class="docutils literal notranslate"><span class="pre">100</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">min_height_drift_cnt</span></span></dt>
+<dd><p>Drift compensation only happens if the valid cells are more than this number.
+(Default: <code class="docutils literal notranslate"><span class="pre">100</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_ray_length</span></span></dt>
+<dd><p>The maximum length for ray tracing.
+(Default: <code class="docutils literal notranslate"><span class="pre">2.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cleanup_step</span></span></dt>
+<dd><p>Substitute this value from validity layer at visibility cleanup.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.01</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cleanup_cos_thresh</span></span></dt>
+<dd><p>Substitute this value from validity layer at visibility cleanup.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.5</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">min_valid_distance</span></span></dt>
+<dd><p>Points with shorter distance will be filtered out.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.3</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_height_range</span></span></dt>
+<dd><p>Points higher than this value from sensor will be filtered out to disable ceiling.
+(Default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ramped_height_range_a</span></span></dt>
+<dd><p>If z &gt; max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.3</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ramped_height_range_b</span></span></dt>
+<dd><p>If z &gt; max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+(Default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ramped_height_range_c</span></span></dt>
+<dd><p>If z &gt; max(d - ramped_height_range_b, 0) * ramped_height_range_a + ramped_height_range_c, reject.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.2</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">safe_thresh</span></span></dt>
+<dd><p>If traversability is smaller, it is counted as unsafe cell.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.5</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">safe_min_thresh</span></span></dt>
+<dd><p>Polygon is unsafe if there exists lower traversability than this.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.5</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_unsafe_n</span></span></dt>
+<dd><p>If the number of cells under safe_thresh exceeds this value, polygon is unsafe.
+(Default: <code class="docutils literal notranslate"><span class="pre">20</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">checker_layer</span></span></dt>
+<dd><p>Layer used for checking safety.
+(Default: <code class="docutils literal notranslate"><span class="pre">&quot;traversability&quot;</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_drift</span></span></dt>
+<dd><p>The maximum drift for the compensation.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.10</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">overlap_clear_range_xy</span></span></dt>
+<dd><p>XY range [m] for clearing overlapped area. This defines the valid area for overlap clearance. (used for multi floor setting)
+(Default: <code class="docutils literal notranslate"><span class="pre">4.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">overlap_clear_range_z</span></span></dt>
+<dd><p>Z range [m] for clearing overlapped area. Cells outside this range will be cleared. (used for multi floor setting)
+(Default: <code class="docutils literal notranslate"><span class="pre">2.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_edge_sharpen</span></span></dt>
+<dd><p>Enable edge sharpening.
+(Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_drift_compensation</span></span></dt>
+<dd><p>Enable drift compensation.
+(Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_visibility_cleanup</span></span></dt>
+<dd><p>Enable visibility cleanup.
+(Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_overlap_clearance</span></span></dt>
+<dd><p>Enable overlap clearance.
+(Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">use_only_above_for_upper_bound</span></span></dt>
+<dd><p>Use only above for upper bound.
+(Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">use_chainer</span></span></dt>
+<dd><p>Use chainer as a backend of traversability filter or pytorch. If false, it uses pytorch. Pytorch requires ~2GB more GPU memory compared to chainer but runs faster.
+(Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">position_noise_thresh</span></span></dt>
+<dd><p>If the position change is bigger than this value, the drift compensation happens.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.1</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">orientation_noise_thresh</span></span></dt>
+<dd><p>If the orientation change is bigger than this value, the drift compensation happens.
+(Default: <code class="docutils literal notranslate"><span class="pre">0.1</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">plugin_config_file</span></span></dt>
+<dd><p>Configuration file for the plugin.
+(Default: <code class="docutils literal notranslate"><span class="pre">&quot;config/plugin_config.yaml&quot;</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">weight_file</span></span></dt>
+<dd><p>Weight file for traversability filter.
+(Default: <code class="docutils literal notranslate"><span class="pre">&quot;config/weights.dat&quot;</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">initial_variance</span></span></dt>
+<dd><p>Initial variance for each cell.
+(Default: <code class="docutils literal notranslate"><span class="pre">10.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">initialized_variance</span></span></dt>
+<dd><p>Initialized variance for each cell.
+(Default: <code class="docutils literal notranslate"><span class="pre">10.0</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w1</span></span></dt>
+<dd><p>Weights for the first layer.
+(Default: <code class="docutils literal notranslate"><span class="pre">np.zeros((4,</span> <span class="pre">1,</span> <span class="pre">3,</span> <span class="pre">3))</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w2</span></span></dt>
+<dd><p>Weights for the second layer.
+(Default: <code class="docutils literal notranslate"><span class="pre">np.zeros((4,</span> <span class="pre">1,</span> <span class="pre">3,</span> <span class="pre">3))</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w3</span></span></dt>
+<dd><p>Weights for the third layer.
+(Default: <code class="docutils literal notranslate"><span class="pre">np.zeros((4,</span> <span class="pre">1,</span> <span class="pre">3,</span> <span class="pre">3))</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w_out</span></span></dt>
+<dd><p>Weights for the output layer.
+(Default: <code class="docutils literal notranslate"><span class="pre">np.zeros((1,</span> <span class="pre">12,</span> <span class="pre">1,</span> <span class="pre">1))</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">true_map_length</span></span></dt>
+<dd><p>True length of the map.
+(Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cell_n</span></span></dt>
+<dd><p>Number of cells in the map.
+(Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">true_cell_n</span></span></dt>
+<dd><p>True number of cells in the map.
+(Default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">resolution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.04</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">subscriber_cfg</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">additional_layers</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">fusion_algorithms</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">pointcloud_channel_fusions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">image_channel_fusions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">data_type</span></span></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">float32</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">average_weight</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">map_length</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">sensor_noise_factor</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.05</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">mahalanobis_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">outlier_variance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.01</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">drift_compensation_variance_inlier</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">time_variance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.01</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">time_interval</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_variance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dilation_size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dilation_size_initialize</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">drift_compensation_alpha</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">traversability_inlier</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">wall_num_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">min_height_drift_cnt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_ray_length</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cleanup_step</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.01</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cleanup_cos_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">min_valid_distance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.3</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_height_range</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ramped_height_range_a</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.3</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ramped_height_range_b</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">ramped_height_range_c</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.2</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">safe_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">safe_min_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_unsafe_n</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">checker_layer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'traversability'</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_drift</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">overlap_clear_range_xy</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">overlap_clear_range_z</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_edge_sharpen</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_drift_compensation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_visibility_cleanup</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">enable_overlap_clearance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">use_only_above_for_upper_bound</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">use_chainer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">position_noise_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">orientation_noise_thresh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">plugin_config_file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'config/plugin_config.yaml'</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">weight_file</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'config/weights.dat'</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">initial_variance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">initialized_variance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">10.0</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w3</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">w_out</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">true_map_length</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">cell_n</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">true_cell_n</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">load_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Load weights from a file into the model’s parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – The path to the file containing the weights.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Get the names of the parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of parameter names.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Get the types of the parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of parameter types.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">set_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set the value of a parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – The name of the parameter.</p></li>
+<li><p><strong>value</strong> (<em>any</em>) – The new value for the parameter.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get the value of a parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the parameter.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value of the parameter.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Update the parameters related to the map size and resolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.04</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subscriber_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fusion_algorithms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pointcloud_channel_fusions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_channel_fusions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'numpy.float32'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_noise_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mahalanobis_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlier_variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drift_compensation_variance_inlier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation_size_initialize</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drift_compensation_alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traversability_inlier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wall_num_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_height_drift_cnt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_ray_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cleanup_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cleanup_cos_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_valid_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_height_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ramped_height_range_a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ramped_height_range_b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ramped_height_range_c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_min_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_unsafe_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checker_layer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'traversability'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_drift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_clear_range_xy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_clear_range_z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_edge_sharpen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_drift_compensation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_visibility_cleanup</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_overlap_clearance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_only_above_for_upper_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_chainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position_noise_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation_noise_thresh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugin_config_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config/plugin_config.yaml'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config/weights.dat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialized_variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_map_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-elevation_mapping_cupy.plugins.plugin_manager">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginParams">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.plugin_manager.</span></span><span class="sig-name descname"><span class="pre">PluginParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_nan</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_height_layer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginParams.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginParams.layer_name">
+<span class="sig-name descname"><span class="pre">layer_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.layer_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginParams.fill_nan">
+<span class="sig-name descname"><span class="pre">fill_nan</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.fill_nan" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginParams.is_height_layer">
+<span class="sig-name descname"><span class="pre">is_height_layer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.is_height_layer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginParams.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_nan</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_height_layer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginBase">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.plugin_manager.</span></span><span class="sig-name descname"><span class="pre">PluginBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>This is a base class of Plugins</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginBase.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginBase.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plugin_params</strong> – PluginParams</p></li>
+<li><p><strong>callback</strong> (<em>The parameter of</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginBase.get_layer_data">
+<span class="sig-name descname"><span class="pre">get_layer_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elevation_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugin_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugin_layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cupy.ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginBase.get_layer_data" title="Link to this definition"></a></dt>
+<dd><p>Retrieve a copy of the layer data from the elevation, plugin, or semantic maps based on the layer name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>elevation_map</strong> (<em>cp.ndarray</em>) – The elevation map containing various layers.</p></li>
+<li><p><strong>layer_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names for each layer in the elevation map.</p></li>
+<li><p><strong>plugin_layers</strong> (<em>cp.ndarray</em>) – The plugin layers containing additional data.</p></li>
+<li><p><strong>plugin_layer_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names for each layer in the plugin layers.</p></li>
+<li><p><strong>semantic_map</strong> (<em>cp.ndarray</em>) – The semantic map containing various layers.</p></li>
+<li><p><strong>semantic_layer_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of names for each layer in the semantic map.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – The name of the layer to retrieve.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A copy of the requested layer as a cupy ndarray if found, otherwise None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[cp.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">elevation_mapping_cupy.plugins.plugin_manager.</span></span><span class="sig-name descname"><span class="pre">PluginManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This manages the plugins.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plugin_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams" title="elevation_mapping_cupy.plugins.plugin_manager.PluginParams"><span class="pre">PluginParams</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.init" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.load_plugin_settings">
+<span class="sig-name descname"><span class="pre">load_plugin_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.load_plugin_settings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_names">
+<span class="sig-name descname"><span class="pre">get_layer_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.reset_layers">
+<span class="sig-name descname"><span class="pre">reset_layers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.reset_layers" title="Link to this definition"></a></dt>
+<dd><p>Invalidate cached plugin layers so they will be recomputed on demand.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_names">
+<span class="sig-name descname"><span class="pre">get_plugin_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_index_with_name">
+<span class="sig-name descname"><span class="pre">get_plugin_index_with_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_plugin_index_with_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_index_with_name">
+<span class="sig-name descname"><span class="pre">get_layer_index_with_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_layer_index_with_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.update_with_name">
+<span class="sig-name descname"><span class="pre">update_with_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elevation_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cupy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">semantic_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elements_to_shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_active_stack</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.update_with_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_map_with_name">
+<span class="sig-name descname"><span class="pre">get_map_with_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cupy.ndarray</span></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_map_with_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_param_with_name">
+<span class="sig-name descname"><span class="pre">get_param_with_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginParams" title="elevation_mapping_cupy.plugins.plugin_manager.PluginParams"><span class="pre">PluginParams</span></a></span></span><a class="headerlink" href="#elevation_mapping_cupy.plugins.plugin_manager.PluginManager.get_param_with_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Python software" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../release_notes/jazzy_release.html" class="btn btn-neutral float-right" title="ROS 2 Jazzy v2.2.0 Release" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Takahiro Miki, Gian Erni.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
