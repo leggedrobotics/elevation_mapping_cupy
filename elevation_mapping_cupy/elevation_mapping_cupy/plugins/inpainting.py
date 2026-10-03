@@ -46,32 +46,27 @@ class Inpainting(PluginBase):
         self.fill_border_holes = bool(fill_border_holes)
         self.inpaint_radius = float(inpaint_radius)
 
-    def _select_holes_to_fill(self, invalid_mask: np.ndarray) -> np.ndarray:
-        """Return a uint8 mask of bounded invalid components worth filling."""
-        if not invalid_mask.any():
-            return invalid_mask
+    def _select_holes_to_fill(self, invalid_mask: np.ndarray):
+        """Label the bounded invalid components worth filling.
 
-        if self.max_hole_area is None and self.fill_border_holes:
-            return invalid_mask.copy()
-
+        Returns the component labels (0 where nothing is filled) and the
+        (label, left, top, width, height) box of every selected component.
+        """
         height, width = invalid_mask.shape
-        selected = np.zeros_like(invalid_mask, dtype=np.uint8)
+        if self.max_hole_area is None and self.fill_border_holes:
+            return invalid_mask.astype(np.int32), [(1, 0, 0, width, height)]
+
         label_count, labels, stats, _ = cv.connectedComponentsWithStats(invalid_mask, connectivity=4)
-        for label in range(1, label_count):
-            left, top, component_width, component_height, area = stats[label]
-            if self.max_hole_area is not None and area > self.max_hole_area:
-                continue
-            if not self.fill_border_holes:
-                touches_border = (
-                    left == 0
-                    or top == 0
-                    or left + component_width == width
-                    or top + component_height == height
-                )
-                if touches_border:
-                    continue
-            selected[labels == label] = 1
-        return selected
+        left, top, component_width, component_height, area = stats.T
+        keep = np.ones(label_count, dtype=bool)
+        keep[0] = False  # label 0 is the valid background
+        if self.max_hole_area is not None:
+            keep &= area <= self.max_hole_area
+        if not self.fill_border_holes:
+            keep &= (left > 0) & (top > 0) & (left + component_width < width) & (top + component_height < height)
+        kept = np.flatnonzero(keep)
+        fill_labels = np.where(keep[labels], labels, 0).astype(np.int32)
+        return fill_labels, [(int(i), *(int(v) for v in stats[i, :4])) for i in kept]
 
     def __call__(
         self,
@@ -113,15 +108,15 @@ class Inpainting(PluginBase):
         if not invalid_mask_np.any():
             return elevation.astype(cp.float64)
 
-        fill_mask_np = self._select_holes_to_fill(invalid_mask_np)
-        if not fill_mask_np.any():
+        fill_labels, holes = self._select_holes_to_fill(invalid_mask_np)
+        if not holes:
             return output.astype(cp.float64)
 
         h_valid = elevation[valid_mask]
         h_max = float(cp.asnumpy(h_valid.max()))
         h_min = float(cp.asnumpy(h_valid.min()))
         denom = h_max - h_min
-        fill_mask = cp.asarray(fill_mask_np.astype(bool))
+        fill_mask = cp.asarray(fill_labels > 0)
 
         if denom <= 1e-6:
             _LOGGER.warning(
@@ -134,10 +129,20 @@ class Inpainting(PluginBase):
 
         # Keep the full invalid mask when running OpenCV so large unknown regions do not
         # contribute placeholder values to nearby hole filling. Only bounded components are
-        # copied back into the published layer.
+        # copied back into the published layer. cv.inpaint fills every masked pixel, and a
+        # survey-sized map is mostly unknown, so inpaint each hole in a window that only
+        # adds the inpaint radius around it.
         safe_elevation = cp.where(valid_mask, elevation, h_min)
         scaled = cp.asnumpy(cp.clip((safe_elevation - h_min) * 255.0 / denom, 0.0, 255.0)).astype("uint8")
-        dst = cv.inpaint(scaled, invalid_mask_np, self.inpaint_radius, self.method)
+        dst = np.zeros_like(scaled)
+        margin = int(np.ceil(self.inpaint_radius)) + 1
+        height, width = scaled.shape
+        for label, left, top, hole_width, hole_height in holes:
+            y0, y1 = max(top - margin, 0), min(top + hole_height + margin, height)
+            x0, x1 = max(left - margin, 0), min(left + hole_width + margin, width)
+            window = cv.inpaint(scaled[y0:y1, x0:x1], invalid_mask_np[y0:y1, x0:x1], self.inpaint_radius, self.method)
+            own = fill_labels[y0:y1, x0:x1] == label
+            dst[y0:y1, x0:x1][own] = window[own]
         h_inpainted = cp.asarray(dst.astype(np.float32) * denom / 255.0 + h_min, dtype=cp.float32)
         output = cp.where(fill_mask, h_inpainted, output)
         return output.astype(cp.float64)
