@@ -98,6 +98,11 @@ if(BUILD_TESTING)
     TIMEOUT 120
     ENV PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
   )
+  ament_add_pytest_test(test_observation_age
+    ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/tests/test_observation_age.py
+    TIMEOUT 120
+    ENV PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+  )
   ament_add_pytest_test(test_indexing_center
     ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/tests/test_indexing_center.py
     TIMEOUT 120

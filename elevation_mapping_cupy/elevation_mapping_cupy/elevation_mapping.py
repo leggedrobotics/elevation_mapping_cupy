@@ -109,6 +109,10 @@ class ElevationMap:
 
         self.map_lock = threading.Lock()
         self.elevation_map = xp.zeros((7, self.cell_n, self.cell_n), dtype=self.data_type)
+        # Source-time evidence is independent of the legacy visibility timer.
+        # NaN means no raw observation; restored/interpolated terrain is not one.
+        self.observation_age = xp.full((self.cell_n, self.cell_n), xp.nan, dtype=xp.float64)
+        self._observation_stamp_ns = None
         self.layer_names = [
             "elevation",
             "variance",
@@ -158,6 +162,7 @@ class ElevationMap:
         """Reset all the layers of the elevation & the semantic map."""
         with self.map_lock:
             self.elevation_map *= 0.0
+            self.observation_age.fill(xp.nan)
             # Initial variance
             self.elevation_map[1] += self.initial_variance
             self.plugin_manager.reset_layers()
@@ -254,6 +259,8 @@ class ElevationMap:
             return
         with self.map_lock:
             self.elevation_map = cp.roll(self.elevation_map, shift_value, axis=(1, 2))
+            self.observation_age = cp.roll(self.observation_age, shift_value, axis=(0, 1))
+            self.pad_value(self.observation_age[None], shift_value, value=cp.nan)
             self.pad_value(self.elevation_map, shift_value, value=0.0)
             self.pad_value(self.elevation_map, shift_value, idx=1, value=self.initial_variance)
             # Plugin layers are computed on-demand; invalidate cache when shifting.
@@ -347,7 +354,9 @@ class ElevationMap:
         """
         t -= self.center
 
-    def update_map_with_kernel(self, points_all, channels, R, t, position_noise, orientation_noise):
+    def update_map_with_kernel(
+        self, points_all, channels, R, t, position_noise, orientation_noise, source_stamp_ns=None
+    ):
         """Update map with new measurement.
 
         Args:
@@ -361,6 +370,7 @@ class ElevationMap:
         points = cp.ascontiguousarray(points_all[:, :3])
 
         with self.map_lock:
+            source_is_new = self._advance_observation_time(source_stamp_ns)
             self.new_map.fill(0.0)
             self.error.fill(0.0)
             self.error_cnt.fill(0.0)
@@ -418,6 +428,11 @@ class ElevationMap:
             if self.param.enable_overlap_clearance:
                 self.clear_overlap_map(t)
 
+            valid = (self.elevation_map[2] > 0.5) & cp.isfinite(self.elevation_map[0])
+            self.observation_age[~valid] = cp.nan
+            if source_is_new:
+                self.observation_age[(self.new_map[2] > 0.0) & valid] = 0.0
+
             self.traversability_input *= 0.0
             self.dilation_filter_kernel(
                 self.elevation_map[5],
@@ -470,6 +485,20 @@ class ElevationMap:
         """adds the time interval to the time layer."""
         self.elevation_map[4] += self.param.time_interval
 
+    def _advance_observation_time(self, source_stamp_ns):
+        """Advance under map_lock by source time, never by callback count."""
+        if (
+            source_stamp_ns is None
+            or source_stamp_ns <= 0
+            or (self._observation_stamp_ns is not None and source_stamp_ns <= self._observation_stamp_ns)
+        ):
+            self.observation_age.fill(cp.nan)
+            return False
+        if self._observation_stamp_ns is not None:
+            self.observation_age += (source_stamp_ns - self._observation_stamp_ns) / 1_000_000_000
+        self._observation_stamp_ns = int(source_stamp_ns)
+        return True
+
     def update_upper_bound_with_valid_elevation(self):
         """Filters all invalid cell's upper_bound and is_upper_bound layers."""
         mask = self.elevation_map[2] > 0.5
@@ -484,6 +513,7 @@ class ElevationMap:
         t: cp._core.core.ndarray,
         position_noise: float,
         orientation_noise: float,
+        source_stamp_ns: Optional[int] = None,
     ):
         """Input the point cloud and fuse the new measurements to update the elevation map.
 
@@ -494,6 +524,8 @@ class ElevationMap:
             t (cupy._core.core.ndarray):
             position_noise (float):
             orientation_noise (float):
+            source_stamp_ns (Optional[int]): Raw cloud source timestamp; missing,
+                zero or nonincreasing values grant no observation evidence.
 
         Returns:
             None:
@@ -507,6 +539,7 @@ class ElevationMap:
             cp.asarray(t, dtype=self.data_type),
             position_noise,
             orientation_noise,
+            source_stamp_ns,
         )
 
     def input_image(
@@ -658,6 +691,20 @@ class ElevationMap:
         """
         return self.process_map_for_publish(self.elevation_map[4], fill_nan=False, add_z=False)
 
+    def get_observation_age(self):
+        """Seconds since accepted raw cloud observation at the published stamp.
+
+        Round upward when converting float64 ages to GridMap float32, so numeric
+        rounding cannot make stale terrain look more recently observed.
+        """
+        age = self.observation_age[1:-1, 1:-1]
+        published = age.astype(cp.float32)
+        return cp.where(
+            published.astype(cp.float64) < age,
+            cp.nextafter(published, cp.float32(cp.inf)),
+            published,
+        )
+
     def get_upper_bound(self):
         """Get the upper bound layer.
 
@@ -740,7 +787,7 @@ class ElevationMap:
         Returns:
             bool: Indicates if layer exists.
         """
-        if name in self.layer_names:
+        if name == "observation_age" or name in self.layer_names:
             return True
         elif name in self.plugin_manager.layer_names:
             return True
@@ -769,6 +816,8 @@ class ElevationMap:
                 m = self.get_traversability()
             elif name == "time":
                 m = self.get_time()
+            elif name == "observation_age":
+                m = self.get_observation_age()
             elif name == "upper_bound":
                 m = self.get_upper_bound()
             elif name == "is_upper_bound":
@@ -902,6 +951,8 @@ class ElevationMap:
             return_map: The rqeuested layer.
 
         """
+        if name == "observation_age":
+            return self.observation_age.copy()
         if name in self.layer_names:
             idx = self.layer_names.index(name)
             return_map = self.elevation_map[idx]
@@ -1010,6 +1061,7 @@ class ElevationMap:
         ordered: List[str] = []
         for container in (
             self.layer_names,
+            ("observation_age",),
             getattr(self.plugin_manager, "layer_names", []),
         ):
             for name in container:
@@ -1035,6 +1087,8 @@ class ElevationMap:
     ) -> None:
         if not layer_data:
             raise ValueError("No layer data provided for masked replace.")
+        if "observation_age" in layer_data:
+            raise ValueError("observation_age is read-only raw sensor evidence")
 
         # Transform the layer data from grid_map coordinate convention to the elevation_mapping_cupy coordinate convention
         for name, array in layer_data.items():
@@ -1076,6 +1130,7 @@ class ElevationMap:
         center_z = float(cp.asnumpy(self.center)[2])
 
         with self.map_lock:
+            self.observation_age[1:-1, 1:-1][map_rows, map_cols][cp_mask] = cp.nan
             for name, array in layer_data.items():
                 target = self._resolve_layer_target(name)
                 if target is None:
@@ -1127,6 +1182,8 @@ class ElevationMap:
         total_plugin_layers = len(getattr(self.plugin_manager, "layer_names", []))
 
         with self.map_lock:
+            # Loading a saved observation age must never certify a new scan.
+            self.observation_age.fill(cp.nan)
             self.center[:] = cp.asarray(center_np, dtype=self.data_type)
             for name, data in raw_layers.items():
                 target = self._resolve_layer_target(name, allow_semantic_creation=False)
