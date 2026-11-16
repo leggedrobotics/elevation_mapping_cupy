@@ -881,15 +881,17 @@ class ElevationMappingNode(Node):
             t_np = np.zeros(3, dtype=np.float32)
             R = np.eye(3, dtype=np.float32)
         else:
-            transform_camera_to_map = self.safe_lookup_transform(
-                self.map_frame,
+            # input_image() projects map points into the camera, so it needs map -> camera
+            # (the inverse of the camera pose), as the ROS 1 node passes it.
+            transform_map_to_camera = self.safe_lookup_transform(
                 frame_sensor_id,
+                self.map_frame,
                 camera_msg.header.stamp,
             )
-            if transform_camera_to_map is None:
+            if transform_map_to_camera is None:
                 return
-            t = transform_camera_to_map.transform.translation
-            q = transform_camera_to_map.transform.rotation
+            t = transform_map_to_camera.transform.translation
+            q = transform_map_to_camera.transform.rotation
             t_np = np.array([t.x, t.y, t.z], dtype=np.float32)
             R = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
 
