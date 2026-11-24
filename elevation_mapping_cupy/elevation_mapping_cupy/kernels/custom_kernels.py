@@ -5,6 +5,10 @@
 import cupy as cp
 import string
 
+# cupy >= 14 only forward-declares float16 in its kernel headers; the preambles
+# below use it as a type, so include its definition (cupy 13 has no such header).
+FLOAT16 = "#include <cupy/float16.cuh>\n" if int(cp.__version__.split(".")[0]) >= 14 else ""
+
 
 def map_utils(
     resolution,
@@ -130,7 +134,7 @@ def map_utils(
         ramped_height_range_b=ramped_height_range_b,
         ramped_height_range_c=ramped_height_range_c,
     )
-    return util_preamble
+    return FLOAT16 + util_preamble
 
 
 def add_points_kernel(
@@ -534,7 +538,7 @@ def polygon_mask_kernel(width, height, resolution):
     polygon_mask_kernel = cp.ElementwiseKernel(
         in_params="raw U polygon, raw U center_x, raw U center_y, raw int16 polygon_n, raw U polygon_bbox",
         out_params="raw U mask",
-        preamble=string.Template(
+        preamble=FLOAT16 + string.Template(
             """
             __device__ struct Point
             {
