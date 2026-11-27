@@ -13,7 +13,6 @@ from rclpy.qos import QoSPresetProfiles
 from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from elevation_map_msgs.msg import ChannelInfo
-import ros2_numpy as rnp
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
 from tf_transformations import quaternion_matrix
 import tf2_ros
@@ -22,7 +21,7 @@ from rclpy.duration import Duration
 from rclpy.serialization import serialize_message, deserialize_message
 from grid_map_msgs.msg import GridMap
 from grid_map_msgs.srv import SetGridMap, ProcessFile
-from geometry_msgs.msg import Vector3, Quaternion
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import Float32MultiArray
 from std_msgs.msg import MultiArrayLayout as MAL
 from std_msgs.msg import MultiArrayDimension as MAD
@@ -133,6 +132,8 @@ class ElevationMappingNode(Node):
         self.register_subscribers()
         self.register_publishers()
         self.register_timers()
+        self._sensor_stamps = {}
+        self._cleared_stamps = {}
         self.register_services()
         self._last_t = None
 
@@ -147,7 +148,6 @@ class ElevationMappingNode(Node):
         self.get_logger().info(f"Initialized map with length: {self._map.map_length}, resolution: {self._map.resolution}, cells: {self._map.cell_n}")
 
         self._map_q = None
-        self._map_t = None
 
     def initialize_ros(self) -> None:
         self._tf_buffer = tf2_ros.Buffer()
@@ -315,6 +315,9 @@ class ElevationMappingNode(Node):
         self.service_namespace = self._normalize_namespace(service_ns_param)
 
     def register_subscribers(self) -> None:
+        if any(cfg.get("data_type") == "pointcloud" and cfg.get("channels") for cfg in self.my_subscribers.values()):
+            from ros2_numpy import numpify
+            self.numpify = numpify
         self._pointcloud_subs = {}
         self._image_syncs = {}
         self._image_filter_subs = {}
@@ -346,7 +349,7 @@ class ElevationMappingNode(Node):
                     queue_size=10,
                     slop=0.5,
                 )
-                image_sync.registerCallback(partial(self.image_callback, sub_key=key))
+                image_sync.registerCallback(partial(self.receive_sensor, self.image_callback, key))
                 self._image_filter_subs[key] = [camera_sub, camera_info_sub]
                 self._image_syncs[key] = image_sync
 
@@ -375,7 +378,7 @@ class ElevationMappingNode(Node):
             self._pointcloud_subs[key] = self.create_subscription(
                 PointCloud2,
                 topic_name,
-                partial(self.pointcloud_callback, sub_key=key),
+                partial(self.receive_sensor, self.pointcloud_callback, key),
                 qos_profile,
             )
 
@@ -463,8 +466,15 @@ class ElevationMappingNode(Node):
             self.handle_clear_map
         )
 
+    def receive_sensor(self, callback, key, msg, *synchronized):
+        ns = rclpy.time.Time.from_msg(msg.header.stamp).nanoseconds
+        if ns <= self._cleared_stamps.get(key, -1):
+            return
+        self._sensor_stamps[key] = max(ns, self._sensor_stamps.get(key, -1))
+        callback(msg, *synchronized, sub_key=key)
+
     def publish_map(self, key: str) -> None:
-        if self._map_q is None:
+        if self._last_t is None:
             return
         publisher = self._publishers_dict[key]
         if publisher.get_subscription_count() == 0:
@@ -477,19 +487,9 @@ class ElevationMappingNode(Node):
         actual_map_length = (self._map.cell_n - 2) * self._map.resolution
         gm.info.length_x = actual_map_length
         gm.info.length_y = actual_map_length
-        if self._map_t is not None:
-            gm.info.pose.position.x = self._map_t.x
-            gm.info.pose.position.y = self._map_t.y
-            # grid_map_ros (and our RViz usage) treats GridMap as a horizontal 2.5D surface and ignores pose.z and
-            # pose.orientation. Foxglove's GridMap renderer *does* apply them, which can make the map appear tilted
-            # and shifted in Z when we embed the robot pose here. Keep pose.x/y as the map center in `map_frame`,
-            # but publish a neutral pose for visualization sanity.
-            gm.info.pose.position.z = 0.0
-        else:
-            gm.info.pose.position.x = float(center[0])
-            gm.info.pose.position.y = float(center[1])
-            gm.info.pose.position.z = 0.0
-
+        # Grid samples move in whole cells. Publish their actual center in the map frame.
+        gm.info.pose.position.x = float(center[0])
+        gm.info.pose.position.y = float(center[1])
         gm.info.pose.orientation.x = 0.0
         gm.info.pose.orientation.y = 0.0
         gm.info.pose.orientation.z = 0.0
@@ -590,9 +590,7 @@ class ElevationMappingNode(Node):
 
             self._map.set_full_map(fused_layers, raw_layers, geometry)
 
-            pose_position = raw_msg.info.pose.position
             pose_orientation = raw_msg.info.pose.orientation
-            self._map_t = Vector3(x=pose_position.x, y=pose_position.y, z=pose_position.z)
             self._map_q = Quaternion(
                 x=pose_orientation.x,
                 y=pose_orientation.y,
@@ -617,6 +615,7 @@ class ElevationMappingNode(Node):
         del request
         try:
             self._map.clear()
+            self._cleared_stamps = self._sensor_stamps.copy()
             self._last_t = self.get_clock().now().to_msg()
             self._republish_all_once()
             response.success = True
@@ -864,6 +863,7 @@ class ElevationMappingNode(Node):
             return None
 
     def image_callback(self, camera_msg: Image, camera_info_msg: CameraInfo, sub_key: str) -> None:
+
         frame_sensor_id = camera_msg.header.frame_id
         if not frame_sensor_id:
             raise ValueError("Image header.frame_id is empty.")
@@ -915,7 +915,7 @@ class ElevationMappingNode(Node):
         channels = ["x", "y", "z"] + additional_channels
 
         if additional_channels:
-            points = rnp.numpify(msg)
+            points = self.numpify(msg)
             if points is None:
                 return
 
@@ -1014,7 +1014,6 @@ class ElevationMappingNode(Node):
         trans = np.array([t.x, t.y, t.z], dtype=np.float32)
         rot = quaternion_matrix([q.x, q.y, q.z, q.w])[:3, :3].astype(np.float32)
         self._map.move_to(trans, rot)
-        self._map_t = t
         self._map_q = q
 
     def update_variance(self) -> None:
